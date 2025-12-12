@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef CG_H
-#define CG_H
+#ifndef SPIN_H
+#define SPIN_H
 
 /* return Clebsch-Gordan coefficient for given angular momenta:
  * <j1m1j2m2|jm>
