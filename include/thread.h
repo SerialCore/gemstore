@@ -4,28 +4,28 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef PARALLEL_H
-#define PARALLEL_H
+#ifndef THREAD_H
+#define THREAD_H
 
 #include <unistd.h>
 #include <pthread.h>
 
-typedef void *(*mt_fun)(void *);
+typedef void *(*thread_function)(void *);
 
-typedef struct {
+typedef struct thread {
 	int ith;
 	int len;
 	int *cal;
 	pthread_mutex_t *mutex;
 	int lock;
-	mt_fun f;
+	thread_function f;
 	void *p;
-}mt_args;
+} thread_t;
 
-int getNumProcessors();
+int getNumCores();
 
-void *mt_run(void *args);
+void *thread_run(void *args);
 
-void mt_load(int len, mt_fun f, void *p, int lth);
+void thread_load(int len, thread_function f, void *p, int lth);
 
 #endif

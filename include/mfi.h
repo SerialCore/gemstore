@@ -11,6 +11,7 @@
 #include <matrix.h>
 #include <sumckdk.h>
 #include <inteCenV.h>
+#include <thread.h>
 
 typedef struct{
         basis_list qnlist_spfy;

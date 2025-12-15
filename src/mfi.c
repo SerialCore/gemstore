@@ -12,7 +12,7 @@
 #include <matrix.h>
 #include <sumckdk.h>
 #include <inteCenV.h>
-#include <parallel.h>
+#include <thread.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,11 +62,11 @@ void free_scdk(int *len_part, int len_list, sumckdk_scdk *****scdk)
 
 void *calc_scdk(void *args)
 {
-    mt_args *mtargs = (mt_args *)args;
-    int ith = mtargs->ith;
-    pthread_mutex_t *mutex = mtargs->mutex;
-    int lock = mtargs->lock;
-    margs *arg = (margs *)mtargs->p;
+    thread_t *targ = (thread_t *)args;
+    int ith = targ->ith;
+    pthread_mutex_t *mutex = targ->mutex;
+    int lock = targ->lock;
+    margs *arg = (margs *)targ->p;
     int len_list = arg->qnlist_spfy.len_list;
     int *len_part = arg->qnlist_spfy.len_part;
     int nf = ith;
@@ -106,11 +106,11 @@ void *calc_scdk(void *args)
 
 void *calc_scdk_mt(void *args)
 {
-    mt_args *mtargs = (mt_args *)args;
-    int ith = mtargs->ith;
-    pthread_mutex_t *mutex = mtargs->mutex;
-    int lock = mtargs->lock;
-    margs *arg = (margs *)mtargs->p;
+    thread_t *targ = (thread_t *)args;
+    int ith = targ->ith;
+    pthread_mutex_t *mutex = targ->mutex;
+    int lock = targ->lock;
+    margs *arg = (margs *)targ->p;
     int len_list = arg->qnlist_spfy.len_list;
     int *len_part = arg->qnlist_spfy.len_part;
     int nf = ith / 15;
@@ -301,9 +301,9 @@ void getlsj_sl(margs *marg, double m1, double m2, double m3, double rmin, double
 
 void *getmfi(void *args)
 {
-    mt_args *mtarg = (mt_args *)args;
-    margs *arg = (margs *)mtarg->p;
-    int nf = mtarg->ith;
+    thread_t *targ = (thread_t *)args;
+    margs *arg = (margs *)targ->p;
+    int nf = targ->ith;
     int nfp, ni, nip;
     int mapf1, mapf2, mapi1, mapi2;
 

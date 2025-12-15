@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <debug.h>
+#include <task.h>
 
 #include <stdio.h>
 
@@ -12,23 +12,122 @@ void print_help();
 
 int main(int argc, char **argv)
 {
-	printf("Lambda_s:\n");debug02(1,1,2,-1);printf("\n");
-	printf("Sigma_s: \n");debug02(1,1,2,+1);printf("\n");
-	printf("Xi_ss:   \n");debug02(2,2,1,+1);printf("\n");
+	printf("Lambda_s:\n");
+	task_baryon(1, 1, 2, -1, 0.5, +1, 2);
+    task_baryon(1, 1, 2, -1, 1.5, +1, 2);
+    task_baryon(1, 1, 2, -1, 2.5, +1, 2);
+    task_baryon(1, 1, 2, -1, 0.5, -1, 1);
+    task_baryon(1, 1, 2, -1, 1.5, -1, 1);
+    task_baryon(1, 1, 2, -1, 2.5, -1, 1);
+	printf("\n");
+	
+	printf("Sigma_s: \n");
+	task_baryon(1, 1, 2, +1, 0.5, +1, 2);
+    task_baryon(1, 1, 2, +1, 1.5, +1, 2);
+    task_baryon(1, 1, 2, +1, 2.5, +1, 2);
+    task_baryon(1, 1, 2, +1, 0.5, -1, 1);
+    task_baryon(1, 1, 2, +1, 1.5, -1, 1);
+    task_baryon(1, 1, 2, +1, 2.5, -1, 1);
+	printf("\n");
 
-	printf("Lambda_c:\n");debug02(1,1,3,-1);printf("\n");
-	printf("Sigma_c: \n");debug02(1,1,3,+1);printf("\n");
-	printf("Omega_c: \n");debug02(2,2,3,+1);printf("\n");
+	printf("Xi_ss:   \n");
+	task_baryon(2, 2, 1, +1, 0.5, +1, 2);
+    task_baryon(2, 2, 1, +1, 1.5, +1, 2);
+    task_baryon(2, 2, 1, +1, 2.5, +1, 2);
+    task_baryon(2, 2, 1, +1, 0.5, -1, 1);
+    task_baryon(2, 2, 1, +1, 1.5, -1, 1);
+    task_baryon(2, 2, 1, +1, 2.5, -1, 1);
+	printf("\n");
 
-	printf("Lambda_b:\n");debug02(1,1,4,-1);printf("\n");
-	printf("Sigma_b: \n");debug02(1,1,4,+1);printf("\n");
-	printf("Omega_b: \n");debug02(2,2,4,+1);printf("\n");
+	printf("Lambda_c:\n");
+	task_baryon(1, 1, 3, -1, 0.5, +1, 2);
+    task_baryon(1, 1, 3, -1, 1.5, +1, 2);
+    task_baryon(1, 1, 3, -1, 2.5, +1, 2);
+    task_baryon(1, 1, 3, -1, 0.5, -1, 1);
+    task_baryon(1, 1, 3, -1, 1.5, -1, 1);
+    task_baryon(1, 1, 3, -1, 2.5, -1, 1);
+	printf("\n");
 
-	printf("Xi_cc:   \n");debug02(3,3,1,+1);printf("\n");
-	printf("Xi_bb:   \n");debug02(4,4,1,+1);printf("\n");
+	printf("Sigma_c: \n");
+	task_baryon(1, 1, 3, +1, 0.5, +1, 2);
+    task_baryon(1, 1, 3, +1, 1.5, +1, 2);
+    task_baryon(1, 1, 3, +1, 2.5, +1, 2);
+    task_baryon(1, 1, 3, +1, 0.5, -1, 1);
+    task_baryon(1, 1, 3, +1, 1.5, -1, 1);
+    task_baryon(1, 1, 3, +1, 2.5, -1, 1);
+	printf("\n");
 
-	printf("Omega_cc:\n");debug02(3,3,2,+1);printf("\n");
-	printf("Omega_bb:\n");debug02(4,4,2,+1);printf("\n");
+	printf("Omega_c: \n");
+	task_baryon(2, 2, 3, +1, 0.5, +1, 2);
+    task_baryon(2, 2, 3, +1, 1.5, +1, 2);
+    task_baryon(2, 2, 3, +1, 2.5, +1, 2);
+    task_baryon(2, 2, 3, +1, 0.5, -1, 1);
+    task_baryon(2, 2, 3, +1, 1.5, -1, 1);
+    task_baryon(2, 2, 3, +1, 2.5, -1, 1);
+	printf("\n");
+
+	printf("Lambda_b:\n");
+	task_baryon(1, 1, 4, -1, 0.5, +1, 2);
+    task_baryon(1, 1, 4, -1, 1.5, +1, 2);
+    task_baryon(1, 1, 4, -1, 2.5, +1, 2);
+    task_baryon(1, 1, 4, -1, 0.5, -1, 1);
+    task_baryon(1, 1, 4, -1, 1.5, -1, 1);
+    task_baryon(1, 1, 4, -1, 2.5, -1, 1);
+	printf("\n");
+	
+	printf("Sigma_b: \n");
+	task_baryon(1, 1, 4, +1, 0.5, +1, 2);
+    task_baryon(1, 1, 4, +1, 1.5, +1, 2);
+    task_baryon(1, 1, 4, +1, 2.5, +1, 2);
+    task_baryon(1, 1, 4, +1, 0.5, -1, 1);
+    task_baryon(1, 1, 4, +1, 1.5, -1, 1);
+    task_baryon(1, 1, 4, +1, 2.5, -1, 1);
+	printf("\n");
+	
+	printf("Omega_b: \n");
+	task_baryon(2, 2, 4, +1, 0.5, +1, 2);
+    task_baryon(2, 2, 4, +1, 1.5, +1, 2);
+    task_baryon(2, 2, 4, +1, 2.5, +1, 2);
+    task_baryon(2, 2, 4, +1, 0.5, -1, 1);
+    task_baryon(2, 2, 4, +1, 1.5, -1, 1);
+    task_baryon(2, 2, 4, +1, 2.5, -1, 1);
+	printf("\n");
+
+	printf("Xi_cc:   \n");
+	task_baryon(3, 3, 1, +1, 0.5, +1, 2);
+    task_baryon(3, 3, 1, +1, 1.5, +1, 2);
+    task_baryon(3, 3, 1, +1, 2.5, +1, 2);
+    task_baryon(3, 3, 1, +1, 0.5, -1, 1);
+    task_baryon(3, 3, 1, +1, 1.5, -1, 1);
+    task_baryon(3, 3, 1, +1, 2.5, -1, 1);
+	printf("\n");
+	
+	printf("Xi_bb:   \n");
+	task_baryon(4, 4, 1, +1, 0.5, +1, 2);
+    task_baryon(4, 4, 1, +1, 1.5, +1, 2);
+    task_baryon(4, 4, 1, +1, 2.5, +1, 2);
+    task_baryon(4, 4, 1, +1, 0.5, -1, 1);
+    task_baryon(4, 4, 1, +1, 1.5, -1, 1);
+    task_baryon(4, 4, 1, +1, 2.5, -1, 1);
+	printf("\n");
+
+	printf("Omega_cc:\n");
+	task_baryon(3, 3, 2, +1, 0.5, +1, 2);
+    task_baryon(3, 3, 2, +1, 1.5, +1, 2);
+    task_baryon(3, 3, 2, +1, 2.5, +1, 2);
+    task_baryon(3, 3, 2, +1, 0.5, -1, 1);
+    task_baryon(3, 3, 2, +1, 1.5, -1, 1);
+    task_baryon(3, 3, 2, +1, 2.5, -1, 1);
+	printf("\n");
+	
+	printf("Omega_bb:\n");
+	task_baryon(4, 4, 2, +1, 0.5, +1, 2);
+    task_baryon(4, 4, 2, +1, 1.5, +1, 2);
+    task_baryon(4, 4, 2, +1, 2.5, +1, 2);
+    task_baryon(4, 4, 2, +1, 0.5, -1, 1);
+    task_baryon(4, 4, 2, +1, 1.5, -1, 1);
+    task_baryon(4, 4, 2, +1, 2.5, -1, 1);
+	printf("\n");
 
     return 0;
 }

@@ -1,5 +1,24 @@
-all:
-	gcc -o gemstore src/basis.c src/debug.c src/eigen.c src/fileio.c src/inteCenV.c src/main.c src/matrix.c src/mfi.c src/parallel.c src/spin.c src/sumckdk.c src/vtype.c -I include/ -lm
+OBJ_DIR=obj/
+SRC_DIR=src/
+INCLUDE_DIR=include/
+
+CFLAGS = -I $(INCLUDE_DIR) -lm
+
+EXCUTEABLE=gemstore
+
+include $(SRC_DIR)Makefile
+
+.PHONY:
+
+all: $(OBJ_DIR) $(OBJECT)
+	gcc	$(OBJECT) -o $(EXCUTEABLE) $(CFLAGS)
+
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+
+run:
+	./$(EXCUTEABLE)
 
 clean:
-	rm gemstore
+	rm -rf $(OBJ_DIR)
+	rm -f $(EXCUTEABLE)

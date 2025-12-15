@@ -248,10 +248,10 @@ double clebsch_gordan(double j1, double m1, double j2, double m2, double j, doub
     
     /* compute sums */
     sum = 0;
-    for (x = xmin; x <= xmax; x += 2) {
+    for (x = xmin; x <= xmax; x += 1) {
         mansum = factman_inverse(x) * factman_inverse(j1+j2-j-x) * factman_inverse(j1-m1-x) * factman_inverse(j2+m2-x) 
             * factman_inverse(j-j2+m1+x) * factman_inverse(j-j1-m2+x);
-		if (x%4 != 0)
+		if (x%2 != 0)
 			mansum = -mansum;
 		expsum = factexp_inverse(x) + factexp_inverse(j1+j2-j-x) + factexp_inverse(j1-m1-x) + factexp_inverse(j2+m2-x) 
             + factexp_inverse(j-j2+m1+x) + factexp_inverse(j-j1-m2+x);
@@ -261,12 +261,12 @@ double clebsch_gordan(double j1, double m1, double j2, double m2, double j, doub
 	return factor * sum;
 }
 
-double cg_3J_symbol(double j1, double m1, double j2, double m2, double j, double m)
+double threeJ_symbol(double j1, double m1, double j2, double m2, double j, double m)
 {
 	return pow(-1, j1-j2-m) / sqrt(2*j+1) * clebsch_gordan(j1, m1, j2, m2, j, -m);
 }
 
-double cg_6J_symbol(double j1, double j2, double j12, double j3, double j, double j23)
+double sixJ_symbol(double j1, double j2, double j12, double j3, double j, double j23)
 {
 	int x, xmin, xmax;
     double manfactor, mansum, factor, sum;
@@ -303,10 +303,10 @@ double cg_6J_symbol(double j1, double j2, double j12, double j3, double j, doubl
 	
     /* compute sums */
 	sum = 0;
-	for (x = xmin; x <= xmax; x += 2) {
+	for (x = xmin; x <= xmax; x += 1) {
         mansum = factman(x+1) * factman_inverse(x-j1-j2-j12) * factman_inverse(x-j12-j3-j) * factman_inverse(x-j1-j23-j) 
             * factman_inverse(x-j2-j3-j23) * factman_inverse(j1+j2+j3+j-x) * factman_inverse(j1+j12+j3+j23-x) * factman_inverse(j2+j12+j+j23-x);
-		if (x%4 != 0)
+		if (x%2 != 0)
 			mansum = -mansum;   
 		expsum = factexp(x+1) + factexp_inverse(x-j1-j2-j12) + factexp_inverse(x-j12-j3-j) + factexp_inverse(x-j1-j23-j) 
             + factexp_inverse(x-j2-j3-j23) + factexp_inverse(j1+j2+j3+j-x) + factexp_inverse(j1+j12+j3+j23-x) + factexp_inverse(j2+j12+j+j23-x);
@@ -316,7 +316,7 @@ double cg_6J_symbol(double j1, double j2, double j12, double j3, double j, doubl
 	return factor * sum;
 }
 
-double cg_9J_symbol(double j1, double j2, double j12, double j3, double j4, double j34, double j13, double j24, double j)
+double nineJ_symbol(double j1, double j2, double j12, double j3, double j4, double j34, double j13, double j24, double j)
 {
 	int x, xmin, xmax;
 	double sum;
@@ -342,11 +342,11 @@ double cg_9J_symbol(double j1, double j2, double j12, double j3, double j4, doub
 
     /* compute sums */
 	sum = 0;
-	for (x = xmin; x <= xmax; x += 2) {
+	for (x = xmin; x <= xmax; x += 1) {
 		sum += pow(-1, x) * (x+1) 
-            * cg_6J_symbol(j1, j2, j12, j34, j, 0.5*x)
-            * cg_6J_symbol(j3, j4, j34, j2, 0.5*x, j24)
-            * cg_6J_symbol(j13, j24, j, 0.5*x, j1, j3);
+            * sixJ_symbol(j1, j2, j12, j34, j, 0.5*x)
+            * sixJ_symbol(j3, j4, j34, j2, 0.5*x, j24)
+            * sixJ_symbol(j13, j24, j, 0.5*x, j1, j3);
 	}
 
 	return sum;

@@ -5,24 +5,24 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <parallel.h>
+#include <thread.h>
 
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
 
-int getNumProcessors()
+int getNumCores()
 {
     return sysconf(_SC_NPROCESSORS_ONLN);
 }
 
-void *mt_run(void *args)
+void *thread_run(void *args)
 {
-	mt_args *arg = (mt_args*)args;
-	int len = arg->len;
-	int *cal = arg->cal;
-	pthread_mutex_t *mutex = arg->mutex;
-	mt_fun f = arg->f;
+	thread_t *targ = (thread_t *)args;
+	int len = targ->len;
+	int *cal = targ->cal;
+	pthread_mutex_t *mutex = targ->mutex;
+	thread_function f = targ->f;
 	int i, pos;
 	
     for (i = 0; i < len; i++) {
@@ -36,19 +36,19 @@ void *mt_run(void *args)
 		}
 		pthread_mutex_unlock(mutex);
 		if (pos >= 0) {
-			f(&arg[pos]);
+			f(&targ[pos]);
 		}
 	}
 
 	return NULL;
 }
 
-void mt_load(int len, mt_fun f, void *p, int lth)
+void thread_load(int len, thread_function f, void *p, int lth)
 {
 	pthread_t *tid = (pthread_t*)malloc(sizeof(pthread_t)*lth);
 	int cal = 0;
 	pthread_mutex_t mutex;
-	mt_args *arg = (mt_args*)malloc(sizeof(mt_args)*len);
+	thread_t *arg = (thread_t*)malloc(sizeof(thread_t)*len);
 	int i;
 	
 	pthread_mutex_init(&mutex, NULL);
@@ -63,7 +63,7 @@ void mt_load(int len, mt_fun f, void *p, int lth)
 		arg[i].f = f;
 	}
 	for (i = 0; i < lth; i++) {
-		pthread_create(&tid[i], NULL, mt_run, arg);
+		pthread_create(&tid[i], NULL, thread_run, arg);
 	}
 	for (i = 0; i < lth; i++) {
 		pthread_join(tid[i], NULL);

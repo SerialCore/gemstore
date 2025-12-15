@@ -6,7 +6,7 @@
  */
 
 #include <eigen.h>
-#include <parallel.h>
+#include <thread.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -753,7 +753,7 @@ void trideigvMul(double **a, int n, double *d, double *e, double *dt, double *et
 
     min_lnum = 1;
 
-    lth = getNumProcessors();
+    lth = getNumCores();
 
     mutex_subpro = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t) * lth);
     cond_subpro = (pthread_cond_t *)malloc(sizeof(pthread_cond_t) * lth);
@@ -1619,7 +1619,7 @@ void eigv2Mul(double **a, double **b, int n, double *d, double *dt, double **vt,
 
     min_lnum = 1;
 
-    lth = getNumProcessors();
+    lth = getNumCores();
 
     mutex_subpro = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t) * lth);
     cond_subpro = (pthread_cond_t *)malloc(sizeof(pthread_cond_t) * lth);

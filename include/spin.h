@@ -16,19 +16,19 @@ double clebsch_gordan(double j1, double m1, double j2, double m2, double j, doub
  * j1, j2, j
  * m1, m2, m
  */
-double cg_3J_symbol(double j1, double m1, double j2, double m2, double j, double m);
+double threeJ_symbol(double j1, double m1, double j2, double m2, double j, double m);
 
 /* return 6J symbol for given angular momenta:
  * j1, j2, j12
  * j3,  j, j23
  */
-double cg_6J_symbol(double j1, double j2, double j12, double j3, double j, double j23);
+double sixJ_symbol(double j1, double j2, double j12, double j3, double j, double j23);
 
 /* return 9J symbol for given angular momenta:
  *  j1,  j2, j12
  *  j3,  j4, j34
  * j13, j24,   j
 */
-double cg_9J_symbol(double j1, double j2, double j12, double j3, double j4, double j34, double j13, double j24, double j);
+double nineJ_symbol(double j1, double j2, double j12, double j3, double j4, double j34, double j13, double j24, double j);
 
 #endif

@@ -5,45 +5,39 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <debug.h>
+#include <task.h>
 #include <mfi.h>
 #include <eigen.h>
 #include <sumckdk.h>
-#include <parallel.h>
 #include <inteCenV.h>
+#include <thread.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-void eigsys(margs *arg);
-
+void getq(double mn, double ms, double mc, double mb, int q, double *mi);
 void getq(double mn, double ms, double mc, double mb, int q, double *mi)
 {
-    switch (q)
-    {
+    switch (q) {
     case 1:
         *mi = mn;
         break;
-
     case 2:
         *mi = ms;
         break;
-
     case 3:
         *mi = mc;
         break;
-
     case 4:
         *mi = mb;
         break;
-
     default:
         printf("error_getq\n");
         break;
     }
 }
 
-void debug01(int q1, int q2, int q3, int f12, double J, int P, int Lmax)
+void task_baryon(int q1, int q2, int q3, int f12, double J, int P, int Lmax)
 {
     double GeV = 1;
     double MeV = 0.001 * GeV;
@@ -130,20 +124,30 @@ void debug01(int q1, int q2, int q3, int f12, double J, int P, int Lmax)
     malloc_scdk(marg.qnlist_spfy.len_part, marg.qnlist_spfy.len_list, &(marg.scdk_sorn_2));
     malloc_scdk(marg.qnlist_spfy.len_part, marg.qnlist_spfy.len_list, &(marg.scdk_sorn_3));
 
-    mt_load(15 * marg.qnlist_spfy.len_list, calc_scdk_mt, &marg, getNumProcessors());
+    thread_load(15 * marg.qnlist_spfy.len_list, calc_scdk_mt, &marg, getNumCores());
     matrix_init(&(marg.Nfi), marg.qnlist_full.len_list, marg.qnlist_full.len_list);
     matrix_init(&(marg.Hfi), marg.qnlist_full.len_list, marg.qnlist_full.len_list);
     matrix_init(&(marg.v), marg.qnlist_full.len_list, marg.qnlist_full.len_list);
     marg.e1 = (double *)malloc(sizeof(double) * marg.qnlist_full.len_list);
     marg.e2 = (double *)malloc(sizeof(double) * marg.qnlist_full.len_list);
-    mt_load(marg.qnlist_full.len_list, getmfi, &marg, getNumProcessors());
+    thread_load(marg.qnlist_full.len_list, getmfi, &marg, getNumCores());
 
-    /*
-    //	printmatrix(marg.Nfi);
-    //	printmatrix(marg.Hfi);
-    */
+    /**/
 
-    eigsys(&marg);
+    int n = marg.qnlist_full.len_list;
+    double **Nfi = marg.Nfi.p;
+    double **Hfi = marg.Hfi.p;
+    double **v = marg.v.p;
+    double *e1 = marg.e1;
+    double *e2 = marg.e2;
+    int info;
+
+    /*printmatrix(marg->Nfi);
+    printmatrix(marg->Hfi);*/
+    eigv2Mul(Hfi, Nfi, n, e1, e2, v, n, &info);
+    //array_print(marg->v);
+    /*printf("info=%d\n",info);*/
+    printArrayD1(e1, 3);
 
     free_scdk(marg.qnlist_spfy.len_part, marg.qnlist_spfy.len_list, &(marg.scdk_cent_1));
     free_scdk(marg.qnlist_spfy.len_part, marg.qnlist_spfy.len_list, &(marg.scdk_cent_2));
@@ -190,32 +194,4 @@ void debug01(int q1, int q2, int q3, int f12, double J, int P, int Lmax)
     matrix_free(&marg.v);
     free(marg.e1);
     free(marg.e2);
-}
-
-void debug02(int q1, int q2, int q3, int f12)
-{
-    debug01(q1, q2, q3, f12, 0.5, +1, 2);
-    debug01(q1, q2, q3, f12, 1.5, +1, 2);
-    debug01(q1, q2, q3, f12, 2.5, +1, 2);
-    debug01(q1, q2, q3, f12, 0.5, -1, 1);
-    debug01(q1, q2, q3, f12, 1.5, -1, 1);
-    debug01(q1, q2, q3, f12, 2.5, -1, 1);
-}
-
-void eigsys(margs *arg)
-{
-    int n = arg->qnlist_full.len_list;
-    double **Nfi = arg->Nfi.p;
-    double **Hfi = arg->Hfi.p;
-    double **v = arg->v.p;
-    double *e1 = arg->e1;
-    double *e2 = arg->e2;
-    int info;
-
-    /*printmatrix(arg->Nfi);
-    printmatrix(arg->Hfi);*/
-    eigv2Mul(Hfi, Nfi, n, e1, e2, v, n, &info);
-    //array_print(arg->v);
-    /*printf("info=%d\n",info);*/
-    printArrayD1(e1, 3);
 }
