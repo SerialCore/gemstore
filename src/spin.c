@@ -351,3 +351,48 @@ double nineJ_symbol(double j1, double j2, double j12, double j3, double j4, doub
 
 	return sum;
 }
+
+double kronecker_delta(double *i, double *j, int n)
+{
+    for (int k = 0; k < n; k++) {
+        if (i[k] != j[k]) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+double sh_sdots(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp)
+{
+    double a[] = {s1, s2, s, l};
+    double b[] = {s1p, s2p, sp, lp};
+
+    return 0.5 * (s*(s+1)-s1*(s1+1)-s2*(s2+1)) * kronecker_delta(a, b, 4);
+}
+
+double sh_ldots1(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
+{
+    double a[] = {s1, s2, l};
+    double b[] = {s1p, s2p, lp};
+
+    return pow(-1, s+lp+j) * sixJ_symbol(sp, s, 1, l, lp, j) * pow(-1, s1p+s2p+s+1) * sqrt((2*sp+1)*(2*s+1)) * sixJ_symbol(s1, s1p, 1, sp, s, s2p) 
+        * sqrt((2*s1+1)*(s1+1)*s1) * sqrt((2*l+1)*(l+1)*l) * kronecker_delta(a, b, 3);
+}
+
+double sh_ldots2(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
+{
+    double a[] = {s1, s2, l};
+    double b[] = {s1p, s2p, lp};
+
+    return pow(-1, s+lp+j) * sixJ_symbol(sp, s, 1, l, lp, j) * pow(-1, s1+s2+sp+1) * sqrt((2*sp+1)*(2*s+1)) * sixJ_symbol(s2, s2p, 1, sp, s, s1p) 
+        * sqrt((2*s2+1)*(s2+1)*s2) * sqrt((2*l+1)*(l+1)*l) * kronecker_delta(a, b, 3);
+}
+
+double sh_tensor(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
+{
+    double a[] = {s1, s2};
+    double b[] = {s1p, s2p};
+
+    return pow(-1, s+lp+j) * sqrt(4.8*M_PI) * sixJ_symbol(sp, s, 2, l, lp, j) * sqrt(5*(2*sp+1)*(2*s+1)) * nineJ_symbol(s1p, s1, 1, s2p, s2, 1, sp, s, 2) 
+        * sqrt((2*s1+1)*(s1+1)*s1) * sqrt((2*s2+1)*(s2+1)*s2) * pow(-1, lp) * sqrt(1.25*M_1_PI*(2*lp+1)*(2*l+1)) * threeJ_symbol(lp, 0, 2, 0, l, 0) * kronecker_delta(a, b, 2);
+}

@@ -5,6 +5,7 @@
  */
 
 #include <task.h>
+#include <spin.h>
 
 #include <stdio.h>
 
@@ -12,7 +13,10 @@ void print_help();
 
 int main(int argc, char **argv)
 {
-	printf("Lambda_s:\n");
+    double a = sh_tensor(0.5, 0.5, 1.0, 2.0, 0.5, 0.5, 1.0, 2.0, 1.0);
+    printf("sh_tensor result: %f\n", a);
+
+	/*printf("Lambda_s:\n");
 	task_baryon(1, 1, 2, -1, 0.5, +1, 2);
     task_baryon(1, 1, 2, -1, 1.5, +1, 2);
     task_baryon(1, 1, 2, -1, 2.5, +1, 2);
@@ -127,7 +131,7 @@ int main(int argc, char **argv)
     task_baryon(4, 4, 2, +1, 0.5, -1, 1);
     task_baryon(4, 4, 2, +1, 1.5, -1, 1);
     task_baryon(4, 4, 2, +1, 2.5, -1, 1);
-	printf("\n");
+	printf("\n");*/
 
     return 0;
 }
