@@ -22,3 +22,9 @@ run:
 clean:
 	rm -rf $(OBJ_DIR)
 	rm -f $(EXCUTEABLE)
+
+install:
+	sudo cp $(EXCUTEABLE) /usr/local/bin/$(EXCUTEABLE)
+
+uninstall:
+	sudo rm /usr/local/bin/$(EXCUTEABLE)
