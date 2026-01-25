@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026, Wen-Xuan Zhang <serialcore@outlook.com>
+ * Copyright (C) 2025 Wen-Xuan Zhang <serialcore@outlook.com>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -34,16 +34,16 @@ double nineJ_symbol(double j1, double j2, double j12, double j3, double j4, doub
 /* return Kronecker delta for given arrays of indices, n is length of array */
 double kronecker_delta(double *i, double *j, int n);
 
-/* return matrix element of spin-spin operator */
-double operator_sdots(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp);
+/* return matrix element of spin-spin operator between spherical harmonics states */
+double sh_sdots(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp);
 
-/* return matrix element of spin1-orbit operator */
-double operator_ldots1(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j);
+/* return matrix element of spin1-orbit operator between spherical harmonics states */
+double sh_ldots1(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j);
 
-/* return matrix element of spin2-orbit operator */
-double operator_ldots2(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j);
+/* return matrix element of spin2-orbit operator between spherical harmonics states */
+double sh_ldots2(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j);
 
-/* return matrix element of tensor operator */
-double operator_tensor(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j);
+/* return matrix element of tensor operator between spherical harmonics states */
+double sh_tensor(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j);
 
 #endif

@@ -1,14 +1,12 @@
 OBJ_DIR=obj/
 SRC_DIR=src/
-MODEL_DIR=src/model/
 INCLUDE_DIR=include/
 
 CFLAGS = -I $(INCLUDE_DIR) -lm
 
 EXCUTEABLE=gemstore
 
-include $(SRC_DIR)Makefile.in
-include $(MODEL_DIR)Makefile.in
+include $(SRC_DIR)Makefile
 
 .PHONY:
 

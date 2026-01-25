@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Wen-Xuan Zhang <serialcore@outlook.com>
+ * Copyright (C) 2026, Wen-Xuan Zhang <serialcore@outlook.com>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -8,21 +8,17 @@
 #define MATRIX_H
 
 typedef struct matrix {
-	int n;      	/* count of rows */
-	int m;      	/* count of cols */
-	double **p; 	/* element values */
+	int row;      		/* count of rows */
+	int col;      		/* count of cols */
+	double *value; 		/* element values */
 } matrix_t;
 
-matrix_t *matrix_init(matrix_t *matrix, int n, int m);
+matrix_t *matrix_init(int row, int col);
 
 void matrix_push(matrix_t *matrix);
 
 void matrix_print(matrix_t *matrix);
 
 void matrix_free(matrix_t *matrix);
-
-void array_print(double *p, int n);
-
-void array_free(double *p);
 
 #endif

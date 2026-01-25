@@ -1,0 +1,5 @@
+
+OBJECT += $(patsubst $(MODEL_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(MODEL_DIR)*.c))
+
+$(OBJ_DIR)%.o: $(MODEL_DIR)%.c
+	gcc -c $< -o $@ $(CFLAGS)

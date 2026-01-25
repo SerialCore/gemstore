@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2026, Wen-Xuan Zhang <serialcore@outlook.com>
+ * Copyright (C) 2025, Wen-Xuan Zhang <serialcore@outlook.com>
+ * Copyright (C) 2025, Si-Qiang Luo <luosq15@lzu.edu.cn>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -226,48 +227,37 @@ double kronecker_delta(double *i, double *j, int n)
     return 1;
 }
 
-double operator_sdots(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp)
+double sh_sdots(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp)
 {
     double a[] = {s1, s2, s, l};
     double b[] = {s1p, s2p, sp, lp};
 
-    double pre_factor = (s*(s+1)-s1*(s1+1)-s2*(s2+1));
-
-    return 0.5 * pre_factor * kronecker_delta(a, b, 4);
+    return 0.5 * (s*(s+1)-s1*(s1+1)-s2*(s2+1)) * kronecker_delta(a, b, 4);
 }
 
-double operator_ldots1(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
+double sh_ldots1(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
 {
     double a[] = {s1, s2, l};
     double b[] = {s1p, s2p, lp};
 
-    double phase = pow(-1, s+lp+j) * pow(-1, s1p+s2p+s+1);
-    double sqrt_term = sqrt((2*sp+1)*(2*s+1)) * sqrt((2*s1+1)*(s1+1)*s1) * sqrt((2*l+1)*(l+1)*l);
-    double symbol_term = sixJ_symbol(sp, s, 1, l, lp, j) * sixJ_symbol(s1, s1p, 1, sp, s, s2p);
-
-    return phase * sqrt_term * symbol_term * kronecker_delta(a, b, 3);
+    return pow(-1, s+lp+j) * sixJ_symbol(sp, s, 1, l, lp, j) * pow(-1, s1p+s2p+s+1) * sqrt((2*sp+1)*(2*s+1)) * sixJ_symbol(s1, s1p, 1, sp, s, s2p) 
+        * sqrt((2*s1+1)*(s1+1)*s1) * sqrt((2*l+1)*(l+1)*l) * kronecker_delta(a, b, 3);
 }
 
-double operator_ldots2(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
+double sh_ldots2(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
 {
     double a[] = {s1, s2, l};
     double b[] = {s1p, s2p, lp};
 
-    double phase = pow(-1, s+lp+j) * pow(-1, s1+s2+sp+1);
-    double sqrt_term = sqrt((2*sp+1)*(2*s+1)) * sqrt((2*s2+1)*(s2+1)*s2) * sqrt((2*l+1)*(l+1)*l);
-    double symbol_term = sixJ_symbol(sp, s, 1, l, lp, j) * sixJ_symbol(s2, s2p, 1, sp, s, s1p);
-
-    return phase * sqrt_term * symbol_term * kronecker_delta(a, b, 3);
+    return pow(-1, s+lp+j) * sixJ_symbol(sp, s, 1, l, lp, j) * pow(-1, s1+s2+sp+1) * sqrt((2*sp+1)*(2*s+1)) * sixJ_symbol(s2, s2p, 1, sp, s, s1p) 
+        * sqrt((2*s2+1)*(s2+1)*s2) * sqrt((2*l+1)*(l+1)*l) * kronecker_delta(a, b, 3);
 }
 
-double operator_tensor(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
+double sh_tensor(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
 {
     double a[] = {s1, s2};
     double b[] = {s1p, s2p};
 
-    double phase = pow(-1, s+lp+j) * pow(-1, lp);
-    double sqrt_term = sqrt(4.8*M_PI) * sqrt(5*(2*sp+1)*(2*s+1)) * sqrt((2*s1+1)*(s1+1)*s1) * sqrt((2*s2+1)*(s2+1)*s2) * sqrt(1.25*M_1_PI*(2*lp+1)*(2*l+1));
-    double symbol_term = sixJ_symbol(sp, s, 2, l, lp, j) * nineJ_symbol(s1p, s1, 1, s2p, s2, 1, sp, s, 2) * threeJ_symbol(lp, 0, 2, 0, l, 0);
-
-    return phase * sqrt_term * symbol_term * kronecker_delta(a, b, 2);
+    return pow(-1, s+lp+j) * sqrt(4.8*M_PI) * sixJ_symbol(sp, s, 2, l, lp, j) * sqrt(5*(2*sp+1)*(2*s+1)) * nineJ_symbol(s1p, s1, 1, s2p, s2, 1, sp, s, 2) 
+        * sqrt((2*s1+1)*(s1+1)*s1) * sqrt((2*s2+1)*(s2+1)*s2) * pow(-1, lp) * sqrt(1.25*M_1_PI*(2*lp+1)*(2*l+1)) * threeJ_symbol(lp, 0, 2, 0, l, 0) * kronecker_delta(a, b, 2);
 }
