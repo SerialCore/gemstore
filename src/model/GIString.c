@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <model/GIString.h>
+#include <gemstore/model/GIString.h>
 
 /* erf */
 static double a[65] = {

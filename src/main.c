@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <orbit.h>
+#include <gemstore/basis/orbit.h>
 
 #include <stdio.h>
 

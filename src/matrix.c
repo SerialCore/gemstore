@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <matrix.h>
+#include <gemstore/matrix.h>
 
 #include <stdio.h>
 #include <stdlib.h>

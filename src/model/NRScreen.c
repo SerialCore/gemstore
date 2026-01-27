@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <model/NRScreen.h>
+#include <gemstore/model/NRScreen.h>
 
 #include <math.h>
 

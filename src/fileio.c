@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <fileio.h>
+#include <gemstore/fileio.h>
 
 #include <stdio.h>
 #include <stdarg.h>
