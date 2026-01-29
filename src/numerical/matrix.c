@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 matrix_t matrix_init(int row, int col)
 {
@@ -30,6 +31,20 @@ matrix_t matrix_init(int row, int col)
 	return matrix;
 }
 
+matrix_t matrix_random(int row, int col)
+{
+	matrix_t matrix = matrix_init(row, col);
+
+	srand(time(NULL));
+	for (int i = 0; i < row; i++) {
+		for (int j = 0; j < col; j++) {
+			matrix.value[i][j] = (rand() / (double)RAND_MAX) * 2.0 - 1.0;
+		}
+	}
+
+	return matrix;
+}
+
 void matrix_push(matrix_t *matrix)
 {
 	matrix->value = (double**)realloc(matrix->value, sizeof(double*)*(matrix->row+1));
@@ -37,7 +52,7 @@ void matrix_push(matrix_t *matrix)
 	matrix->row++;
 }
 
-void matrix_print(matrix_t *matrix)
+void matrix_print(const matrix_t *matrix)
 {
 	double **value = matrix->value;
 	int row = matrix->row, col = matrix->col;
@@ -69,7 +84,7 @@ void matrix_free(matrix_t *matrix)
 	free(matrix);
 }
 
-void array_print(double *a, int n)
+void array_print(const double *a, int n)
 {
 	for (int i = 0; i < n; i++) {
 		printf("%25.20f ", a[i]);

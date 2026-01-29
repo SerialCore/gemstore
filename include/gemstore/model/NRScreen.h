@@ -21,7 +21,7 @@ typedef struct argsNRScreen {
     double sigma;           /* short-range */
 } argsNRScreen_t;
 
-argsNRScreen_t argsNRScreen_meson = {
+const argsNRScreen_t argsNRScreen_meson = {
     0.606, 0.780, 1.984, 5.368, 172.57, 
     0.3930, 0.2312, 0.069, -1.1711, 1.842
 };

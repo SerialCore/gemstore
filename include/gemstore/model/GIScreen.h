@@ -27,7 +27,7 @@ typedef struct argsGIScreen {
     double epsilon_tens;    /* GI smearing parameter for tensor */
 } argsGIScreen_t;
 
-argsGIScreen_t argsGIScreen_meson = {
+const argsGIScreen_t argsGIScreen_meson = {
     0.220, 0.419, 1.628, 4.977, 172.57, 
     0.18, 0.15, -0.253, 1.8, 1.55, 
     0.0, -0.168, -0.035, 0.055, 0.025

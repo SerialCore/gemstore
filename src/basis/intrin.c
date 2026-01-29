@@ -5,6 +5,7 @@
  */
 
 #include <gemstore/basis/intrin.h>
+#include <gemstore/basis/soc.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,7 +74,7 @@ void intrin_wfn_push(intrin_wfn_t *wf, double coeff, const char *config)
     wf->configs[wf->num_terms - 1] = strdup(config);
 }
 
-void intrin_wfn_print(intrin_wfn_t *wfn)
+void intrin_wfn_print(const intrin_wfn_t *wfn)
 {
     printf("{");
     for (int i = 0; i < wfn->num_terms; i++) {
@@ -95,4 +96,35 @@ void intrin_wfn_free(intrin_wfn_t *wfn)
     wfn->num_configs = 0;
     wfn->coeffs = NULL;
     wfn->configs = NULL;
+}
+
+cg_table_t CallCGTable(double s1, double s2, double st, double st3)
+{
+    cg_table_t couple;
+    couple.num = 0;
+    couple.tuples = NULL;
+
+    for (double ms1 = -s1; ms1 <= s1 + 1e-10; ms1 += 1.0) {
+        for (double ms2 = -s2; ms2 <= s2 + 1e-10; ms2 += 1.0) {
+            if (ms1 + ms2 - st3 == 0.0) {
+                double cg = clebsch_gordan(s1, ms1, s2, ms2, st, st3);
+                if (cg != 0.0) {
+                    couple.num++;
+                    couple.tuples = (cg_tuple_t *)realloc(couple.tuples, couple.num * sizeof(cg_tuple_t));
+                    couple.tuples[couple.num - 1].ms1 = ms1;
+                    couple.tuples[couple.num - 1].ms2 = ms2;
+                    couple.tuples[couple.num - 1].cg = cg;
+                }
+            }
+        }
+    }
+
+    return couple;
+}
+
+void cg_table_free(cg_table_t *t)
+{
+    free(t->tuples);
+    t->num = 0;
+    t->tuples = NULL;
 }
