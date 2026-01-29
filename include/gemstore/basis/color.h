@@ -4,4 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/basis/basis.h>
+#ifndef GEMSTORE_BASIS_COLOR
+#define GEMSTORE_BASIS_COLOR
+
+
+
+#endif

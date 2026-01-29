@@ -2,11 +2,13 @@ CC=gcc
 
 CFLAGS = -I $(INCLUDE_DIR) -lm
 
+INCLUDE_DIR=include/
+LIB_DIR=lib/
 OBJ_DIR=obj/
 SRC_DIR=src/
 MODEL_DIR=src/model/
 BASIS_DIR=src/basis/
-INCLUDE_DIR=include/
+NUMERICAL_DIR=src/numerical
 
 EXCUTEABLE=gemstore
 
@@ -16,6 +18,7 @@ EXCUTEABLE=gemstore
 
 OBJECT += $(patsubst $(BASIS_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(BASIS_DIR)*.c))
 OBJECT += $(patsubst $(MODEL_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(MODEL_DIR)*.c))
+OBJECT += $(patsubst $(NUMERICAL_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(NUMERICAL_DIR)*.c))
 OBJECT += $(patsubst $(SRC_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(SRC_DIR)*.c))
 
 all: $(OBJ_DIR) $(OBJECT)
@@ -26,6 +29,9 @@ $(OBJ_DIR)%.o: $(BASIS_DIR)%.c
 	${CC} -c $< -o $@ $(CFLAGS)
 
 $(OBJ_DIR)%.o: $(MODEL_DIR)%.c
+	${CC} -c $< -o $@ $(CFLAGS)
+
+$(OBJ_DIR)%.o: $(NUMERICAL_DIR)%.c
 	${CC} -c $< -o $@ $(CFLAGS)
 
 $(OBJ_DIR)%.o: $(SRC_DIR)%.c
