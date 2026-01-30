@@ -21,57 +21,61 @@ intrin_wfn_t intrin_wfn_init(int num_configs)
     return wf;
 }
 
-intrin_wfn_t intrin_wfn_trim(intrin_wfn_t *wfn)
+void intrin_wfn_product(const intrin_wfn_t *wfnA, const intrin_wfn_t *wfnB, intrin_wfn_t *wfnC, double factor)
 {
-    intrin_wfn_t output = intrin_wfn_init(wfn->num_configs);
+    for (int i = 0; i < wfnA->num_terms; i++) {
+        for (int j = 0; j < wfnB->num_terms; j++) {
+            double coeff =  factor * wfnA->coeffs[i] * wfnB->coeffs[j];
+            char config[16];
+            sprintf(config, "%s%s", wfnA->configs[i], wfnB->configs[j]);
+            intrin_wfn_push(wfnC, coeff, config);
+        }
+    }
+}
+
+void intrin_wfn_trim(intrin_wfn_t *wfn)
+{
+    intrin_wfn_t trimmed = intrin_wfn_init(wfn->num_configs);
 
     for (int i = 0; i < wfn->num_terms; i++)
     {
         double coeff = wfn->coeffs[i];
         const char *config = wfn->configs[i];
+
+        if (coeff == 0.0) {
+            continue;
+        }
+
         int found = 0;
-        for (int j = 0; j < output.num_terms; j++)
-        {
-            if (strcmp(output.configs[j], config) == 0)
-            {
-                output.coeffs[j] += coeff;
+        for (int j = 0; j < trimmed.num_terms; j++) {
+            if (strcmp(trimmed.configs[j], config) == 0) {
+                trimmed.coeffs[j] += coeff;
                 found = 1;
                 break;
             }
         }
-        if (!found)
-        {
-            intrin_wfn_push(&output, coeff, config);
-        }
-    }
-    
-    intrin_wfn_t final = intrin_wfn_init(wfn->num_configs);
-
-    for (int j = 0; j < output.num_terms; j++)
-    {
-        if (output.coeffs[j] != 0.0)
-        {
-            intrin_wfn_push(&final, output.coeffs[j], output.configs[j]);
+        if (!found) {
+            intrin_wfn_push(&trimmed, coeff, config);
         }
     }
 
-    intrin_wfn_free(&output);
-    return final;
+    intrin_wfn_free(wfn);
+    *wfn = trimmed;
 }
 
-void intrin_wfn_push(intrin_wfn_t *wf, double coeff, const char *config)
+void intrin_wfn_push(intrin_wfn_t *wfn, double coeff, const char *config)
 {
-    if (strlen(config) != (size_t)wf->num_configs)
+    if (strlen(config) != (size_t)wfn->num_configs)
     {
         // Error: invalid config length
         return;
     }
 
-    wf->num_terms++;
-    wf->coeffs = (double *)realloc(wf->coeffs, wf->num_terms * sizeof(double));
-    wf->configs = (char **)realloc(wf->configs, wf->num_terms * sizeof(char *));
-    wf->coeffs[wf->num_terms - 1] = coeff;
-    wf->configs[wf->num_terms - 1] = strdup(config);
+    wfn->num_terms++;
+    wfn->coeffs = (double *)realloc(wfn->coeffs, wfn->num_terms * sizeof(double));
+    wfn->configs = (char **)realloc(wfn->configs, wfn->num_terms * sizeof(char *));
+    wfn->coeffs[wfn->num_terms - 1] = coeff;
+    wfn->configs[wfn->num_terms - 1] = strdup(config);
 }
 
 void intrin_wfn_print(const intrin_wfn_t *wfn)

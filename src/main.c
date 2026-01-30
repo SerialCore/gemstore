@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/basis/isospin.h>
+#include <gemstore/basis/color.h>
 #include <gemstore/basis/intrin.h>
 
 #include <stdio.h>
@@ -13,37 +13,24 @@ void print_help();
 
 int main(int argc, char **argv)
 {
-    intrin_wfn_t wf;
+    intrin_wfn_t wf, ref_wf;
 
-    wf = isospin_basis(0.5, 'q');
-    printf("IsospinBasis[1/2]:\n");
+    wf = color_wfn_penta38();
+    printf("ColorWFPenta38:\n");
     intrin_wfn_print(&wf);
-    intrin_wfn_free(&wf);
 
-    wf = isospin_wfn_meson(1.0, 0.0);
-    printf("IsospinWFMeson[1][0]:\n");
-    intrin_wfn_print(&wf);
-    intrin_wfn_free(&wf);
+    ref_wf = color_wfn_penta68();
+    printf("ColorWFPenta68:\n");
+    intrin_wfn_print(&ref_wf);
 
-    wf = isospin_wfn_baryon(1.0, 1.5, 0.5);
-    printf("IsospinWFBaryon[1,3/2][1/2]:\n");
-    intrin_wfn_print(&wf);
-    intrin_wfn_free(&wf);
+    double ortho = OrthogonalColor(&wf, &ref_wf);
+    printf("Orthogonal degree: %f\n", ortho);
 
-    wf = isospin_wfn_tetra(1.0, 1.0, 1.0, 0.0);
-    printf("IsospinWFTetra[1,1,1][0]:\n");
-    intrin_wfn_print(&wf);
-    intrin_wfn_free(&wf);
+    double normal = OrthogonalColor(&ref_wf, &ref_wf);
+    printf("Normalized degree: %f\n", normal);
 
-    wf = isospin_wfn_penta(1.0, 0.5, 1.0, 1.5, 0.5);
-    printf("IsospinWFPenta[1,1/2,1,3/2][1/2]:\n");
-    intrin_wfn_print(&wf);
     intrin_wfn_free(&wf);
-
-    wf = isospin_wfn_hexa(1.0, 0.5, 1.0, 1.5, 1.0, 0.0);
-    printf("IsospinWFHexa[1,1/2,1,3/2,1][0]:\n");
-    intrin_wfn_print(&wf);
-    intrin_wfn_free(&wf);
+    intrin_wfn_free(&ref_wf);
 
     return 0;
 }

@@ -22,11 +22,14 @@ typedef struct intrin_wfn
 /* Initialize intrinsic wave function */
 intrin_wfn_t intrin_wfn_init(int num_configs);
 
+/* Product of two intrinsic wave functions */
+void intrin_wfn_product(const intrin_wfn_t *wfnA, const intrin_wfn_t *wfnB, intrin_wfn_t *wfnC, double factor);
+
 /* Trim intrinsic wave function */
-intrin_wfn_t intrin_wfn_trim(intrin_wfn_t *wfn);
+void intrin_wfn_trim(intrin_wfn_t *wfn);
 
 /* Push a term to the intrinsic wave function */
-void intrin_wfn_push(intrin_wfn_t *wf, double coeff, const char *config);
+void intrin_wfn_push(intrin_wfn_t *wfn, double coeff, const char *config);
 
 /* Print intrinsic wave function */
 void intrin_wfn_print(const intrin_wfn_t *wfn);
