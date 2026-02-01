@@ -8,7 +8,7 @@ OBJ_DIR=obj/
 SRC_DIR=src/
 MODEL_DIR=src/model/
 BASIS_DIR=src/basis/
-NUMERICAL_DIR=src/numerical
+NUMERICAL_DIR=src/numerical/
 
 EXCUTEABLE=gemstore
 

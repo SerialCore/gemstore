@@ -30,7 +30,4 @@ intrin_wfn_t color_wfn_penta38();
 /* Get color wave functions of pentaquark state (68⊗8) */
 intrin_wfn_t color_wfn_penta68();
 
-/* Calculate the orthogonal degree of two color wave functions */
-double OrthogonalColor(const intrin_wfn_t *wfn, const intrin_wfn_t *ref);
-
 #endif

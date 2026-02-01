@@ -22,6 +22,9 @@ typedef struct intrin_wfn
 /* Initialize intrinsic wave function */
 intrin_wfn_t intrin_wfn_init(int num_configs);
 
+/* Overlap of two intrinsic wave functions */
+double intrin_wfn_overlap(const intrin_wfn_t *wfn, const intrin_wfn_t *ref);
+
 /* Product of two intrinsic wave functions */
 void intrin_wfn_product(const intrin_wfn_t *wfnA, const intrin_wfn_t *wfnB, intrin_wfn_t *wfnC, double factor);
 

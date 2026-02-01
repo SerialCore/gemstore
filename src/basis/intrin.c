@@ -21,6 +21,21 @@ intrin_wfn_t intrin_wfn_init(int num_configs)
     return wf;
 }
 
+double intrin_wfn_overlap(const intrin_wfn_t *wfn, const intrin_wfn_t *ref)
+{
+    double overlap = 0;
+
+    for (int i = 0; i < wfn->num_terms; i++) {
+        for (int j = 0; j < ref->num_terms; j++) {
+            if (strcmp(wfn->configs[i], ref->configs[j]) == 0) {
+                overlap += wfn->coeffs[i] * ref->coeffs[j];
+            }
+        }
+    }
+
+    return overlap;
+}
+
 void intrin_wfn_product(const intrin_wfn_t *wfnA, const intrin_wfn_t *wfnB, intrin_wfn_t *wfnC, double factor)
 {
     for (int i = 0; i < wfnA->num_terms; i++) {

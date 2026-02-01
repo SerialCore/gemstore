@@ -10,6 +10,19 @@
 #include <math.h>
 #include <complex.h>
 
+typedef struct argsOrbit
+{
+    /* radial number & gaussian parameter */
+    int n;
+    /* orbital momentum */
+    int l;
+    /* scale factor, nu for GEM and beta for SHO */
+    double scale;
+} argsOrbit_t;
+
+typedef double (*orbit_wfn_t)(double x, int n, int l, double scale);
+typedef complex (*orbit_wfn_complex_t)(double x, int n, int l, double scale);
+
 /* Scale ν[n, nmax, rmax, rmin] = 1/rmin^2 * (rmax/rmin)^((2 - 2n)/(nmax-1)) */
 static inline double getnu(int n, int nmax, double rmax, double rmin)
 {
@@ -133,37 +146,5 @@ static inline complex SRnlp_nonexp(double p, int n, int l, double beta)
     
     return phase * pre_factor * pow(p_beta, l) * gamma_term * lag; /* * exp(-p * p / (2 * beta * beta)) */
 }
-
-/* Normalized integrals for Gaussian basis in coordinate space
- * Return 1 */
-double NormalizedGr();
-
-/* Orthogonal integrals for Gaussian basis in coordinate space
- * Return 0.973337 */
-double OrthogonalGr();
-
-/* Normalized integrals for Gaussian basis in momentum space
- * Return 1 */
-double NormalizedGp();
-
-/* Orthogonal integrals for Gaussian basis in momentum space
- * Return 0.973337 */
-double OrthogonalGp();
-
-/* Normalized integrals for SHO basis in coordinate space
- * Return 1 */
-double NormalizedSr();
-
-/* Orthogonal integrals for SHO basis in coordinate space
- * Return 0 */
-double OrthogonalSr();
-
-/* Normalized integrals for SHO basis in momentum space
- * Return 1 */
-double NormalizedSp();
-
-/* Orthogonal integrals for SHO basis in momentum space
- * Return 0 */
-double OrthogonalSp();
 
 #endif

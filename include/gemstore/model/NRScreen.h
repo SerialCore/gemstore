@@ -7,35 +7,88 @@
 #ifndef GEMSTORE_MODEL_NRSCREEN
 #define GEMSTORE_MODEL_NRSCREEN
 
-typedef struct argsNRScreen {
-    double mn;              /* mass of n */
-    double ms;              /* mass of s */
-    double mc;              /* mass of c */
-    double mb;              /* mass of b */
-    double mt;              /* mass of t */
+#include <gemstore/model/model.h>
 
-    double alpha_s;         /* strong coupling constant */
-    double b;               /* string tension */
-    double mu;              /* screen length */
-    double c;               /* constant */
-    double sigma;           /* short-range */
-} argsNRScreen_t;
+#include <math.h>
 
-const argsNRScreen_t argsNRScreen_meson = {
-    0.606, 0.780, 1.984, 5.368, 172.57, 
-    0.3930, 0.2312, 0.069, -1.1711, 1.842
+const argsModel_t argsNRScreen_meson = {
+    .mn = 0.606,
+    .ms = 0.780,
+    .mc = 1.984,
+    .mb = 5.368,
+    .mt = 172.57,
+    .alpha_s = 0.3930,
+    .b1 = 0.2312,
+    .mu = 0.069,
+    .c = -1.1711,
+    .sigma = 1.842
 };
 
-double NRScreen_T(double p, double m1, double m2);
+static inline double NRScreen_T(double p, double m1, double m2)
+{
+    return m1 + m2 + p * p / (2.0 * m1) + p * p / (2.0 * m2);
+}
 
-double NRScreen_Vconf(double r, double alpha_s, double b, double mu, double c);
+static inline double NRScreen_Vconf(double r, double alpha_s, double b, double mu, double c)
+{
+    if (r == 0.0) {
+        return 0.0;
+    }
+    
+    double Cij = -4.0 / 3.0;
+    double coul = alpha_s / r;
+    double screen = b * (1.0 - exp(-mu * r)) / mu;
+    
+    return Cij * coul - (3.0 / 4.0) * Cij * screen - (3.0 / 4.0) * Cij * c;
+}
 
-double NRScreen_Vcont(double r, double alpha_s, double sigma, double m1, double m2, double sds);
+static inline double NRScreen_Vcont(double r, double alpha_s, double sigma, double m1, double m2, double sds)
+{
+    double magnet = 32.0 * alpha_s * sds / (9.0 * m1 * m2);
+    double factor = pow(sigma, 3.0) / sqrt(M_PI);
+    double exp_term = exp(-sigma * sigma * r * r);
 
-double NRScreen_Vsocm(double r, double alpha_s, double m1, double m2, double lds1, double lds2);
+    return magnet * factor * exp_term;
+}
 
-double NRScreen_Vsotp(double r, double alpha_s, double b, double mu, double m1, double m2, double lds1, double lds2);
+static inline double NRScreen_Vsocm(double r, double alpha_s, double m1, double m2, double lds1, double lds2)
+{
+    if (r == 0.0) {
+        return 0.0;
+    }
+    
+    double Cij = -4.0 / 3.0;
+    double tensor = alpha_s / pow(r, 3.0);
+    double magnet = (lds1 / (m1 * m1) + lds2 / (m2 * m2) + (lds1 + lds2) / (m1 * m2));
 
-double NRScreen_Vtens(double r, double alpha_s, double m1, double m2, double tens);
+    return -Cij * tensor * magnet;
+}
+
+static inline double NRScreen_Vsotp(double r, double alpha_s, double b, double mu, double m1, double m2, double lds1, double lds2)
+{
+    if (r == 0.0) {
+        return 0.0;
+    }
+
+    double Cij = -4.0 / 3.0;
+    double dcoul_dr = -alpha_s / pow(r, 2.0);
+    double dscreen_dr = b * exp(-mu * r);
+    double dV_dr = Cij * dcoul_dr - (3.0 / 4.0) * Cij * dscreen_dr;
+    double magnet = (lds1 / (m1 * m1) + lds2 / (m2 * m2));
+    
+    return -0.5 / r * dV_dr * magnet;
+}
+
+static inline double NRScreen_Vtens(double r, double alpha_s, double m1, double m2, double tens)
+{
+    if (r == 0.0) {
+        return 0.0;
+    }
+
+    double tensor = alpha_s / pow(r, 3.0);
+    double magnet = 4.0 * tens / (3.0 * m1 * m2);
+
+    return tensor * magnet;
+}
 
 #endif

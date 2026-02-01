@@ -7,30 +7,29 @@
 #ifndef GEMSTORE_MODEL_GISTRING
 #define GEMSTORE_MODEL_GISTRING
 
-typedef struct argsGIString {
-    double md;              /* mass of d */
-    double mu;              /* mass of u */
-    double ms;              /* mass of s */
-    double mc;              /* mass of c */
-    double mb;              /* mass of b */
-    double mt;              /* mass of t */
+#include <gemstore/model/model.h>
 
-    double b;               /* string tension */
-    double c;               /* constant */
-    double sigma_0;         /* GI smearing parameter for sigma_ij */
-    double s;               /* GI smearing parameter for sigma_ij */
-    
-    double epsilon_Coul;    /* GI smearing parameter for Coulumb */
-    double epsilon_cont;    /* GI smearing parameter for contact */
-    double epsilon_sonu;    /* GI smearing parameter for spin-orbit */
-    double epsilon_sos;     /* GI smearing parameter for Thomas */
-    double epsilon_tens;    /* GI smearing parameter for tensor */
-} argsGIString_t;
-
-const argsGIString_t argsGIString_meson = {
-    0.220, 0.220, 0.419, 1.628, 4.977, 172.57, 
-    0.18, -0.253, 1.8, 1.55, 
-    0.0, -0.168, -0.035, 0.055, 0.025
+const argsModel_t argsGIString_meson = {
+    .mn = 0.220,
+    .ms = 0.419,
+    .mc = 1.628,
+    .mb = 4.977,
+    .mt = 172.57,
+    .b1 = 0.18,
+    .c = -0.253,
+    .sigma_0 = 1.8,
+    .s = 1.55,
+    .epsilon_Coul = 0.0,
+    .epsilon_cont = -0.168,
+    .epsilon_sonu = -0.035,
+    .epsilon_sos = 0.055,
+    .epsilon_tens = 0.025,
+    .alpha1 = 0.25,
+    .alpha2 = 0.15,
+    .alpha3 = 0.20,
+    .gamma1 = 0.5,
+    .gamma2 = 1.5811388300841898,
+    .gamma3 = 15.811388300841898
 };
 
 #endif

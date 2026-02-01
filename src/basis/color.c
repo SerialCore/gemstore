@@ -254,18 +254,3 @@ intrin_wfn_t color_wfn_penta68()
     intrin_wfn_trim(&cwf);
     return cwf;
 }
-
-double OrthogonalColor(const intrin_wfn_t *wfn, const intrin_wfn_t *ref)
-{
-    double overlap = 0;
-
-    for (int i = 0; i < wfn->num_terms; i++) {
-        for (int j = 0; j < ref->num_terms; j++) {
-            if (strcmp(wfn->configs[i], ref->configs[j]) == 0) {
-                overlap += wfn->coeffs[i] * ref->coeffs[j];
-            }
-        }
-    }
-
-    return overlap;
-}
