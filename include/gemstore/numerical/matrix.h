@@ -13,6 +13,11 @@ typedef struct matrix {
 	double **value; 	/* value of elements */
 } matrix_t;
 
+typedef struct array {
+	int con;      		/* count of rows */
+	double *value; 		/* value of elements */
+} array_t;
+
 /* Initialize a matrix with given dimensions */
 matrix_t matrix_init(int row, int col);
 
@@ -42,5 +47,11 @@ void matrix_print(const matrix_t *mat);
 
 /* Free the memory allocated for a matrix */
 void matrix_free(matrix_t *mat);
+
+/* Print the array */
+void array_print(const array_t *ary);
+
+/* Free the memory allocated for an array */
+void array_free(array_t *ary);
 
 #endif

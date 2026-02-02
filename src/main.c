@@ -13,7 +13,7 @@ void print_help();
 
 int main(int argc, char **argv)
 {
-    debug_orbit_wfn();
+    debug_eigen_system();
 
     return 0;
 }

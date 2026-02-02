@@ -15,8 +15,13 @@
 #include <gemstore/basis/su3.h>
 
 #include <gemstore/numerical/integral.h>
+#include <gemstore/numerical/matrix.h>
+#include <gemstore/numerical/eigen.h>
+
+#include <gemstore/thread.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 
 void debug_su3_product()
 {
@@ -191,4 +196,42 @@ void debug_orbit_wfn()
     factor = sqrt(2 * beta1 * beta1 * beta2 * beta2 / (beta1 * beta1 + beta2 * beta2));
     double orthogonalSp = integral_wfn_overlap_complex(SRnlp_nonexp, factor, &args_bra, &args_ket);
     printf("Orthogonal overlap for Sp: %f\n", orthogonalSp);
+}
+
+void debug_eigen_system()
+{
+    int n = 10;
+    matrix_t mat = matrix_random(n, n);
+    matrix_print(&mat);
+
+    double *e1 = (double *)malloc(n * sizeof(double));
+    double *e2 = (double *)malloc(n * sizeof(double));
+    double **v = (double **)malloc(n * sizeof(double *));
+    for (int i = 0; i < n; i++) {
+        v[i] = (double *)malloc(n * sizeof(double));
+    }
+
+    eigen_standard_thread(mat.value, n, e1, e2, v, n);
+    //eigen_general_thread(Hfi, Nfi, n, e1, e2, v, n, &info);
+
+    array_t val = {
+        .con = n,
+        .value = e1
+    };
+    array_print(&val);
+
+    matrix_t vec = {
+        .row = n,
+        .col = n,
+        .value = v
+    };
+    matrix_print(&vec);
+
+    for (int i = 0; i < n; i++) {
+        free(v[i]);
+    }
+    free(v);
+    free(e1);
+    free(e2);
+    matrix_free(&mat);
 }
