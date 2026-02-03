@@ -4,4 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/model/GIString.h>
+#ifndef GEMSTORE_NUMERICAL_SPECTRA
+#define GEMSTORE_NUMERICAL_SPECTRA
+
+
+
+#endif

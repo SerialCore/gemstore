@@ -1,13 +1,48 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<iostream>
-#include<fstream>
-#include<vector>
-#include<cmath>
-#include<ctime>
-#include<cassert>
-#include<pthread.h>
+/*
+ * Copyright (C) 2026, Wen-Xuan Zhang <serialcore@outlook.com>
+ * Copyright (C) 2026, Si-Qiang Luo <luosq15@lzu.edu.cn>
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 
+#include <gemstore/fitting.h>
+#include <gemstore/entry.h>
+
+#include <Minuit2/FCNBase.h>
+#include <Minuit2/FunctionMinimum.h>
+#include <Minuit2/MnMigrad.h>
+#include <Minuit2/MnPrint.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <cmath>
+#include <ctime>
+#include <cassert>
+#include <pthread.h>
+
+class chi_2 : public ROOT::Minuit2::FCNBase {
+public:
+	chi_2();
+	~chi_2() {}
+	virtual double operator()(const std::vector<double>& ) const;
+	virtual double Up() const { return ferrordef; }
+	void SetErrorDef(double def) { ferrordef = def; }
+private:
+	double ferrordef;
+	long unsigned int Nparas;
+	int Nerrs;
+	int DOF;
+};
+
+chi_2::chi_2() : ferrordef(1.)
+{
+	Nparas=10;
+	Nerrs=25;
+	DOF=1;
+}
 
 double chi2(const std::vector<double>& paras)
 {
@@ -22,38 +57,8 @@ double chi2(const std::vector<double>& paras)
 	}
 	res=sqrt(res);
 	printf("chi_2=%15.10f\n\n",res);
-	getchar();
 	return res;
 }
-
-#include "Minuit2/FCNBase.h"
-#include "Minuit2/FunctionMinimum.h"
-#include "Minuit2/MnMigrad.h"
-#include "Minuit2/MnPrint.h"
-
-class chi_2 : public ROOT::Minuit2::FCNBase {
-
-public:
-	chi_2();
-	~chi_2() {}
-	virtual double operator()(const std::vector<double>& ) const;
-	virtual double Up() const { return ferrordef; }
-	void SetErrorDef(double def) { ferrordef = def; }
-private:
-	double ferrordef;
-	int Nparas;
-	int Nerrs;
-	int DOF;
-};
-
-chi_2::chi_2() : ferrordef(1.)
-{
-	Nparas=10;
-	Nerrs=25;
-	DOF=1;
-}
-
-bool openfile=true;
 
 double chi_2::operator()(const std::vector<double>& paras) const {
 	long double chi_square;
@@ -62,7 +67,7 @@ double chi_2::operator()(const std::vector<double>& paras) const {
 	return chi_square;
 }
 
-int main(void)
+void test(double *a)
 {
 	srand(time(0)); 
 
@@ -89,6 +94,9 @@ int main(void)
 
 	ROOT::Minuit2::FunctionMinimum min2 = migrad();
 	std::cout << min2.UserParameters() << std::endl;
-	
-	return 0;
+	std::cout << a[0] + a[1] + a[2] << std::endl;
+
+	double b[3];
+	call_gem(b);
+	std::cout << a[0] - b[0] + a[1] - b[1] + a[2] - b[2] << std::endl;
 }

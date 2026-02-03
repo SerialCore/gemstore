@@ -1,62 +1,75 @@
-CC=gcc
+CC = gcc
+CPPC = g++
+CFLAGS = -Wall -O2
+CPPFLAGS = -Wall -O2
+LDFLAGS = -L$(MINUIT2_DIR) -lMinuit2 -lm
 
-CFLAGS = -I $(INCLUDE_DIR) -lm
+INC_DIR = include/
+OBJ_DIR = obj/
+SRC_DIR = src/
+MODEL_DIR = src/model/
+BASIS_DIR = src/basis/
+NUMERICAL_DIR = src/numerical/
+MINUIT2_DIR = lib/Minuit2/
 
-INCLUDE_DIR=include/
-LIB_DIR=lib/
-OBJ_DIR=obj/
-SRC_DIR=src/
-MODEL_DIR=src/model/
-BASIS_DIR=src/basis/
-NUMERICAL_DIR=src/numerical/
+EXCUTEABLE = gemstore
+LIBMINUIT2 = $(MINUIT2_DIR)libMinuit2.a
 
-EXCUTEABLE=gemstore
+INCLUDES = -I$(INC_DIR)
+INCLUDES_CPP = $(INCLUDES) -I$(MINUIT2_DIR)include/
 
-#include $(SRC_DIR)Makefile.in
-#include $(MODEL_DIR)Makefile.in
-#include $(BASIS_DIR)Makefile.in
+#OBJECTS = $(patsubst $(BASIS_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(BASIS_DIR)*.c)) \
+		$(patsubst $(MODEL_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(MODEL_DIR)*.c)) \
+		$(patsubst $(NUMERICAL_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(NUMERICAL_DIR)*.c)) \
+		$(patsubst $(SRC_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(SRC_DIR)*.c)) \
+		$(patsubst $(SRC_DIR)%.cc, $(OBJ_DIR)%.o, $(wildcard $(SRC_DIR)*.cc))
 
-OBJECT += $(patsubst $(BASIS_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(BASIS_DIR)*.c))
-OBJECT += $(patsubst $(MODEL_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(MODEL_DIR)*.c))
-OBJECT += $(patsubst $(NUMERICAL_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(NUMERICAL_DIR)*.c))
-OBJECT += $(patsubst $(SRC_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(SRC_DIR)*.c))
+C_SOURCES = $(wildcard $(SRC_DIR)*.c $(MODEL_DIR)*.c $(BASIS_DIR)*.c $(NUMERICAL_DIR)*.c)
+CPP_SOURCES = $(wildcard $(SRC_DIR)*.cc)
 
-all: $(OBJ_DIR) $(OBJECT)
-	${CC} $(OBJECT) -o $(EXCUTEABLE) $(CFLAGS)
-.PHONY: all
+OBJECTS = $(patsubst %.c, $(OBJ_DIR)%.o, $(C_SOURCES)) \
+          $(patsubst %.cc, $(OBJ_DIR)%.o, $(CPP_SOURCES))
 
-$(OBJ_DIR)%.o: $(BASIS_DIR)%.c
-	${CC} -c $< -o $@ $(CFLAGS)
+all: $(LIBMINUIT2) $(EXCUTEABLE)
 
-$(OBJ_DIR)%.o: $(MODEL_DIR)%.c
-	${CC} -c $< -o $@ $(CFLAGS)
+$(EXCUTEABLE): $(OBJECTS) $(LIBMINUIT2)
+	${CPPC} $^ -o $@ $(LDFLAGS)
 
-$(OBJ_DIR)%.o: $(NUMERICAL_DIR)%.c
-	${CC} -c $< -o $@ $(CFLAGS)
+$(LIBMINUIT2):
+	$(MAKE) -C $(MINUIT2_DIR)
 
-$(OBJ_DIR)%.o: $(SRC_DIR)%.c
-	${CC} -c $< -o $@ $(CFLAGS)
+#$(OBJ_DIR)%.o: $(BASIS_DIR)%.c
+#	${CC} $(CFLAGS) $(INCLUDES) -c $< -o $@ 
 
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+#$(OBJ_DIR)%.o: $(MODEL_DIR)%.c
+#	${CC} $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-run:
+#$(OBJ_DIR)%.o: $(NUMERICAL_DIR)%.c
+#	${CC} $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJ_DIR)%.o: %.c
+	@mkdir -p $(@D)
+	${CC} $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJ_DIR)%.o: %.cc
+	@mkdir -p $(@D)
+	${CPPC} $(CPPFLAGS) $(INCLUDES_CPP) -c $< -o $@
+
+run: all
 	./$(EXCUTEABLE)
-.PHONY: run
 
 clean:
-	rm -rf $(OBJ_DIR)
-	rm -f $(EXCUTEABLE)
-.PHONY: clean
+	rm -rf $(OBJ_DIR) $(EXCUTEABLE)
+	$(MAKE) -C $(MINUIT2_DIR) clean
 
-install:
-	sudo cp $(EXCUTEABLE) /usr/local/bin/$(EXCUTEABLE)
-.PHONY: install
+install: all
+	sudo cp $(EXCUTEABLE) /usr/local/bin/
 
 uninstall:
-	sudo rm /usr/local/bin/$(EXCUTEABLE)
-.PHONY: uninstall
+	sudo rm -f /usr/local/bin/$(EXCUTEABLE)
 
 print-objects:
-	@echo $(OBJECT)
-.PHONY: print-objects
+	@echo "OBJECTS = $(OBJECTS)"
+	@echo "LIBMINUIT2 = $(LIBMINUIT2)"
+
+.PHONY: all run clean install uninstall print-objects

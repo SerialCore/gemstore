@@ -13,7 +13,7 @@ void print_help();
 
 int main(int argc, char **argv)
 {
-    debug_eigen_system();
+    chi2_test();
 
     return 0;
 }

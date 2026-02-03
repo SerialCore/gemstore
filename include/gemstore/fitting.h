@@ -4,17 +4,15 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef GEMSTORE_ENTRY
-#define GEMSTORE_ENTRY
+#ifndef GEMSTORE_FITTING
+#define GEMSTORE_FITTING
 
-void chi2_test();
-
-/* C entry function to be called by c++ */
+/* Make sure c program can only see this c++ entry function */
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void call_gem(double *a);
+void test(double* a);
 
 #ifdef __cplusplus
 }

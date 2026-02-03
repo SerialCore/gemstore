@@ -1,26 +1,28 @@
-CCPP = g++
-CPP_ARGS =
+CPPC = g++
+CPPFLAGS =
+INCLUDES = -I $(INC_DIR)
 
-OBJ_DIR = obj
-MINUIT2_SRC_DIR = src
-MINUIT2_INC_DIR = include
+OBJ_DIR = obj/
+SRC_DIR = src/
+INC_DIR = include/
 
-FILE_CXX := $(wildcard ./$(MINUIT2_SRC_DIR)/*.cxx)
-OBJS_CXX  = $(addprefix ./$(OBJ_DIR)/,$(notdir $(FILE_CXX:.cxx=.o))) 
+TARGET = libMinuit2.a
 
-all: libMinuit2.a a.out
+OBJECTS = $(patsubst %.cxx, $(OBJ_DIR)%.o, $(wildcard $(SRC_DIR)*.cxx))
 
-$(OBJ_DIR)/%.o: $(MINUIT2_SRC_DIR)/%.cxx
-	mkdir -p $(OBJ_DIR) && $(CCPP)$(CCPP_ARGS) -c $< -o $@ -I $(MINUIT2_INC_DIR)
+all: $(TARGET)
 
-libMinuit2.a: $(OBJS_CXX)
-	ar rcs libMinuit2.a $(OBJS_CXX)
+$(TARGET): $(OBJECTS)
+	ar rcs $@ $^
 
-a.out: find_point.cpp libMinuit2.a
-	$(CCPP) $(CCPP_ARGS) -o a.out find_point.cpp libMinuit2.a -I $(MINUIT2_INC_DIR)
+$(OBJ_DIR)%.o: %.cxx
+	@mkdir -p $(@D)
+	$(CPPC) $(CPPFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	rm -rf libMinuit2.a a.out $(OBJ_DIR)
+	rm -rf $(OBJ_DIR) $(TARGET)
 
-print-x:
-	@echo $(OBJS_CXX)
+print-objects:
+	@echo "OBJECTS = $(OBJECTS)"
+
+.PHONY: all clean print-objects

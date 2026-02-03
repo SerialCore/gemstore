@@ -82,23 +82,6 @@ typedef struct
     int lt;                         /* Number of requested eigenvectors */
 } eig2_args;
 
-/* Simple bubble sort on array of doubles */
-static void sort(double *a, int n);
-static void sort(double *a, int n)
-{
-    int i, j;
-    double temp;
-    for (i = 0; i < n - 1; i++) {
-        for (j = 0; j < n - i - 1; j++) {
-            if (a[j] > a[j + 1]) {
-                temp = a[j];
-                a[j] = a[j + 1];
-                a[j + 1] = temp;
-            }
-        }
-    }
-}
-
 /* Divides loop range [st..ed] into roughly equal chunks for threads */
 static void allocateThreads(int st, int ed, int lth, int min_lnum, int *stList, int *edList, int *lth_use);
 static void allocateThreads(int st, int ed, int lth, int min_lnum, int *stList, int *edList, int *lth_use)

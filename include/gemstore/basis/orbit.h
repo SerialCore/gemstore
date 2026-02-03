@@ -45,7 +45,7 @@ static inline double laguerrel(int k, double alpha, double x)
 
     double L_prev2 = 1.0;
     double L_prev1 = -x + alpha + 1.0;
-    double L_curr;
+    double L_curr = 0.0;
     for (int m = 2; m <= k; m++) {
         L_curr = ((2.0 * m - 1.0 + alpha - x) * L_prev1 - (m - 1.0 + alpha) * L_prev2) / m;
         L_prev2 = L_prev1;

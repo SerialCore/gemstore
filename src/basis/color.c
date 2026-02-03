@@ -10,7 +10,7 @@
 #include <math.h>
 #include <string.h>
 
-static void *CM8(intrin_wfn_t *CM8)
+static void CM8(intrin_wfn_t *CM8)
 {
     for (int i = 0; i < 8; i++) {
         CM8[i] = intrin_wfn_init(2);
@@ -44,7 +44,7 @@ static void *CM8(intrin_wfn_t *CM8)
     intrin_wfn_push(&CM8[7], 1.0, "rB");
 }
 
-static void *CB38(intrin_wfn_t *CB38)
+static void CB38(intrin_wfn_t *CB38)
 {
     for (int i = 0; i < 8; i++) {
         CB38[i] = intrin_wfn_init(3);
@@ -89,7 +89,7 @@ static void *CB38(intrin_wfn_t *CB38)
     intrin_wfn_push(&CB38[7], -1.0 / sqrt(2.0), "bgb");
 }
 
-static void *CB68(intrin_wfn_t *CB68)
+static void CB68(intrin_wfn_t *CB68)
 {
     for (int i = 0; i < 8; i++) {
         CB68[i] = intrin_wfn_init(3);

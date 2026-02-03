@@ -4,4 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/model/GIString.h>
+#include <gemstore/numerical/spectra.h>
+
+void spectra_meson_NRScreen()
+{
+    
+}
