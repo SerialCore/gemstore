@@ -10,10 +10,10 @@
 
 #include <stdlib.h>
 
-#define GLO 50          /* order of Gauss-Legendre integral */
+#define OHP 50          /* order of half-range Hermite polynomials */
 
-/* integral weights for Gauss-Legendre polynomials */
-static const double weights[GLO] = {
+/* weights of half-range Hermite polynomials */
+static const double weights[OHP] = {
     9.49074370469973147082E-003, 2.20248042432282553631E-002, 3.43744122779471227909E-002, 4.62954423315795433979E-002, 5.74270673524102602228E-002,
     6.72616743347232748312E-002, 7.51655105427606549250E-002, 8.04487210189303602989E-002, 8.24866653780293849459E-002, 8.08772841479732588309E-002,
     7.55968131214373946840E-002, 6.70988969096135482036E-002, 5.63037514101928781474E-002, 4.44533647270852753206E-002, 3.28602655529441186895E-002,
@@ -26,8 +26,8 @@ static const double weights[GLO] = {
     1.94847016939779663560E-035, 1.44052991578865261374E-038, 3.94314802874471338715E-042, 2.51219924772053768487E-046, 1.15324953442160894479E-051
 };
 
-/* integral nodes for Gauss-Legendre polynomials */
-static const double nodes[GLO] = {
+/* nodes of half-range Hermite polynomials */
+static const double nodes[OHP] = {
     3.69941668941189387078E-003, 1.94655785593001262377E-002, 4.77232575110775569884E-002, 8.82994741423326136810E-002, 1.40944249831512837831E-001,
     2.05343824732975154536E-001, 2.81130944731155938791E-001, 3.67895701867100816092E-001, 4.65196632382567480466E-001, 5.72571575839739193266E-001,
     6.89547864293400636314E-001, 8.15651524129035456870E-001, 9.50415293767051842487E-001, 1.09338537085220496150E+000, 1.24412689394047714663E+000,
@@ -48,7 +48,7 @@ double integral_wfn_overlap(
 {
     double sum = 0.0;
 
-    for (int i = 0; i < GLO; i++) {
+    for (int i = 0; i < OHP; i++) {
         sum += node_factor * weights[i]
              * wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale)
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
@@ -66,7 +66,7 @@ double integral_wfn_overlap_complex(
 {
     double sum = 0.0;
 
-    for (int i = 0; i < GLO; i++) {
+    for (int i = 0; i < OHP; i++) {
         sum += node_factor * weights[i]
              * wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale)
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
@@ -86,7 +86,7 @@ double integral_matrix_element(
 {
     double sum = 0.0;
 
-    for (int i = 0; i < GLO; i++) {
+    for (int i = 0; i < OHP; i++) {
         sum += node_factor * weights[i]
              * wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale)
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
@@ -107,7 +107,7 @@ double integral_matrix_element_complex(
 {
     double sum = 0.0;
 
-    for (int i = 0; i < GLO; i++) {
+    for (int i = 0; i < OHP; i++) {
         sum += node_factor * weights[i]
              * wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale)
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
