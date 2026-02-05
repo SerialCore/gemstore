@@ -31,6 +31,8 @@ double integral_matrix_element(
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
+    const argsFlavor_t *args_flavor,
+    const argsSOC_t *args_soc,
     const argsModel_t *args_model);
 
 /* Integrate matrix elements with given potential (complex) */
@@ -40,6 +42,8 @@ double integral_matrix_element_complex(
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
+    const argsFlavor_t *args_flavor,
+    const argsSOC_t *args_soc,
     const argsModel_t *args_model);
 
 #endif

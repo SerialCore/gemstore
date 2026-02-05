@@ -13,7 +13,7 @@ void print_help();
 
 int main(int argc, char **argv)
 {
-    chi2_test();
+    debug_potential_model();
 
     return 0;
 }

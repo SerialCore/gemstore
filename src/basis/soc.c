@@ -226,6 +226,15 @@ double kronecker_delta(double *i, double *j, int n)
     return 1;
 }
 
+double operator_center(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp)
+{
+    double a[] = {s1, s2, s, l};
+    double b[] = {s1p, s2p, sp, lp};
+
+    return kronecker_delta(a, b, 4);
+}
+
+
 double operator_sdots(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp)
 {
     double a[] = {s1, s2, s, l};

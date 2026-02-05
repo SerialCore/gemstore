@@ -6,6 +6,9 @@
 
 #include <gemstore/debug.h>
 
+#include <gemstore/model/model.h>
+#include <gemstore/model/NRScreen.h>
+
 #include <gemstore/basis/intrin.h>
 #include <gemstore/basis/color.h>
 #include <gemstore/basis/spin.h>
@@ -158,23 +161,23 @@ void debug_orbit_wfn()
         .scale = nu2
     };
 
-    double factor;
+    double factor, overlap;
 
     factor = 1 / sqrt(2 * nu1);
-    double normalizedGr = integral_wfn_overlap(GRnlr_nonexp, factor, &args_bra, &args_bra);
-    printf("Normalized overlap for Gr: %f\n", normalizedGr);
+    overlap = integral_wfn_overlap(GRnlr_nonexp, factor, &args_bra, &args_bra);
+    printf("Normalized overlap for Gr: %f\n", overlap);
 
     factor = 1 / sqrt(nu1 + nu2);
-    double orthogonalGr = integral_wfn_overlap(GRnlr_nonexp, factor, &args_bra, &args_ket);
-    printf("Orthogonal overlap for Gr: %f\n", orthogonalGr);
+    overlap = integral_wfn_overlap(GRnlr_nonexp, factor, &args_bra, &args_ket);
+    printf("Orthogonal overlap for Gr: %f\n", overlap);
 
     factor = sqrt(2 * nu1);
-    double normalizedGp = integral_wfn_overlap_complex(GRnlp_nonexp, factor, &args_bra, &args_bra);
-    printf("Normalized overlap for Gp: %f\n", normalizedGp);
+    overlap = integral_wfn_overlap_complex(GRnlp_nonexp, factor, &args_bra, &args_bra);
+    printf("Normalized overlap for Gp: %f\n", overlap);
 
     factor = sqrt(4 * nu1 * nu2 / (nu1 + nu2));
-    double orthogonalGp = integral_wfn_overlap_complex(GRnlp_nonexp, factor, &args_bra, &args_ket);
-    printf("Orthogonal overlap for Gp: %f\n", orthogonalGp);
+    overlap = integral_wfn_overlap_complex(GRnlp_nonexp, factor, &args_bra, &args_ket);
+    printf("Orthogonal overlap for Gp: %f\n", overlap);
 
     double beta1 = 0.8;
     args_bra.scale = beta1;
@@ -182,20 +185,84 @@ void debug_orbit_wfn()
     args_ket.scale = beta2;
 
     factor = 1 / beta1;
-    double normalizedSr = integral_wfn_overlap(SRnlr_nonexp, factor, &args_bra, &args_bra);
-    printf("Normalized overlap for Sr: %f\n", normalizedSr);
+    overlap = integral_wfn_overlap(SRnlr_nonexp, factor, &args_bra, &args_bra);
+    printf("Normalized overlap for Sr: %f\n", overlap);
 
     factor = sqrt(2 / (beta1 * beta1 + beta2 * beta2));
-    double orthogonalSr = integral_wfn_overlap(SRnlr_nonexp, factor, &args_bra, &args_ket);
-    printf("Orthogonal overlap for Sr: %f\n", orthogonalSr);
+    overlap = integral_wfn_overlap(SRnlr_nonexp, factor, &args_bra, &args_ket);
+    printf("Orthogonal overlap for Sr: %f\n", overlap);
 
     factor = beta1;
-    double normalizedSp = integral_wfn_overlap_complex(SRnlp_nonexp, factor, &args_bra, &args_bra);
-    printf("Normalized overlap for Sp: %f\n", normalizedSp);
+    overlap = integral_wfn_overlap_complex(SRnlp_nonexp, factor, &args_bra, &args_bra);
+    printf("Normalized overlap for Sp: %f\n", overlap);
 
     factor = sqrt(2 * beta1 * beta1 * beta2 * beta2 / (beta1 * beta1 + beta2 * beta2));
-    double orthogonalSp = integral_wfn_overlap_complex(SRnlp_nonexp, factor, &args_bra, &args_ket);
-    printf("Orthogonal overlap for Sp: %f\n", orthogonalSp);
+    overlap = integral_wfn_overlap_complex(SRnlp_nonexp, factor, &args_bra, &args_ket);
+    printf("Orthogonal overlap for Sp: %f\n", overlap);
+}
+
+void debug_potential_model()
+{
+    double s1 = 0.5, s2 = 0.5;
+    double S = 0, L = 0, J = 0;
+
+    double nu1 = getnu(1, 30, 25, 0.1);
+    argsOrbit_t args_bra = {
+        .n = 1,
+        .l = 0,
+        .scale = nu1
+    };
+
+    double nu2 = getnu(2, 30, 25, 0.1);
+    argsOrbit_t args_ket = {
+        .n = 2,
+        .l = 0,
+        .scale = nu2
+    };
+
+    argsModel_t args_model = argsNRScreen_meson;
+    double m1 = args_model.mc;
+    double m2 = args_model.mc;
+    argsFlavor_t args_flavor = {
+        .m1 = m1,
+        .m2 = m2
+    };
+
+    double cen = operator_center(s1, s2, S, L, s1, s2, S, L);
+    double sds = operator_sdots(s1, s2, S, L, s1, s2, S, L);
+    double ls1 = operator_ldots1(s1, s2, S, L, s1, s2, S, L, J);
+    double ls2 = operator_ldots2(s1, s2, S, L, s1, s2, S, L, J);
+    double ten = operator_tensor(s1, s2, S, L, s1, s2, S, L, J);
+    argsSOC_t args_soc = {
+        .OCent = 1,
+        .OSdS = sds,
+        .OLS1 = ls1,
+        .OLS2 = ls2,
+        .OTens = ten
+    };
+    printf("OCen = %f, OSdS = %f, OLS1 = %f, OLS2 = %f, OTens = %f\n", cen, sds, ls1, ls2, ten);
+
+    double factor = 1 / sqrt(nu1 + nu2);
+    double factor_complex =  sqrt(4 * nu1 * nu2 / (nu1 + nu2));
+    double element;
+
+    element = integral_matrix_element_complex(GRnlp_nonexp, NRScreen_T, factor_complex, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
+    printf("Matrix element for <1|T|2>: %f\n", element);
+
+    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vconf, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
+    printf("Matrix element for <1|Vconf|2>: %f\n", element);
+
+    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vcont, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
+    printf("Matrix element for <1|Vcont|2>: %f\n", element);
+
+    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vsocm, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
+    printf("Matrix element for <1|Vsocm|2>: %f\n", element);
+
+    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vsotp, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
+    printf("Matrix element for <1|Vsotp|2>: %f\n", element);
+
+    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vtens, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
+    printf("Matrix element for <1|Vtens|2>: %f\n", element);
 }
 
 void debug_eigen_system()

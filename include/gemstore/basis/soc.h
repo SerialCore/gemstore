@@ -34,6 +34,9 @@ double nineJ_symbol(double j1, double j2, double j12, double j3, double j4, doub
 /* return Kronecker delta for given arrays of indices, n is length of array */
 double kronecker_delta(double *i, double *j, int n);
 
+/* return matrix element of center potential */
+double operator_center(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp);
+
 /* return matrix element of spin-spin operator */
 double operator_sdots(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp);
 

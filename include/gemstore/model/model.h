@@ -7,12 +7,12 @@
 #ifndef GEMSTORE_MODEL_MODEL
 #define GEMSTORE_MODEL_MODEL
 
-typedef enum model_enum {
-    NRScreen,
-    GIString,
-    GIScreen,
-    GIQuadraScreen
-} model_enum_t;
+typedef enum model_type {
+    MODEL_NR_SCREEN,
+    MODEL_GI_STRING,
+    MODEL_GI_SCREEN,
+    MODEL_GI_QUADRA_SCREEN
+} model_type_t;
 
 typedef struct argsModel {
     double mn;              /* mass of n */
@@ -44,6 +44,19 @@ typedef struct argsModel {
     double gamma3;          /* GI smearing parameter for coupling constant */
 } argsModel_t;
 
-typedef double (*potential_t)(double x, const argsModel_t* args);
+typedef struct argsSOC {
+    double OCent;
+    double OSdS;
+    double OLS1;
+    double OLS2;
+    double OTens;
+} argsSOC_t;
+
+typedef struct argsFlavor {
+    double m1;
+    double m2;
+} argsFlavor_t;
+
+typedef double (*potential_t)(double x, const argsFlavor_t *args_flavor, const argsSOC_t *args_soc, const argsModel_t *args_model);
 
 #endif
