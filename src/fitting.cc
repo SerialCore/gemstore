@@ -95,8 +95,4 @@ void test(double *a)
 	ROOT::Minuit2::FunctionMinimum min2 = migrad();
 	std::cout << min2.UserParameters() << std::endl;
 	std::cout << a[0] + a[1] + a[2] << std::endl;
-
-	double b[3];
-	call_gem(b);
-	std::cout << a[0] - b[0] + a[1] - b[1] + a[2] - b[2] << std::endl;
 }

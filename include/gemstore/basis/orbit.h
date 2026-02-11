@@ -20,9 +20,6 @@ typedef struct argsOrbit
     double scale;
 } argsOrbit_t;
 
-typedef double (*orbit_wfn_t)(double x, int n, int l, double scale);
-typedef complex (*orbit_wfn_complex_t)(double x, int n, int l, double scale);
-
 /* Scale ν[n, nmax, rmax, rmin] = 1/rmin^2 * (rmax/rmin)^((2 - 2n)/(nmax-1)) */
 static inline double getnu(int n, int nmax, double rmax, double rmin)
 {
@@ -55,96 +52,34 @@ static inline double laguerrel(int k, double alpha, double x)
     return L_curr;
 }
 
-/* Gaussian basis in coordinate space */
-static inline double GRnlr(double r, int n, int l, double nu)
-{
-    double pre_factor = pow(2.0, l/2.0 + 1.25) * pow(nu, l/2.0 + 0.75);
-    double gamma_term = sqrt(1 / tgamma(l + 1.5));
-    double exp_term = exp(-r * r * nu);
+/* define orbit wave function in coordinate space */
+typedef double (*orbit_wfn_t)(double x, int n, int l, double scale);
 
-    return pre_factor * pow(r, l) * gamma_term * exp_term;
-}
+/* define orbit wave function in momentum space */
+typedef complex (*orbit_wfn_complex_t)(double x, int n, int l, double scale);
+
+/* Gaussian basis in coordinate space */
+double GRnlr(double r, int n, int l, double nu);
 
 /* Gaussian basis in coordinate space without exponential */
-static inline double GRnlr_nonexp(double r, int n, int l, double nu)
-{
-    double pre_factor = pow(2.0, l/2.0 + 1.25) * pow(nu, l/2.0 + 0.75);
-    double gamma_term = sqrt(1 / tgamma(l + 1.5));
-
-    return pre_factor * pow(r, l) * gamma_term; /* * exp(-r * r * nu); */
-}
+double GRnlr_nonexp(double r, int n, int l, double nu);
 
 /* Gaussian basis in momentum space */
-static inline complex GRnlp(double p, int n, int l, double nu)
-{
-    complex phase = pow(-I, l);
-    double pre_factor = pow(2.0, -l/2.0 - 0.25) * pow(nu, -l/2.0 - 0.75);
-    double gamma_term = sqrt(1 / tgamma(l + 1.5));
-    double exp_term = exp(-p * p / (4.0 * nu));
-
-    return phase * pre_factor * pow(p, l) * gamma_term * exp_term;
-}
+complex GRnlp(double p, int n, int l, double nu);
 
 /* Gaussian basis in momentum space without exponential */
-static inline complex GRnlp_nonexp(double p, int n, int l, double nu)
-{
-    complex phase = pow(-I, l);
-    double pre_factor = pow(2.0, -l/2.0 - 0.25) * pow(nu, -l/2.0 - 0.75);
-    double gamma_term = sqrt(1 / tgamma(l + 1.5));
-
-    return phase * pre_factor * pow(p, l) * gamma_term; /* * exp(-p * p / (4.0 * nu)); */
-}
+complex GRnlp_nonexp(double p, int n, int l, double nu);
 
 /* Spherical harmonic oscillator basis in coordinate space */
-static inline double SRnlr(double r, int n, int l, double beta)
-{
-    double pre_factor = pow(beta, 1.5);
-    double r_beta = r * beta;
-    double x = r_beta * r_beta;
-    double gamma_term = sqrt((2.0 * tgamma(n + 1.0)) / tgamma(n + l + 1.5));
-    double exp_term = exp(-0.5 * x);
-    double lag = laguerrel(n, l + 0.5, x);
-
-    return pre_factor * pow(r_beta, l) * gamma_term *  exp_term * lag;
-}
+double SRnlr(double r, int n, int l, double beta);
 
 /* Spherical harmonic oscillator basis in coordinate space without exponential */
-static inline double SRnlr_nonexp(double r, int n, int l, double beta)
-{
-    double pre_factor = pow(beta, 1.5);
-    double r_beta = r * beta;
-    double x = r_beta * r_beta;
-    double gamma_term = sqrt((2.0 * tgamma(n + 1.0)) / tgamma(n + l + 1.5));
-    double lag = laguerrel(n, l + 0.5, x);
-
-    return pre_factor * pow(r_beta, l) * gamma_term * lag; /* * exp(-r * r * beta * beta / 2) */
-}
+double SRnlr_nonexp(double r, int n, int l, double beta);
 
 /* Spherical harmonic oscillator basis in momentum space */
-static inline complex SRnlp(double p, int n, int l, double beta)
-{
-    complex phase = pow(-1.0, n) * pow(-I, l);
-    double pre_factor = 1 / pow(beta, 1.5);
-    double p_beta = p / beta;
-    double x = p_beta * p_beta;
-    double gamma_term = sqrt((2.0 * tgamma(n + 1.0)) / tgamma(n + l + 1.5));
-    double exp_term = exp(-0.5 * x);
-    double lag = laguerrel(n, l + 0.5, x);
-    
-    return phase * pre_factor * pow(p_beta, l) * gamma_term * exp_term * lag;
-}
+complex SRnlp(double p, int n, int l, double beta);
 
 /* Spherical harmonic oscillator basis in momentum space without exponential */
-static inline complex SRnlp_nonexp(double p, int n, int l, double beta)
-{
-    complex phase = pow(-1.0, n) * pow(-I, l);
-    double pre_factor = 1 / pow(beta, 1.5);
-    double p_beta = p / beta;
-    double x = p_beta * p_beta;
-    double gamma_term = sqrt((2.0 * tgamma(n + 1.0)) / tgamma(n + l + 1.5));
-    double lag = laguerrel(n, l + 0.5, x);
-    
-    return phase * pre_factor * pow(p_beta, l) * gamma_term * lag; /* * exp(-p * p / (2 * beta * beta)) */
-}
+complex SRnlp_nonexp(double p, int n, int l, double beta);
 
 #endif

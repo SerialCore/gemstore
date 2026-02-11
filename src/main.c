@@ -10,15 +10,15 @@
 #include <stdio.h>
 
 void print_help();
-
-int main(int argc, char **argv)
-{
-    debug_potential_model();
-
-    return 0;
-}
-
 void print_help()
 {
     printf("This is the help page.\n");
+}
+
+int main(int argc, char **argv)
+{
+    //debug_soc_operator();
+    call_spectra_meson_NRScreen(3, 3, 0, 0, 0, 20, 10.0, 0.1);
+
+    return 0;
 }

@@ -216,67 +216,123 @@ double nineJ_symbol(double j1, double j2, double j12, double j3, double j4, doub
 	return sum;
 }
 
-double kronecker_delta(double *i, double *j, int n)
+double operator_center_sl(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
 {
-    for (int k = 0; k < n; k++) {
-        if (i[k] != j[k]) {
-            return 0;
-        }
+    if (s1 != s1p || s2 != s2p || s != sp || l != lp) {
+        return 0.0;
     }
-    return 1;
+    else {
+        return 1.0;
+    }
 }
 
-double operator_center(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp)
+double operator_sdots_sl(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
 {
-    double a[] = {s1, s2, s, l};
-    double b[] = {s1p, s2p, sp, lp};
-
-    return kronecker_delta(a, b, 4);
-}
-
-
-double operator_sdots(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp)
-{
-    double a[] = {s1, s2, s, l};
-    double b[] = {s1p, s2p, sp, lp};
+    if (s1 != s1p || s2 != s2p || s != sp || l != lp) {
+        return 0.0;
+    }
 
     double pre_factor = (s*(s+1)-s1*(s1+1)-s2*(s2+1));
 
-    return 0.5 * pre_factor * kronecker_delta(a, b, 4);
+    return 0.5 * pre_factor;
 }
 
-double operator_ldots1(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
+double operator_ldots1_sl(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
 {
-    double a[] = {s1, s2, l};
-    double b[] = {s1p, s2p, lp};
+    if (s1 != s1p || s2 != s2p || l != lp) {
+        return 0.0;
+    }
 
     double phase = pow(-1, s+lp+j) * pow(-1, s1p+s2p+s+1);
     double sqrt_term = sqrt((2*sp+1)*(2*s+1)) * sqrt((2*s1+1)*(s1+1)*s1) * sqrt((2*l+1)*(l+1)*l);
     double symbol_term = sixJ_symbol(sp, s, 1, l, lp, j) * sixJ_symbol(s1, s1p, 1, sp, s, s2p);
 
-    return phase * sqrt_term * symbol_term * kronecker_delta(a, b, 3);
+    return phase * sqrt_term * symbol_term;
 }
 
-double operator_ldots2(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
+double operator_ldots2_sl(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
 {
-    double a[] = {s1, s2, l};
-    double b[] = {s1p, s2p, lp};
+    if (s1 != s1p || s2 != s2p || l != lp) {
+        return 0.0;
+    }
 
     double phase = pow(-1, s+lp+j) * pow(-1, s1+s2+sp+1);
     double sqrt_term = sqrt((2*sp+1)*(2*s+1)) * sqrt((2*s2+1)*(s2+1)*s2) * sqrt((2*l+1)*(l+1)*l);
     double symbol_term = sixJ_symbol(sp, s, 1, l, lp, j) * sixJ_symbol(s2, s2p, 1, sp, s, s1p);
 
-    return phase * sqrt_term * symbol_term * kronecker_delta(a, b, 3);
+    return phase * sqrt_term * symbol_term;
 }
 
-double operator_tensor(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
+double operator_tensor_sl(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j)
 {
-    double a[] = {s1, s2};
-    double b[] = {s1p, s2p};
+    if (s1 != s1p || s2 != s2p) {
+        return 0.0;
+    }
 
     double phase = pow(-1, s+lp+j) * pow(-1, lp);
     double sqrt_term = sqrt(4.8*M_PI) * sqrt(5*(2*sp+1)*(2*s+1)) * sqrt((2*s1+1)*(s1+1)*s1) * sqrt((2*s2+1)*(s2+1)*s2) * sqrt(1.25*M_1_PI*(2*lp+1)*(2*l+1));
     double symbol_term = sixJ_symbol(sp, s, 2, l, lp, j) * nineJ_symbol(s1p, s1, 1, s2p, s2, 1, sp, s, 2) * threeJ_symbol(lp, 0, 2, 0, l, 0);
 
-    return phase * sqrt_term * symbol_term * kronecker_delta(a, b, 2);
+    return phase * sqrt_term * symbol_term;
+}
+
+/* transform sl coupling into jj coupling */
+static double trans_sl_jj(double s1, double s2, double L, double jl, double s1p, double s2p, double Lp, double jlp, double J, operator_sl osl);
+static double trans_sl_jj(double s1, double s2, double L, double jl, double s1p, double s2p, double Lp, double jlp, double J, operator_sl osl)
+{
+    double result = 0.0;
+
+    /* S loop for bra */
+    double S_min = fabs(s1 - s2);
+    double S_max = s1 + s2;
+    for (double S = S_min; S <= S_max + 1e-10; S += 1.0) {
+        /* Sp loop for ket */
+        double Sp_min = fabs(s1p - s2p);
+        double Sp_max = s1p + s2p;
+        for (double Sp = Sp_min; Sp <= Sp_max + 1e-10; Sp += 1.0) {
+            /* phase factor for bra */
+            double phase_bra = pow(-1.0, s2 + L + S + jl);
+            double factor_bra = sqrt((2.0 * S + 1.0) * (2.0 * jl + 1.0));
+            double sixj_bra   = sixJ_symbol(s2, s1, S, L, J, jl);
+
+            /* phase factor for ket */
+            double phase_ket = pow(-1.0, s2p + Lp + Sp + jlp);
+            double factor_ket = sqrt((2.0 * Sp + 1.0) * (2.0 * jlp + 1.0));
+            double sixj_ket   = sixJ_symbol(s2p, s1p, Sp, Lp, J, jlp);
+
+            /* operator value in sl coupling */
+            double sl_value = osl(s1, s2, S, L, s1p, s2p, Sp, Lp, J);
+
+            result += phase_bra * factor_bra * sixj_bra *
+                      phase_ket * factor_ket * sixj_ket *
+                      sl_value;
+        }
+    }
+
+    return result;
+}
+
+double operator_center_jj(double s1, double s2, double l, double jl, double s1p, double s2p, double lp, double jlp, double j)
+{
+    return trans_sl_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j, operator_center_sl);
+}
+
+double operator_sdots_jj(double s1, double s2, double l, double jl, double s1p, double s2p, double lp, double jlp, double j)
+{
+    return trans_sl_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j, operator_sdots_sl);
+}
+
+double operator_ldots1_jj(double s1, double s2, double l, double jl, double s1p, double s2p, double lp, double jlp, double j)
+{
+    return trans_sl_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j, operator_ldots1_sl);
+}
+
+double operator_ldots2_jj(double s1, double s2, double l, double jl, double s1p, double s2p, double lp, double jlp, double j)
+{
+    return trans_sl_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j, operator_ldots2_sl);
+}
+
+double operator_tensor_jj(double s1, double s2, double l, double jl, double s1p, double s2p, double lp, double jlp, double j)
+{
+    return trans_sl_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j, operator_tensor_sl);
 }

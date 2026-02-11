@@ -7,14 +7,57 @@
 #include <gemstore/entry.h>
 #include <gemstore/fitting.h>
 
-void call_gem(double *a)
+#include <gemstore/numerical/spectra.h>
+#include <gemstore/numerical/matrix.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+
+void call_spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin)
 {
-    a[0] = 0.1;
-    a[1] = 0.2;
-    a[2] = 0.3;
+    double *e1 = (double *)malloc(nmax * sizeof(double));
+    double **v = (double **)malloc(nmax * sizeof(double *));
+    for (int i = 0; i < nmax; i++) {
+        v[i] = (double *)malloc(nmax * sizeof(double));
+    }
+
+    array_t eigenvalue = {
+        .con = nmax,
+        .value = e1
+    };
+
+    matrix_t eigenvector = {
+        .row = nmax,
+        .col = nmax,
+        .value = v
+    };
+
+    spectra_meson_NRScreen(f1, f2, S, L, J, nmax, rmax, rmin, &eigenvalue, &eigenvector);
+
+    array_print(&eigenvalue);
+    matrix_print(&eigenvector);
+
+    array_free(&eigenvalue);
+    matrix_free(&eigenvector);
 }
 
-void chi2_test()
+void call_fitting_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, double *e_out, double **v_out)
+{
+    array_t eigenvalue = {
+        .con = nmax,
+        .value = e_out
+    };
+
+    matrix_t eigenvector = {
+        .row = nmax,
+        .col = nmax,
+        .value = v_out
+    };
+
+    spectra_meson_NRScreen(f1, f2, S, L, J, nmax, rmax, rmin, &eigenvalue, &eigenvector);
+}
+
+void call_minuit2()
 {
     double a[] = {1.1, 1.2, 1.3};
     test(a);

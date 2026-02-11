@@ -165,7 +165,7 @@ void matrix_free(matrix_t *mat)
 void array_print(const array_t *ary)
 {
 	for (int i = 0; i < ary->con; i++) {
-		printf("%25.20f ", ary->value[i]);
+		printf("%10.6f ", ary->value[i]);
 	}
 	printf("\n");
 }

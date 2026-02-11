@@ -33,24 +33,60 @@ void debug_su3_product()
 
 void debug_soc_operator()
 {
-    double s1 = 0.5, s2 = 0.5, s = 1.0, l = 1.0;
-    double s1p = 0.5, s2p = 0.5, sp = 1.0, lp = 1.0;
+    double s1 = 0.5, s2 = 0.5, s = 1.0, l = 1.0, jl = 1.5;
+    double s1p = 0.5, s2p = 0.5, sp = 1.0, lp = 1.0, jlp = 1.5;
     double j = 2.0;
-    printf("s1=%1.1f, s2=%1.1f, s=%1.1f, l=%1.1f\n", s1, s2, s, l);
-    printf("s1p=%1.1f, s2p=%1.1f, sp=%1.1f, lp=%1.1f\n", s1p, s2p, sp, lp);
+    printf("s1=%1.1f, s2=%1.1f, s=%1.1f, l=%1.1f, jl=%1.1f\n", s1, s2, s, l, jl);
+    printf("s1p=%1.1f, s2p=%1.1f, sp=%1.1f, lp=%1.1f, jlp=%1.1f\n", s1p, s2p, sp, lp, jlp);
     printf("j=%1.1f\n", j);
 
-    double sds = operator_sdots(0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0);
-    printf("SOC operator value (s1.s2): %f\n", sds);
+    double sl, jj;
+    sl = operator_sdots_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    printf("Casimir operator value (s1.s2) in sl coupling: %f\n", sl);
+    jj = operator_sdots_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    printf("Casimir operator value (s1.s2) in jj coupling: %f\n", jj);
 
-    double lds1 = operator_sdots(1.0, 0.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0);
-    printf("SOC operator value (l.s1): %f\n", lds1);
+    sl = operator_ldots1_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    printf("SOC operator value (l.s1) in sl coupling: %f\n", sl);
+    jj = operator_ldots1_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    printf("SOC operator value (l.s1) in jj coupling: %f\n", jj);
 
-    double lds2 = operator_sdots(1.0, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0);
-    printf("SOC operator value (l.s2): %f\n", lds2);
+    sl = operator_ldots2_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    printf("SOC operator value (l.s2) in sl coupling: %f\n", sl);
+    jj = operator_ldots2_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    printf("SOC operator value (l.s2) in jj coupling: %f\n", jj);
 
-    double tens = operator_tensor(0.5, 0.5, 1.0, 1.0, 0.5, 0.5, 1.0, 1.0, 2.0);
-    printf("Tensor operator value: %f\n", tens);
+    sl = operator_tensor_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    printf("Tensor operator value in sl coupling: %f\n", sl);
+    jj = operator_tensor_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    printf("Tensor operator value in jj coupling: %f\n\n", jj);
+
+    s1 = 0.5, s2 = 0.5, s = 1.0, l = 1.0, jl = 1.5;
+    s1p = 0.5, s2p = 0.5, sp = 1.0, lp = 1.0, jlp = 0.5;
+    j = 1.0;
+    printf("s1=%1.1f, s2=%1.1f, s=%1.1f, l=%1.1f, jl=%1.1f\n", s1, s2, s, l, jl);
+    printf("s1p=%1.1f, s2p=%1.1f, sp=%1.1f, lp=%1.1f, jlp=%1.1f\n", s1p, s2p, sp, lp, jlp);
+    printf("j=%1.1f\n", j);
+
+    sl = operator_sdots_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    printf("Casimir operator value (s1.s2) in sl coupling: %f\n", sl);
+    jj = operator_sdots_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    printf("Casimir operator value (s1.s2) in jj coupling: %f\n", jj);
+
+    sl = operator_ldots1_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    printf("SOC operator value (l.s1) in sl coupling: %f\n", sl);
+    jj = operator_ldots1_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    printf("SOC operator value (l.s1) in jj coupling: %f\n", jj);
+
+    sl = operator_ldots2_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    printf("SOC operator value (l.s2) in sl coupling: %f\n", sl);
+    jj = operator_ldots2_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    printf("SOC operator value (l.s2) in jj coupling: %f\n", jj);
+
+    sl = operator_tensor_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    printf("Tensor operator value in sl coupling: %f\n", sl);
+    jj = operator_tensor_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    printf("Tensor operator value in jj coupling: %f\n", jj);
 }
 
 void debug_color_wfn()
@@ -201,7 +237,7 @@ void debug_orbit_wfn()
     printf("Orthogonal overlap for Sp: %f\n", overlap);
 }
 
-void debug_potential_model()
+void debug_matrix_element()
 {
     double s1 = 0.5, s2 = 0.5;
     double S = 0, L = 0, J = 0;
@@ -228,13 +264,13 @@ void debug_potential_model()
         .m2 = m2
     };
 
-    double cen = operator_center(s1, s2, S, L, s1, s2, S, L);
-    double sds = operator_sdots(s1, s2, S, L, s1, s2, S, L);
-    double ls1 = operator_ldots1(s1, s2, S, L, s1, s2, S, L, J);
-    double ls2 = operator_ldots2(s1, s2, S, L, s1, s2, S, L, J);
-    double ten = operator_tensor(s1, s2, S, L, s1, s2, S, L, J);
+    double cen = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
+    double sds = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
+    double ls1 = operator_ldots1_sl(s1, s2, S, L, s1, s2, S, L, J);
+    double ls2 = operator_ldots2_sl(s1, s2, S, L, s1, s2, S, L, J);
+    double ten = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
     argsSOC_t args_soc = {
-        .OCent = 1,
+        .OCent = cen,
         .OSdS = sds,
         .OLS1 = ls1,
         .OLS2 = ls2,
@@ -247,28 +283,29 @@ void debug_potential_model()
     double element;
 
     element = integral_matrix_element_complex(GRnlp_nonexp, NRScreen_T, factor_complex, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
-    printf("Matrix element for <1|T|2>: %f\n", element);
+    printf("Matrix element of <1|T|2>: %f\n", element);
 
     element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vconf, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
-    printf("Matrix element for <1|Vconf|2>: %f\n", element);
+    printf("Matrix element of <1|Vconf|2>: %f\n", element);
 
     element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vcont, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
-    printf("Matrix element for <1|Vcont|2>: %f\n", element);
+    printf("Matrix element of <1|Vcont|2>: %f\n", element);
 
     element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vsocm, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
-    printf("Matrix element for <1|Vsocm|2>: %f\n", element);
+    printf("Matrix element of <1|Vsocm|2>: %f\n", element);
 
     element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vsotp, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
-    printf("Matrix element for <1|Vsotp|2>: %f\n", element);
+    printf("Matrix element of <1|Vsotp|2>: %f\n", element);
 
     element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vtens, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
-    printf("Matrix element for <1|Vtens|2>: %f\n", element);
+    printf("Matrix element of <1|Vtens|2>: %f\n", element);
 }
 
 void debug_eigen_system()
 {
     int n = 10;
     matrix_t mat = matrix_random(n, n);
+    printf("Random matrix:\n");
     matrix_print(&mat);
 
     double *e1 = (double *)malloc(n * sizeof(double));
@@ -278,20 +315,22 @@ void debug_eigen_system()
         v[i] = (double *)malloc(n * sizeof(double));
     }
 
-    eigen_standard_thread(mat.value, n, e1, e2, v, n);
-    //eigen_general_thread(Hfi, Nfi, n, e1, e2, v, n, &info);
-
     array_t val = {
         .con = n,
         .value = e1
     };
-    array_print(&val);
-
     matrix_t vec = {
         .row = n,
         .col = n,
         .value = v
     };
+
+    eigen_standard_thread(mat.value, n, e1, e2, v, n);
+    //eigen_general_thread(Hfi, Nfi, n, e1, e2, v, n, &info);
+    
+    printf("Eigen values:\n");
+    array_print(&val);
+    printf("Eigen vectors:\n");
     matrix_print(&vec);
 
     for (int i = 0; i < n; i++) {
@@ -302,3 +341,4 @@ void debug_eigen_system()
     free(e2);
     matrix_free(&mat);
 }
+
