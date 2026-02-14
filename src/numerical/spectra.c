@@ -47,7 +47,7 @@ static inline double getmq(int index, argsModel_t *args_model)
     return mq;
 }
 
-void spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, array_t *e_out, matrix_t *v_out, int v_len)
+void spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, array_t *e_out, matrix_t *v_out, int v_len, argsModel_t *params)
 {
     /* construct basis */
     argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
@@ -59,7 +59,7 @@ void spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, doubl
         basis[i].scale = nu;
     }
 
-    /* construc matrices */
+    /* construct matrices */
     matrix_t mT = matrix_init(nmax, nmax);
     matrix_t mVconf = matrix_init(nmax, nmax);
     matrix_t mVcont = matrix_init(nmax, nmax);
@@ -74,7 +74,7 @@ void spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, doubl
     argsOrbit_t args_ket;
     double factor;
     double factor_complex;
-    argsModel_t args_model = argsNRScreen_meson;
+    argsModel_t args_model = (params == NULL)? argsNRScreen_meson : *params;
     double s1 = 0.5, s2 = 0.5;
     double m1 = getmq(f1, &args_model);
     double m2 = getmq(f2, &args_model);
@@ -116,8 +116,7 @@ void spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, doubl
     matrix_sum(&Hfi, &mVsotp, &Hfi);
     matrix_sum(&Hfi, &mVtens, &Hfi);
 
-    int info = 0;    
-    eigen_general_thread(Hfi.value, Nfi.value, nmax, e_out->value, v_out->value, v_len, &info);
+    eigen_general_thread(Hfi.value, Nfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, v_len);
 
     free(basis);
     matrix_free(&mT);

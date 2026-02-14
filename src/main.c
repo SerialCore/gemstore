@@ -19,7 +19,8 @@ int main(int argc, char **argv)
 {
     //debug_soc_operator();
     //debug_matrix_element();
-    call_spectra_meson_NRScreen(3, 3, 0, 0, 0, 20, 10.0, 0.1);
+    call_spectra_meson_NRScreen(3, 3, 1, 1, 0, 20, 10.0, 0.1);
+    //call_minuit2_chi2();
 
     return 0;
 }

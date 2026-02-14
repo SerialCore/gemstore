@@ -48,8 +48,8 @@ void eigen_standard_thread(double **a, int n, double *d, double **vt, int lt);
  * d: Output array of eigenvalues (length at least n)
  * vt: Output matrix of selected eigenvectors (lt rows × n columns)
  * lt: Number of largest (or requested) eigenvectors to compute and return
- * info: Output status / error code */
-void eigen_general(double **a, double **b, int n, double *d, double **vt, int lt, int *info);
+ * (info): Output error code: error_cholesky */
+void eigen_general(double **a, double **b, int n, double *d, double **vt, int lt);
 
 /* Multi-threaded version of eigen_general()
  * a: Input symmetric matrix A (n × n)
@@ -58,7 +58,7 @@ void eigen_general(double **a, double **b, int n, double *d, double **vt, int lt
  * d: Output array of eigenvalues (length at least n)
  * vt: Output matrix of selected eigenvectors (lt rows × n columns)
  * lt: Number of largest (or requested) eigenvectors to compute and return
- * info: Output status / error code */
-void eigen_general_thread(double **a, double **b, int n, double *d, double **vt, int lt, int *info);
+ * (info): Output error code: error_cholesky */
+void eigen_general_thread(double **a, double **b, int n, double *d, double **vt, int lt);
 
 #endif

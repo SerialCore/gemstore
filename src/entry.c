@@ -16,49 +16,47 @@
 
 void call_spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin)
 {
-    double *e1 = (double *)malloc(nmax * sizeof(double));
-    double **v = (double **)malloc(nmax * sizeof(double *));
-    for (int i = 0; i < nmax; i++) {
-        v[i] = (double *)malloc(nmax * sizeof(double));
-    }
-
+    double *e = (double *)malloc(nmax * sizeof(double));
     array_t eigenvalue = {
         .con = nmax,
-        .value = e1
+        .value = e
     };
 
-    matrix_t eigenvector = {
-        .row = nmax,
-        .col = nmax,
-        .value = v
-    };
-
-    spectra_meson_NRScreen(f1, f2, S, L, J, nmax, rmax, rmin, &eigenvalue, &eigenvector, 0);
-
+    spectra_meson_NRScreen(f1, f2, S, L, J, nmax, rmax, rmin, &eigenvalue, NULL, 0, NULL);
     array_print(&eigenvalue);
 
     array_free(&eigenvalue);
-    matrix_free(&eigenvector);
 }
 
-void call_fitting_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, double *e_out, double **v_out)
+double call_fitting_meson_NRScreen(int f1, int f2, int N, int S, int L, int J, int nmax, double rmax, double rmin, const double *params)
 {
+    double *e = (double *)malloc(nmax * sizeof(double));
     array_t eigenvalue = {
         .con = nmax,
-        .value = e_out
+        .value = e
     };
 
-    matrix_t eigenvector = {
-        .row = nmax,
-        .col = nmax,
-        .value = v_out
+    argsModel_t args_model = {
+        .mn = params[0],
+        .ms = params[1],
+        .mc = params[2],
+        .mb = params[3],
+        .alpha_s = params[4],
+        .b1 = params[5],
+        .mu = params[6],
+        .c = params[7],
+        .sigma = params[8]
     };
 
-    spectra_meson_NRScreen(f1, f2, S, L, J, nmax, rmax, rmin, &eigenvalue, &eigenvector, 0);
+    spectra_meson_NRScreen(f1, f2, S, L, J, nmax, rmax, rmin, &eigenvalue, NULL, 0, &args_model);
+    double e_out = e[N - 1];
+
+    array_free(&eigenvalue);
+    return e_out;
 }
 
-void call_minuit2()
+void call_minuit2_chi2()
 {
-    double a[] = {1.1, 1.2, 1.3};
-    test(a);
+    double *params = (double *)malloc(9 * sizeof(double));
+    perform_fit(params);
 }

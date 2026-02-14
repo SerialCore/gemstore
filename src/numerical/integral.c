@@ -8,6 +8,8 @@
 #include <gemstore/model/model.h>
 #include <gemstore/basis/orbit.h>
 
+#include <complex.h>
+
 #define OHP 50          /* order of half-range Hermite polynomials */
 
 /* weights of half-range Hermite polynomials */
@@ -66,7 +68,7 @@ double integral_wfn_overlap_complex(
 
     for (int i = 0; i < OHP; i++) {
         sum += node_factor * weights[i]
-             * wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale)
+             * conj(wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale))
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
              * node_factor * node_factor * nodes[i] * nodes[i];
     }
@@ -109,7 +111,7 @@ double integral_matrix_element_complex(
 
     for (int i = 0; i < OHP; i++) {
         sum += node_factor * weights[i]
-             * wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale)
+             * conj(wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale))
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
              * pot(node_factor * nodes[i], args_model, args_dynmc)
              * node_factor * node_factor * nodes[i] * nodes[i];

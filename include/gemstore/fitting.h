@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-void test(double* a);
+void perform_fit(double *params_out);
 
 #ifdef __cplusplus
 }

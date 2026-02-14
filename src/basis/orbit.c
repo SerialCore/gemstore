@@ -6,6 +6,8 @@
 
 #include <gemstore/basis/orbit.h>
 
+#include <complex.h>
+
 double GRnlr(double r, int n, int l, double nu)
 {
     double pre_factor = pow(2.0, l/2.0 + 1.25) * pow(nu, l/2.0 + 0.75);
@@ -25,7 +27,7 @@ double GRnlr_nonexp(double r, int n, int l, double nu)
 
 complex GRnlp(double p, int n, int l, double nu)
 {
-    complex phase = pow(-I, l);
+    complex phase = cpow(-I, l);
     double pre_factor = pow(2.0, -l/2.0 - 0.25) * pow(nu, -l/2.0 - 0.75);
     double gamma_term = sqrt(1 / tgamma(l + 1.5));
     double exp_term = exp(-p * p / (4.0 * nu));
@@ -35,7 +37,7 @@ complex GRnlp(double p, int n, int l, double nu)
 
 complex GRnlp_nonexp(double p, int n, int l, double nu)
 {
-    complex phase = pow(-I, l);
+    complex phase = cpow(-I, l);
     double pre_factor = pow(2.0, -l/2.0 - 0.25) * pow(nu, -l/2.0 - 0.75);
     double gamma_term = sqrt(1 / tgamma(l + 1.5));
 
@@ -67,7 +69,7 @@ double SRnlr_nonexp(double r, int n, int l, double beta)
 
 complex SRnlp(double p, int n, int l, double beta)
 {
-    complex phase = pow(-1.0, n) * pow(-I, l);
+    complex phase = pow(-1.0, n) * cpow(-I, l);
     double pre_factor = 1 / pow(beta, 1.5);
     double p_beta = p / beta;
     double x = p_beta * p_beta;
@@ -80,7 +82,7 @@ complex SRnlp(double p, int n, int l, double beta)
 
 complex SRnlp_nonexp(double p, int n, int l, double beta)
 {
-    complex phase = pow(-1.0, n) * pow(-I, l);
+    complex phase = pow(-1.0, n) * cpow(-I, l);
     double pre_factor = 1 / pow(beta, 1.5);
     double p_beta = p / beta;
     double x = p_beta * p_beta;
