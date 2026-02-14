@@ -15,11 +15,11 @@ typedef enum model_type {
 } model_type_t;
 
 typedef struct argsModel {
-    double mn;              /* mass of n */
-    double ms;              /* mass of s */
-    double mc;              /* mass of c */
-    double mb;              /* mass of b */
-    double mt;              /* mass of t */
+    double mn;              /* mass of n quark */
+    double ms;              /* mass of s quark */
+    double mc;              /* mass of c quark */
+    double mb;              /* mass of b quark */
+    double mt;              /* mass of t quark */
 
     double alpha_s;         /* strong coupling constant */
     double b1;              /* string tension */
@@ -44,19 +44,17 @@ typedef struct argsModel {
     double gamma3;          /* GI smearing parameter for coupling constant */
 } argsModel_t;
 
-typedef struct argsSOC {
-    double OCent;
-    double OSdS;
-    double OLS1;
-    double OLS2;
-    double OTens;
-} argsSOC_t;
+typedef struct argsModelDy {
+    double m1;              /* mass of particle 1 */
+    double m2;              /* mass of particle 2 */
+    double C12;             /* color factor of pair 12 */
+    double OCent;           /* operator value of centor potential */
+    double OSdS;            /* operator value of spin-spin coupling */
+    double OLS1;            /* operator value of orbit-spin1 coupling */
+    double OLS2;            /* operator value of orbit-spin2 coupling */
+    double OTens;           /* operator value of tensor potential */
+} argsModelDy_t;
 
-typedef struct argsFlavor {
-    double m1;
-    double m2;
-} argsFlavor_t;
-
-typedef double (*potential_t)(double x, const argsFlavor_t *args_flavor, const argsSOC_t *args_soc, const argsModel_t *args_model);
+typedef double (*potential_t)(double x, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
 
 #endif

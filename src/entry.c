@@ -5,6 +5,7 @@
  */
 
 #include <gemstore/entry.h>
+#include <gemstore/fileio.h>
 #include <gemstore/fitting.h>
 
 #include <gemstore/numerical/spectra.h>
@@ -32,10 +33,9 @@ void call_spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, 
         .value = v
     };
 
-    spectra_meson_NRScreen(f1, f2, S, L, J, nmax, rmax, rmin, &eigenvalue, &eigenvector);
+    spectra_meson_NRScreen(f1, f2, S, L, J, nmax, rmax, rmin, &eigenvalue, &eigenvector, 0);
 
     array_print(&eigenvalue);
-    matrix_print(&eigenvector);
 
     array_free(&eigenvalue);
     matrix_free(&eigenvector);
@@ -54,7 +54,7 @@ void call_fitting_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, 
         .value = v_out
     };
 
-    spectra_meson_NRScreen(f1, f2, S, L, J, nmax, rmax, rmin, &eigenvalue, &eigenvector);
+    spectra_meson_NRScreen(f1, f2, S, L, J, nmax, rmax, rmin, &eigenvalue, &eigenvector, 0);
 }
 
 void call_minuit2()

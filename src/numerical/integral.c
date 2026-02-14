@@ -8,8 +8,6 @@
 #include <gemstore/model/model.h>
 #include <gemstore/basis/orbit.h>
 
-#include <stdlib.h>
-
 #define OHP 50          /* order of half-range Hermite polynomials */
 
 /* weights of half-range Hermite polynomials */
@@ -82,9 +80,8 @@ double integral_matrix_element(
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
-    const argsFlavor_t *args_flavor,
-    const argsSOC_t *args_soc,
-    const argsModel_t *args_model)
+    const argsModel_t *args_model,
+    const argsModelDy_t *args_dynmc)
 {
     double sum = 0.0;
 
@@ -92,7 +89,7 @@ double integral_matrix_element(
         sum += node_factor * weights[i]
              * wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale)
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
-             * pot(node_factor * nodes[i], args_flavor, args_soc, args_model)
+             * pot(node_factor * nodes[i], args_model, args_dynmc)
              * node_factor * node_factor * nodes[i] * nodes[i];
     }
 
@@ -105,9 +102,8 @@ double integral_matrix_element_complex(
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
-    const argsFlavor_t *args_flavor,
-    const argsSOC_t *args_soc,
-    const argsModel_t *args_model)
+    const argsModel_t *args_model,
+    const argsModelDy_t *args_dynmc)
 {
     double sum = 0.0;
 
@@ -115,7 +111,7 @@ double integral_matrix_element_complex(
         sum += node_factor * weights[i]
              * wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale)
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
-             * pot(node_factor * nodes[i], args_flavor, args_soc, args_model)
+             * pot(node_factor * nodes[i], args_model, args_dynmc)
              * node_factor * node_factor * nodes[i] * nodes[i];
     }
 

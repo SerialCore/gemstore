@@ -363,7 +363,7 @@ void *eigen_general_fun(void *args)
     return NULL;
 }
 
-void eigen_tridiagonal(double **a, int n, double *d, double *e, double *dt, double *et, int lt)
+void eigen_tridiagonal(double **a, int n, double *d, double *e, double *et, int lt)
 {
     int i, j, k;
     double sigma, beta, uu, eps, vmax;
@@ -636,7 +636,6 @@ void eigen_tridiagonal(double **a, int n, double *d, double *e, double *dt, doub
         }
     }
     for (i = 0; i < lt; i++) {
-        dt[i] = d[i];
         et[i] = e[i];
     }
     for (i = 0; i < n; i++) {
@@ -665,7 +664,7 @@ void eigen_tridiagonal(double **a, int n, double *d, double *e, double *dt, doub
     free(od);
 }
 
-void eigen_tridiagonal_thread(double **a, int n, double *d, double *e, double *dt, double *et, int lt)
+void eigen_tridiagonal_thread(double **a, int n, double *d, double *e, double *et, int lt)
 {
     int l;
     int cal_pth;
@@ -1203,7 +1202,6 @@ void eigen_tridiagonal_thread(double **a, int n, double *d, double *e, double *d
         }
     }
     for (i = 0; i < lt; i++) {
-        dt[i] = d[i];
         et[i] = e[i];
     }
     for (i = 0; i < n; i++) {
@@ -1262,7 +1260,7 @@ void eigen_tridiagonal_thread(double **a, int n, double *d, double *e, double *d
     free(tid);
 }
 
-void eigen_standard(double **a, int n, double *d, double *dt, double **vt, int lt)
+void eigen_standard(double **a, int n, double *d, double **vt, int lt)
 {
     double **aa, *e, *et;
     int i, j;
@@ -1275,7 +1273,7 @@ void eigen_standard(double **a, int n, double *d, double *dt, double **vt, int l
             aa[i][j] = a[i][j];
         }
     }
-    eigen_tridiagonal(aa, n, d, e, dt, et, lt);
+    eigen_tridiagonal(aa, n, d, e, et, lt);
     for (i = 0; i < lt; i++) {
         for (j = 0; j < n; j++) {
             vt[i][j] = aa[i][j];
@@ -1287,7 +1285,7 @@ void eigen_standard(double **a, int n, double *d, double *dt, double **vt, int l
     free(et);
 }
 
-void eigen_standard_thread(double **a, int n, double *d, double *dt, double **vt, int lt)
+void eigen_standard_thread(double **a, int n, double *d, double **vt, int lt)
 {
     double **aa, *e, *et;
     int i, j;
@@ -1300,7 +1298,7 @@ void eigen_standard_thread(double **a, int n, double *d, double *dt, double **vt
             aa[i][j] = a[i][j];
         }
     }
-    eigen_tridiagonal_thread(aa, n, d, e, dt, et, lt);
+    eigen_tridiagonal_thread(aa, n, d, e, et, lt);
     for (i = 0; i < lt; i++) {
         for (j = 0; j < n; j++) {
             vt[i][j] = aa[i][j];
@@ -1312,7 +1310,7 @@ void eigen_standard_thread(double **a, int n, double *d, double *dt, double **vt
     free(et);
 }
 
-void eigen_general(double **a, double **b, int n, double *d, double *dt, double **vt, int lt, int *info)
+void eigen_general(double **a, double **b, int n, double *d, double **vt, int lt, int *info)
 {
 
     double **G, **IG, **IGA, **S, *e, *et;
@@ -1390,7 +1388,7 @@ void eigen_general(double **a, double **b, int n, double *d, double *dt, double 
         }
     }
 
-    eigen_tridiagonal(S, n, d, e, dt, et, lt);
+    eigen_tridiagonal(S, n, d, e, et, lt);
 
     for (j = 0; j < n; j++) {
         for (i = 0; i < lt; i++) {
@@ -1415,7 +1413,7 @@ void eigen_general(double **a, double **b, int n, double *d, double *dt, double 
     free(et);
 }
 
-void eigen_general_thread(double **a, double **b, int n, double *d, double *dt, double **vt, int lt, int *info)
+void eigen_general_thread(double **a, double **b, int n, double *d, double **vt, int lt, int *info)
 {
 
     int l;
@@ -1655,7 +1653,7 @@ void eigen_general_thread(double **a, double **b, int n, double *d, double *dt, 
             }
         }
     */
-    eigen_tridiagonal_thread(S, n, d, e, dt, et, lt);
+    eigen_tridiagonal_thread(S, n, d, e, et, lt);
 
     allocateThreads(0, n - 1, lth, min_lnum, stList, edList, &lth_use);
     type = 5;

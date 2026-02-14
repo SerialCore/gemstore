@@ -9,6 +9,7 @@
 #include <gemstore/model/model.h>
 #include <gemstore/model/NRScreen.h>
 
+#include <gemstore/basis/basis.h>
 #include <gemstore/basis/intrin.h>
 #include <gemstore/basis/color.h>
 #include <gemstore/basis/spin.h>
@@ -259,17 +260,16 @@ void debug_matrix_element()
     argsModel_t args_model = argsNRScreen_meson;
     double m1 = args_model.mc;
     double m2 = args_model.mc;
-    argsFlavor_t args_flavor = {
-        .m1 = m1,
-        .m2 = m2
-    };
-
+    double C12 = -4.0 / 3.0;
     double cen = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
     double sds = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
     double ls1 = operator_ldots1_sl(s1, s2, S, L, s1, s2, S, L, J);
     double ls2 = operator_ldots2_sl(s1, s2, S, L, s1, s2, S, L, J);
     double ten = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
-    argsSOC_t args_soc = {
+    argsModelDy_t args_dynmc = {
+        .m1 = m1,
+        .m2 = m2,
+        .C12 = C12,
         .OCent = cen,
         .OSdS = sds,
         .OLS1 = ls1,
@@ -282,22 +282,22 @@ void debug_matrix_element()
     double factor_complex =  sqrt(4 * nu1 * nu2 / (nu1 + nu2));
     double element;
 
-    element = integral_matrix_element_complex(GRnlp_nonexp, NRScreen_T, factor_complex, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
+    element = integral_matrix_element_complex(GRnlp_nonexp, NRScreen_T, factor_complex, &args_bra, &args_ket, &args_model, &args_dynmc);
     printf("Matrix element of <1|T|2>: %f\n", element);
 
-    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vconf, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
+    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vconf, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
     printf("Matrix element of <1|Vconf|2>: %f\n", element);
 
-    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vcont, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
+    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vcont, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
     printf("Matrix element of <1|Vcont|2>: %f\n", element);
 
-    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vsocm, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
+    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vsocm, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
     printf("Matrix element of <1|Vsocm|2>: %f\n", element);
 
-    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vsotp, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
+    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vsotp, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
     printf("Matrix element of <1|Vsotp|2>: %f\n", element);
 
-    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vtens, factor, &args_bra, &args_ket, &args_flavor, &args_soc, &args_model);
+    element = integral_matrix_element(GRnlr_nonexp, NRScreen_Vtens, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
     printf("Matrix element of <1|Vtens|2>: %f\n", element);
 }
 
@@ -308,8 +308,7 @@ void debug_eigen_system()
     printf("Random matrix:\n");
     matrix_print(&mat);
 
-    double *e1 = (double *)malloc(n * sizeof(double));
-    double *e2 = (double *)malloc(n * sizeof(double));
+    double *e = (double *)malloc(n * sizeof(double));
     double **v = (double **)malloc(n * sizeof(double *));
     for (int i = 0; i < n; i++) {
         v[i] = (double *)malloc(n * sizeof(double));
@@ -317,7 +316,7 @@ void debug_eigen_system()
 
     array_t val = {
         .con = n,
-        .value = e1
+        .value = e
     };
     matrix_t vec = {
         .row = n,
@@ -325,7 +324,7 @@ void debug_eigen_system()
         .value = v
     };
 
-    eigen_standard_thread(mat.value, n, e1, e2, v, n);
+    eigen_standard_thread(mat.value, n, e, v, n);
     //eigen_general_thread(Hfi, Nfi, n, e1, e2, v, n, &info);
     
     printf("Eigen values:\n");
@@ -337,8 +336,7 @@ void debug_eigen_system()
         free(v[i]);
     }
     free(v);
-    free(e1);
-    free(e2);
+    free(e);
     matrix_free(&mat);
 }
 

@@ -12,9 +12,10 @@
 #include <stdlib.h>
 #include <math.h>
 
+/*
 void basis_list_init(basis_list *qnlist)
 {
-    qnlist->qnum = (argsBasis_t **)malloc(sizeof(argsBasis_t *) * 0);
+    qnlist->basis = (basis_base_t **)malloc(sizeof(basis_base_t *) * 0);
     qnlist->len_part = (int *)malloc(sizeof(int) * 0);
     qnlist->len_list = 0;
 }
@@ -42,8 +43,8 @@ void basis_list_push(basis_list *qnlist, int newqnQ, int map1, int map2, double 
     {
         i = qnlist->len_list;
         j = 0;
-        qnlist->qnum = (argsBasis_t **)realloc(qnlist->qnum, sizeof(argsBasis_t *) * (i + 1));
-        qnlist->qnum[i] = (argsBasis_t *)malloc(sizeof(argsBasis_t) * 1);
+        qnlist->qnum = (basis_base_t **)realloc(qnlist->qnum, sizeof(basis_base_t *) * (i + 1));
+        qnlist->qnum[i] = (basis_base_t *)malloc(sizeof(basis_base_t) * 1);
         qnlist->len_part = (int *)realloc(qnlist->len_part, sizeof(int) * (i + 1));
         qnlist->len_part[i] = 1;
         qnlist->len_list++;
@@ -52,7 +53,7 @@ void basis_list_push(basis_list *qnlist, int newqnQ, int map1, int map2, double 
     {
         i = qnlist->len_list - 1;
         j = qnlist->len_part[i];
-        qnlist->qnum[i] = (argsBasis_t *)realloc(qnlist->qnum[i], sizeof(argsBasis_t) * (j + 1));
+        qnlist->qnum[i] = (basis_base_t *)realloc(qnlist->qnum[i], sizeof(basis_base_t) * (j + 1));
         qnlist->len_part[i]++;
     }
 
@@ -141,6 +142,45 @@ void basis_list_push_full(basis_list *qnlist_spfy, basis_list *qnlist_full, doub
     }
 }
 
+// Generate full basis for given J, P (parity), flavors, nmax, rmin, rmax.
+// Possible channels: S=0 or 1, L such that |S-L| <= J <= S+L, and (-1)^{L+1} = P (meson parity).
+// Assumes s1=s2=0.5 fixed. For each channel, add n=1 to nmax with varying nu.
+// len_list = num_channels, len_part = nmax per channel.
+void generate_meson_basis(basis_list *qnlist_full, double m1, double m2, double J, int P, int nmax, double rmin, double rmax) {
+    double s1 = 0.5, s2 = 0.5;
+    int newqnQ, nrho, S, L;
+    basis_list_init(qnlist_full);
+
+    // Loop over possible S (0 or 1)
+    for (S = abs(s1 - s2); S <= s1 + s2; S++) {  // 0 or 1
+        // Loop over possible L (start from 0, up to some Lmax if needed)
+        for (L = 0; L <= 10; L++) {  // Arbitrary max L=10; adjust as needed
+            if (abs(S - L) > J || S + L < J) continue;  // Triangle for J
+            if (pow(-1, L + 1) != P) continue;  // Meson parity P = (-1)^{L+1}
+
+            // For this channel {S,L}, add n=1 to nmax
+            for (nrho = 1; nrho <= nmax; nrho++) {
+                if (1 == nrho) {
+                    newqnQ = 1;  // Start new channel
+                } else {
+                    newqnQ = 0;  // Append to current channel
+                }
+                newqnQ++;
+                //basis_list_push(qnlist_full, newqnQ, 1.0, m1, m2, s1, s2, S, L, J, nrho, getnu(rmin, rmax, nmax, nrho));
+            }
+        }
+    }
+}
+
+// Free basis_list (add if needed)
+void basis_list_free(basis_list *qnlist) {
+    for (int i = 0; i < qnlist->len_list; i++) {
+        free(qnlist->qnum[i]);
+    }
+    free(qnlist->qnum);
+    free(qnlist->len_part);
+}
+
 // SL/jj 基构造函数（支持 S-D 混合：L_min to L_max, e.g., 0 to 2）
 void build_basis_sd(basis_list *qnlist, double s1, double s2, double J, int P,  // P: parity (-1)^L
                     int L_min, int L_max, int nmax, double rmin, double rmax) {  // 径向参数
@@ -204,14 +244,14 @@ static void build_sub_basis_for_L(basis_list *qnlist, double s1, double s2, doub
     }
 
     // 分配临时数组（避免多次 realloc）
-    argsBasis_t *sl_temp = malloc(sl_count * sizeof(argsBasis_t));
-    argsBasis_t *jj_temp = malloc(jj_count * sizeof(argsBasis_t));
+    basis_base_t *sl_temp = malloc(sl_count * sizeof(basis_base_t));
+    basis_base_t *jj_temp = malloc(jj_count * sizeof(basis_base_t));
     int sl_idx = 0, jj_idx = 0;
 
     // 填充 SL
     for (double S = fabs(s1 - s2); S <= s1 + s2 + 1e-10; S += 1.0) {
         if (fabs(S - L) <= J && J <= S + L) {
-            argsBasis_t q;
+            basis_base_t q;
             q.s1 = s1; q.s2 = s2; q.sij = S; q.L = L; q.J = J;
             q.jl = 0.0;  // SL 模式下 jl 无意义，可设 0
             q.lrho = L; q.llam = 0;  // 假设 lrho=L, llam=0（meson Jacobi）
@@ -273,3 +313,4 @@ void build_basis_mixed(basis_list *qnlist, double s1, double s2, double J, int P
     // 日志输出（验证）
     basis_list_logs(*qnlist);
 }
+*/

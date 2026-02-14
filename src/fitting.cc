@@ -69,6 +69,8 @@ double chi_2::operator()(const std::vector<double>& paras) const {
 
 void test(double *a)
 {
+	//call_fitting_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, double *e_out, double **v_out);
+
 	srand(time(0)); 
 
 	chi_2 MinuitFit;

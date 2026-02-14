@@ -10,6 +10,11 @@
 #include <math.h>
 #include <complex.h>
 
+typedef enum orbit_type {
+    ORBIT_GEM,
+    ORBIT_SHO
+} orbit_type_t;
+
 typedef struct argsOrbit
 {
     /* radial number & gaussian parameter */
