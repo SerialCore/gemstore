@@ -23,10 +23,11 @@ const argsModel_t argsNRScreen_meson = {
 
 double NRScreen_T(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
-    double m1 = args_dynmc->m1;
-    double m2 = args_dynmc->m2;
+    double mi = args_dynmc->mi;
+    double mj = args_dynmc->mj;
+    double cent = args_dynmc->OCent;
 
-    return m1 + m2 + p * p / (2.0 * m1) + p * p / (2.0 * m2);
+    return cent * (mi + mj + p * p / (2.0 * mi) + p * p / (2.0 * mj));
 }
 
 double NRScreen_Vconf(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
@@ -38,14 +39,15 @@ double NRScreen_Vconf(double r, const argsModel_t *args_model, const argsModelDy
     double b1 = args_model->b1;
     double mu = args_model->mu;
     double c = args_model->c;
-
-    double C12 = args_dynmc->C12;
     double alpha_s = args_model->alpha_s;
+
+    double Cij = args_dynmc->Cij;
+    double cent = args_dynmc->OCent;
 
     double coul = alpha_s / r;
     double screen = b1 * (1.0 - exp(-mu * r)) / mu;
     
-    return C12 * coul - (3.0 / 4.0) * C12 * screen - (3.0 / 4.0) * C12 * c;
+    return Cij * cent * coul - (3.0 / 4.0) * Cij * cent * screen - (3.0 / 4.0) * Cij * cent * c;
 }
 
 double NRScreen_Vcont(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
@@ -53,11 +55,11 @@ double NRScreen_Vcont(double r, const argsModel_t *args_model, const argsModelDy
     double alpha_s = args_model->alpha_s;
     double sigma = args_model->sigma;
 
-    double m1 = args_dynmc->m1;
-    double m2 = args_dynmc->m2;
+    double mi = args_dynmc->mi;
+    double mj = args_dynmc->mj;
     double sds = args_dynmc->OSdS;
 
-    double magnet = 32.0 * alpha_s * sds / (9.0 * m1 * m2);
+    double magnet = 32.0 * alpha_s * sds / (9.0 * mi * mj);
     double factor = pow(sigma, 3.0) / sqrt(M_PI);
     double exp_term = exp(-sigma * sigma * r * r);
 
@@ -72,16 +74,16 @@ double NRScreen_Vsocm(double r, const argsModel_t *args_model, const argsModelDy
 
     double alpha_s = args_model->alpha_s;
 
-    double m1 = args_dynmc->m1;
-    double m2 = args_dynmc->m2;
-    double C12 = args_dynmc->C12;
-    double lds1 = args_dynmc->OLS1;
-    double lds2 = args_dynmc->OLS2;
+    double mi = args_dynmc->mi;
+    double mj = args_dynmc->mj;
+    double Cij = args_dynmc->Cij;
+    double ldsi = args_dynmc->OLSi;
+    double ldsj = args_dynmc->OLSj;
     
     double tensor = alpha_s / pow(r, 3.0);
-    double magnet = (lds1 / (m1 * m1) + lds2 / (m2 * m2) + (lds1 + lds2) / (m1 * m2));
+    double magnet = (ldsi / (mi * mi) + ldsj / (mj * mj) + (ldsi + ldsj) / (mi * mj));
 
-    return -C12 * tensor * magnet;
+    return -Cij * tensor * magnet;
 }
 
 double NRScreen_Vsotp(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
@@ -94,16 +96,16 @@ double NRScreen_Vsotp(double r, const argsModel_t *args_model, const argsModelDy
     double b1 = args_model->b1;
     double mu = args_model->mu;
 
-    double m1 = args_dynmc->m1;
-    double m2 = args_dynmc->m2;
-    double C12 = args_dynmc->C12;
-    double lds1 = args_dynmc->OLS1;
-    double lds2 = args_dynmc->OLS2;
+    double mi = args_dynmc->mi;
+    double mj = args_dynmc->mj;
+    double Cij = args_dynmc->Cij;
+    double ldsi = args_dynmc->OLSi;
+    double ldsj = args_dynmc->OLSj;
 
     double dcoul_dr = -alpha_s / pow(r, 2.0);
     double dscreen_dr = b1 * exp(-mu * r);
-    double dV_dr = C12 * dcoul_dr - (3.0 / 4.0) * C12 * dscreen_dr;
-    double magnet = (lds1 / (m1 * m1) + lds2 / (m2 * m2));
+    double dV_dr = Cij * dcoul_dr - (3.0 / 4.0) * Cij * dscreen_dr;
+    double magnet = (ldsi / (mi * mi) + ldsj / (mj * mj));
     
     return -0.5 / r * dV_dr * magnet;
 }
@@ -116,12 +118,12 @@ double NRScreen_Vtens(double r, const argsModel_t *args_model, const argsModelDy
 
     double alpha_s = args_model->alpha_s;
 
-    double m1 = args_dynmc->m1;
-    double m2 = args_dynmc->m2;
+    double mi = args_dynmc->mi;
+    double mj = args_dynmc->mj;
     double tens = args_dynmc->OTens;
 
     double tensor = alpha_s / pow(r, 3.0);
-    double magnet = 4.0 * tens / (3.0 * m1 * m2);
+    double magnet = 4.0 * tens / (3.0 * mi * mj);
 
     return tensor * magnet;
 }

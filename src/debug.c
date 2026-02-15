@@ -47,14 +47,14 @@ void debug_soc_operator()
     jj = operator_sdots_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
     printf("Casimir operator value (s1.s2) in jj coupling: %f\n", jj);
 
-    sl = operator_ldots1_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    sl = operator_ldotsi_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
     printf("SOC operator value (l.s1) in sl coupling: %f\n", sl);
-    jj = operator_ldots1_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    jj = operator_ldotsi_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
     printf("SOC operator value (l.s1) in jj coupling: %f\n", jj);
 
-    sl = operator_ldots2_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    sl = operator_ldotsj_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
     printf("SOC operator value (l.s2) in sl coupling: %f\n", sl);
-    jj = operator_ldots2_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    jj = operator_ldotsj_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
     printf("SOC operator value (l.s2) in jj coupling: %f\n", jj);
 
     sl = operator_tensor_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
@@ -74,14 +74,14 @@ void debug_soc_operator()
     jj = operator_sdots_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
     printf("Casimir operator value (s1.s2) in jj coupling: %f\n", jj);
 
-    sl = operator_ldots1_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    sl = operator_ldotsi_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
     printf("SOC operator value (l.s1) in sl coupling: %f\n", sl);
-    jj = operator_ldots1_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    jj = operator_ldotsi_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
     printf("SOC operator value (l.s1) in jj coupling: %f\n", jj);
 
-    sl = operator_ldots2_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    sl = operator_ldotsj_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
     printf("SOC operator value (l.s2) in sl coupling: %f\n", sl);
-    jj = operator_ldots2_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    jj = operator_ldotsj_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
     printf("SOC operator value (l.s2) in jj coupling: %f\n", jj);
 
     sl = operator_tensor_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
@@ -263,17 +263,17 @@ void debug_matrix_element()
     double C12 = -4.0 / 3.0;
     double cen = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
     double sds = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
-    double ls1 = operator_ldots1_sl(s1, s2, S, L, s1, s2, S, L, J);
-    double ls2 = operator_ldots2_sl(s1, s2, S, L, s1, s2, S, L, J);
+    double ls1 = operator_ldotsi_sl(s1, s2, S, L, s1, s2, S, L, J);
+    double ls2 = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
     double ten = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
     argsModelDy_t args_dynmc = {
-        .m1 = m1,
-        .m2 = m2,
-        .C12 = C12,
+        .mi = m1,
+        .mj = m2,
+        .Cij = C12,
         .OCent = cen,
         .OSdS = sds,
-        .OLS1 = ls1,
-        .OLS2 = ls2,
+        .OLSi = ls1,
+        .OLSj = ls2,
         .OTens = ten
     };
     printf("OCen = %f, OSdS = %f, OLS1 = %f, OLS2 = %f, OTens = %f\n", cen, sds, ls1, ls2, ten);

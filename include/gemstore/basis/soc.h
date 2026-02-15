@@ -32,39 +32,39 @@ double sixJ_symbol(double j1, double j2, double j12, double j3, double j, double
 double nineJ_symbol(double j1, double j2, double j12, double j3, double j4, double j34, double j13, double j24, double j);
 
 /* define operator function for sl coupling */
-typedef double (*operator_sl)(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j);
+typedef double (*operator_sl)(double si, double sj, double s, double l, double sip, double sjp, double sp, double lp, double j);
 
 /* return matrix element of center potential in sl couping*/
-double operator_center_sl(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j);
+double operator_center_sl(double si, double sj, double s, double l, double sip, double sjp, double sp, double lp, double j);
 
 /* return matrix element of spin-spin operator in sl couping */
-double operator_sdots_sl(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j);
+double operator_sdots_sl(double si, double sj, double s, double l, double sip, double sjp, double sp, double lp, double j);
 
-/* return matrix element of spin1-orbit operator in sl couping */
-double operator_ldots1_sl(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j);
+/* return matrix element of spini-orbit operator in sl couping */
+double operator_ldotsi_sl(double si, double sj, double s, double l, double sip, double sjp, double sp, double lp, double j);
 
-/* return matrix element of spin2-orbit operator in sl couping */
-double operator_ldots2_sl(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j);
+/* return matrix element of spinj-orbit operator in sl couping */
+double operator_ldotsj_sl(double si, double sj, double s, double l, double sip, double sjp, double sp, double lp, double j);
 
 /* return matrix element of tensor operator in sl couping */
-double operator_tensor_sl(double s1, double s2, double s, double l, double s1p, double s2p, double sp, double lp, double j);
+double operator_tensor_sl(double si, double sj, double s, double l, double sip, double sjp, double sp, double lp, double j);
 
 /* define operator function for sl coupling */
-typedef double (*operator_jj)(double s1, double s2, double l, double jl, double s1p, double s2p, double lp, double jlp, double j);
+typedef double (*operator_jj)(double si, double sj, double l, double jl, double sip, double sjp, double lp, double jlp, double j);
 
 /* return matrix element of center potential in jj couping*/
-double operator_center_jj(double s1, double s2, double l, double jl, double s1p, double s2p, double lp, double jlp, double j);
+double operator_center_jj(double si, double sj, double l, double jl, double sip, double sjp, double lp, double jlp, double j);
 
 /* return matrix element of spin-spin operator in jj couping */
-double operator_sdots_jj(double s1, double s2, double l, double jl, double s1p, double s2p, double lp, double jlp, double j);
+double operator_sdots_jj(double si, double sj, double l, double jl, double sip, double sjp, double lp, double jlp, double j);
 
-/* return matrix element of spin1-orbit operator in jj couping */
-double operator_ldots1_jj(double s1, double s2, double l, double jl, double s1p, double s2p, double lp, double jlp, double j);
+/* return matrix element of spini-orbit operator in jj couping */
+double operator_ldotsi_jj(double si, double sj, double l, double jl, double sip, double sjp, double lp, double jlp, double j);
 
-/* return matrix element of spin2-orbit operator in jj couping */
-double operator_ldots2_jj(double s1, double s2, double l, double jl, double s1p, double s2p, double lp, double jlp, double j);
+/* return matrix element of spinj-orbit operator in jj couping */
+double operator_ldotsj_jj(double si, double sj, double l, double jl, double sip, double sjp, double lp, double jlp, double j);
 
 /* return matrix element of tensor operator in jj couping */
-double operator_tensor_jj(double s1, double s2, double l, double jl, double s1p, double s2p, double lp, double jlp, double j);
+double operator_tensor_jj(double si, double sj, double l, double jl, double sip, double sjp, double lp, double jlp, double j);
 
 #endif

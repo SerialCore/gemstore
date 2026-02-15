@@ -9,28 +9,77 @@
 
 #include <gemstore/model/model.h>
 
-const argsModel_t argsGIScreen_meson = {
-    .mn = 0.220,
-    .ms = 0.419,
-    .mc = 1.628,
-    .mb = 4.977,
-    .mt = 172.57,
-    .b1 = 0.18,
-    .mu = 0.15,
-    .c = -0.253,
-    .sigma_0 = 1.8,
-    .s = 1.55,
-    .epsilon_Coul = 0.0,
-    .epsilon_cont = -0.168,
-    .epsilon_sonu = -0.035,
-    .epsilon_sos = 0.055,
-    .epsilon_tens = 0.025,
-    .alpha1 = 0.25,
-    .alpha2 = 0.15,
-    .alpha3 = 0.20,
-    .gamma1 = 0.5,
-    .gamma2 = 1.5811388300841898,
-    .gamma3 = 15.811388300841898
-};
+#include <math.h>
+
+/* Default meson parameters for model GIScreen */
+extern const argsModel_t argsGIScreen_meson;
+
+/* Default parameters for running strong couping constant */
+extern const double GI_ALPHA_K[3], GI_GAMMA_K[3];
+
+/* Get GI smearing parameter sigma_ij */
+static inline double sigma_ij(double mi, double mj, double sigma0, double s);
+static inline double sigma_ij(double mi, double mj, double sigma0, double s)
+{
+    double msum = mi + mj;
+    double mprod = mi * mj;
+    double frac1 = 4.0 * mprod / (msum * msum);
+    double frac2 = 2.0 * mprod / msum;
+    double term1 = sigma0 * sigma0 * (0.5 + 0.5 * pow(frac1, 4));
+    double term2 = s * s * pow(frac2, 2);
+
+    return sqrt(term1 + term2);
+}
+
+/* Get GI smearing parameters sigma_k_ij */
+static inline void sigma_k_ij(double sigmaij, double sigmak[3]);
+static inline void sigma_k_ij(double sigmaij, double sigmak[3])
+{
+    for (int k = 0; k < 3; k++) {
+        sigmak[k] = GI_GAMMA_K[k] * sigmaij / sqrt(GI_GAMMA_K[k] * GI_GAMMA_K[k] + sigmaij * sigmaij);
+    }
+}
+
+/* Kinetic energy for GIScreen */
+double GIScreen_T(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* GI smearing beta_ij */
+double GIScreen_betaij(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* GI smearing delta_ij */
+double GIScreen_deltaij(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* GI smearing delta_ii */
+double GIScreen_deltaii(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* GI smearing delta_jj */
+double GIScreen_deltajj(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* Coulomb potential for GIScreen */
+double GIScreen_Vcoul(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* Confining potential for GIScreen */
+double GIScreen_Vconf(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* Contact potential for GIScreen */
+double GIScreen_Vcont(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* Spin-orbit coulping for GIScreen */
+double GIScreen_Vsovi(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* Spin-orbit coulping for GIScreen */
+double GIScreen_Vsovj(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* Spin-orbit coulping for GIScreen */
+double GIScreen_Vsovij(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* Thomas precession for GIScreen */
+double GIScreen_Vsosi(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* Thomas precession for GIScreen */
+double GIScreen_Vsosj(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* Tenser potential for GIScreen */
+double GIScreen_Vtens(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
 
 #endif

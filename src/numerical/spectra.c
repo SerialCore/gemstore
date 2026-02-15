@@ -80,9 +80,9 @@ void spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, doubl
     double m2 = getmq(f2, &args_model);
     double C12 = -4.0 / 3.0;
     argsModelDy_t args_dynmc = {
-        .m1 = m1,
-        .m2 = m2,
-        .C12 = C12,
+        .mi = m1,
+        .mj = m2,
+        .Cij = C12,
     };
 
     /* calculate matrix elements */
@@ -96,8 +96,8 @@ void spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, doubl
 
             args_dynmc.OCent = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
             args_dynmc.OSdS = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
-            args_dynmc.OLS1 = operator_ldots1_sl(s1, s2, S, L, s1, s2, S, L, J);
-            args_dynmc.OLS2 = operator_ldots2_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc.OLSi = operator_ldotsi_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc.OLSj = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
             args_dynmc.OTens = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
                 
             mT.value[i][j] = integral_matrix_element_complex(GRnlp_nonexp, NRScreen_T, factor_complex, &args_bra, &args_ket, &args_model, &args_dynmc);

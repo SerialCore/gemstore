@@ -14,6 +14,15 @@ typedef enum model_type {
     MODEL_GI_QUADRA_SCREEN
 } model_type_t;
 
+typedef enum potential_type {
+    POTENTIAL_CENT,
+    POTENTIAL_COUL,
+    POTENTIAL_CONT,
+    POTENTIAL_SOCM,
+    POTENTIAL_SOTP,
+    POTENTIAL_TENS,
+} potential_type_t;
+
 typedef struct argsModel {
     double mn;              /* mass of n quark */
     double ms;              /* mass of s quark */
@@ -35,24 +44,19 @@ typedef struct argsModel {
     double epsilon_sonu;    /* GI smearing parameter for spin-orbit */
     double epsilon_sos;     /* GI smearing parameter for Thomas */
     double epsilon_tens;    /* GI smearing parameter for tensor */
-
-    double alpha1;          /* GI smearing parameter for coupling constant */
-    double alpha2;          /* GI smearing parameter for coupling constant */
-    double alpha3;          /* GI smearing parameter for coupling constant */
-    double gamma1;          /* GI smearing parameter for coupling constant */
-    double gamma2;          /* GI smearing parameter for coupling constant */
-    double gamma3;          /* GI smearing parameter for coupling constant */
 } argsModel_t;
 
 typedef struct argsModelDy {
-    double m1;              /* mass of particle 1 */
-    double m2;              /* mass of particle 2 */
-    double C12;             /* color factor of pair 12 */
+    double mi;              /* mass of particle i */
+    double mj;              /* mass of particle j */
+    double Cij;             /* color factor of pair ij */
     double OCent;           /* operator value of centor potential */
     double OSdS;            /* operator value of spin-spin coupling */
-    double OLS1;            /* operator value of orbit-spin1 coupling */
-    double OLS2;            /* operator value of orbit-spin2 coupling */
+    double OLSi;            /* operator value of orbit-spini coupling */
+    double OLSj;            /* operator value of orbit-spinj coupling */
     double OTens;           /* operator value of tensor potential */
+    double Sigij;           /* GI smearing parameter sigma_ij */
+    double Sigkij[3];         /* GI smearing parameters sigma_k_ij */
 } argsModelDy_t;
 
 typedef double (*potential_t)(double x, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);

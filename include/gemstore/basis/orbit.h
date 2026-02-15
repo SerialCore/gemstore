@@ -28,7 +28,7 @@ typedef struct argsOrbit
 /* Scale ν[n, nmax, rmax, rmin] = 1/rmin^2 * (rmax/rmin)^((2 - 2n)/(nmax-1)) */
 static inline double getnu(int n, int nmax, double rmax, double rmin)
 {
-    double fm = 5.0676896;
+    double fm = 5.06773093854369882649;
     double r1 = rmin * fm;
 
     if (nmax <= 1) {
