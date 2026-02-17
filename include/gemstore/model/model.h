@@ -41,7 +41,7 @@ typedef struct argsModel {
 
     double epsilon_Coul;    /* GI smearing parameter for Coulumb */
     double epsilon_cont;    /* GI smearing parameter for contact */
-    double epsilon_sonu;    /* GI smearing parameter for spin-orbit */
+    double epsilon_sov;    /* GI smearing parameter for spin-orbit */
     double epsilon_sos;     /* GI smearing parameter for Thomas */
     double epsilon_tens;    /* GI smearing parameter for tensor */
 } argsModel_t;

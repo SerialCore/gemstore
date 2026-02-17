@@ -27,7 +27,7 @@ const argsModel_t argsGIScreen_meson = {
     /* GI smearing / contact / spin-orbit / tensor coefficients */
     .epsilon_Coul = 0.0,
     .epsilon_cont = -0.168,
-    .epsilon_sonu = -0.035,
+    .epsilon_sov = -0.035,
     .epsilon_sos = 0.055,
     .epsilon_tens = 0.025,
 };
@@ -44,38 +44,96 @@ double GIScreen_T(double p, const argsModel_t *args_model, const argsModelDy_t *
     return cent * sqrt(mi * mi + p * p) + cent * sqrt(mj * mj + p * p);
 }
 
-double GIScreen_betaij(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIScreen_betaij_coul(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
+    double epsilon_Coul = args_model->epsilon_Coul;
     double mi = args_dynmc->mi;
     double mj = args_dynmc->mj;
     double cent = args_dynmc->OCent;
 
-    return cent * (1.0 + p * p / (sqrt(p * p + mi * mi) * sqrt(p * p + mj * mj)));
+    double betaij = cent * (1.0 + p * p / (sqrt(p * p + mi * mi) * sqrt(p * p + mj * mj)));
+
+    return pow(betaij, 0.5 + epsilon_Coul);
 }
 
-double GIScreen_deltaij(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIScreen_deltaij_cont(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
+    double epsilon_cont = args_model->epsilon_cont;
     double mi = args_dynmc->mi;
     double mj = args_dynmc->mj;
     double cent = args_dynmc->OCent;
 
-    return cent * mi * mj / (sqrt(p * p + mi * mi) * sqrt(p * p + mj * mj));
+    double deltaij = cent * mi * mj / (sqrt(p * p + mi * mi) * sqrt(p * p + mj * mj));
+
+    return pow(deltaij, 0.5 + epsilon_cont);
 }
 
-double GIScreen_deltaii(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIScreen_deltaii_sov(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
+    double epsilon_sov = args_model->epsilon_sov;
     double mi = args_dynmc->mi;
     double cent = args_dynmc->OCent;
 
-    return cent * mi * mi / (sqrt(p * p + mi * mi) * sqrt(p * p + mi * mi));
+    double deltaii = cent * mi * mi / (sqrt(p * p + mi * mi) * sqrt(p * p + mi * mi));
+
+    return pow(deltaii, 0.5 + epsilon_sov);
 }
 
-double GIScreen_deltajj(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIScreen_deltajj_sov(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
+    double epsilon_sov = args_model->epsilon_sov;
     double mj = args_dynmc->mj;
     double cent = args_dynmc->OCent;
 
-    return cent * mj * mj / (sqrt(p * p + mj * mj) * sqrt(p * p + mj * mj));
+    double deltajj = cent * mj * mj / (sqrt(p * p + mj * mj) * sqrt(p * p + mj * mj));
+
+    return pow(deltajj, 0.5 + epsilon_sov);
+}
+
+double GIScreen_deltaij_sov(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+{
+    double epsilon_sov = args_model->epsilon_sov;
+    double mi = args_dynmc->mi;
+    double mj = args_dynmc->mj;
+    double cent = args_dynmc->OCent;
+
+    double deltaij = cent * mi * mj / (sqrt(p * p + mi * mi) * sqrt(p * p + mj * mj));
+
+    return pow(deltaij, 0.5 + epsilon_sov);
+}
+
+double GIScreen_deltaii_sos(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+{
+    double epsilon_sos = args_model->epsilon_sos;
+    double mi = args_dynmc->mi;
+    double cent = args_dynmc->OCent;
+
+    double deltaii = cent * mi * mi / (sqrt(p * p + mi * mi) * sqrt(p * p + mi * mi));
+
+    return pow(deltaii, 0.5 + epsilon_sos);
+}
+
+double GIScreen_deltajj_sos(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+{
+    double epsilon_sos = args_model->epsilon_sos;
+    double mj = args_dynmc->mj;
+    double cent = args_dynmc->OCent;
+
+    double deltajj = cent * mj * mj / (sqrt(p * p + mj * mj) * sqrt(p * p + mj * mj));
+
+    return pow(deltajj, 0.5 + epsilon_sos);
+}
+
+double GIScreen_deltaij_tens(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+{
+    double epsilon_tens = args_model->epsilon_tens;
+    double mi = args_dynmc->mi;
+    double mj = args_dynmc->mj;
+    double cent = args_dynmc->OCent;
+
+    double deltaij = cent * mi * mj / (sqrt(p * p + mi * mi) * sqrt(p * p + mj * mj));
+
+    return pow(deltaij, 0.5 + epsilon_tens);
 }
 
 double GIScreen_Vcoul(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
@@ -216,9 +274,7 @@ double GIScreen_Vsosi(double r, const argsModel_t *args_model, const argsModelDy
     }
 
     double mi = args_dynmc->mi;
-    double Cij = args_dynmc->Cij;
     double ldsi = args_dynmc->OLSi;
-    double sigmak[3] = {args_dynmc->Sigkij[0], args_dynmc->Sigkij[1], args_dynmc->Sigkij[2]};
 
     double pref = -ldsi / (2 * r * mi * mi);
 
@@ -236,9 +292,7 @@ double GIScreen_Vsosj(double r, const argsModel_t *args_model, const argsModelDy
     }
 
     double mj = args_dynmc->mj;
-    double Cij = args_dynmc->Cij;
     double ldsj = args_dynmc->OLSj;
-    double sigmak[3] = {args_dynmc->Sigkij[0], args_dynmc->Sigkij[1], args_dynmc->Sigkij[2]};
 
     double pref = -ldsj / (2 * r * mj * mj);
 

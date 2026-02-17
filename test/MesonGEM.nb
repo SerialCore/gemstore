@@ -23,10 +23,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[      1060,         20]
-NotebookDataLength[    316153,       8006]
-NotebookOptionsPosition[    315332,       7981]
-NotebookOutlinePosition[    315723,       7997]
-CellTagsIndexPosition[    315680,       7994]
+NotebookDataLength[    314577,       7984]
+NotebookOptionsPosition[    313752,       7959]
+NotebookOutlinePosition[    314143,       7975]
+CellTagsIndexPosition[    314100,       7972]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -4053,31 +4053,7 @@ Cell[BoxData[{
     "]"}], ":=", "\[IndentingNewLine]", 
    RowBox[{"Module", "[", 
     RowBox[{
-     RowBox[{"{", 
-      RowBox[{
-      "Cij", ",", "S", ",", "L", ",", "J", ",", "nmax", ",", "rmax", ",", 
-       "rmin", ",", "mi", ",", "mj", ",", "b", ",", "\[Mu]", ",", "c", ",", 
-       "\[Sigma]0", ",", "s", ",", "\[Epsilon]Coul", ",", "\[Epsilon]cont", ",",
-        "\[Epsilon]so\[Nu]", ",", "\[Epsilon]sos", ",", "\[Epsilon]tens", ",",
-        "\[Alpha]k", ",", "\[Gamma]k", ",", "SL", ",", "OSdS", ",", "OS1L", ",",
-        "OS2L", ",", "OTen", ",", "OCen", ",", "T", ",", "\[Beta]ij", ",", 
-       "\[Delta]ij", ",", "\[Delta]ii", ",", "\[Delta]jj", ",", "\[Sigma]ij", 
-       ",", "\[Sigma]kij", ",", "VCoul", ",", "Vconf", ",", "Vcont", ",", 
-       "Vtens", ",", "Vso\[Nu]i", ",", "Vso\[Nu]j", ",", "Vso\[Nu]ij", ",", 
-       "Vsosi", ",", "Vsosj", ",", "NSL", ",", "mT", ",", "m\[Beta]ijCoul", ",",
-        "m\[Delta]ijcont", ",", "mVCoul", ",", "mVconf", ",", "mVcont", ",", 
-       "m\[Delta]ijtens", ",", "mVtens", ",", "m\[Delta]iiso\[Nu]", ",", 
-       "mVso\[Nu]i", ",", "m\[Delta]iisos", ",", "mVsosi", ",", 
-       "m\[Delta]jjso\[Nu]", ",", "mVso\[Nu]j", ",", "m\[Delta]jjsos", ",", 
-       "mVsosj", ",", "m\[Delta]ijso\[Nu]", ",", "mVso\[Nu]ij", ",", "Nfi", ",",
-        "RX", ",", "vt", ",", "getNm", ",", "mTt", ",", "m\[Beta]ijCoult", ",",
-        "m\[Delta]ijcontt", ",", "mVCoult", ",", "mVconft", ",", "mVcontt", ",",
-        "m\[Delta]ijtenst", ",", "mVtenst", ",", "m\[Delta]iiso\[Nu]t", ",", 
-       "mVso\[Nu]it", ",", "m\[Delta]iisost", ",", "mVsosit", ",", 
-       "m\[Delta]jjso\[Nu]t", ",", "mVso\[Nu]jt", ",", "m\[Delta]jjsost", ",",
-        "mVsosjt", ",", "m\[Delta]ijso\[Nu]t", ",", "mVso\[Nu]ijt", ",", 
-       "Hfi", ",", "e", ",", "u", ",", "v"}], "}"}], ",", 
-     "\[IndentingNewLine]", 
+     RowBox[{"{", "}"}], ",", "\[IndentingNewLine]", 
      RowBox[{"(*", " ", "inputs", " ", "*)"}], "\[IndentingNewLine]", 
      RowBox[{
       RowBox[{"Cij", "=", 
@@ -5971,8 +5947,10 @@ Cell[BoxData[{
    3.976863667723181*^9, 3.976863753062821*^9}, {3.976875921253442*^9, 
    3.9768761011685123`*^9}, 3.976876291703207*^9, {3.9770464635952787`*^9, 
    3.977046467468814*^9}, {3.977264733270173*^9, 3.977264740252285*^9}, {
-   3.977265120555736*^9, 3.977265136866865*^9}},
- CellLabel->"In[41]:=",ExpressionUUID->"bc55fd56-139b-4373-89ca-2ddfea3e0906"]
+   3.977265120555736*^9, 3.977265136866865*^9}, {3.9802410679214897`*^9, 
+   3.980241095269717*^9}, {3.980319935920836*^9, 3.9803199411804657`*^9}, 
+   3.980323707120933*^9},ExpressionUUID->"bc55fd56-139b-4373-89ca-\
+2ddfea3e0906"]
 }, Closed]],
 
 Cell[CellGroupData[{
@@ -8011,15 +7989,15 @@ Cell[56634, 1437, 28157, 714, 70, "Input",ExpressionUUID->"566f93ef-099c-422c-89
 }, Closed]],
 Cell[CellGroupData[{
 Cell[84828, 2156, 526, 8, 51, "Section",ExpressionUUID->"5a1b978f-831b-4ca3-aef7-5570e6e188e9"],
-Cell[85357, 2166, 73839, 1867, 70, "Input",ExpressionUUID->"712039a1-1be2-45da-ad6d-3a03ce2876ce"]
+Cell[85357, 2166, 73839, 1867, 5376, "Input",ExpressionUUID->"712039a1-1be2-45da-ad6d-3a03ce2876ce"]
 }, Closed]],
 Cell[CellGroupData[{
 Cell[159233, 4038, 409, 6, 51, "Section",ExpressionUUID->"bb49cc66-fa4f-47c5-9591-af9f79f3df39"],
-Cell[159645, 4046, 76325, 1928, 70, "Input",ExpressionUUID->"bc55fd56-139b-4373-89ca-2ddfea3e0906"]
+Cell[159645, 4046, 74745, 1906, 5349, "Input",ExpressionUUID->"bc55fd56-139b-4373-89ca-2ddfea3e0906"]
 }, Closed]],
 Cell[CellGroupData[{
-Cell[236007, 5979, 471, 7, 51, "Section",ExpressionUUID->"9236354d-e94c-47de-aee0-aba21274ec6c"],
-Cell[236481, 5988, 78835, 1990, 70, "Input",ExpressionUUID->"ed5079f2-791d-4232-a798-52a85c357888"]
+Cell[234427, 5957, 471, 7, 51, "Section",ExpressionUUID->"9236354d-e94c-47de-aee0-aba21274ec6c"],
+Cell[234901, 5966, 78835, 1990, 70, "Input",ExpressionUUID->"ed5079f2-791d-4232-a798-52a85c357888"]
 }, Closed]]
 }
 ]

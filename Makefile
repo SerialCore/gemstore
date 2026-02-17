@@ -4,6 +4,11 @@ CFLAGS = -Wall -O2
 CPPFLAGS = -Wall -O2
 LDFLAGS = -L$(MINUIT2_DIR) -lMinuit2 -lm
 
+ifdef USE_LAPACKE
+    CFLAGS += -DLAPACKE
+    LDFLAGS += -llapacke -lopenblas
+endif
+
 INC_DIR = include/
 OBJ_DIR = obj/
 SRC_DIR = src/
@@ -18,12 +23,6 @@ LIBMINUIT2 = $(MINUIT2_DIR)libMinuit2.a
 INCLUDES = -I$(INC_DIR)
 INCLUDES_CPP = $(INCLUDES) -I$(MINUIT2_DIR)include/
 
-#OBJECTS = $(patsubst $(BASIS_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(BASIS_DIR)*.c)) \
-		$(patsubst $(MODEL_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(MODEL_DIR)*.c)) \
-		$(patsubst $(NUMERICAL_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(NUMERICAL_DIR)*.c)) \
-		$(patsubst $(SRC_DIR)%.c, $(OBJ_DIR)%.o, $(wildcard $(SRC_DIR)*.c)) \
-		$(patsubst $(SRC_DIR)%.cc, $(OBJ_DIR)%.o, $(wildcard $(SRC_DIR)*.cc))
-
 C_SOURCES = $(wildcard $(SRC_DIR)*.c $(MODEL_DIR)*.c $(BASIS_DIR)*.c $(NUMERICAL_DIR)*.c)
 CPP_SOURCES = $(wildcard $(SRC_DIR)*.cc)
 
@@ -37,15 +36,6 @@ $(EXCUTEABLE): $(OBJECTS) $(LIBMINUIT2)
 
 $(LIBMINUIT2):
 	$(MAKE) -C $(MINUIT2_DIR)
-
-#$(OBJ_DIR)%.o: $(BASIS_DIR)%.c
-#	${CC} $(CFLAGS) $(INCLUDES) -c $< -o $@ 
-
-#$(OBJ_DIR)%.o: $(MODEL_DIR)%.c
-#	${CC} $(CFLAGS) $(INCLUDES) -c $< -o $@
-
-#$(OBJ_DIR)%.o: $(NUMERICAL_DIR)%.c
-#	${CC} $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJ_DIR)%.o: %.c
 	@mkdir -p $(@D)

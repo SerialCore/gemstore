@@ -303,40 +303,63 @@ void debug_matrix_element()
 
 void debug_eigen_system()
 {
-    int n = 10;
-    matrix_t mat = matrix_random(n, n);
-    printf("Random matrix:\n");
-    matrix_print(&mat);
+    int n = 4;
+    matrix_t a = matrix_init(n, n);
+    a.value[0][0] = 2.1; a.value[0][1] = 1.2; a.value[0][2] = 1.3; a.value[0][3] = 1.4;
+    a.value[1][0] = 1.2; a.value[1][1] = 2.2; a.value[1][2] = 1.3; a.value[1][3] = 1.4;
+    a.value[2][0] = 1.3; a.value[2][1] = 1.3; a.value[2][2] = 2.3; a.value[2][3] = 1.2;
+    a.value[3][0] = 1.4; a.value[3][1] = 1.4; a.value[3][2] = 1.2; a.value[3][3] = 2.4;
 
-    double *e = (double *)malloc(n * sizeof(double));
-    double **v = (double **)malloc(n * sizeof(double *));
-    for (int i = 0; i < n; i++) {
-        v[i] = (double *)malloc(n * sizeof(double));
+    matrix_t b = matrix_init(n, n);
+    b.value[0][0] = 1.0; b.value[0][1] = 0.9; b.value[0][2] = 0.8; b.value[0][3] = 0.7;
+    b.value[1][0] = 0.9; b.value[1][1] = 1.0; b.value[1][2] = 0.7; b.value[1][3] = 0.6;
+    b.value[2][0] = 0.8; b.value[2][1] = 0.7; b.value[2][2] = 1.0; b.value[2][3] = 0.6;
+    b.value[3][0] = 0.7; b.value[3][1] = 0.6; b.value[3][2] = 0.6; b.value[3][3] = 1.0;
+
+    array_t e = array_init(n);
+    matrix_t v = matrix_init(n, n);
+
+#ifdef LAPACKE
+    lapack_general(a.value, b.value, n, e.value, v.value, n);
+#else
+    eigen_general(a.value, b.value, n, e.value, v.value, n);
+#endif
+
+    printf("A:\n");
+    matrix_print(&a);
+    printf("B:\n");
+    matrix_print(&b);
+    printf("e:\n");
+    array_print(&e);
+    printf("v:\n");
+    matrix_print(&v);
+
+    /* verify eigen vectors */
+    printf("Residual of Av - eBv:\n");
+    array_t res1 = array_init(n);
+    array_t res2 = array_init(n);
+    for (int k = 0; k < n; k++) {
+        for (int i = 0; i < n; i++) {
+        double sum1 = 0.0;
+        double sum2 = 0.0;
+        for (int j = 0; j < n; j++) {
+            sum1 += a.value[i][j] * v.value[k][j];
+            sum2 += b.value[i][j] * v.value[k][j];
+        }
+        res1.value[i] = sum1;
+        res2.value[i] = sum2;
+        }
+        for (int i = 0; i < n; i++) {
+            res1.value[i] -= e.value[k] * res2.value[i];
+        }
+        array_print(&res1);
     }
 
-    array_t val = {
-        .con = n,
-        .value = e
-    };
-    matrix_t vec = {
-        .row = n,
-        .col = n,
-        .value = v
-    };
-
-    eigen_standard_thread(mat.value, n, e, v, n);
-    //eigen_general_thread(Hfi, Nfi, n, e1, e2, v, n, &info);
-    
-    printf("Eigen values:\n");
-    array_print(&val);
-    printf("Eigen vectors:\n");
-    matrix_print(&vec);
-
-    for (int i = 0; i < n; i++) {
-        free(v[i]);
-    }
-    free(v);
-    free(e);
-    matrix_free(&mat);
+    matrix_free(&a);
+    matrix_free(&b);
+    array_free(&e);
+    matrix_free(&v);
+    array_free(&res1);
+    array_free(&res2);
 }
 

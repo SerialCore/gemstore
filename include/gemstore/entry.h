@@ -14,11 +14,15 @@ extern "C" {
 
 double call_fitting_meson_NRScreen(int f1, int f2, int N, int S, int L, int J, int nmax, double rmax, double rmin, const double *params);
 
+double call_fitting_meson_GIScreen(int f1, int f2, int N, int S, int L, int J, int nmax, double rmax, double rmin, const double *params);
+
 #ifdef __cplusplus
 }
 #endif
 
 void call_spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin);
+
+void call_spectra_meson_GIScreen(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin);
 
 void call_minuit2_chi2();
 

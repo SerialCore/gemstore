@@ -43,17 +43,29 @@ static inline void sigma_k_ij(double sigmaij, double sigmak[3])
 /* Kinetic energy for GIScreen */
 double GIScreen_T(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
 
-/* GI smearing beta_ij */
-double GIScreen_betaij(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+/* GI smearing beta_ij for Vcoul */
+double GIScreen_betaij_coul(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
 
-/* GI smearing delta_ij */
-double GIScreen_deltaij(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+/* GI smearing delta_ij for Vcont */
+double GIScreen_deltaij_cont(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
 
-/* GI smearing delta_ii */
-double GIScreen_deltaii(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+/* GI smearing delta_ii for Vsovi */
+double GIScreen_deltaii_sov(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
 
-/* GI smearing delta_jj */
-double GIScreen_deltajj(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+/* GI smearing delta_jj for Vsovj */
+double GIScreen_deltajj_sov(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* GI smearing delta_ij for Vsovij */
+double GIScreen_deltaij_sov(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* GI smearing delta_ii for Vsosi */
+double GIScreen_deltaii_sos(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* GI smearing delta_jj for Vsosj */
+double GIScreen_deltajj_sos(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
+
+/* GI smearing delta_ij for Vtens */
+double GIScreen_deltaij_tens(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);
 
 /* Coulomb potential for GIScreen */
 double GIScreen_Vcoul(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);

@@ -21,15 +21,9 @@ const argsModel_t argsGIString_meson = {
     .s = 1.55,
     .epsilon_Coul = 0.0,
     .epsilon_cont = -0.168,
-    .epsilon_sonu = -0.035,
+    .epsilon_sov = -0.035,
     .epsilon_sos = 0.055,
-    .epsilon_tens = 0.025,
-    .alpha1 = 0.25,
-    .alpha2 = 0.15,
-    .alpha3 = 0.20,
-    .gamma1 = 0.5,
-    .gamma2 = 1.5811388300841898,
-    .gamma3 = 15.811388300841898
+    .epsilon_tens = 0.025
 };
 
 #endif
