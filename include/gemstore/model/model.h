@@ -41,7 +41,7 @@ typedef struct argsModel {
 
     double epsilon_Coul;    /* GI smearing parameter for Coulumb */
     double epsilon_cont;    /* GI smearing parameter for contact */
-    double epsilon_sov;    /* GI smearing parameter for spin-orbit */
+    double epsilon_sov;     /* GI smearing parameter for spin-orbit */
     double epsilon_sos;     /* GI smearing parameter for Thomas */
     double epsilon_tens;    /* GI smearing parameter for tensor */
 } argsModel_t;
@@ -56,7 +56,7 @@ typedef struct argsModelDy {
     double OLSj;            /* operator value of orbit-spinj coupling */
     double OTens;           /* operator value of tensor potential */
     double Sigij;           /* GI smearing parameter sigma_ij */
-    double Sigkij[3];         /* GI smearing parameters sigma_k_ij */
+    double Sigkij[3];       /* GI smearing parameters sigma_k_ij */
 } argsModelDy_t;
 
 typedef double (*potential_t)(double x, const argsModel_t *args_model, const argsModelDy_t *args_dynmc);

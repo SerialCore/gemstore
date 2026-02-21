@@ -76,14 +76,14 @@ const std::vector<State> experimental_data = {
     {4, 4, 3, 1, 1, 2, 10.5240,  0.002}    // χb2(3P)
 };
 
-const int N_PARAMS = 9;		/* number of parameters to be fitted */
+const int N_PARAMS = 13;		/* number of parameters to be fitted */
 
 double compute_chi2(const std::vector<double>& params)
 {
 	double chi_square = 0.0;
 
     for (const auto& state : experimental_data) {
-        double e_out = call_fitting_meson_NRScreen(state.f1, state.f2, state.N, state.S, state.L, state.J, 20, 10.0, 0.1, params.data());
+        double e_out = call_fitting_meson_GIScreen(state.f1, state.f2, state.N, state.S, state.L, state.J, 20, 10.0, 0.1, params.data());
 
 		//std::cout << "State (" << state.f1 << "," << state.f2 << ") calc = " << e_out << "  exp = " << state.exp_mass << std::endl;
         double diff = e_out - state.exp_mass;
@@ -124,15 +124,19 @@ void perform_fit(double *params_out)
     double step = 0.01;  	/* initial guess of step */
     /*double err = 0.1;    	 initial guess of error */
 
-    upar.Add("mn", 0.606, step, 0.1, 1.0);
-    upar.Add("ms", 0.780, step, 0.3, 1.0);
-    upar.Add("mc", 1.984, step, 1.0, 3.0);
-    upar.Add("mb", 5.368, step, 4.0, 6.0);
-    upar.Add("as", 0.3930, step, 0.1, 0.5);
-    upar.Add("b1", 0.2312, step, 0.1, 0.3);
-    upar.Add("mu", 0.069, step, 0.01, 0.1);
-    upar.Add("c", -1.1711, step, -2.0, 0.0);
-    upar.Add("sig", 1.842, step, 1.0, 3.0);
+    upar.Add("mn", 0.220, step, 0.1, 1.0);
+    upar.Add("ms", 0.419, step, 0.3, 1.0);
+    upar.Add("mc", 1.628, step, 1.0, 3.0);
+    upar.Add("mb", 4.977, step, 4.0, 6.0);
+    upar.Add("b1", 0.18, step, 0.1, 0.3);
+    upar.Add("mu", 0.15, step, 0.1, 0.2);
+    upar.Add("c", -0.253, step, -2.0, 0.0);
+    upar.Add("sig0", 1.8, step, 1.0, 3.0);
+    upar.Add("s", 1.55, step, 1.0, 3.0);
+    upar.Add("econt", -0.168, step, -0.5, 0.0);
+    upar.Add("esov", -0.035, step, -0.1, 0.1);
+    upar.Add("esos", 0.055, step, -0.1, 0.1);
+    upar.Add("etens", 0.025, step, -0.1, 0.1);
 
     /* use of Migrad algorithm with strategy 2, high precision */
     ROOT::Minuit2::MnMigrad migrad(minuit_fit, upar, 2);

@@ -10,26 +10,39 @@
 #include <math.h>
 
 const argsModel_t argsGIScreen_meson = {
-    /* quark masses (GeV) */
     .mn = 0.220,
     .ms = 0.419,
     .mc = 1.628,
     .mb = 4.977,
     .mt = 172.57,
-
-    /* GI screened string model parameters */
     .b1 = 0.18,
     .mu = 0.15,
     .c = -0.253,
     .sigma_0 = 1.8,
     .s = 1.55,
-    
-    /* GI smearing / contact / spin-orbit / tensor coefficients */
     .epsilon_Coul = 0.0,
     .epsilon_cont = -0.168,
     .epsilon_sov = -0.035,
     .epsilon_sos = 0.055,
     .epsilon_tens = 0.025,
+};
+
+const argsModel_t argsGIScreen_meson_fitted = {
+    .mn = 0.2615,
+    .ms = 0.4520,
+    .mc = 1.6769,
+    .mb = 5.0232,
+    .mt = 172.57,
+    .b1 = 0.2309,
+    .mu = 0.1073,
+    .c = -0.3831,
+    .sigma_0 = 2.1036,
+    .s = 1.2858,
+    .epsilon_Coul = 0.0,
+    .epsilon_cont = -0.1012,
+    .epsilon_sov = -0.0997,
+    .epsilon_sos = 0.0993,
+    .epsilon_tens = -0.1000,
 };
 
 const double GI_ALPHA_K[3] = {0.25, 0.15, 0.20};

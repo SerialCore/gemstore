@@ -66,11 +66,17 @@ double call_fitting_meson_GIScreen(int f1, int f2, int N, int S, int L, int J, i
         .ms = params[1],
         .mc = params[2],
         .mb = params[3],
-        .alpha_s = params[4],
-        .b1 = params[5],
-        .mu = params[6],
-        .c = params[7],
-        .sigma = params[8]
+        .mt = 172.57,
+        .b1 = params[4],
+        .mu = params[5],
+        .c = params[6],
+        .sigma_0 = params[7],
+        .s = params[8],
+        .epsilon_Coul = 0.0,
+        .epsilon_cont = params[9],
+        .epsilon_sov = params[10],
+        .epsilon_sos = params[11],
+        .epsilon_tens = params[12],
     };
 
     spectra_meson_GIScreen(f1, f2, S, L, J, nmax, rmax, rmin, &eigenvalue, NULL, 0, &args_model);
@@ -82,6 +88,6 @@ double call_fitting_meson_GIScreen(int f1, int f2, int N, int S, int L, int J, i
 
 void call_minuit2_chi2()
 {
-    double *params = (double *)malloc(9 * sizeof(double));
+    double *params = (double *)malloc(20 * sizeof(double));
     perform_fit(params);
 }

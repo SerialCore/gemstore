@@ -13,6 +13,7 @@
 
 /* Default meson parameters for model GIScreen */
 extern const argsModel_t argsGIScreen_meson;
+extern const argsModel_t argsGIScreen_meson_fitted;
 
 /* Default parameters for running strong couping constant */
 extern const double GI_ALPHA_K[3], GI_GAMMA_K[3];
