@@ -8,10 +8,7 @@
 #include <gemstore/numerical/matrix.h>
 #include <gemstore/numerical/integral.h>
 #include <gemstore/numerical/eigen.h>
-
-#include <gemstore/model/model.h>
-#include <gemstore/model/NRScreen.h>
-#include <gemstore/model/GIScreen.h>
+#include <gemstore/numerical/model.h>
 
 #include <gemstore/basis/basis.h>
 #include <gemstore/basis/orbit.h>
@@ -20,8 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static inline double getmq(int index, argsModel_t *args_model);
-static inline double getmq(int index, argsModel_t *args_model)
+static inline double getmq(int index, const argsModel_t *args_model);
+static inline double getmq(int index, const argsModel_t *args_model)
 {
     double mq;
 
@@ -50,7 +47,9 @@ static inline double getmq(int index, argsModel_t *args_model)
     return mq;
 }
 
-void spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, array_t *e_out, matrix_t *v_out, int v_len, argsModel_t *params)
+void spectra_meson_NR(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, 
+    const argsModel_t *args_model, argsModelDy_t *args_dynmc,
+    array_t *e_out, matrix_t *v_out, int v_len)
 {
     /* construct basis */
     argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
@@ -77,16 +76,13 @@ void spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, doubl
     argsOrbit_t args_ket;
     double factor;
     double factor_complex;
-    argsModel_t args_model = (params == NULL)? argsNRScreen_meson : *params;
     double s1 = 0.5, s2 = 0.5;
-    double m1 = getmq(f1, &args_model);
-    double m2 = getmq(f2, &args_model);
+    double m1 = getmq(f1, args_model);
+    double m2 = getmq(f2, args_model);
     double C12 = -4.0 / 3.0;
-    argsModelDy_t args_dynmc = {
-        .mi = m1,
-        .mj = m2,
-        .Cij = C12,
-    };
+    args_dynmc->mi = m1;
+    args_dynmc->mj = m2;
+    args_dynmc->Cij = C12;
 
     /* calculate matrix elements */
     for (int i = 0; i < nmax; i++) {
@@ -97,19 +93,19 @@ void spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, doubl
             factor = 1 / sqrt(args_bra.scale + args_ket.scale);
             factor_complex =  sqrt(4 * args_bra.scale * args_ket.scale / (args_bra.scale + args_ket.scale));
 
-            args_dynmc.OCent = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
-            args_dynmc.OSdS = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
-            args_dynmc.OLSi = operator_ldotsi_sl(s1, s2, S, L, s1, s2, S, L, J);
-            args_dynmc.OLSj = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
-            args_dynmc.OTens = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OCent = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OSdS = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OLSi = operator_ldotsi_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OLSj = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OTens = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
                 
-            mT.value[i][j] = integral_matrix_element_complex(GRnlp_nonexp, NRScreen_T, factor_complex, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mVconf.value[i][j] = integral_matrix_element(GRnlr_nonexp, NRScreen_Vconf, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mVcont.value[i][j] = integral_matrix_element(GRnlr_nonexp, NRScreen_Vcont, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mVsocm.value[i][j] = integral_matrix_element(GRnlr_nonexp, NRScreen_Vsocm, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mVsotp.value[i][j] = integral_matrix_element(GRnlr_nonexp, NRScreen_Vsotp, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mVtens.value[i][j] = integral_matrix_element(GRnlr_nonexp, NRScreen_Vtens, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-            Nfi.value[i][j] = integral_wfn_overlap(GRnlr_nonexp, factor, &args_bra, &args_ket);
+            mT.value[i][j] = integral_matrix_element_complex(GRnlp, NRVt, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
+            mVconf.value[i][j] = integral_matrix_element(GRnlr, NRVconf, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            mVcont.value[i][j] = integral_matrix_element(GRnlr, NRVcont, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            mVsocm.value[i][j] = integral_matrix_element(GRnlr, NRVsocm, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            mVsotp.value[i][j] = integral_matrix_element(GRnlr, NRVsotp, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            mVtens.value[i][j] = integral_matrix_element(GRnlr, NRVtens, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            Nfi.value[i][j] = integral_wfn_overlap(GRnlr, factor, &args_bra, &args_ket);
         }
     }
 
@@ -132,7 +128,9 @@ void spectra_meson_NRScreen(int f1, int f2, int S, int L, int J, int nmax, doubl
     matrix_free(&Nfi);
 }
 
-void spectra_meson_GIScreen(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, array_t *e_out, matrix_t *v_out, int v_len, argsModel_t *params)
+void spectra_meson_GI(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, 
+    const argsModel_t *args_model, argsModelDy_t *args_dynmc,
+    array_t *e_out, matrix_t *v_out, int v_len)
 {
     /* construct basis */
     argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
@@ -189,19 +187,16 @@ void spectra_meson_GIScreen(int f1, int f2, int S, int L, int J, int nmax, doubl
     argsOrbit_t args_ket;
     double factor;
     double factor_complex;
-    argsModel_t args_model = (params == NULL)? argsGIScreen_meson : *params;
     double s1 = 0.5, s2 = 0.5;
-    double m1 = getmq(f1, &args_model);
-    double m2 = getmq(f2, &args_model);
+    double m1 = getmq(f1, args_model);
+    double m2 = getmq(f2, args_model);
     double C12 = -4.0 / 3.0;
-    double sigmaij = sigma_ij(m1, m2, args_model.sigma_0, args_model.s);
-    argsModelDy_t args_dynmc = {
-        .mi = m1,
-        .mj = m2,
-        .Cij = C12,
-        .Sigij = sigmaij
-    };
-    sigma_k_ij(sigmaij, args_dynmc.Sigkij);
+    double sigmaij = sigma_ij(m1, m2, args_model->sigma_0, args_model->s);
+    args_dynmc->mi = m1;
+    args_dynmc->mj = m2;
+    args_dynmc->Cij = C12;
+    args_dynmc->Sigij = sigmaij;
+    sigma_k_ij(sigmaij, args_dynmc->Sigkij);
 
     /* calculate matrix elements */
     for (int i = 0; i < nmax; i++) {
@@ -212,31 +207,31 @@ void spectra_meson_GIScreen(int f1, int f2, int S, int L, int J, int nmax, doubl
             factor = 1 / sqrt(args_bra.scale + args_ket.scale);
             factor_complex =  sqrt(4 * args_bra.scale * args_ket.scale / (args_bra.scale + args_ket.scale));
 
-            args_dynmc.OCent = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
-            args_dynmc.OSdS = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
-            args_dynmc.OLSi = operator_ldotsi_sl(s1, s2, S, L, s1, s2, S, L, J);
-            args_dynmc.OLSj = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
-            args_dynmc.OTens = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OCent = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OSdS = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OLSi = operator_ldotsi_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OLSj = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OTens = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
                 
-            mT.value[i][j] = integral_matrix_element_complex(GRnlp_nonexp, GIScreen_T, factor_complex, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mbetaijCoul.value[i][j] = integral_matrix_element_complex(GRnlp_nonexp, GIScreen_betaij_coul, factor_complex, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mdeltaijCont.value[i][j] = integral_matrix_element_complex(GRnlp_nonexp, GIScreen_deltaij_cont, factor_complex, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mdeltaiiSov.value[i][j] = integral_matrix_element_complex(GRnlp_nonexp, GIScreen_deltaii_sov, factor_complex, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mdeltajjSov.value[i][j] = integral_matrix_element_complex(GRnlp_nonexp, GIScreen_deltajj_sov, factor_complex, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mdeltaijSov.value[i][j] = integral_matrix_element_complex(GRnlp_nonexp, GIScreen_deltaij_sov, factor_complex, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mdeltaiiSos.value[i][j] = integral_matrix_element_complex(GRnlp_nonexp, GIScreen_deltaii_sos, factor_complex, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mdeltajjSos.value[i][j] = integral_matrix_element_complex(GRnlp_nonexp, GIScreen_deltajj_sos, factor_complex, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mdeltaijTens.value[i][j] = integral_matrix_element_complex(GRnlp_nonexp, GIScreen_deltaij_tens , factor_complex ,&args_bra,& args_ket,& args_model,& args_dynmc);
-            mVcoul.value[i][j] = integral_matrix_element(GRnlr_nonexp, GIScreen_Vcoul , factor,& args_bra,& args_ket,& args_model,& args_dynmc);
-            mVconf.value[i][j] = integral_matrix_element(GRnlr_nonexp,GIScreen_Vconf,factor,& args_bra,& args_ket,& args_model,& args_dynmc);
-            mVcont.value[i][j] = integral_matrix_element(GRnlr_nonexp, GIScreen_Vcont, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mVsovi.value[i][j] = integral_matrix_element(GRnlr_nonexp, GIScreen_Vsovi, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mVsovj.value[i][j] = integral_matrix_element(GRnlr_nonexp, GIScreen_Vsovj, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mVsovij.value[i][j] = integral_matrix_element(GRnlr_nonexp, GIScreen_Vsovij, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mVsosi.value[i][j] = integral_matrix_element(GRnlr_nonexp, GIScreen_Vsosi, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mVsosj.value[i][j] = integral_matrix_element(GRnlr_nonexp, GIScreen_Vsosj, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-            mVtens.value[i][j] = integral_matrix_element(GRnlr_nonexp, GIScreen_Vtens, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-            Nfi.value[i][j] = integral_wfn_overlap(GRnlr_nonexp, factor, &args_bra, &args_ket);
+            mT.value[i][j] = integral_matrix_element_complex(GRnlp, GIVt, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
+            mbetaijCoul.value[i][j] = integral_matrix_element_complex(GRnlp, GIVbetaijcoul, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
+            mdeltaijCont.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaijcont, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
+            mdeltaiiSov.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaiisov, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
+            mdeltajjSov.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltajjsov, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
+            mdeltaijSov.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaijsov, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
+            mdeltaiiSos.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaiisos, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
+            mdeltajjSos.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltajjsos, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
+            mdeltaijTens.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaijtens, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
+            mVcoul.value[i][j] = integral_matrix_element(GRnlr, GIVcoul, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            mVconf.value[i][j] = integral_matrix_element(GRnlr, GIVconf, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            mVcont.value[i][j] = integral_matrix_element(GRnlr, GIVcont, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            mVsovi.value[i][j] = integral_matrix_element(GRnlr, GIVsovi, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            mVsovj.value[i][j] = integral_matrix_element(GRnlr, GIVsovj, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            mVsovij.value[i][j] = integral_matrix_element(GRnlr, GIVsovij, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            mVsosi.value[i][j] = integral_matrix_element(GRnlr, GIVsosi, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            mVsosj.value[i][j] = integral_matrix_element(GRnlr, GIVsosj, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            mVtens.value[i][j] = integral_matrix_element(GRnlr, GIVtens, factor, &args_bra, &args_ket, args_model, args_dynmc);
+            Nfi.value[i][j] = integral_wfn_overlap(GRnlr, factor, &args_bra, &args_ket);
         }
     }
 

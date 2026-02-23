@@ -7,7 +7,7 @@
 #ifndef GEMSTORE_NUMERICAL_INTEGRAL
 #define GEMSTORE_NUMERICAL_INTEGRAL
 
-#include <gemstore/model/model.h>
+#include <gemstore/numerical/model.h>
 #include <gemstore/basis/orbit.h>
 
 /* Integrate wavefunction overlaps */

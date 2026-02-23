@@ -63,28 +63,16 @@ typedef double (*orbit_wfn_t)(double x, int n, int l, double scale);
 /* define orbit wave function in momentum space */
 typedef complex (*orbit_wfn_complex_t)(double x, int n, int l, double scale);
 
-/* Gaussian basis in coordinate space */
+/* Gaussian basis in coordinate space without exponential */
 double GRnlr(double r, int n, int l, double nu);
 
-/* Gaussian basis in coordinate space without exponential */
-double GRnlr_nonexp(double r, int n, int l, double nu);
-
-/* Gaussian basis in momentum space */
+/* Gaussian basis in momentum space without exponential */
 complex GRnlp(double p, int n, int l, double nu);
 
-/* Gaussian basis in momentum space without exponential */
-complex GRnlp_nonexp(double p, int n, int l, double nu);
-
-/* Spherical harmonic oscillator basis in coordinate space */
+/* Spherical harmonic oscillator basis in coordinate space without exponential */
 double SRnlr(double r, int n, int l, double beta);
 
-/* Spherical harmonic oscillator basis in coordinate space without exponential */
-double SRnlr_nonexp(double r, int n, int l, double beta);
-
-/* Spherical harmonic oscillator basis in momentum space */
-complex SRnlp(double p, int n, int l, double beta);
-
 /* Spherical harmonic oscillator basis in momentum space without exponential */
-complex SRnlp_nonexp(double p, int n, int l, double beta);
+complex SRnlp(double p, int n, int l, double beta);
 
 #endif

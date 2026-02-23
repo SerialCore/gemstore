@@ -14,10 +14,54 @@
 #include <Minuit2/MnPrint.h>
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #include <ctime>
 #include <cassert>
+
+class DualStream {
+public:
+    DualStream(const std::string& filename = "Fitting.out")
+        : console(std::cout), file(filename, std::ios::out | std::ios::app) {
+        if (!file.is_open()) {
+            std::cerr << "Cannot open log file: " << filename << std::endl;
+        }
+    }
+
+    DualStream(const DualStream&) = delete;
+    DualStream& operator=(const DualStream&) = delete;
+    DualStream(DualStream&&) = delete;
+    DualStream& operator=(DualStream&&) = delete;
+
+    ~DualStream() {
+        if (file.is_open()) {
+            file << std::endl;
+            file.close();
+        }
+    }
+
+    template<typename T>
+    DualStream& operator<<(const T& value) {
+        console << value;
+        if (file.is_open()) {
+            file << value;
+        }
+        return *this;
+    }
+
+    DualStream& operator<<(std::ostream& (*manip)(std::ostream&)) {
+        console << manip;
+        if (file.is_open()) {
+            file << manip;
+        }
+        return *this;
+    }
+
+private:
+    std::ostream& console;
+    std::ofstream file;
+};
 
 struct State {
     int f1, f2, N, S, L, J;		/* quantum numbers */
@@ -26,83 +70,97 @@ struct State {
 };
 
 const std::vector<State> experimental_data = {
-    // Bc (c b-bar)
-    {3, 4, 1, 0, 0, 0, 6.2745,   0.001},   // Bc(1S)
-    {3, 4, 2, 0, 0, 0, 6.8712,   0.005},   // Bc(2S)  — large error
+    // K (u/d s-bar)
+    {1, 2, 1, 0, 0, 0, 497.6,    5},   // K(1S)
+    {1, 2, 1, 1, 0, 1, 895.6,    5},   // K*(1S)
 
-    // Bs (s b-bar)
-    {2, 4, 1, 0, 0, 0, 5.3669,   0.0005},   // Bs(1S)
-    {2, 4, 1, 1, 0, 1, 5.4154,   0.001},   // Bs*(1S) vector
-
-    // Ds (s c-bar)
-    {2, 3, 1, 0, 0, 0, 1.9684,   0.0005},   // Ds(1S)
-    {2, 3, 1, 1, 0, 1, 2.1122,   0.001},   // Ds*(1S)
+    // phi (s s-bar)
+    {2, 2, 1, 1, 0, 1, 1019.5,   5},   // phi(1S)
 
     // B (u/d b-bar)
-    {1, 4, 1, 0, 0, 0, 5.2796,   0.0003},   // B(1S) average
-    {1, 4, 1, 1, 0, 1, 5.3248,   0.0008},   // B*(1S)
+    {1, 4, 1, 0, 0, 0, 5279.6,   5},   // B(1S)
+    {1, 4, 1, 1, 0, 1, 5324.8,   5},   // B*(1S)
 
     // D (u/d c-bar)
-    {1, 3, 1, 0, 0, 0, 1.8648,   0.0003},   // D(1S) average
-    {1, 3, 1, 1, 0, 1, 2.0069,   0.0008},   // D*(1S)
+    {1, 3, 1, 0, 0, 0, 1864.8,   5},   // D(1S)
+    {1, 3, 1, 1, 0, 1, 2006.9,   5},   // D*(1S)
+
+    // Bs (s b-bar)
+    {2, 4, 1, 0, 0, 0, 5366.9,   5},   // Bs(1S)
+    {2, 4, 1, 1, 0, 1, 5415.4,   5},   // Bs*(1S)
+
+    // Ds (s c-bar)
+    {2, 3, 1, 0, 0, 0, 1968.4,   5},   // Ds(1S)
+    {2, 3, 1, 1, 0, 1, 2112.2,   5},   // Ds*(1S)
+
+    // Bc (c b-bar)
+    {3, 4, 1, 0, 0, 0, 6274.5,   5},   // Bc(1S)
+    {3, 4, 2, 0, 0, 0, 6871.2,   5},   // Bc(2S)
 
     // charmonium (c c-bar)
-    {3, 3, 1, 0, 0, 0, 2.9841,   0.002},   // ηc(1S)
-    {3, 3, 2, 0, 0, 0, 3.6378,   0.003},   // ηc(2S)
-    {3, 3, 1, 1, 0, 1, 3.0969,   0.0001},   // J/ψ(1S)
-    {3, 3, 2, 1, 0, 1, 3.6861,   0.0005},   // ψ(2S)
-    {3, 3, 1, 0, 1, 1, 3.5254,   0.001},   // hc(1P)
-    {3, 3, 1, 1, 1, 0, 3.4147,   0.001},   // χc0(1P)
-    {3, 3, 1, 1, 1, 1, 3.5107,   0.0005},   // χc1(1P)
-    {3, 3, 1, 1, 1, 2, 3.5562,   0.0005},   // χc2(1P)
+    {3, 3, 1, 0, 0, 0, 2984.1,   5},   // ηc(1S)
+    {3, 3, 2, 0, 0, 0, 3637.8,   5},   // ηc(2S)
+    {3, 3, 1, 1, 0, 1, 3096.9,   5},   // J/ψ(1S)
+    {3, 3, 2, 1, 0, 1, 3686.1,   5},   // ψ(2S)
+    {3, 3, 1, 0, 1, 1, 3525.4,   5},   // hc(1P)
+    {3, 3, 1, 1, 1, 0, 3414.7,   5},   // χc0(1P)
+    {3, 3, 1, 1, 1, 1, 3510.7,   5},   // χc1(1P)
+    {3, 3, 1, 1, 1, 2, 3556.2,   5},   // χc2(1P)
 
     // bottomonium (b b-bar)
-    {4, 4, 1, 0, 0, 0, 9.3987,   0.002},   // ηb(1S)
-    {4, 4, 2, 0, 0, 0, 9.9990,   0.005},   // ηb(2S) — large error
-    {4, 4, 1, 1, 0, 1, 9.4604,   0.0005},   // Υ(1S)
-    {4, 4, 2, 1, 0, 1, 10.0234,  0.001},   // Υ(2S)
-    {4, 4, 3, 1, 0, 1, 10.3551,  0.001},   // Υ(3S)
-    {4, 4, 4, 1, 0, 1, 10.5794,  0.002},   // Υ(4S)
-    {4, 4, 1, 1, 2, 2, 10.1637,  0.003},   // Υ(1D₂)
-    {4, 4, 1, 0, 1, 1, 9.8993,   0.001},   // hb(1P)
-    {4, 4, 2, 0, 1, 1, 10.2598,  0.0015},   // hb(2P)
-    {4, 4, 1, 1, 1, 0, 9.8594,   0.001},   // χb0(1P)
-    {4, 4, 1, 1, 1, 1, 9.8928,   0.0008},   // χb1(1P)
-    {4, 4, 1, 1, 1, 2, 9.9122,   0.0008},   // χb2(1P)
-    {4, 4, 2, 1, 1, 0, 10.2325,  0.001},   // χb0(2P)
-    {4, 4, 2, 1, 1, 1, 10.2555,  0.001},   // χb1(2P)
-    {4, 4, 2, 1, 1, 2, 10.2687,  0.001},   // χb2(2P)
-    {4, 4, 3, 1, 1, 1, 10.5134,  0.0015},   // χb1(3P)
-    {4, 4, 3, 1, 1, 2, 10.5240,  0.002}    // χb2(3P)
+    {4, 4, 1, 0, 0, 0, 9398.7,   5},   // ηb(1S)
+    {4, 4, 2, 0, 0, 0, 9999.0,   5},   // ηb(2S)
+    {4, 4, 1, 1, 0, 1, 9460.4,   5},   // Υ(1S)
+    {4, 4, 2, 1, 0, 1, 10023.4,  5},   // Υ(2S)
+    {4, 4, 3, 1, 0, 1, 10355.1,  5},   // Υ(3S)
+    {4, 4, 4, 1, 0, 1, 10579.4,  5},   // Υ(4S)
+    {4, 4, 1, 1, 2, 2, 10163.7,  5},   // Υ(1D₂)
+    {4, 4, 1, 0, 1, 1, 9899.3,   5},   // hb(1P)
+    {4, 4, 2, 0, 1, 1, 10259.8,  5},   // hb(2P)
+    {4, 4, 1, 1, 1, 0, 9859.4,   5},   // χb0(1P)
+    {4, 4, 1, 1, 1, 1, 9892.8,   5},   // χb1(1P)
+    {4, 4, 1, 1, 1, 2, 9912.2,   5},   // χb2(1P)
+    {4, 4, 2, 1, 1, 0, 10232.5,  5},   // χb0(2P)
+    {4, 4, 2, 1, 1, 1, 10255.5,  5},   // χb1(2P)
+    {4, 4, 2, 1, 1, 2, 10268.7,  5},   // χb2(2P)
+    {4, 4, 3, 1, 1, 1, 10513.4,  5},   // χb1(3P)
+    {4, 4, 3, 1, 1, 2, 10524.0,  5}    // χb2(3P)
 };
 
-const int N_PARAMS = 13;		/* number of parameters to be fitted */
+DualStream dual("Fitting.out");
 
-double compute_chi2(const std::vector<double>& params)
+double compute_chi2(const std::vector<double>& params, bool print_details)
 {
 	double chi_square = 0.0;
 
     for (const auto& state : experimental_data) {
         double e_out = call_fitting_meson_GIScreen(state.f1, state.f2, state.N, state.S, state.L, state.J, 20, 10.0, 0.1, params.data());
+        double diff = 1000 * e_out - state.exp_mass;
 
-		//std::cout << "State (" << state.f1 << "," << state.f2 << ") calc = " << e_out << "  exp = " << state.exp_mass << std::endl;
-        double diff = e_out - state.exp_mass;
+        if (print_details) {
+		    dual << "State (" << state.f1 << "," << state.f2 << "," << state.N << "," << state.S << "," << state.L << "," << state.J << ") calc = " 
+            << 1000 * e_out << "  exp = " << state.exp_mass << "  diff = " << diff << std::endl;
+        }
         double weight = (state.exp_error > 0.0) ? 1.0 / (state.exp_error * state.exp_error) : 1.0;
         chi_square += diff * diff * weight;
     }
 
-    std::cout << "Total chi2=" << chi_square << std::endl;
+    dual << "Total chi2=" << chi_square << std::endl;
     return chi_square;
 }
 
 class Chi2Functor : public ROOT::Minuit2::FCNBase {
 public:
-	Chi2Functor() : error_def_(1.0), n_params_(N_PARAMS), n_data_(experimental_data.size()) {}
+	Chi2Functor(double error_def, size_t n_params, size_t n_data) {
+        this->error_def_ = error_def;
+        this->n_params_ = n_params;
+        this->n_data_ = n_data;
+    }
     ~Chi2Functor() {}
 
 	double operator()(const std::vector<double>& params) const override {
 		assert(params.size() == n_params_);
-		return compute_chi2(params);
+		return compute_chi2(params, false);
 	}
 	
 	double Up() const override { return error_def_; }
@@ -118,32 +176,34 @@ void perform_fit(double *params_out)
 {
     srand(time(0));
 
-    Chi2Functor minuit_fit;
-
+    /* set parameters */
     ROOT::Minuit2::MnUserParameters upar;
-    double step = 0.01;  	/* initial guess of step */
-    /*double err = 0.1;    	 initial guess of error */
-
-    upar.Add("mn", 0.220, step, 0.1, 1.0);
-    upar.Add("ms", 0.419, step, 0.3, 1.0);
-    upar.Add("mc", 1.628, step, 1.0, 3.0);
-    upar.Add("mb", 4.977, step, 4.0, 6.0);
-    upar.Add("b1", 0.18, step, 0.1, 0.3);
-    upar.Add("mu", 0.15, step, 0.1, 0.2);
-    upar.Add("c", -0.253, step, -2.0, 0.0);
-    upar.Add("sig0", 1.8, step, 1.0, 3.0);
-    upar.Add("s", 1.55, step, 1.0, 3.0);
-    upar.Add("econt", -0.168, step, -0.5, 0.0);
-    upar.Add("esov", -0.035, step, -0.1, 0.1);
-    upar.Add("esos", 0.055, step, -0.1, 0.1);
-    upar.Add("etens", 0.025, step, -0.1, 0.1);
+    //upar.Add(name, value, init_step, lower_limit, upper_limit);
+    upar.Add("mn", 0.220, 0.01, 0.1, 0.5);
+    upar.Add("ms", 0.419, 0.01, 0.3, 0.7);
+    upar.Add("mc", 1.628, 0.01, 1.5, 2.0);
+    upar.Add("mb", 4.977, 0.01, 4.5, 5.5);
+    upar.Add("b1", 0.18, 0.01, 0.1, 0.3);
+    //upar.Add("b2", 0.02, 0.01, 0.0, 0.1);
+    upar.Add("mu", 0.15, 0.01, 0.1, 0.2);
+    upar.Add("c", -0.253, 0.01, -2.0, 0.0);
+    upar.Add("sig0", 1.8, 0.01, 1.0, 3.0);
+    upar.Add("s", 1.55, 0.01, 1.0, 3.0);
+    upar.Add("econt", -0.168, 0.01, -0.5, 0.0);
+    upar.Add("esov", -0.035, 0.01, -1.0, 1.0);
+    upar.Add("esos", 0.055, 0.01, -1.0, 1.0);
+    upar.Add("etens", 0.025, 0.01, -1.0, 1.0);
+    int N_PARAMS = upar.Params().size();
+    int N_DATA = experimental_data.size();
 
     /* use of Migrad algorithm with strategy 2, high precision */
+    Chi2Functor minuit_fit(1.0, N_PARAMS, N_DATA);
     ROOT::Minuit2::MnMigrad migrad(minuit_fit, upar, 2);
 
+    /* perform the fit */
     ROOT::Minuit2::FunctionMinimum min_result = migrad();
-    std::cout << "Fit converged: " << min_result.IsValid() << std::endl;
-    std::cout << min_result.UserParameters() << std::endl;
+    compute_chi2(min_result.UserParameters().Params(), true);
+    dual << min_result.UserParameters() << std::endl;
 
     auto params = min_result.UserParameters().Params();
     for (int i = 0; i < N_PARAMS; i++) {

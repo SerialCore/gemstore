@@ -7,11 +7,6 @@
 #ifndef GEMSTORE_BASIS_BASIS
 #define GEMSTORE_BASIS_BASIS
 
-typedef enum system_type {
-    SYSTEM_MESON,
-    SYSTEM_BARYON
-} system_type_t;
-
 typedef struct basis_base {
     system_type_t type;
     double J;           /* total momentum J */
