@@ -38,21 +38,21 @@ const argsModel_t argsGIString_meson = {
 };
 
 const argsModel_t argsGIScreen_meson = {
-    .mn = 0.4546,
+    .mn = 0.4508,
     .ms = 0.6157,
-    .mc = 1.8015,
-    .mb = 5.1437,
+    .mc = 1.8050,
+    .mb = 5.1478,
     .mt = 172.57,
-    .b1 = 0.2724,
-    .mu = 0.1614,
-    .c = -0.6594,
-    .sigma_0 = 1.8631,
-    .s = 1.0326,
+    .b1 = 0.2652,
+    .mu = 0.1556,
+    .c = -0.6548,
+    .sigma_0 = 1.7447,
+    .s = 1.1321,
     .epsilon_Coul = 0.0,
-    .epsilon_cont = -0.2485,
-    .epsilon_sov = -0.9132,
-    .epsilon_sos = 0.9984,
-    .epsilon_tens = -0.0800,
+    .epsilon_cont = -0.2590,
+    .epsilon_sov = -0.6302,
+    .epsilon_sos = 0.8472,
+    .epsilon_tens = -0.1445,
 };
 
 const argsModel_t argsGIScreen_meson_init = {
@@ -74,6 +74,25 @@ const argsModel_t argsGIScreen_meson_init = {
 };
 
 const argsModel_t argsGIQuadra_meson = {
+    .mn = 0.4597,
+    .ms = 0.6244,
+    .mc = 1.8135,
+    .mb = 5.1563,
+    .mt = 172.57,
+    .b1 = 0.2081,
+    .b2 = 0.0181,
+    .mu = 0.1337,
+    .c = -0.6402,
+    .sigma_0 = 1.6608,
+    .s = 1.1374,
+    .epsilon_Coul = 0.0,
+    .epsilon_cont = -0.2754,
+    .epsilon_sov = -0.6252,
+    .epsilon_sos = 0.9885,
+    .epsilon_tens = -0.2282
+};
+
+const argsModel_t argsGIQuadra_meson_init = {
     .mn = 0.220,
     .ms = 0.419,
     .mc = 1.628,
@@ -366,9 +385,8 @@ double GIVconf(double r, const argsModel_t *args_model, const argsModelDy_t *arg
             return pref_quadra * inner_quadra + pref * (inner1 + inner2 - inner3) - 0.75 * Cij * cent * c;
         }
     }
-    else {
-        return 0.0;
-    }
+
+    return 0.0;
 }
 
 double GIVcont(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
