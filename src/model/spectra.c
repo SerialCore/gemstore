@@ -4,15 +4,16 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/numerical/spectra.h>
-#include <gemstore/numerical/matrix.h>
-#include <gemstore/numerical/integral.h>
-#include <gemstore/numerical/eigen.h>
-#include <gemstore/numerical/model.h>
+#include <gemstore/model/spectra.h>
+#include <gemstore/model/model.h>
 
 #include <gemstore/basis/basis.h>
 #include <gemstore/basis/orbit.h>
-#include <gemstore/basis/soc.h>
+
+#include <gemstore/math/matrix.h>
+#include <gemstore/math/integral.h>
+#include <gemstore/math/eigen.h>
+#include <gemstore/math/soc.h>
 
 #include <stdio.h>
 #include <stdlib.h>

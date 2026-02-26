@@ -5,7 +5,7 @@
  */
 
 #include <gemstore/basis/intrin.h>
-#include <gemstore/basis/soc.h>
+#include <gemstore/math/soc.h>
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef GEMSTORE_BASIS_SOC
-#define GEMSTORE_BASIS_SOC
+#ifndef GEMSTORE_MATH_SOC
+#define GEMSTORE_MATH_SOC
 
 /* return Clebsch-Gordan coefficient for given angular momenta:
  * <j1m1j2m2|jm>

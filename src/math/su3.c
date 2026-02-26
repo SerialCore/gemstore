@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/basis/su3.h>
+#include <gemstore/math/su3.h>
 
 #include <stdio.h>
 

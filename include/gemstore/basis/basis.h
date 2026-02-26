@@ -8,7 +8,6 @@
 #define GEMSTORE_BASIS_BASIS
 
 typedef struct basis_base {
-    system_type_t type;
     double J;           /* total momentum J */
     double P;           /* parity P */
 } basis_base_t;

@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef GEMSTORE_NUMERICAL_SPECTRA
-#define GEMSTORE_NUMERICAL_SPECTRA
+#ifndef GEMSTORE_MODEL_SPECTRA
+#define GEMSTORE_MODEL_SPECTRA
 
-#include <gemstore/numerical/matrix.h>
-#include <gemstore/numerical/model.h>
+#include <gemstore/math/matrix.h>
+#include <gemstore/model/model.h>
 
 /* Calculate meson spectra in NRScreen model */
 void spectra_meson_NR(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, 

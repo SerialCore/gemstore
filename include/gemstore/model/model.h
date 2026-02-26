@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef GEMSTORE_NUMERICAL_MODEL
-#define GEMSTORE_NUMERICAL_MODEL
+#ifndef GEMSTORE_MODEL_MODEL
+#define GEMSTORE_MODEL_MODEL
 
 #include <math.h>
 

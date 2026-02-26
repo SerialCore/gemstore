@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef GEMSTORE_NUMERICAL_INTEGRAL
-#define GEMSTORE_NUMERICAL_INTEGRAL
+#ifndef GEMSTORE_MATH_INTEGRAL
+#define GEMSTORE_MATH_INTEGRAL
 
-#include <gemstore/numerical/model.h>
 #include <gemstore/basis/orbit.h>
+#include <gemstore/model/model.h>
 
 /* Integrate wavefunction overlaps */
 double integral_wfn_overlap(

@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/basis/soc.h>
+#include <gemstore/math/soc.h>
 
 #include <math.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 /* Precomputed factorials (d/2)! indexed by d */

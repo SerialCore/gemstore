@@ -17,9 +17,9 @@ void print_help()
 
 int main(int argc, char **argv)
 {
-    //call_spectra_meson(3, 3, 0, 0, 0, 20, 10.0, 0.1, "NRScreen");
-    //call_spectra_meson(3, 3, 0, 0, 0, 20, 10.0, 0.1, "GIString");
-    //call_spectra_meson(3, 3, 0, 0, 0, 20, 10.0, 0.1, "GIScreen");
-    //call_spectra_meson(3, 3, 0, 0, 0, 20, 10.0, 0.1, "GIQuadra");
-    call_minuit2_chi2();
+    //call_spectra_meson(3, 3, 0, 0, 0, 30, 25.0, 0.1, "NRScreen");
+    //call_spectra_meson(3, 3, 0, 0, 0, 30, 25.0, 0.1, "GIString");
+    //call_spectra_meson(3, 3, 0, 0, 0, 30, 25.0, 0.1, "GIScreen");
+    call_spectra_meson(3, 3, 0, 0, 0, 30, 25.0, 0.1, "GIQuadra");
+    //call_minuit2_chi2();
 }

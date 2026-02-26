@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef GEMSTORE_BASIS_SU3
-#define GEMSTORE_BASIS_SU3
+#ifndef GEMSTORE_MATH_SU3
+#define GEMSTORE_MATH_SU3
 
 /* Calculate dimension of SU(3) representation */
 int su3_dimension(int upper, int lower);

@@ -12,15 +12,14 @@
 #include <gemstore/basis/spin.h>
 #include <gemstore/basis/isospin.h>
 #include <gemstore/basis/orbit.h>
-#include <gemstore/basis/soc.h>
-#include <gemstore/basis/su3.h>
 
-#include <gemstore/numerical/integral.h>
-#include <gemstore/numerical/matrix.h>
-#include <gemstore/numerical/eigen.h>
-#include <gemstore/numerical/model.h>
+#include <gemstore/math/integral.h>
+#include <gemstore/math/matrix.h>
+#include <gemstore/math/eigen.h>
+#include <gemstore/math/soc.h>
+#include <gemstore/math/su3.h>
 
-#include <gemstore/thread.h>
+#include <gemstore/model/model.h>
 
 #include <stdio.h>
 #include <stdlib.h>

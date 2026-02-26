@@ -8,9 +8,10 @@
 #include <gemstore/fileio.h>
 #include <gemstore/fitting.h>
 
-#include <gemstore/numerical/spectra.h>
-#include <gemstore/numerical/matrix.h>
-#include <gemstore/numerical/model.h>
+#include <gemstore/model/spectra.h>
+#include <gemstore/model/model.h>
+
+#include <gemstore/math/matrix.h>
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/numerical/integral.h>
-#include <gemstore/numerical/model.h>
+#include <gemstore/math/integral.h>
+#include <gemstore/model/model.h>
 #include <gemstore/basis/orbit.h>
 
 #include <complex.h>

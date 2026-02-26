@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef GEMSTORE_NUMERICAL_EIGEN
-#define GEMSTORE_NUMERICAL_EIGEN
+#ifndef GEMSTORE_MATH_EIGEN
+#define GEMSTORE_MATH_EIGEN
 
 /* Householder tridiagonalization + implicit QR
  * a: Input symmetric matrix A (n × n)
