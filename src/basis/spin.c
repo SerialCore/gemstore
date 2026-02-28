@@ -38,7 +38,7 @@ intrin_wfn_t spin_wfn_meson(double st, double st3)
         intrin_wfn_t part1M = spin_basis(ms1);
         intrin_wfn_t part2M = spin_basis(ms2);
 
-        intrin_wfn_product(&part1M, &part2M, &swM, cg);
+        intrin_wfn_product(&part1M, &part2M, cg, &swM);
         intrin_wfn_free(&part1M);
         intrin_wfn_free(&part2M);
     }
@@ -56,7 +56,7 @@ intrin_wfn_t spin_wfn_baryon(double s12, double st, double st3)
         intrin_wfn_t part1B = spin_wfn_meson(0.0, 0.0);
         intrin_wfn_t part2B = spin_basis(st3);
 
-        intrin_wfn_product(&part1B, &part2B, &swB, 1.0);
+        intrin_wfn_product(&part1B, &part2B, 1.0, &swB);
         intrin_wfn_free(&part1B);
         intrin_wfn_free(&part2B);
     }
@@ -70,7 +70,7 @@ intrin_wfn_t spin_wfn_baryon(double s12, double st, double st3)
             intrin_wfn_t part1B = spin_wfn_meson(1.0, ms12);
             intrin_wfn_t part2B = spin_basis(ms3);
 
-            intrin_wfn_product(&part1B, &part2B, &swB, cg);
+            intrin_wfn_product(&part1B, &part2B, cg, &swB);
             intrin_wfn_free(&part1B);
             intrin_wfn_free(&part2B);
         }
@@ -89,7 +89,7 @@ intrin_wfn_t spin_wfn_tetra(double s12, double s34, double st, double st3)
         intrin_wfn_t part1T = spin_wfn_meson(0.0, 0.0);
         intrin_wfn_t part2T = spin_wfn_meson(0.0, 0.0);
 
-        intrin_wfn_product(&part1T, &part2T, &swT, 1.0);
+        intrin_wfn_product(&part1T, &part2T, 1.0, &swT);
         intrin_wfn_free(&part1T);
         intrin_wfn_free(&part2T);
     }
@@ -97,7 +97,7 @@ intrin_wfn_t spin_wfn_tetra(double s12, double s34, double st, double st3)
         intrin_wfn_t part1T = spin_wfn_meson(0.0, 0.0);
         intrin_wfn_t part2T = spin_wfn_meson(1.0, st3);
 
-        intrin_wfn_product(&part1T, &part2T, &swT, 1.0);
+        intrin_wfn_product(&part1T, &part2T, 1.0, &swT);
         intrin_wfn_free(&part1T);
         intrin_wfn_free(&part2T);
     }
@@ -105,7 +105,7 @@ intrin_wfn_t spin_wfn_tetra(double s12, double s34, double st, double st3)
         intrin_wfn_t part1T = spin_wfn_meson(1.0, st3);
         intrin_wfn_t part2T = spin_wfn_meson(0.0, 0.0);
 
-        intrin_wfn_product(&part1T, &part2T, &swT, 1.0);
+        intrin_wfn_product(&part1T, &part2T, 1.0, &swT);
         intrin_wfn_free(&part1T);
         intrin_wfn_free(&part2T);
     }
@@ -119,7 +119,7 @@ intrin_wfn_t spin_wfn_tetra(double s12, double s34, double st, double st3)
             intrin_wfn_t part1T = spin_wfn_meson(1.0, ms12);
             intrin_wfn_t part2T = spin_wfn_meson(1.0, ms34);
 
-            intrin_wfn_product(&part1T, &part2T, &swT, cg);
+            intrin_wfn_product(&part1T, &part2T, cg, &swT);
             intrin_wfn_free(&part1T);
             intrin_wfn_free(&part2T);
         }
@@ -138,7 +138,7 @@ intrin_wfn_t spin_wfn_penta(double s12, double s123, double s45, double st, doub
         intrin_wfn_t part1P = spin_wfn_baryon(s12, s123, st3);
         intrin_wfn_t part2P = spin_wfn_meson(0.0, 0.0);
 
-        intrin_wfn_product(&part1P, &part2P, &swP, 1.0);
+        intrin_wfn_product(&part1P, &part2P, 1.0, &swP);
         intrin_wfn_free(&part1P);
         intrin_wfn_free(&part2P);
     }
@@ -152,7 +152,7 @@ intrin_wfn_t spin_wfn_penta(double s12, double s123, double s45, double st, doub
             intrin_wfn_t part1P = spin_wfn_baryon(s12, s123, ms123);
             intrin_wfn_t part2P = spin_wfn_meson(1.0, ms45);
 
-            intrin_wfn_product(&part1P, &part2P, &swP, cg);
+            intrin_wfn_product(&part1P, &part2P, cg, &swP);
             intrin_wfn_free(&part1P);
             intrin_wfn_free(&part2P);
         }
@@ -175,7 +175,7 @@ intrin_wfn_t spin_wfn_hexa(double s12, double s123, double s45, double s456, dou
         intrin_wfn_t part1H = spin_wfn_baryon(s12, s123, ms123);
         intrin_wfn_t part2H = spin_wfn_baryon(s45, s456, ms456);
 
-        intrin_wfn_product(&part1H, &part2H, &swH, cg);
+        intrin_wfn_product(&part1H, &part2H, cg, &swH);
         intrin_wfn_free(&part1H);
         intrin_wfn_free(&part2H);
     }

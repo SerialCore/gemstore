@@ -16,6 +16,7 @@
 #include <gemstore/math/integral.h>
 #include <gemstore/math/matrix.h>
 #include <gemstore/math/eigen.h>
+#include <gemstore/math/cmi.h>
 #include <gemstore/math/soc.h>
 #include <gemstore/math/su3.h>
 
@@ -87,16 +88,53 @@ void debug_soc_operator()
     printf("Tensor operator value in jj coupling: %f\n", jj);
 }
 
+void debug_casimir_operator()
+{
+    matrix_t sfac = matrix_init(6 * 6, 6);
+    matrix_t cfac = matrix_init(2 * 2, 6);
+    intrin_wfn_t swv[6];
+    intrin_wfn_t cwv[2];
+    
+    swv[0] = spin_wfn_tetra(1, 1, 2, 2);
+    swv[1] = spin_wfn_tetra(1, 1, 1, 1);
+    swv[2] = spin_wfn_tetra(1, 1, 0, 0);
+    swv[3] = spin_wfn_tetra(1, 0, 1, 1);
+    swv[4] = spin_wfn_tetra(0, 1, 1, 1);
+    swv[5] = spin_wfn_tetra(0, 0, 0, 0);
+    cwv[0] = color_wfn_tetra6();
+    cwv[1] = color_wfn_tetra3();
+
+    operator_sigma2(swv, 6, &sfac);
+    operator_lambda2(cwv, 2, "qqQQ", &cfac);
+
+    printf("SpinWF:\n");
+    for (int i = 0; i < 6; i++) {
+        intrin_wfn_print(&swv[i]);
+        intrin_wfn_free(&swv[i]);
+    }
+    printf("\nColorWF:\n");
+    for (int i = 0; i < 2; i++) {
+        intrin_wfn_print(&cwv[i]);
+        intrin_wfn_free(&cwv[i]);
+    }
+    printf("\nSpinFactor:\n");
+    matrix_print(&sfac);
+    printf("\nColorFactor:\n");
+    matrix_print(&cfac);
+    matrix_free(&sfac);
+    matrix_free(&cfac);
+}
+
 void debug_color_wfn()
 {
     intrin_wfn_t wf, ref_wf;
 
-    wf = color_wfn_penta38();
-    printf("ColorWFPenta38:\n");
+    wf = color_wfn_tetra1();
+    printf("ColorWFTetra1:\n");
     intrin_wfn_print(&wf);
 
-    ref_wf = color_wfn_penta68();
-    printf("\nColorWFPenta68:\n");
+    ref_wf = color_wfn_tetra8();
+    printf("\nColorWFTetra8:\n");
     intrin_wfn_print(&ref_wf);
 
     double ortho = intrin_wfn_overlap(&wf, &ref_wf);

@@ -21,13 +21,10 @@ intrin_wfn_t color_wfn_tetra1();
 /* Get color wave functions of tetraquark state (8⊗8) */
 intrin_wfn_t color_wfn_tetra8();
 
-/* Get color wave functions of pentaquark state (1⊗1) */
-intrin_wfn_t color_wfn_penta1();
+/* Get color wave functions of tetraquark state (3⊗3) */
+intrin_wfn_t color_wfn_tetra3();
 
-/* Get color wave functions of pentaquark state (38⊗8) */
-intrin_wfn_t color_wfn_penta38();
-
-/* Get color wave functions of pentaquark state (68⊗8) */
-intrin_wfn_t color_wfn_penta68();
+/* Get color wave functions of tetraquark state (6⊗6) */
+intrin_wfn_t color_wfn_tetra6();
 
 #endif

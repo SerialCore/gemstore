@@ -26,7 +26,7 @@ intrin_wfn_t intrin_wfn_init(int num_configs);
 double intrin_wfn_overlap(const intrin_wfn_t *wfn, const intrin_wfn_t *ref);
 
 /* Product of two intrinsic wave functions */
-void intrin_wfn_product(const intrin_wfn_t *wfnA, const intrin_wfn_t *wfnB, intrin_wfn_t *wfnC, double factor);
+void intrin_wfn_product(const intrin_wfn_t *wfnA, const intrin_wfn_t *wfnB, double factor, intrin_wfn_t *wfnC);
 
 /* Trim intrinsic wave function */
 void intrin_wfn_trim(intrin_wfn_t *wfn);

@@ -36,7 +36,7 @@ double intrin_wfn_overlap(const intrin_wfn_t *wfn, const intrin_wfn_t *ref)
     return overlap;
 }
 
-void intrin_wfn_product(const intrin_wfn_t *wfnA, const intrin_wfn_t *wfnB, intrin_wfn_t *wfnC, double factor)
+void intrin_wfn_product(const intrin_wfn_t *wfnA, const intrin_wfn_t *wfnB, double factor, intrin_wfn_t *wfnC)
 {
     for (int i = 0; i < wfnA->num_terms; i++) {
         for (int j = 0; j < wfnB->num_terms; j++) {

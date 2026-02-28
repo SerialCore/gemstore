@@ -13,6 +13,9 @@ void debug_su3_product();
 /* Debug spin-orbit coupling operators */
 void debug_soc_operator();
 
+/* Debug color and spin casimir operators */
+void debug_casimir_operator();
+
 /* Debug color wavefunctions */
 void debug_color_wfn();
 
