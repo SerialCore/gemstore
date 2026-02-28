@@ -127,11 +127,10 @@ const std::vector<State> experimental_data = {
     {4, 4, 3, 1, 1, 2, 10524.0,  5}    // χb2(3P)
 };
 
-DualStream dual("Fitting.out");
-
 double compute_chi2(const std::vector<double>& params, bool print_details)
 {
 	double chi_square = 0.0;
+    DualStream dual("Fitting.out");
 
     for (const auto& state : experimental_data) {
         double e_out = call_fitting_meson_GIScreen(state.f1, state.f2, state.N, state.S, state.L, state.J, 20, 10.0, 0.1, params.data());
@@ -175,6 +174,7 @@ private:
 void perform_fit(double *params_out)
 {
     srand(time(0));
+    DualStream dual("Fitting.out");
 
     /* set parameters */
     ROOT::Minuit2::MnUserParameters upar;
