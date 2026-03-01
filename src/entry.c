@@ -9,7 +9,7 @@
 #include <gemstore/fitting.h>
 
 #include <gemstore/model/spectra.h>
-#include <gemstore/model/model.h>
+#include <gemstore/model/gimodel.h>
 
 #include <gemstore/math/matrix.h>
 
@@ -23,12 +23,7 @@ void call_spectra_meson(int f1, int f2, int S, int L, int J, int nmax, double rm
     matrix_t eigenvector = matrix_init(nmax, nmax);
     argsModelDy_t args_dynmc = {0};
 
-    if (strcmp(model, "NRScreen") == 0) {
-        args_dynmc.model = MODEL_NR_SCREEN;
-        args_dynmc.system = SYSTEM_MESON;
-        spectra_meson_NR(f1, f2, S, L, J, nmax, rmax, rmin, &argsNRScreen_meson, &args_dynmc, &eigenvalue, &eigenvector, nmax);
-
-    } else if (strcmp(model, "GIString") == 0) {
+    if (strcmp(model, "GIString") == 0) {
         args_dynmc.model = MODEL_GI_STRING;
         args_dynmc.system = SYSTEM_MESON;
         spectra_meson_GI(f1, f2, S, L, J, nmax, rmax, rmin, &argsGIString_meson, &args_dynmc, &eigenvalue, &eigenvector, nmax);
@@ -61,7 +56,7 @@ double call_fitting_meson_GIScreen(int f1, int f2, int N, int S, int L, int J, i
 {
     array_t eigenvalue = array_init(nmax);
 
-    argsModel_t args_model = {
+    argsGIModel_t args_model = {
         .mn = params[0],
         .ms = params[1],
         .mc = params[2],
@@ -94,7 +89,7 @@ double call_fitting_meson_GIQuadra(int f1, int f2, int N, int S, int L, int J, i
 {
     array_t eigenvalue = array_init(nmax);
 
-    argsModel_t args_model = {
+    argsGIModel_t args_model = {
         .mn = params[0],
         .ms = params[1],
         .mc = params[2],

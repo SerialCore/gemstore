@@ -20,8 +20,6 @@
 #include <gemstore/math/soc.h>
 #include <gemstore/math/su3.h>
 
-#include <gemstore/model/model.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -271,69 +269,6 @@ void debug_orbit_wfn()
     factor = sqrt(2 * beta1 * beta1 * beta2 * beta2 / (beta1 * beta1 + beta2 * beta2));
     overlap = integral_wfn_overlap_complex(SRnlp, factor, &args_bra, &args_ket);
     printf("Orthogonal overlap for Sp: %f\n", overlap);
-}
-
-void debug_matrix_element()
-{
-    double s1 = 0.5, s2 = 0.5;
-    double S = 0, L = 0, J = 0;
-
-    double nu1 = getnu(1, 30, 25, 0.1);
-    argsOrbit_t args_bra = {
-        .n = 1,
-        .l = 0,
-        .scale = nu1
-    };
-
-    double nu2 = getnu(2, 30, 25, 0.1);
-    argsOrbit_t args_ket = {
-        .n = 2,
-        .l = 0,
-        .scale = nu2
-    };
-
-    argsModel_t args_model = argsNRScreen_meson;
-    double m1 = args_model.mc;
-    double m2 = args_model.mc;
-    double C12 = -4.0 / 3.0;
-    double cen = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
-    double sds = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
-    double ls1 = operator_ldotsi_sl(s1, s2, S, L, s1, s2, S, L, J);
-    double ls2 = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
-    double ten = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
-    argsModelDy_t args_dynmc = {
-        .mi = m1,
-        .mj = m2,
-        .Cij = C12,
-        .OCent = cen,
-        .OSdS = sds,
-        .OLSi = ls1,
-        .OLSj = ls2,
-        .OTens = ten
-    };
-    printf("OCen = %f, OSdS = %f, OLS1 = %f, OLS2 = %f, OTens = %f\n", cen, sds, ls1, ls2, ten);
-
-    double factor = 1 / sqrt(nu1 + nu2);
-    double factor_complex =  sqrt(4 * nu1 * nu2 / (nu1 + nu2));
-    double element;
-
-    element = integral_matrix_element_complex(GRnlp, NRVt, factor_complex, &args_bra, &args_ket, &args_model, &args_dynmc);
-    printf("Matrix element of <1|T|2>: %f\n", element);
-
-    element = integral_matrix_element(GRnlr, NRVconf, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-    printf("Matrix element of <1|Vconf|2>: %f\n", element);
-
-    element = integral_matrix_element(GRnlr, NRVcont, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-    printf("Matrix element of <1|Vcont|2>: %f\n", element);
-
-    element = integral_matrix_element(GRnlr, NRVsocm, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-    printf("Matrix element of <1|Vsocm|2>: %f\n", element);
-
-    element = integral_matrix_element(GRnlr, NRVsotp, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-    printf("Matrix element of <1|Vsotp|2>: %f\n", element);
-
-    element = integral_matrix_element(GRnlr, NRVtens, factor, &args_bra, &args_ket, &args_model, &args_dynmc);
-    printf("Matrix element of <1|Vtens|2>: %f\n", element);
 }
 
 void debug_eigen_system()

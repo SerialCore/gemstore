@@ -28,9 +28,6 @@ void debug_isospin_wfn();
 /* Debug orbital wavefunctions */
 void debug_orbit_wfn();
 
-/* Debug potential integral */
-void debug_matrix_element();
-
 /* Debug eigen system */
 void debug_eigen_system();
 

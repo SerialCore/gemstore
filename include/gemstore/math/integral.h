@@ -8,7 +8,7 @@
 #define GEMSTORE_MATH_INTEGRAL
 
 #include <gemstore/basis/orbit.h>
-#include <gemstore/model/model.h>
+#include <gemstore/model/gimodel.h>
 
 /* Integrate wavefunction overlaps */
 double integral_wfn_overlap(
@@ -31,7 +31,7 @@ double integral_matrix_element(
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
-    const argsModel_t *args_model,
+    const argsGIModel_t *args_model,
     const argsModelDy_t *args_dynmc);
 
 /* Integrate matrix elements with given potential (complex) */
@@ -41,7 +41,7 @@ double integral_matrix_element_complex(
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
-    const argsModel_t *args_model,
+    const argsGIModel_t *args_model,
     const argsModelDy_t *args_dynmc);
 
 #endif

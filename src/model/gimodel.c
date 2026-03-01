@@ -4,23 +4,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/model/model.h>
+#include <gemstore/model/gimodel.h>
 
 #include <math.h>
 
-const argsModel_t argsNRScreen_meson = {
-    .mn = 0.606,
-    .ms = 0.780,
-    .mc = 1.984,
-    .mb = 5.368,
-    .alpha_s = 0.3930,
-    .b1 = 0.2312,
-    .mu = 0.069,
-    .c = -1.1711,
-    .sigma = 1.842
-};
-
-const argsModel_t argsGIString_meson = {
+const argsGIModel_t argsGIString_meson = {
     .mn = 0.220,
     .ms = 0.419,
     .mc = 1.628,
@@ -37,7 +25,7 @@ const argsModel_t argsGIString_meson = {
     .epsilon_tens = 0.025
 };
 
-const argsModel_t argsGIScreen_meson = {
+const argsGIModel_t argsGIScreen_meson = {
     .mn = 0.4508,
     .ms = 0.6157,
     .mc = 1.8050,
@@ -55,7 +43,7 @@ const argsModel_t argsGIScreen_meson = {
     .epsilon_tens = -0.1445,
 };
 
-const argsModel_t argsGIScreen_meson_init = {
+const argsGIModel_t argsGIScreen_meson_init = {
     .mn = 0.220,
     .ms = 0.419,
     .mc = 1.628,
@@ -73,7 +61,7 @@ const argsModel_t argsGIScreen_meson_init = {
     .epsilon_tens = 0.025,
 };
 
-const argsModel_t argsGIQuadra_meson = {
+const argsGIModel_t argsGIQuadra_meson = {
     .mn = 0.4597,
     .ms = 0.6244,
     .mc = 1.8135,
@@ -92,7 +80,7 @@ const argsModel_t argsGIQuadra_meson = {
     .epsilon_tens = -0.2282
 };
 
-const argsModel_t argsGIQuadra_meson_init = {
+const argsGIModel_t argsGIQuadra_meson_init = {
     .mn = 0.220,
     .ms = 0.419,
     .mc = 1.628,
@@ -114,114 +102,7 @@ const argsModel_t argsGIQuadra_meson_init = {
 const double GI_ALPHA_K[3] = {0.25, 0.15, 0.20};
 const double GI_GAMMA_K[3] = {0.5, 1.5811388300841898, 15.811388300841896};
 
-double NRVt(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
-{
-    double mi = args_dynmc->mi;
-    double mj = args_dynmc->mj;
-    double cent = args_dynmc->OCent;
-
-    return cent * (mi + mj + p * p / (2.0 * mi) + p * p / (2.0 * mj));
-}
-
-double NRVconf(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
-{
-    if (r == 0.0) {
-        return 0.0;
-    }
-    
-    double b1 = args_model->b1;
-    double mu = args_model->mu;
-    double c = args_model->c;
-    double alpha_s = args_model->alpha_s;
-
-    double Cij = args_dynmc->Cij;
-    double cent = args_dynmc->OCent;
-
-    double coul = alpha_s / r;
-    double screen = b1 * (1.0 - exp(-mu * r)) / mu;
-    
-    return Cij * cent * coul - (3.0 / 4.0) * Cij * cent * screen - (3.0 / 4.0) * Cij * cent * c;
-}
-
-double NRVcont(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
-{
-    double alpha_s = args_model->alpha_s;
-    double sigma = args_model->sigma;
-
-    double mi = args_dynmc->mi;
-    double mj = args_dynmc->mj;
-    double sds = args_dynmc->OSdS;
-
-    double magnet = 32.0 * alpha_s * sds / (9.0 * mi * mj);
-    double factor = pow(sigma, 3.0) / sqrt(M_PI);
-    double exp_term = exp(-sigma * sigma * r * r);
-
-    return magnet * factor * exp_term;
-}
-
-double NRVsocm(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
-{
-    if (r == 0.0) {
-        return 0.0;
-    }
-
-    double alpha_s = args_model->alpha_s;
-
-    double mi = args_dynmc->mi;
-    double mj = args_dynmc->mj;
-    double Cij = args_dynmc->Cij;
-    double ldsi = args_dynmc->OLSi;
-    double ldsj = args_dynmc->OLSj;
-    
-    double tensor = alpha_s / pow(r, 3.0);
-    double magnet = (ldsi / (mi * mi) + ldsj / (mj * mj) + (ldsi + ldsj) / (mi * mj));
-
-    return -Cij * tensor * magnet;
-}
-
-double NRVsotp(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
-{
-    if (r == 0.0) {
-        return 0.0;
-    }
-
-    double alpha_s = args_model->alpha_s;
-    double b1 = args_model->b1;
-    double mu = args_model->mu;
-
-    double mi = args_dynmc->mi;
-    double mj = args_dynmc->mj;
-    double Cij = args_dynmc->Cij;
-    double ldsi = args_dynmc->OLSi;
-    double ldsj = args_dynmc->OLSj;
-
-    double dcoul_dr = -alpha_s / pow(r, 2.0);
-    double dscreen_dr = b1 * exp(-mu * r);
-    double dV_dr = Cij * dcoul_dr - (3.0 / 4.0) * Cij * dscreen_dr;
-    double magnet = (ldsi / (mi * mi) + ldsj / (mj * mj));
-    
-    return -0.5 / r * dV_dr * magnet;
-}
-
-double NRVtens(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
-{
-    if (r == 0.0) {
-        return 0.0;
-    }
-
-    double alpha_s = args_model->alpha_s;
-
-    double mi = args_dynmc->mi;
-    double mj = args_dynmc->mj;
-    double tens = args_dynmc->OTens;
-
-    double tensor = alpha_s / pow(r, 3.0);
-    double magnet = 4.0 * tens / (3.0 * mi * mj);
-
-    return tensor * magnet;
-}
-
-double GIVt(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVt(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     double mi = args_dynmc->mi;
     double mj = args_dynmc->mj;
@@ -230,7 +111,7 @@ double GIVt(double p, const argsModel_t *args_model, const argsModelDy_t *args_d
     return cent * sqrt(mi * mi + p * p) + cent * sqrt(mj * mj + p * p);
 }
 
-double GIVbetaijcoul(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVbetaijcoul(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     double epsilon_Coul = args_model->epsilon_Coul;
     double mi = args_dynmc->mi;
@@ -242,7 +123,7 @@ double GIVbetaijcoul(double p, const argsModel_t *args_model, const argsModelDy_
     return pow(betaij, 0.5 + epsilon_Coul);
 }
 
-double GIVdeltaijcont(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVdeltaijcont(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     double epsilon_cont = args_model->epsilon_cont;
     double mi = args_dynmc->mi;
@@ -254,7 +135,7 @@ double GIVdeltaijcont(double p, const argsModel_t *args_model, const argsModelDy
     return pow(deltaij, 0.5 + epsilon_cont);
 }
 
-double GIVdeltaiisov(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVdeltaiisov(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     double epsilon_sov = args_model->epsilon_sov;
     double mi = args_dynmc->mi;
@@ -265,7 +146,7 @@ double GIVdeltaiisov(double p, const argsModel_t *args_model, const argsModelDy_
     return pow(deltaii, 0.5 + epsilon_sov);
 }
 
-double GIVdeltajjsov(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVdeltajjsov(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     double epsilon_sov = args_model->epsilon_sov;
     double mj = args_dynmc->mj;
@@ -276,7 +157,7 @@ double GIVdeltajjsov(double p, const argsModel_t *args_model, const argsModelDy_
     return pow(deltajj, 0.5 + epsilon_sov);
 }
 
-double GIVdeltaijsov(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVdeltaijsov(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     double epsilon_sov = args_model->epsilon_sov;
     double mi = args_dynmc->mi;
@@ -288,7 +169,7 @@ double GIVdeltaijsov(double p, const argsModel_t *args_model, const argsModelDy_
     return pow(deltaij, 0.5 + epsilon_sov);
 }
 
-double GIVdeltaiisos(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVdeltaiisos(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     double epsilon_sos = args_model->epsilon_sos;
     double mi = args_dynmc->mi;
@@ -299,7 +180,7 @@ double GIVdeltaiisos(double p, const argsModel_t *args_model, const argsModelDy_
     return pow(deltaii, 0.5 + epsilon_sos);
 }
 
-double GIVdeltajjsos(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVdeltajjsos(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     double epsilon_sos = args_model->epsilon_sos;
     double mj = args_dynmc->mj;
@@ -310,7 +191,7 @@ double GIVdeltajjsos(double p, const argsModel_t *args_model, const argsModelDy_
     return pow(deltajj, 0.5 + epsilon_sos);
 }
 
-double GIVdeltaijtens(double p, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVdeltaijtens(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     double epsilon_tens = args_model->epsilon_tens;
     double mi = args_dynmc->mi;
@@ -322,7 +203,7 @@ double GIVdeltaijtens(double p, const argsModel_t *args_model, const argsModelDy
     return pow(deltaij, 0.5 + epsilon_tens);
 }
 
-double GIVcoul(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVcoul(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     if (r == 0.0) {
         return 0.0;
@@ -340,7 +221,7 @@ double GIVcoul(double r, const argsModel_t *args_model, const argsModelDy_t *arg
     return Cij * cent * sum / r;
 }
 
-double GIVconf(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVconf(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     if (r == 0.0) {
         return 0.0;
@@ -389,7 +270,7 @@ double GIVconf(double r, const argsModel_t *args_model, const argsModelDy_t *arg
     return 0.0;
 }
 
-double GIVcont(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVcont(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     double mi = args_dynmc->mi;
     double mj = args_dynmc->mj;
@@ -408,7 +289,7 @@ double GIVcont(double r, const argsModel_t *args_model, const argsModelDy_t *arg
     return pref * sum;
 }
 
-double GIVsovi(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVsovi(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     if (r == 0.0) {
         return 0.0;
@@ -430,7 +311,7 @@ double GIVsovi(double r, const argsModel_t *args_model, const argsModelDy_t *arg
     return pref * dVcoul_dr;
 }
 
-double GIVsovj(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVsovj(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     if (r == 0.0) {
         return 0.0;
@@ -460,7 +341,7 @@ double GIVsovj(double r, const argsModel_t *args_model, const argsModelDy_t *arg
     return pref * dVcoul_dr;
 }
 
-double GIVsovij(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVsovij(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     if (r == 0.0) {
         return 0.0;
@@ -492,7 +373,7 @@ double GIVsovij(double r, const argsModel_t *args_model, const argsModelDy_t *ar
     return pref * dVcoul_dr;
 }
 
-double GIVsosi(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVsosi(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     if (r == 0.0) {
         return 0.0;
@@ -510,7 +391,7 @@ double GIVsosi(double r, const argsModel_t *args_model, const argsModelDy_t *arg
     return pref * dVconf_dr;
 }
 
-double GIVsosj(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVsosj(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     if (r == 0.0) {
         return 0.0;
@@ -536,7 +417,7 @@ double GIVsosj(double r, const argsModel_t *args_model, const argsModelDy_t *arg
     return pref * dVconf_dr;
 }
 
-double GIVtens(double r, const argsModel_t *args_model, const argsModelDy_t *args_dynmc)
+double GIVtens(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc)
 {
     if (r == 0.0) {
         return 0.0;
