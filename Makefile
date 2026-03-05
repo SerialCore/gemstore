@@ -15,6 +15,7 @@ SRC_DIR = src/
 BASIS_DIR = src/basis/
 MATH_DIR = src/math/
 MODEL_DIR = src/model/
+PARAM_DIR = src/param/
 MINUIT2_DIR = lib/Minuit2/
 
 EXCUTEABLE = gemstore
@@ -23,8 +24,8 @@ LIBMINUIT2 = $(MINUIT2_DIR)libMinuit2.a
 INCLUDES = -I$(INC_DIR)
 INCLUDES_CPP = $(INCLUDES) -I$(MINUIT2_DIR)include/
 
-C_SOURCES = $(wildcard $(SRC_DIR)*.c $(BASIS_DIR)*.c $(MATH_DIR)*.c $(MODEL_DIR)*.c)
-CPP_SOURCES = $(wildcard $(SRC_DIR)*.cc)
+C_SOURCES = $(wildcard $(SRC_DIR)*.c $(BASIS_DIR)*.c $(MATH_DIR)*.c $(MODEL_DIR)*.c $(PARAM_DIR)*.c)
+CPP_SOURCES = $(wildcard $(PARAM_DIR)*.cc)
 
 OBJECTS = $(patsubst %.c, $(OBJ_DIR)%.o, $(C_SOURCES)) \
           $(patsubst %.cc, $(OBJ_DIR)%.o, $(CPP_SOURCES))

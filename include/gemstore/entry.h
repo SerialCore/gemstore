@@ -7,21 +7,6 @@
 #ifndef GEMSTORE_ENTRY
 #define GEMSTORE_ENTRY
 
-/* C entry function to be called by c++ */
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-double call_fitting_meson_GIScreen(int f1, int f2, int N, int S, int L, int J, int nmax, double rmax, double rmin, const double *params);
-
-double call_fitting_meson_GIQuadra(int f1, int f2, int N, int S, int L, int J, int nmax, double rmax, double rmin, const double *params);
-
-#ifdef __cplusplus
-}
-#endif
-
-void call_spectra_meson(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, const char *model);
-
-void call_minuit2_chi2();
 
 #endif
