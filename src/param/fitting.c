@@ -84,5 +84,5 @@ double call_meson_GIQuadra(int f1, int f2, int N, int S, int L, int J, int nmax,
 void call_minuit2()
 {
     double *params = (double *)malloc(20 * sizeof(double));
-    minuit2_ccbar_GIQuadra(params);
+    minuit2_meson_GIQuadra(params);
 }

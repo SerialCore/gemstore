@@ -7,7 +7,7 @@
 #ifndef GEMSTORE_MODEL_GIMODEL
 #define GEMSTORE_MODEL_GIMODEL
 
-#include <gemstore/typec.h>
+#include <gemstore/types.h>
 
 #include <math.h>
 
