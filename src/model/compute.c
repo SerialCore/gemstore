@@ -5,9 +5,11 @@
  */
 
 #include <gemstore/model/compute.h>
-#include <gemstore/model/gimodel.h>
 #include <gemstore/model/spectra.h>
+#include <gemstore/param/argset.h>
 #include <gemstore/math/matrix.h>
+
+#include <gemstore/types.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +19,7 @@ void compute_spectra_meson(int f1, int f2, int S, int L, int J, int nmax, double
 {
     array_t eigenvalue = array_init(nmax);
     matrix_t eigenvector = matrix_init(nmax, nmax);
-    argsModelDy_t args_dynmc = {0};
+    argsGIModelDy_t args_dynmc = {0};
 
     if (strcmp(model, "GIString") == 0) {
         args_dynmc.model = MODEL_GI_STRING;

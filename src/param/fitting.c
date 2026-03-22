@@ -5,8 +5,11 @@
  */
 
 #include <gemstore/param/fitting.h>
-#include <gemstore/param/fitmeson.h>
-#include <gemstore/param/fitccbar.h>
+#include <gemstore/param/argset.h>
+#include <gemstore/param/meson.h>
+#include <gemstore/param/bbbar.h>
+#include <gemstore/param/ccbar.h>
+#include <gemstore/param/light.h>
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/model/gimodel.h>
@@ -23,19 +26,17 @@ double call_meson_GIScreen(int f1, int f2, int N, int S, int L, int J, int nmax,
         .ms = params[1],
         .mc = params[2],
         .mb = params[3],
-        .mt = 172.57,
         .b1 = params[4],
         .mu = params[5],
         .c = params[6],
         .sigma_0 = params[7],
         .s = params[8],
-        .epsilon_Coul = 0.0,
         .epsilon_cont = params[9],
         .epsilon_sov = params[10],
         .epsilon_sos = params[11],
         .epsilon_tens = params[12],
     };
-    argsModelDy_t args_dynmc = {
+    argsGIModelDy_t args_dynmc = {
         .model = MODEL_GI_SCREEN,
         .system = SYSTEM_MESON
     };
@@ -56,20 +57,18 @@ double call_meson_GIQuadra(int f1, int f2, int N, int S, int L, int J, int nmax,
         .ms = params[1],
         .mc = params[2],
         .mb = params[3],
-        .mt = 172.57,
         .b1 = params[4],
         .b2 = params[5],
         .mu = params[6],
         .c = params[7],
         .sigma_0 = params[8],
         .s = params[9],
-        .epsilon_Coul = 0.0,
         .epsilon_cont = params[10],
         .epsilon_sov = params[11],
         .epsilon_sos = params[12],
         .epsilon_tens = params[13],
     };
-    argsModelDy_t args_dynmc = {
+    argsGIModelDy_t args_dynmc = {
         .model = MODEL_GI_QUADRA,
         .system = SYSTEM_MESON
     };
@@ -84,5 +83,14 @@ double call_meson_GIQuadra(int f1, int f2, int N, int S, int L, int J, int nmax,
 void call_minuit2()
 {
     double *params = (double *)malloc(20 * sizeof(double));
-    minuit2_meson_GIQuadra(params);
+    //minuit2_meson_GIScreen(params);
+    //minuit2_meson_GIQuadra(params);
+    //minuit2_bbbar_GIScreen(params);
+    //minuit2_bbbar_GIQuadra(params);
+    minuit2_ccbar_GIScreen(params);
+    //minuit2_ccbar_GIQuadra(params);
+    //minuit2_light_GIScreen(params);
+    //minuit2_light_GIQuadra(params);
+
+    free(params);
 }

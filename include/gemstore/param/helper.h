@@ -8,6 +8,7 @@
 #define GEMSTORE_PARAM_TYPECC
 
 #include <gemstore/param/fitting.h>
+#include <gemstore/types.h>
 
 #include <Minuit2/FCNBase.h>
 
@@ -20,12 +21,6 @@ struct State {
     int f1, f2, N, S, L, J;		/* quantum numbers */
 	double exp_mass;			/* experimental mass */
 	double exp_error;			/* experimental error */
-};
-
-enum Model {
-    MODEL_GI_STRING,
-    MODEL_GI_SCREEN,
-    MODEL_GI_QUADRA
 };
 
 /* DualStream is to print console and file at once */
@@ -74,7 +69,7 @@ private:
 
 /* The entrance of chi2 computation with data, parameters and model selection inputed.
  * Should be static to be compiled for each fitting process. */
-static double compute_chi2(const std::vector<State> data, const std::vector<double>& params, enum Model model, bool print_details)
+static double compute_chi2(const std::vector<State> data, const std::vector<double>& params, model_type_t model, bool print_details)
 {
 	double chi_square = 0.0;
     DualStream dual("Fitting.out");
@@ -84,10 +79,10 @@ static double compute_chi2(const std::vector<State> data, const std::vector<doub
         switch (model)
         {
         case MODEL_GI_SCREEN:
-            e_out = call_meson_GIScreen(state.f1, state.f2, state.N, state.S, state.L, state.J, 20, 20.0, 0.1, params.data());
+            e_out = call_meson_GIScreen(state.f1, state.f2, state.N, state.S, state.L, state.J, 20, 20.0, 0.01, params.data());
             break;
         case MODEL_GI_QUADRA:
-            e_out = call_meson_GIQuadra(state.f1, state.f2, state.N, state.S, state.L, state.J, 20, 20.0, 0.1, params.data());
+            e_out = call_meson_GIQuadra(state.f1, state.f2, state.N, state.S, state.L, state.J, 20, 20.0, 0.01, params.data());
             break;
         default:
             e_out = 0.0;
@@ -110,11 +105,10 @@ static double compute_chi2(const std::vector<State> data, const std::vector<doub
 /* The helper class containing base-data and model selection */
 class Chi2Minimizer : public ROOT::Minuit2::FCNBase {
 public:
-	Chi2Minimizer(std::vector<State> data, enum Model model, size_t n_params, size_t n_data, double error_def) {
+	Chi2Minimizer(std::vector<State> data, model_type_t model, size_t n_params, double error_def) {
         this->data_ = data;
         this->model_ = model;
         this->n_params_ = n_params;
-        this->n_data_ = n_data;
         this->error_def_ = error_def;
     }
     ~Chi2Minimizer() {}
@@ -129,10 +123,9 @@ public:
 
 private:
     std::vector<State> data_;   /* define input data */
-    enum Model model_;          /* define model type */
+    model_type_t model_;          /* define model type */
 	double error_def_;			/* define error */
 	size_t n_params_;			/* number of parameters */
-	size_t n_data_;				/* number of data, DOF = n_data - n_params */
 };
 
 #endif

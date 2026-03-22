@@ -32,7 +32,7 @@ double integral_matrix_element(
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
     const argsGIModel_t *args_model,
-    const argsModelDy_t *args_dynmc);
+    const argsGIModelDy_t *args_dynmc);
 
 /* Integrate matrix elements with given potential (complex) */
 double integral_matrix_element_complex(
@@ -42,6 +42,6 @@ double integral_matrix_element_complex(
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
     const argsGIModel_t *args_model,
-    const argsModelDy_t *args_dynmc);
+    const argsGIModelDy_t *args_dynmc);
 
 #endif

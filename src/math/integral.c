@@ -5,7 +5,6 @@
  */
 
 #include <gemstore/math/integral.h>
-#include <gemstore/model/gimodel.h>
 #include <gemstore/basis/orbit.h>
 
 #include <complex.h>
@@ -83,7 +82,7 @@ double integral_matrix_element(
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
     const argsGIModel_t *args_model,
-    const argsModelDy_t *args_dynmc)
+    const argsGIModelDy_t *args_dynmc)
 {
     double sum = 0.0;
 
@@ -105,7 +104,7 @@ double integral_matrix_element_complex(
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
     const argsGIModel_t *args_model,
-    const argsModelDy_t *args_dynmc)
+    const argsGIModelDy_t *args_dynmc)
 {
     double sum = 0.0;
 

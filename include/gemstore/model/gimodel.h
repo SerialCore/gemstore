@@ -7,54 +7,9 @@
 #ifndef GEMSTORE_MODEL_GIMODEL
 #define GEMSTORE_MODEL_GIMODEL
 
-#include <gemstore/types.h>
+#include <gemstore/param/argset.h>
 
 #include <math.h>
-
-typedef struct argsGIModel {
-    double mn;              /* mass of n quark */
-    double ms;              /* mass of s quark */
-    double mc;              /* mass of c quark */
-    double mb;              /* mass of b quark */
-    double mt;              /* mass of t quark */
-
-    double b1;              /* string tension */
-    double b2;              /* surface tension */
-    double mu;              /* screen length */
-    double c;               /* constant potential */
-    double sigma_0;         /* GI smearing parameter for sigma */
-    double s;               /* GI smearing parameter for sigma */
-
-    double epsilon_Coul;    /* GI smearing parameter for Coulumb */
-    double epsilon_cont;    /* GI smearing parameter for contact */
-    double epsilon_sov;     /* GI smearing parameter for spin-orbit */
-    double epsilon_sos;     /* GI smearing parameter for Thomas */
-    double epsilon_tens;    /* GI smearing parameter for tensor */
-} argsGIModel_t;
-
-typedef struct argsModelDy {
-    model_type_t model;     /* model type */
-    system_type_t system;   /* system type */
-    double mi;              /* mass of particle i */
-    double mj;              /* mass of particle j */
-    double Cij;             /* color factor of pair ij */
-    double OCent;           /* operator value of centor potential */
-    double OSdS;            /* operator value of spin-spin coupling */
-    double OLSi;            /* operator value of orbit-spini coupling */
-    double OLSj;            /* operator value of orbit-spinj coupling */
-    double OTens;           /* operator value of tensor potential */
-    double Sigij;           /* GI smearing parameter sigma_ij */
-    double Sigkij[3];       /* GI smearing parameters sigma_k_ij */
-} argsModelDy_t;
-
-/* Default meson parameters for model GISstring */
-extern const argsGIModel_t argsGIString_meson;
-
-/* Default meson parameters for model GIScreen */
-extern const argsGIModel_t argsGIScreen_meson;
-
-/* Default meson parameters for model GISQuadra */
-extern const argsGIModel_t argsGIQuadra_meson;
 
 /* Default parameters for running strong couping constant */
 extern const double GI_ALPHA_K[3], GI_GAMMA_K[3];
@@ -82,60 +37,60 @@ static inline void sigma_k_ij(double sigmaij, double sigmak[3])
     }
 }
 
-typedef double (*potential_t)(double x, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+typedef double (*potential_t)(double x, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* Kinetic energy for GIScreen */
-double GIVt(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVt(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* GI smearing beta_ij for Vcoul */
-double GIVbetaijcoul(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVbetaijcoul(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* GI smearing delta_ij for Vcont */
-double GIVdeltaijcont(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVdeltaijcont(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* GI smearing delta_ii for Vsovi */
-double GIVdeltaiisov(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVdeltaiisov(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* GI smearing delta_jj for Vsovj */
-double GIVdeltajjsov(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVdeltajjsov(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* GI smearing delta_ij for Vsovij */
-double GIVdeltaijsov(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVdeltaijsov(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* GI smearing delta_ii for Vsosi */
-double GIVdeltaiisos(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVdeltaiisos(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* GI smearing delta_jj for Vsosj */
-double GIVdeltajjsos(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVdeltajjsos(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* GI smearing delta_ij for Vtens */
-double GIVdeltaijtens(double p, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVdeltaijtens(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* Coulomb potential for GIScreen */
-double GIVcoul(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVcoul(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* Confining potential for GIScreen */
-double GIVconf(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVconf(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* Contact potential for GIScreen */
-double GIVcont(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVcont(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* Spin-orbit coulping for GIScreen */
-double GIVsovi(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVsovi(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* Spin-orbit coulping for GIScreen */
-double GIVsovj(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVsovj(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* Spin-orbit coulping for GIScreen */
-double GIVsovij(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVsovij(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* Thomas precession for GIScreen */
-double GIVsosi(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVsosi(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* Thomas precession for GIScreen */
-double GIVsosj(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVsosj(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 /* Tenser potential for GIScreen */
-double GIVtens(double r, const argsGIModel_t *args_model, const argsModelDy_t *args_dynmc);
+double GIVtens(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc);
 
 #endif

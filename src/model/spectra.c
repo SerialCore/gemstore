@@ -15,6 +15,8 @@
 #include <gemstore/math/eigen.h>
 #include <gemstore/math/soc.h>
 
+#include <gemstore/param/argset.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -37,9 +39,6 @@ static inline double getmq(int index, const argsGIModel_t *args_model)
     case 4:
         mq = args_model->mb;
         break;
-    case 5:
-        mq = args_model->mt;
-        break;
     default:
         mq = 0;
         break;
@@ -49,7 +48,7 @@ static inline double getmq(int index, const argsGIModel_t *args_model)
 }
 
 void spectra_meson_GI(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, 
-    const argsGIModel_t *args_model, argsModelDy_t *args_dynmc,
+    const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
     array_t *e_out, matrix_t *v_out, int v_len)
 {
     /* construct basis */

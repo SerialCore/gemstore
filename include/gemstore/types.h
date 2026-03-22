@@ -7,8 +7,6 @@
 #ifndef GEMSTORE_TYPES
 #define GEMSTORE_TYPES
 
-#include <complex.h>
-
 typedef enum orbit_type {
     ORBIT_GEM,
     ORBIT_SHO
@@ -25,14 +23,5 @@ typedef enum model_type {
     MODEL_GI_SCREEN,
     MODEL_GI_QUADRA
 } model_type_t;
-
-typedef struct argsModel {
-    model_type_t model;     /* model type */
-    double mn;              /* mass of n quark */
-    double ms;              /* mass of s quark */
-    double mc;              /* mass of c quark */
-    double mb;              /* mass of b quark */
-    double mt;              /* mass of t quark */
-} argsModel_t;
 
 #endif

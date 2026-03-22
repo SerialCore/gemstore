@@ -30,9 +30,9 @@ void debug_su3_product()
 
 void debug_soc_operator()
 {
-    double s1 = 0.5, s2 = 0.5, s = 1.0, l = 1.0, jl = 1.5;
-    double s1p = 0.5, s2p = 0.5, sp = 1.0, lp = 1.0, jlp = 1.5;
-    double j = 2.0;
+    double s1 = 0.5, s2 = 0.5, s = 1.0, l = 2.0, jl = 1.5;
+    double s1p = 0.5, s2p = 0.5, sp = 1.0, lp = 2.0, jlp = 1.5;
+    double j = 1.0;
     printf("s1=%1.1f, s2=%1.1f, s=%1.1f, l=%1.1f, jl=%1.1f\n", s1, s2, s, l, jl);
     printf("s1p=%1.1f, s2p=%1.1f, sp=%1.1f, lp=%1.1f, jlp=%1.1f\n", s1p, s2p, sp, lp, jlp);
     printf("j=%1.1f\n", j);
@@ -42,25 +42,22 @@ void debug_soc_operator()
     printf("Casimir operator value (s1.s2) in sl coupling: %f\n", sl);
     jj = operator_sdots_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
     printf("Casimir operator value (s1.s2) in jj coupling: %f\n", jj);
-
     sl = operator_ldotsi_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
     printf("SOC operator value (l.s1) in sl coupling: %f\n", sl);
     jj = operator_ldotsi_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
     printf("SOC operator value (l.s1) in jj coupling: %f\n", jj);
-
     sl = operator_ldotsj_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
     printf("SOC operator value (l.s2) in sl coupling: %f\n", sl);
     jj = operator_ldotsj_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
     printf("SOC operator value (l.s2) in jj coupling: %f\n", jj);
-
     sl = operator_tensor_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
     printf("Tensor operator value in sl coupling: %f\n", sl);
     jj = operator_tensor_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
     printf("Tensor operator value in jj coupling: %f\n\n", jj);
 
-    s1 = 0.5, s2 = 0.5, s = 1.0, l = 1.0, jl = 1.5;
-    s1p = 0.5, s2p = 0.5, sp = 1.0, lp = 1.0, jlp = 0.5;
-    j = 1.0;
+    s1 = 0.5, s2 = 0.5, s = 1.0, l = 2.0, jl = 1.5;
+    s1p = 0.5, s2p = 0.5, sp = 1.0, lp = 2.0, jlp = 2.5;
+    j = 2.0;
     printf("s1=%1.1f, s2=%1.1f, s=%1.1f, l=%1.1f, jl=%1.1f\n", s1, s2, s, l, jl);
     printf("s1p=%1.1f, s2p=%1.1f, sp=%1.1f, lp=%1.1f, jlp=%1.1f\n", s1p, s2p, sp, lp, jlp);
     printf("j=%1.1f\n", j);
@@ -69,17 +66,38 @@ void debug_soc_operator()
     printf("Casimir operator value (s1.s2) in sl coupling: %f\n", sl);
     jj = operator_sdots_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
     printf("Casimir operator value (s1.s2) in jj coupling: %f\n", jj);
-
     sl = operator_ldotsi_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
     printf("SOC operator value (l.s1) in sl coupling: %f\n", sl);
     jj = operator_ldotsi_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
     printf("SOC operator value (l.s1) in jj coupling: %f\n", jj);
-
     sl = operator_ldotsj_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
     printf("SOC operator value (l.s2) in sl coupling: %f\n", sl);
     jj = operator_ldotsj_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
     printf("SOC operator value (l.s2) in jj coupling: %f\n", jj);
+    sl = operator_tensor_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    printf("Tensor operator value in sl coupling: %f\n", sl);
+    jj = operator_tensor_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    printf("Tensor operator value in jj coupling: %f\n\n", jj);
 
+    s1 = 0.5, s2 = 0.5, s = 1.0, l = 2.0, jl = 2.5;
+    s1p = 0.5, s2p = 0.5, sp = 1.0, lp = 2.0, jlp = 2.5;
+    j = 3.0;
+    printf("s1=%1.1f, s2=%1.1f, s=%1.1f, l=%1.1f, jl=%1.1f\n", s1, s2, s, l, jl);
+    printf("s1p=%1.1f, s2p=%1.1f, sp=%1.1f, lp=%1.1f, jlp=%1.1f\n", s1p, s2p, sp, lp, jlp);
+    printf("j=%1.1f\n", j);
+
+    sl = operator_sdots_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    printf("Casimir operator value (s1.s2) in sl coupling: %f\n", sl);
+    jj = operator_sdots_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    printf("Casimir operator value (s1.s2) in jj coupling: %f\n", jj);
+    sl = operator_ldotsi_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    printf("SOC operator value (l.s1) in sl coupling: %f\n", sl);
+    jj = operator_ldotsi_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    printf("SOC operator value (l.s1) in jj coupling: %f\n", jj);
+    sl = operator_ldotsj_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
+    printf("SOC operator value (l.s2) in sl coupling: %f\n", sl);
+    jj = operator_ldotsj_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);
+    printf("SOC operator value (l.s2) in jj coupling: %f\n", jj);
     sl = operator_tensor_sl(s1, s2, s, l, s1p, s2p, sp, lp, j);
     printf("Tensor operator value in sl coupling: %f\n", sl);
     jj = operator_tensor_jj(s1, s2, l, jl, s1p, s2p, lp, jlp, j);

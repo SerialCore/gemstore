@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/param/fitccbar.h>
-#include <gemstore/param/fitting.h>
+#include <gemstore/param/light.h>
 #include <gemstore/param/helper.h>
+#include <gemstore/types.h>
 
 #include <Minuit2/FunctionMinimum.h>
 #include <Minuit2/MnMigrad.h>
@@ -15,19 +15,18 @@
 #include <vector>
 #include <ctime>
 
-static const std::vector<State> data = {
-    // charmonium (c c-bar)
-    {3, 3, 1, 0, 0, 0, 2984.1,   5},   // ηc(1S)
-    {3, 3, 2, 0, 0, 0, 3637.8,   5},   // ηc(2S)
-    {3, 3, 1, 1, 0, 1, 3096.9,   5},   // J/ψ(1S)
-    {3, 3, 2, 1, 0, 1, 3686.1,   5},   // ψ(2S)
-    {3, 3, 1, 0, 1, 1, 3525.4,   5},   // hc(1P)
-    {3, 3, 1, 1, 1, 0, 3414.7,   5},   // χc0(1P)
-    {3, 3, 1, 1, 1, 1, 3510.7,   5},   // χc1(1P)
-    {3, 3, 1, 1, 1, 2, 3556.2,   5},   // χc2(1P)
+static const std::vector<State> DATA_LIGHT = {
+    // goldstone meson (c c-bar) 17
+    {1, 1, 1, 1, 0, 1, 775.3,    5},   // rho(770)
+    {1, 1, 1, 1, 1, 2, 1318.2,   5},   // a2(1320)
+    {1, 2, 1, 0, 0, 0, 497.6,    5},   // K(1S)
+    {1, 2, 1, 1, 0, 1, 895.6,    5},   // K*(1S)
+    {1, 2, 1, 1, 1, 2, 1432.4,   5},   // K2*(1430)
+    {2, 2, 1, 1, 0, 1, 1019.5,   5},   // phi(1S)
+    {2, 2, 1, 1, 1, 2, 1517.3,   5},   // f2'(1525)
 };
 
-void minuit2_ccbar_GIScreen(double *params_out)
+void minuit2_light_GIScreen(double *params_out)
 {
     srand(time(0));
     DualStream dual("Fitting.out");
@@ -48,16 +47,17 @@ void minuit2_ccbar_GIScreen(double *params_out)
     upar.Add("esov", -0.035, 0.01, -1.0, 1.0);
     upar.Add("esos", 0.055, 0.01, -1.0, 1.0);
     upar.Add("etens", 0.025, 0.01, -1.0, 1.0);
+    upar.Fix("mc");
+    upar.Fix("mb");
     int N_PARAMS = upar.Params().size();
-    int N_DATA = data.size();
 
     /* use of Migrad algorithm with strategy 2, high precision */
-    Chi2Minimizer minuit_fit(data, MODEL_GI_SCREEN, N_PARAMS, N_DATA, 1.0);
+    Chi2Minimizer minuit_fit(DATA_LIGHT, MODEL_GI_SCREEN, N_PARAMS, 1.0);
     ROOT::Minuit2::MnMigrad migrad(minuit_fit, upar, 2);
 
     /* perform the fit */
     ROOT::Minuit2::FunctionMinimum min_result = migrad();
-    compute_chi2(data, min_result.UserParameters().Params(), MODEL_GI_SCREEN, true);
+    compute_chi2(DATA_LIGHT, min_result.UserParameters().Params(), MODEL_GI_SCREEN, true);
     dual << min_result.UserParameters() << std::endl;
 
     auto params = min_result.UserParameters().Params();
@@ -66,7 +66,7 @@ void minuit2_ccbar_GIScreen(double *params_out)
     }
 }
 
-void minuit2_ccbar_GIQuadra(double *params_out)
+void minuit2_light_GIQuadra(double *params_out)
 {
     srand(time(0));
     DualStream dual("Fitting.out");
@@ -88,16 +88,17 @@ void minuit2_ccbar_GIQuadra(double *params_out)
     upar.Add("esov", -0.035, 0.01, -1.0, 1.0);
     upar.Add("esos", 0.055, 0.01, -1.0, 1.0);
     upar.Add("etens", 0.025, 0.01, -1.0, 1.0);
+    upar.Fix("mc");
+    upar.Fix("mb");
     int N_PARAMS = upar.Params().size();
-    int N_DATA = data.size();
 
     /* use of Migrad algorithm with strategy 2, high precision */
-    Chi2Minimizer minuit_fit(data, MODEL_GI_QUADRA, N_PARAMS, N_DATA, 1.0);
+    Chi2Minimizer minuit_fit(DATA_LIGHT, MODEL_GI_QUADRA, N_PARAMS, 1.0);
     ROOT::Minuit2::MnMigrad migrad(minuit_fit, upar, 2);
 
     /* perform the fit */
     ROOT::Minuit2::FunctionMinimum min_result = migrad();
-    compute_chi2(data, min_result.UserParameters().Params(), MODEL_GI_QUADRA, true);
+    compute_chi2(DATA_LIGHT, min_result.UserParameters().Params(), MODEL_GI_QUADRA, true);
     dual << min_result.UserParameters() << std::endl;
 
     auto params = min_result.UserParameters().Params();

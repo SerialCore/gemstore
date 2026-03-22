@@ -8,6 +8,7 @@
 #include <gemstore/debug.h>
 
 #include <gemstore/param/fitting.h>
+#include <gemstore/model/compute.h>
 
 #include <stdio.h>
 
@@ -19,7 +20,8 @@ void print_help()
 
 int main(int argc, char **argv)
 {
-    call_minuit2();
+    //call_minuit2();
+    compute_spectra_meson(3, 3, 1, 0, 1, 20, 20, 0.01, "GIScreen");
 
     return 0;
 }
