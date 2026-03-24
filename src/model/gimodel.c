@@ -114,9 +114,7 @@ double GIVdeltaijtens(double p, const argsGIModel_t *args_model, const argsGIMod
 
 double GIVcoul(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
 {
-    if (r == 0.0) {
-        return 0.0;
-    }
+    if (r == 0.0) return 0.0;
 
     double Cij = args_dynmc->Cij;
     double cent = args_dynmc->OCent;
@@ -132,9 +130,7 @@ double GIVcoul(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
 
 double GIVconf(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
 {
-    if (r == 0.0) {
-        return 0.0;
-    }
+    if (r == 0.0) return 0.0;
 
     model_type_t model = args_dynmc->model;
     double b1 = args_model->b1;
@@ -200,9 +196,7 @@ double GIVcont(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
 
 double GIVsovi(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
 {
-    if (r == 0.0) {
-        return 0.0;
-    }
+    if (r == 0.0) return 0.0;
 
     double mi = args_dynmc->mi;
     double Cij = args_dynmc->Cij;
@@ -222,9 +216,7 @@ double GIVsovi(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
 
 double GIVsovj(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
 {
-    if (r == 0.0) {
-        return 0.0;
-    }
+    if (r == 0.0) return 0.0;
 
     system_type_t system = args_dynmc->system;
     double mj = args_dynmc->mj;
@@ -232,16 +224,9 @@ double GIVsovj(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
     double ldsj = args_dynmc->OLSj;
     double sigmak[3] = {args_dynmc->Sigkij[0], args_dynmc->Sigkij[1], args_dynmc->Sigkij[2]};
 
-    double sign;
-    if (system == SYSTEM_MESON) {
-        sign = 1.0;
-    }
-    else if (system == SYSTEM_BARYON) {
-        sign = -1.0;
-    }
-    else {
-        sign = 0.0;
-    }
+    double sign = 0.0;
+    if (system == SYSTEM_MESON) sign = 1.0;
+    else if (system == SYSTEM_BARYON) sign = -1.0;
     double pref = sign * ldsj / (2 * r * mj * mj);
 
     double dVcoul_dr = 0.0;
@@ -255,9 +240,7 @@ double GIVsovj(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
 
 double GIVsovij(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
 {
-    if (r == 0.0) {
-        return 0.0;
-    }
+    if (r == 0.0) return 0.0;
 
     system_type_t system = args_dynmc->system;
     double mi = args_dynmc->mi;
@@ -267,16 +250,9 @@ double GIVsovij(double r, const argsGIModel_t *args_model, const argsGIModelDy_t
     double ldsj = args_dynmc->OLSj;
     double sigmak[3] = {args_dynmc->Sigkij[0], args_dynmc->Sigkij[1], args_dynmc->Sigkij[2]};
 
-    double sign;
-    if (system == SYSTEM_MESON) {
-        sign = 1.0;
-    }
-    else if (system == SYSTEM_BARYON) {
-        sign = -1.0;
-    }
-    else {
-        sign = 0.0;
-    }
+    double sign = 0.0;
+    if (system == SYSTEM_MESON) sign = 1.0;
+    else if (system == SYSTEM_BARYON) sign = -1.0;
     double pref = sign * (ldsi + sign * ldsj) / (r * mi * mj);
 
     double dVcoul_dr = 0.0;
@@ -290,9 +266,7 @@ double GIVsovij(double r, const argsGIModel_t *args_model, const argsGIModelDy_t
 
 double GIVsosi(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
 {
-    if (r == 0.0) {
-        return 0.0;
-    }
+    if (r == 0.0) return 0.0;
 
     double mi = args_dynmc->mi;
     double ldsi = args_dynmc->OLSi;
@@ -308,24 +282,15 @@ double GIVsosi(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
 
 double GIVsosj(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
 {
-    if (r == 0.0) {
-        return 0.0;
-    }
+    if (r == 0.0) return 0.0;
 
     system_type_t system = args_dynmc->system;
     double mj = args_dynmc->mj;
     double ldsj = args_dynmc->OLSj;
 
-    double sign;
-    if (system == SYSTEM_MESON) {
-        sign = -1.0;
-    }
-    else if (system == SYSTEM_BARYON) {
-        sign = 1.0;
-    }
-    else {
-        sign = 0.0;
-    }
+    double sign = 0.0;
+    if (system == SYSTEM_MESON) sign = -1.0;
+    else if (system == SYSTEM_BARYON) sign = 1.0;
     double pref = sign * ldsj / (2 * r * mj * mj);
 
     /* numerical differential */
@@ -337,9 +302,7 @@ double GIVsosj(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
 
 double GIVtens(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
 {
-    if (r == 0.0) {
-        return 0.0;
-    }
+    if (r == 0.0) return 0.0;
 
     double mi = args_dynmc->mi;
     double mj = args_dynmc->mj;

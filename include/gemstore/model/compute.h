@@ -7,6 +7,8 @@
 #ifndef GEMSTORE_MODEL_COMPUTE
 #define GEMSTORE_MODEL_COMPUTE
 
-void compute_spectra_meson(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, const char *model);
+#include <gemstore/param/argset.h>
+
+void compute_spectra_meson(const argsInput_t *input);
 
 #endif

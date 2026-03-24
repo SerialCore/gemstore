@@ -82,14 +82,12 @@ static const double factorial_2_inverse[128] = {
 };
 
 /* scale the input by 2 to index precomputed arrays */
-static inline double fact(double x);
 static inline double fact(double x)
 {
     return factorial_2[(int)(2*x)];
 }
 
 /* scale the input by 2 to index precomputed arrays */
-static inline double factin(double x);
 static inline double factin(double x)
 {
     return factorial_2_inverse[(int)(2*x)];
@@ -276,7 +274,6 @@ double operator_tensor_sl(double si, double sj, double s, double l, double sip, 
 }
 
 /* transform sl coupling into jj coupling */
-static double trans_sl_jj(double si, double sj, double L, double jl, double sip, double sjp, double Lp, double jlp, double J, operator_sl osl);
 static double trans_sl_jj(double si, double sj, double L, double jl, double sip, double sjp, double Lp, double jlp, double J, operator_sl osl)
 {
     double result = 0.0;

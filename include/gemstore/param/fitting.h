@@ -20,6 +20,8 @@ double call_meson_GIQuadra(int f1, int f2, int N, int S, int L, int J, int nmax,
 }
 #endif
 
-void call_minuit2();
+void call_minuit2_GIScreen(const char* system);
+
+void call_minuit2_GIQuadra(const char* system);
 
 #endif

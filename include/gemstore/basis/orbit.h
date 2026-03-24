@@ -10,16 +10,6 @@
 #include <math.h>
 #include <complex.h>
 
-typedef struct argsOrbit
-{
-    /* radial number & gaussian parameter */
-    int n;
-    /* orbital momentum */
-    int l;
-    /* scale factor, nu for GEM and beta for SHO */
-    double scale;
-} argsOrbit_t;
-
 /* Scale ν[n, nmax, rmax, rmin] = 1/rmin^2 * (rmax/rmin)^((2 - 2n)/(nmax-1)) */
 static inline double getnu(int n, int nmax, double rmax, double rmin)
 {

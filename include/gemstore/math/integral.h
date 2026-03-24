@@ -8,6 +8,7 @@
 #define GEMSTORE_MATH_INTEGRAL
 
 #include <gemstore/basis/orbit.h>
+#include <gemstore/param/argset.h>
 #include <gemstore/model/gimodel.h>
 
 /* Integrate wavefunction overlaps */

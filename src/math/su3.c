@@ -14,14 +14,12 @@ int su3_dimension(int upper, int lower)
 }
 
 /* Print representation details */
-static void print_rep(int upper, int lower);
 static void print_rep(int upper, int lower)
 {
     printf("{%d, %d} dim=%d\n", upper, lower, su3_dimension(upper, lower));
 }
 
 /* Find direct sums */
-static void indice(int n, int nprime, int m, int mprime);
 static void indice(int n, int nprime, int m, int mprime)
 {
     print_rep(n + nprime, m + mprime);

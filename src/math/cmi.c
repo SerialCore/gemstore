@@ -13,7 +13,6 @@
 #include <complex.h>
 
 /* Helper to get spin vector */
-static inline void get_swv(char c, double v[2]);
 static inline void get_swv(char c, double v[2])
 {
     if (c == '1') {
@@ -29,7 +28,6 @@ static inline void get_swv(char c, double v[2])
 }
 
 /* Helper to get color vector */
-static inline void get_cwv(char c, double v[3]);
 static inline void get_cwv(char c, double v[3])
 {
     char lc = tolower(c);
@@ -46,7 +44,6 @@ static inline void get_cwv(char c, double v[3])
 }
 
 /* Trace for spin-sigma-spin */
-static inline complex trace_spin(const double p[2], const complex m[4], const double v[2]);
 static inline complex trace_spin(const double p[2], const complex m[4], const double v[2])
 {
     complex sum = 0.0 + 0.0 * I;
@@ -61,7 +58,6 @@ static inline complex trace_spin(const double p[2], const complex m[4], const do
 }
 
 /* Trace for color-lambda-color */
-static inline complex trace_color(const double p[3], const complex m[9], const double v[3]);
 static inline complex trace_color(const double p[3], const complex m[9], const double v[3])
 {
     complex sum = 0.0 + 0.0 * I;
@@ -76,7 +72,6 @@ static inline complex trace_color(const double p[3], const complex m[9], const d
 }
 
 /* Compute σ_i · σ_j matrix element between single quark states */
-static double sigma_dot_sigma(char fi, char ii, char fj, char ij);
 static double sigma_dot_sigma(char fi, char ii, char fj, char ij)
 {
     double sum = 0.0;
@@ -113,7 +108,6 @@ static double sigma_dot_sigma(char fi, char ii, char fj, char ij)
 }
 
 /* Compute λ_i · λ_j matrix element between single quark states */
-static double lambda_dot_lambda(char fi, char ii, char fj, char ij);
 static double lambda_dot_lambda(char fi, char ii, char fj, char ij)
 {
     double sum = 0.0;
@@ -178,7 +172,6 @@ static double lambda_dot_lambda(char fi, char ii, char fj, char ij)
 }
 
 /* match configs except positions 1 and 2 */
-static inline int configs_match_except_positions(const char *config1, const char *config2, int num_configs, int skip1, int skip2);
 static inline int configs_match_except_positions(const char *config1, const char *config2, int num_configs, int skip1, int skip2)
 {
     for (int k = 0; k < num_configs; k++) {

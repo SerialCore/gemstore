@@ -6,6 +6,7 @@
 
 #include <gemstore/math/integral.h>
 #include <gemstore/basis/orbit.h>
+#include <gemstore/param/argset.h>
 
 #include <complex.h>
 

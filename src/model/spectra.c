@@ -20,37 +20,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static inline double getmq(int index, const argsGIModel_t *args_model);
 static inline double getmq(int index, const argsGIModel_t *args_model)
 {
-    double mq;
-
-    switch (index)
-    {
-    case 1:
-        mq = args_model->mn;
-        break;
-    case 2:
-        mq = args_model->ms;
-        break;
-    case 3:
-        mq = args_model->mc;
-        break;
-    case 4:
-        mq = args_model->mb;
-        break;
-    default:
-        mq = 0;
-        break;
+    switch (index) {
+        case 1: return args_model->mn;
+        case 2: return args_model->ms;
+        case 3: return args_model->mc;
+        case 4: return args_model->mb;
+        default: return args_model->mn;
     }
-
-    return mq;
 }
 
-void spectra_meson_GI(int f1, int f2, int S, int L, int J, int nmax, double rmax, double rmin, 
-    const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
+void spectra_meson_GI(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
     array_t *e_out, matrix_t *v_out, int v_len)
 {
+    int nmax = args_input->nmax;
+    double rmax = args_input->rmax;
+    double rmin = args_input->rmin;
+    int f1 = args_input->f1, f2 = args_input->f2;
+    double S = args_input->S, L = args_input->L, J = args_input->J;
+
     /* construct basis */
     argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
     double nu;

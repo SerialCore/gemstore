@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef GEMSTORE_PARAM_TYPECC
-#define GEMSTORE_PARAM_TYPECC
+#ifndef GEMSTORE_PARAM_MINUIT
+#define GEMSTORE_PARAM_MINUIT
 
 #include <gemstore/param/fitting.h>
 #include <gemstore/types.h>

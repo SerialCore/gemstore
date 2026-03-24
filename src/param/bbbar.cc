@@ -5,7 +5,7 @@
  */
 
 #include <gemstore/param/bbbar.h>
-#include <gemstore/param/helper.h>
+#include <gemstore/param/minuit.h>
 #include <gemstore/types.h>
 
 #include <Minuit2/FunctionMinimum.h>
