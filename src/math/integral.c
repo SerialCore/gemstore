@@ -40,6 +40,24 @@ static const double nodes[OHP] = {
     8.88668005924412897894E+000, 9.28749674141648604654E+000, 9.72416586588463146083E+000, 1.02158862585784281522E+001, 1.08129860729453608573E+001
 };
 
+double integral_rms_radius(
+    orbit_wfn_t wfn,
+    double node_factor,
+    const argsOrbit_t *args_bra,
+    const argsOrbit_t *args_ket)
+{
+    double sum = 0.0;
+
+    for (int i = 0; i < OHP; i++) {
+        sum += node_factor * weights[i]
+             * wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale)
+             * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
+             * node_factor * node_factor * node_factor * node_factor * nodes[i] * nodes[i] * nodes[i] * nodes[i];
+    }
+
+    return sum;
+}
+
 double integral_wfn_overlap(
     orbit_wfn_t wfn,
     double node_factor,

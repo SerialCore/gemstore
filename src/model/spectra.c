@@ -42,12 +42,10 @@ void spectra_meson_GI(const argsInput_t *args_input, const argsGIModel_t *args_m
 
     /* construct basis */
     argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
-    double nu;
     for (int i = 0; i < nmax; i++) {
-        nu = getnu(i + 1, nmax, rmax, rmin);
         basis[i].n = i + 1;
         basis[i].l = L;
-        basis[i].scale = nu;
+        basis[i].scale = getnu(i + 1, nmax, rmax, rmin);
     }
 
     /* construct matrices */

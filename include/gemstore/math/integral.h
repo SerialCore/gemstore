@@ -11,6 +11,13 @@
 #include <gemstore/param/argset.h>
 #include <gemstore/model/gimodel.h>
 
+/* Integrate rms radius */
+double integral_rms_radius(
+    orbit_wfn_t wfn,
+    double node_factor,
+    const argsOrbit_t *args_bra,
+    const argsOrbit_t *args_ket);
+
 /* Integrate wavefunction overlaps */
 double integral_wfn_overlap(
     orbit_wfn_t wfn,
