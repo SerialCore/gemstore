@@ -33,14 +33,16 @@ void radius_meson_rms(const argsInput_t *args_input, const matrix_t *vector, arr
     argsOrbit_t args_bra;
     argsOrbit_t args_ket;
     double factor;
-    double overlap;
     double coef;
     double r2;
-    double sum;
+    double r2sum;
+    double over;
+    double oversum;
     double fm = 5.06773093854369882649;
 
     for (int n = 0; n < v_len; n++) {
-        sum = 0.0;
+        r2sum = 0.0;
+        oversum = 0.0;
         for (int i = 0; i < nmax; i++) {
             for (int j = 0; j < nmax; j++) {
                 args_bra = basis[i];
@@ -49,12 +51,13 @@ void radius_meson_rms(const argsInput_t *args_input, const matrix_t *vector, arr
                 coef = vector->value[n][i] * vector->value[n][j];
                 factor = 1.0 / sqrt(args_bra.scale + args_ket.scale);
 
-                overlap = integral_wfn_overlap(GRnlr, factor, &args_bra, &args_ket);
                 r2 = integral_rms_radius(GRnlr, factor, &args_bra, &args_ket);
-                sum += coef * r2 / overlap;
+                r2sum += coef * r2;
+                over = integral_wfn_overlap(GRnlr, factor, &args_bra, &args_ket);
+                oversum += coef * over;
             }
         }
-        r_out->value[n] = sqrt(sum) / fm;
+        r_out->value[n] = sqrt(r2sum / oversum) / fm;
     }
 
     free(basis);
