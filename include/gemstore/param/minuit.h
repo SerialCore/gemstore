@@ -69,24 +69,23 @@ private:
 
 /* The entrance of chi2 computation with data, parameters and model selection inputed.
  * Should be static to be compiled for each fitting process. */
-static double compute_chi2(const std::vector<State> data, const std::vector<double>& params, model_type_t model, bool print_details)
+static double compute_chi2(const std::vector<State> data, const std::vector<double> params, model_type_t model, bool print_details)
 {
 	double chi_square = 0.0;
     DualStream dual("Fitting.out");
 
     for (const auto& state : data) {
         double e_out;
-        switch (model)
-        {
-        case MODEL_GI_SCREEN:
-            e_out = call_meson_GIScreen(state.f1, state.f2, state.N, state.S, state.L, state.J, 20, 20.0, 0.01, params.data());
-            break;
-        case MODEL_GI_QUADRA:
-            e_out = call_meson_GIQuadra(state.f1, state.f2, state.N, state.S, state.L, state.J, 20, 20.0, 0.01, params.data());
-            break;
-        default:
-            e_out = 0.0;
-            break;
+        switch (model) {
+            case MODEL_GI_SCREEN:
+                e_out = call_meson_GIScreen(state.f1, state.f2, state.N, state.S, state.L, state.J, 20, 20.0, 0.01, params.data());
+                break;
+            case MODEL_GI_QUADRA:
+                e_out = call_meson_GIQuadra(state.f1, state.f2, state.N, state.S, state.L, state.J, 20, 20.0, 0.01, params.data());
+                break;
+            default:
+                e_out = 0.0;
+                break;
         }
         double diff = 1000 * e_out - state.exp_mass;
 

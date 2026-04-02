@@ -176,6 +176,7 @@ void entry_fitting(const char* arg)
 
     if (strcmp(prefix, "GIScreen") == 0) call_minuit2_GIScreen(suffix);
     else if (strcmp(prefix, "GIQuadra") == 0) call_minuit2_GIQuadra(suffix);
+    else {fprintf(stderr, "Unknown fitting model: %s\n", arg); exit(1);}
 }
 
 void entry_debug(const char* arg)
@@ -188,6 +189,7 @@ void entry_debug(const char* arg)
     else if (strcmp(arg, "isospin_wfn") == 0) debug_isospin_wfn();
     else if (strcmp(arg, "orbit_wfn") == 0) debug_orbit_wfn();
     else if (strcmp(arg, "eigen_system") == 0) debug_eigen_system();
+    else {fprintf(stderr, "Unknown debug unit: %s\n", arg); exit(1);}
 }
 
 void entry_print(const char* arg)

@@ -12,9 +12,9 @@
 extern "C" {
 #endif
 
-double call_meson_GIScreen(int f1, int f2, int N, int S, int L, int J, int nmax, double rmax, double rmin, const double *params);
+double call_meson_GIScreen(int f1, int f2, int N, double S, double L, double J, int nmax, double rmax, double rmin, const double *params);
 
-double call_meson_GIQuadra(int f1, int f2, int N, int S, int L, int J, int nmax, double rmax, double rmin, const double *params);
+double call_meson_GIQuadra(int f1, int f2, int N, double S, double L, double J, int nmax, double rmax, double rmin, const double *params);
 
 #ifdef __cplusplus
 }

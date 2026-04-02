@@ -15,22 +15,23 @@
 #include <gemstore/model/gimodel.h>
 #include <gemstore/model/spectra.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-double call_meson_GIScreen(int f1, int f2, int N, int S, int L, int J, int nmax, double rmax, double rmin, const double *params)
+double call_meson_GIScreen(int f1, int f2, int N, double S, double L, double J, int nmax, double rmax, double rmin, const double *params)
 {
     array_t eigenvalue = array_init(nmax);
 
     argsInput_t args_input = {
-        f1 = f1,
-        f2 = f2,
-        S = S,
-        L = L,
-        J = J,
-        nmax = nmax,
-        rmax = rmax,
-        rmin = rmin
+        .f1 = f1,
+        .f2 = f2,
+        .S = S,
+        .L = L,
+        .J = J,
+        .nmax = nmax,
+        .rmax = rmax,
+        .rmin = rmin
     };
     argsGIModel_t args_model = {
         .mn = params[0],
@@ -59,19 +60,19 @@ double call_meson_GIScreen(int f1, int f2, int N, int S, int L, int J, int nmax,
     return e_out;
 }
 
-double call_meson_GIQuadra(int f1, int f2, int N, int S, int L, int J, int nmax, double rmax, double rmin, const double *params)
+double call_meson_GIQuadra(int f1, int f2, int N, double S, double L, double J, int nmax, double rmax, double rmin, const double *params)
 {
     array_t eigenvalue = array_init(nmax);
 
     argsInput_t args_input = {
-        f1 = f1,
-        f2 = f2,
-        S = S,
-        L = L,
-        J = J,
-        nmax = nmax,
-        rmax = rmax,
-        rmin = rmin
+        .f1 = f1,
+        .f2 = f2,
+        .S = S,
+        .L = L,
+        .J = J,
+        .nmax = nmax,
+        .rmax = rmax,
+        .rmin = rmin
     };
     argsGIModel_t args_model = {
         .mn = params[0],
@@ -93,7 +94,7 @@ double call_meson_GIQuadra(int f1, int f2, int N, int S, int L, int J, int nmax,
         .model = MODEL_GI_QUADRA,
         .system = SYSTEM_MESON
     };
-
+    
     spectra_meson_GI(&args_input, &args_model, &args_dynmc, &eigenvalue, NULL, 0);
     double e_out = eigenvalue.value[N - 1];
 
@@ -108,6 +109,7 @@ void call_minuit2_GIScreen(const char* system)
     else if (strcmp(system, "bbbar") == 0) minuit2_bbbar_GIScreen(params);
     else if (strcmp(system, "ccbar") == 0) minuit2_ccbar_GIScreen(params);
     else if (strcmp(system, "light") == 0) minuit2_light_GIScreen(params);
+    else {fprintf(stderr, "Unknown fitting system: %s\n", system); exit(1);}
 
     free(params);
 }
@@ -119,6 +121,7 @@ void call_minuit2_GIQuadra(const char* system)
     else if (strcmp(system, "bbbar") == 0) minuit2_bbbar_GIQuadra(params);
     else if (strcmp(system, "ccbar") == 0) minuit2_ccbar_GIQuadra(params);
     else if (strcmp(system, "light") == 0) minuit2_light_GIQuadra(params);
+    else {fprintf(stderr, "Unknown fitting system: %s\n", system); exit(1);}
 
     free(params);
 }
