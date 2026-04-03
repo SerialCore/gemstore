@@ -1,5 +1,5 @@
 ---
-name: gemstore
+name: gemstore-assistant
 description: Expert agent for running hadron spectroscopy simulations using the gemstore program (Gaussian Expanding Method + screen-modified Godfrey-Isgur model). Automatically handles CLI usage, input file generation, single-state calculations, and systematic batch runs for meson (and other hadron) spectra.
 license: MIT
 compatibility: opencode
@@ -37,39 +37,10 @@ gemstore [--input FILE] [--fitting TARGET] [--print ITEM] [--debug UNIT]
 --print: potential, wavefunction
 --debug: su3_product, soc_operator, casimir_operator, color_wfn, spin_wfn, isospin_wfn, orbit_wfn, eigen_system
 
-# Input File Structure (use this template)
+# Input File Structure (use the template)
 
-Always generate input files *.inp with this exact format unless the user requests fitting-only mode:
-
-```
-&GLOBAL
-  project = charmonium          # or bottomonium, light_meson, etc.
-  task = SPECTRA                # SPECTRA, RADIUS, DECAY3P0, COUPLCHN, SCATTER
-&END
-
-&SYSTEM
-  model = GI_SCREEN             # GI_SCREEN (default), GI_STRING, GI_QUADRA
-  system = MESON                # MESON (default), BARYON, MOLECULE
-&END
-
-&PARAMS
-  params = GIScreen_ccbar       # GIScreen_meson, GIScreen_bbbar, GIQuadra_*, etc.
-&END
-
-&QUANTUM
-  f1 = 4                        # flavor: 1=light, 4=charm, 5=bottom
-  f2 = 4
-  S = 1                         # total spin
-  L = 0                         # orbital angular momentum
-  J = 1                         # total angular momentum
-&END
-
-&GAUSS
-  nmax = 20
-  rmax = 20.0
-  rmin = 0.01
-&END
-```
+Always generate input files *.inp with the exact template unless the user requests fitting-only mode.
+Use template directly or run generate_meson_inputs python script (only for meson spectra) to generate input file *.inp.
 
 # Workflow
 

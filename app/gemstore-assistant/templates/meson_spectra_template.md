@@ -1,3 +1,12 @@
+# Gemstore Meson Spectra Input Template
+
+This template defines the input format for the gemstore meson spectra computation.
+
+---
+
+## Charmonium Spectra
+
+```
 &GLOBAL
   project = charmonium
   task = SPECTRA
@@ -48,7 +57,16 @@
   J = 1
 &END
 &GAUSS
-  nmax = 30
-  rmax = 30.0
+  nmax = 20
+  rmax = 20.0
   rmin = 0.01
 &END
+```
+
+## Parameter Definition
+
+--f1, f2, quark flavor, 1 for n, 2 for s, 3 for c, 4 for b.
+--S for spin, L for orbital angular momentum, J for total angular momentum.
+--jl=s1+L for Jj coupling
+--nmax, rmax, rmin will be usually fixed
+--GIScreen_meson is the default parameter set
