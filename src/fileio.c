@@ -7,151 +7,29 @@
 #include <gemstore/fileio.h>
 
 #include <stdio.h>
-#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 
-long fileio_length(char *path)
+int fileio_write_spectra(const char *name, const double *mass, const double *rmsradius,
+                         const double *eigenvectors, int nmax, int dim)
 {
     FILE *pf;
-    long length = 0;
+    int state = 0;
 
-    pf = fopen(path, "r");
-    while (fgetc(pf) != EOF) {
-        length++;
-    }
-
-    return length;
-}
-
-int fileio_read_text(char *path, char *text, long length)
-{
-    FILE *pf;
-    int state = 0; 
-
-    pf = fopen(path, "r");
-    if (pf != NULL) {
-        state = fgets(text, length, pf) != NULL ? 1 : 0;
-        state *= fclose(pf) + 1;
-    }
-
-    return state;
-}
-
-int fileio_write_text(char *path, char *text)
-{
-    FILE *pf;
-    int state = 0; 
-
+    char path[256];
+    sprintf(path, "%s%s", name, ".out");
     pf = fopen(path, "w");
+
+    fprintf(pf, "%s\t%s\t%s\t\t%s\n", "Radial", "Mass", "RMS Radius", "Eigenvectors");
     if (pf != NULL) {
-        state = fputs(text, pf);
-        state *= fclose(pf) + 1;
-    }
-
-    return state;
-}
-
-int fileio_append_text(char *path, char *text)
-{
-    FILE *pf;
-    int state = 0; 
-
-    pf = fopen(path, "a");
-    if (pf != NULL) {
-        state = fputs(text, pf);
-        state *= fclose(pf) + 1;
-    }
-
-    return state;
-}
-
-int fileio_read_formate(char *path, char *format, int count, ...)
-{
-    FILE *pf;
-    int state = 0; 
-    va_list args;
-
-    va_start(args, count);
-    pf = fopen(path, "r");
-    if (pf != NULL) {
-        state = fscanf(pf, format, args) == count ? 1 : 0;
-        state *= fclose(pf) + 1;
-    }
-    va_end(args);
-
-    return state;
-}
-
-int fileio_write_formate(char *path, char *format, int count, ...)
-{
-    FILE *pf;
-    int state = 0; 
-    va_list args;
-
-    va_start(args, count);
-    pf = fopen(path, "w");
-    if (pf != NULL) {
-        state = fprintf(pf, format, args) == count ? 1 : 0;
-        state *= fclose(pf) + 1;
-    }
-    va_end(args);
-
-    return state;
-}
-
-int fileio_append_formate(char *path, char *format, int count, ...)
-{
-    FILE *pf;
-    int state = 0; 
-    va_list args;
-
-    va_start(args, count);
-    pf = fopen(path, "a");
-    if (pf != NULL) {
-        state = fprintf(pf, format, args) == count ? 1 : 0;
-        state *= fclose(pf) + 1;
-    }
-    va_end(args);
-
-    return state;
-}
-
-int fileio_read_data(char *path, void *data, int size, long length)
-{
-    FILE *pf;
-    int state = 0; 
-
-    pf = fopen(path, "rb");
-    if (pf != NULL) {
-        state = fread(data, size, length, pf) == length ? 1 : 0;
-        state *= fclose(pf) + 1;
-    }
-
-    return state;
-}
-
-int fileio_write_data(char *path, void *data, int size, long length)
-{
-    FILE *pf;
-    int state = 0; 
-
-    pf = fopen(path, "wb");
-    if (pf != NULL) {
-        state = fwrite(data, size, length, pf) == length ? 1 : 0;
-        state *= fclose(pf) + 1;
-    }
-
-    return state;
-}
-
-int fileio_append_data(char *path, void *data, int size, long length)
-{
-    FILE *pf;
-    int state = 0; 
-
-    pf = fopen(path, "ab");
-    if (pf != NULL) {
-        state = fwrite(data, size, length, pf) == length ? 1 : 0;
-        state *= fclose(pf) + 1;
+        for (int n = 0; n < nmax; n++) {
+            fprintf(pf, "%d\t%10.6f\t%10.6f\t\t", n, mass[n], rmsradius[n]);
+            for (int d = 0; d < dim; d++) {
+                fprintf(pf, "%10.10f ", eigenvectors[n * dim + d]);
+            }
+            fprintf(pf, "\n");
+        }
+        state = fclose(pf) == 0 ? 1 : 0;
     }
 
     return state;
