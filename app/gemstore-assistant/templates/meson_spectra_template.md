@@ -8,7 +8,7 @@ This template defines the input format for the gemstore meson spectra computatio
 
 ```
 &GLOBAL
-  project = charmonium
+  project = {file name}
   task = SPECTRA
   # task = RADIUS
   # task = DECAY3P0
@@ -25,26 +25,25 @@ This template defines the input format for the gemstore meson spectra computatio
 &END
 &PARAMS
   # params = GIString_meson
-  params = GIScreen_meson
+  # params = GIScreen_meson
   # params = GIQuadra_meson
+  params = GIScreen_ccbar
   # params = GIScreen_bbbar
-  # params = GIQuadra_bbbar
-  # params = GIScreen_ccbar
   # params = GIQuadra_ccbar
-  # mn = 0.4433275191676
-  # ms = 0.606437654085
-  # mc = 1.797694082834
-  # mb = 5.142643566529
-  # b1 = 0.2530091124005
-  # b2 = 0.02
-  # mu = 0.1401631404922
-  # c = -0.6300631479611
-  # sigma_0 = 1.776663048762
-  # s = 1.180712032887
-  # epsilon_cont = -0.3068965865533
-  # epsilon_sov = -0.3715004921572
-  # epsilon_sos = 0.9276232568028
-  # epsilon_tens = -0.5056764482414
+  # params = GIQuadra_bbbar
+  # mn = 0.4713455847642
+  # ms = 0.6283121820133
+  # mc = 1.810505119204
+  # mb = 5.156014766761
+  # b1 = 0.2575467075473
+  # mu = 0.1453562021339
+  # c = -0.658943240626
+  # sigma_0 = 1.884145499156
+  # s = 1.113514380624
+  # epsilon_cont = -0.32452949845
+  # epsilon_sov = -0.5404734834836
+  # epsilon_sos = 0.9999999508829
+  # epsilon_tens = -0.4999502878773
 &END
 &QUANTUM
   f1 = 3
@@ -59,7 +58,7 @@ This template defines the input format for the gemstore meson spectra computatio
 &GAUSS
   nmax = 20
   rmax = 20.0
-  rmin = 0.01
+  rmin = 0.1
 &END
 ```
 
@@ -69,4 +68,3 @@ This template defines the input format for the gemstore meson spectra computatio
 --S for spin, L for orbital angular momentum, J for total angular momentum.
 --jl=s1+L for Jj coupling
 --nmax, rmax, rmin will be usually fixed
---GIScreen_meson is the default parameter set

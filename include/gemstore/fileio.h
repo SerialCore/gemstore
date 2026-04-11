@@ -7,7 +7,9 @@
 #ifndef GEMSTORE_FILEIO
 #define GEMSTORE_FILEIO
 
-int fileio_write_spectra(const char *path, const double *mass, const double *rmsradius,
-                         const double *eigenvectors, int nmax, int dim);
+#include <gemstore/math/matrix.h>
+#include <gemstore/param/argset.h>
+
+int write_meson_spectra(const argsInput_t *input, const array_t *mass, const array_t *radius, const matrix_t *vector, int len);
 
 #endif

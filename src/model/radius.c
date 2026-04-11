@@ -14,12 +14,12 @@
 #include <math.h>
 #include <stdlib.h>
 
-void radius_meson_rms(const argsInput_t *args_input, const matrix_t *vector, array_t *r_out, int v_len)
+void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t *radius, int len)
 {
-    int nmax = args_input->nmax;
-    double rmax = args_input->rmax;
-    double rmin = args_input->rmin;
-    int L = (int)args_input->L;
+    int nmax = input->nmax;
+    double rmax = input->rmax;
+    double rmin = input->rmin;
+    int L = (int)input->L;
 
     /* construct basis */
     argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
@@ -40,7 +40,7 @@ void radius_meson_rms(const argsInput_t *args_input, const matrix_t *vector, arr
     double oversum;
     double fm = 5.06773093854369882649;
 
-    for (int n = 0; n < v_len; n++) {
+    for (int n = 0; n < len; n++) {
         r2sum = 0.0;
         oversum = 0.0;
         for (int i = 0; i < nmax; i++) {
@@ -57,7 +57,7 @@ void radius_meson_rms(const argsInput_t *args_input, const matrix_t *vector, arr
                 oversum += coef * over;
             }
         }
-        r_out->value[n] = sqrt(r2sum / oversum) / fm;
+        radius->value[n] = sqrt(r2sum / oversum) / fm;
     }
 
     free(basis);

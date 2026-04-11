@@ -1,7 +1,7 @@
 import os
 
 template = """&GLOBAL
-  project = charmonium
+  project = name
   task = SPECTRA
 &END
 &SYSTEM
@@ -21,7 +21,7 @@ template = """&GLOBAL
 &GAUSS
   nmax = 20
   rmax = 20.0
-  rmin = 0.01
+  rmin = 0.1
 &END
 """
 
@@ -41,10 +41,11 @@ states = [
 
 def generate_ccbar_inputs():
     # For charmonium f1=f2=3
-    content = template.replace("project = charmonium", "project = charmonium")
-    content = content.replace("f1 = 3", f"f1 = 3")
+    content = template.replace("f1 = 3", f"f1 = 3")
     content = content.replace("f2 = 3", f"f2 = 3")
+    content = content.replace("params = GIScreen_meson", f"params = GIScreen_ccbar")
     for name, S, L, J in states:
+        content = content.replace("project = name", f"project = charmonium_{name}")
         content = content.replace("S = 1", f"S = {S}")
         content = content.replace("L = 0", f"L = {L}")
         content = content.replace("J = 1", f"J = {J}")
@@ -55,11 +56,12 @@ def generate_ccbar_inputs():
 
 def generate_bbbar_inputs():
     # For bottomonium
-    content = template.replace("project = charmonium", "project = bottomonium")
-    content = content.replace("f1 = 3", f"f1 = 4")
+    content = template.replace("f1 = 3", f"f1 = 4")
     content = content.replace("f2 = 3", f"f2 = 4")
+    content = content.replace("params = GIScreen_meson", f"params = GIScreen_bbbar")
     for name, S, L, J in states:
-        content = template_b.replace("S = 1", f"S = {S}")
+        content = content.replace("project = name", f"project = bottomonium_{name}")
+        content = content.replace("S = 1", f"S = {S}")
         content = content.replace("L = 0", f"L = {L}")
         content = content.replace("J = 1", f"J = {J}")
         fname = f"bottomonium_{name}.inp"
@@ -69,11 +71,11 @@ def generate_bbbar_inputs():
 
 def generate_cbbar_inputs():
     # For Bc
-    content = template.replace("project = charmonium", "project = Bc")
-    content = content.replace("f1 = 3", f"f1 = 3")
+    content = template.replace("f1 = 3", f"f1 = 3")
     content = content.replace("f2 = 3", f"f2 = 4")
     for name, S, L, J in states:
-        content = template_b.replace("S = 1", f"S = {S}")
+        content = content.replace("project = name", f"project = Bc_{name}")
+        content = content.replace("S = 1", f"S = {S}")
         content = content.replace("L = 0", f"L = {L}")
         content = content.replace("J = 1", f"J = {J}")
         fname = f"Bc_{name}.inp"
@@ -83,11 +85,11 @@ def generate_cbbar_inputs():
 
 def generate_sbbar_inputs():
     # For Bs
-    content = template.replace("project = charmonium", "project = Bs")
-    content = content.replace("f1 = 3", f"f1 = 2")
+    content = template.replace("f1 = 3", f"f1 = 2")
     content = content.replace("f2 = 3", f"f2 = 4")
     for name, S, L, J in states:
-        content = template_b.replace("S = 1", f"S = {S}")
+        content = content.replace("project = name", f"project = Bs_{name}")
+        content = content.replace("S = 1", f"S = {S}")
         content = content.replace("L = 0", f"L = {L}")
         content = content.replace("J = 1", f"J = {J}")
         fname = f"Bs_{name}.inp"
@@ -97,11 +99,11 @@ def generate_sbbar_inputs():
 
 def generate_scbar_inputs():
     # For Ds
-    content = template.replace("project = charmonium", "project = Ds")
-    content = content.replace("f1 = 3", f"f1 = 2")
+    content = template.replace("f1 = 3", f"f1 = 2")
     content = content.replace("f2 = 3", f"f2 = 3")
     for name, S, L, J in states:
-        content = template_b.replace("S = 1", f"S = {S}")
+        content = content.replace("project = name", f"project = Ds_{name}")
+        content = content.replace("S = 1", f"S = {S}")
         content = content.replace("L = 0", f"L = {L}")
         content = content.replace("J = 1", f"J = {J}")
         fname = f"Ds_{name}.inp"
@@ -111,11 +113,11 @@ def generate_scbar_inputs():
 
 def generate_nbbar_inputs():
     # For B
-    content = template.replace("project = charmonium", "project = B")
-    content = content.replace("f1 = 3", f"f1 = 1")
+    content = template.replace("f1 = 3", f"f1 = 1")
     content = content.replace("f2 = 3", f"f2 = 4")
     for name, S, L, J in states:
-        content = template_b.replace("S = 1", f"S = {S}")
+        content = content.replace("project = name", f"project = B_{name}")
+        content = content.replace("S = 1", f"S = {S}")
         content = content.replace("L = 0", f"L = {L}")
         content = content.replace("J = 1", f"J = {J}")
         fname = f"B_{name}.inp"
@@ -125,11 +127,11 @@ def generate_nbbar_inputs():
 
 def generate_ncbar_inputs():
     # For D
-    content = template.replace("project = charmonium", "project = D")
-    content = content.replace("f1 = 3", f"f1 = 1")
+    content = template.replace("f1 = 3", f"f1 = 1")
     content = content.replace("f2 = 3", f"f2 = 3")
     for name, S, L, J in states:
-        content = template_b.replace("S = 1", f"S = {S}")
+        content = content.replace("project = name", f"project = D_{name}")
+        content = content.replace("S = 1", f"S = {S}")
         content = content.replace("L = 0", f"L = {L}")
         content = content.replace("J = 1", f"J = {J}")
         fname = f"D_{name}.inp"

@@ -49,7 +49,7 @@ void compute_spectra_meson(const argsInput_t *input)
 
     radius_meson_rms(input, &eigenvector, &rmsradius, nmax);
 
-    fileio_write_spectra(input->project, eigenvalue.value, rmsradius.value, eigenvector.value[0], nmax, nmax);
+    write_meson_spectra(input, &eigenvalue, &rmsradius, &eigenvector, nmax);
 
     array_free(&eigenvalue);
     array_free(&rmsradius);
