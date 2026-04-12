@@ -134,6 +134,56 @@ void matrix_inverse(const matrix_t *mat, matrix_t *imat)
     free(aug);
 }
 
+void matrix_inverse_lowertri(const matrix_t *mat, matrix_t *imat)
+{
+	if (mat->row != mat->col || imat->row != imat->col || mat->row != imat->row) {
+		printf("error_matrix_inverse_lowertri: dimension mismatch\n");
+		return;
+	}
+
+    for (int i = 0; i < mat->row; i++) {
+		/* Initialize lower-left part to zero (diagonal and below) */
+        for (int j = 0; j <= i; j++) {
+			imat->value[i][j] = 0.0;
+		}
+        /* Diagonal element: L^{-1}[i][i] = 1 / L[i][i] */
+        imat->value[i][i] = 1.0 / mat->value[i][i];
+        
+        /* Below diagonal: L^{-1}[i][j] for j < i */
+        /* Formula: L^{-1}[i][j] = -1/L[i][i] * sum_{k=j}^{i-1} L[i][k] * L^{-1}[k][j] */
+        for (int j = i - 1; j >= 0; j--) {
+            double sum = 0.0;
+            for (int k = j; k < i; k++) {  /* Fixed: iterate lower triangle only (k from j to i-1) */
+                sum += mat->value[i][k] * imat->value[k][j];
+            }
+            imat->value[i][j] = -sum / mat->value[i][i];
+        }
+    }
+}
+
+void matrix_cholesky_decomp(const matrix_t *matS, matrix_t *matL)
+{
+	if (matS->row != matS->col || matL->row != matL->col || matS->row != matL->row) {
+		printf("error_matrix_cholesky_decomp: dimension mismatch\n");
+		return;
+	}
+
+    for (int i = 0; i < matS->row; i++) {
+        for (int j = 0; j < i; j++) {
+            double sum = 0.0;
+            for (int k = 0; k < j; k++) sum += matL->value[i][k] * matL->value[j][k];
+            matL->value[i][j] = (matS->value[i][j] - sum) / matL->value[j][j];
+        }
+        double sum = 0.0;
+        for (int k = 0; k < i; k++) sum += matL->value[i][k] * matL->value[i][k];
+        if (matS->value[i][i] - sum <= 0.0) {
+            fprintf(stderr, "Cholesky failed: matrix not positive definite at i=%d\n", i);
+            exit(1);
+        }
+        matL->value[i][i] = sqrt(matS->value[i][i] - sum);
+    }
+}
+
 void matrix_transpose(const matrix_t *mat, matrix_t *tmat)
 {
 	if (mat->row != tmat->row || mat->col != tmat->col) {

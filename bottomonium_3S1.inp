@@ -1,0 +1,23 @@
+&GLOBAL
+  project = bottomonium_3S1
+  task = SPECTRA
+&END
+&SYSTEM
+  model = GI_SCREEN
+  system = MESON
+&END
+&PARAMS
+  params = GIScreen_bbbar
+&END
+&QUANTUM
+  f1 = 4
+  f2 = 4
+  S = 1
+  L = 0
+  J = 1
+&END
+&GAUSS
+  nmax = 20
+  rmax = 20.0
+  rmin = 0.1
+&END

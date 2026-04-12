@@ -10,7 +10,7 @@
 #include <gemstore/math/matrix.h>
 #include <gemstore/param/argset.h>
 
-/* Calculate meson spectra in GIScreen model */
+/* Calculate meson spectra in GIScreen model and return the eigenvalues and {v_len} of eigenvectors */
 void spectra_meson_GI(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
     array_t *e_out, matrix_t *v_out, int v_len);
 

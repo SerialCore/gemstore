@@ -30,6 +30,12 @@ void matrix_copy(const matrix_t *mat, matrix_t *nmat);
 /* Calculate the inverse of a matrix */
 void matrix_inverse(const matrix_t *mat, matrix_t *imat);
 
+/* Calculate the inverse of a lower triangular matrix */
+void matrix_inverse_lowertri(const matrix_t *mat, matrix_t *imat);
+
+/* Perform Cholesky decomposition S = L * L^T with lower triangular matrix L */
+void matrix_cholesky_decomp(const matrix_t *matS, matrix_t *matL);
+
 /* Transpose a matrix */
 void matrix_transpose(const matrix_t *mat, matrix_t *tmat);
 

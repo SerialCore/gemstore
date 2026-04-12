@@ -10,6 +10,7 @@
 #include <gemstore/math/matrix.h>
 #include <gemstore/param/argset.h>
 
+/* Write {len} of meson spectra to a file, including mass, RMS radius, and eigenvectors */
 int write_meson_spectra(const argsInput_t *input, const array_t *mass, const array_t *radius, const matrix_t *vector, int len);
 
 #endif

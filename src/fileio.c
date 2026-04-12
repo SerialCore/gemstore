@@ -14,6 +14,8 @@
 
 int write_meson_spectra(const argsInput_t *input, const array_t *mass, const array_t *radius, const matrix_t *vector, int len)
 {
+    int nmax = input->nmax;
+
     FILE *pf;
     int state = 0;
 
@@ -25,7 +27,7 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
     if (pf != NULL) {
         for (int n = 0; n < len; n++) {
             fprintf(pf, "%d\t%10.6f\t%10.6f\t", n + 1, mass->value[n], radius->value[n]);
-            for (int d = 0; d < len; d++) {
+            for (int d = 0; d < nmax; d++) {
                 fprintf(pf, "%10.10f ", vector->value[n][d]);
             }
             fprintf(pf, "\n");
