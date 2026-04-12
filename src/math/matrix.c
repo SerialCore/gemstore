@@ -141,24 +141,37 @@ void matrix_inverse_lowertri(const matrix_t *mat, matrix_t *imat)
 		return;
 	}
 
-    for (int i = 0; i < mat->row; i++) {
-		/* Initialize lower-left part to zero (diagonal and below) */
-        for (int j = 0; j <= i; j++) {
-			imat->value[i][j] = 0.0;
-		}
-        /* Diagonal element: L^{-1}[i][i] = 1 / L[i][i] */
-        imat->value[i][i] = 1.0 / mat->value[i][i];
-        
-        /* Below diagonal: L^{-1}[i][j] for j < i */
-        /* Formula: L^{-1}[i][j] = -1/L[i][i] * sum_{k=j}^{i-1} L[i][k] * L^{-1}[k][j] */
+    int n = mat->row;
+    double **Linv = (double**)malloc(n * sizeof(double*));
+    for (int i = 0; i < n; i++) Linv[i] = (double*)malloc(n * sizeof(double));
+
+    for (int i = 0; i < n; i++) {
+        /* initialize */
+        for (int j = 0; j < n; j++) Linv[i][j] = 0.0;
+
+		/* diagonal */
+        Linv[i][i] = 1.0 / mat->value[i][i];
+
+		/* lower triangle */
         for (int j = i - 1; j >= 0; j--) {
             double sum = 0.0;
-            for (int k = j; k < i; k++) {  /* Fixed: iterate lower triangle only (k from j to i-1) */
-                sum += mat->value[i][k] * imat->value[k][j];
-            }
-            imat->value[i][j] = -sum / mat->value[i][i];
+            for (int k = j; k < i; k++)
+                sum += mat->value[i][k] * Linv[k][j];
+            Linv[i][j] = -sum / mat->value[i][i];
         }
+
+		/* set upper triangle to zero */
+        for (int j = i + 1; j < n; j++)
+            Linv[i][j] = 0.0;
     }
+
+	/* write back to imat */
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            imat->value[i][j] = Linv[i][j];
+
+    for (int i = 0; i < n; i++) free(Linv[i]);
+    free(Linv);
 }
 
 void matrix_cholesky_decomp(const matrix_t *matS, matrix_t *matL)
@@ -168,20 +181,40 @@ void matrix_cholesky_decomp(const matrix_t *matS, matrix_t *matL)
 		return;
 	}
 
-    for (int i = 0; i < matS->row; i++) {
+    int n = matS->row;
+    double **L = (double**)malloc(n * sizeof(double*));
+    for (int i = 0; i < n; i++) L[i] = (double*)malloc(n * sizeof(double));
+
+    for (int i = 0; i < n; i++) {
+		/* lower triangle */
         for (int j = 0; j < i; j++) {
             double sum = 0.0;
-            for (int k = 0; k < j; k++) sum += matL->value[i][k] * matL->value[j][k];
-            matL->value[i][j] = (matS->value[i][j] - sum) / matL->value[j][j];
+            for (int k = 0; k < j; k++)
+                sum += L[i][k] * L[j][k];
+            L[i][j] = (matS->value[i][j] - sum) / L[j][j];
         }
+		/* diagonal */
         double sum = 0.0;
-        for (int k = 0; k < i; k++) sum += matL->value[i][k] * matL->value[i][k];
+        for (int k = 0; k < i; k++)
+            sum += L[i][k] * L[i][k];
         if (matS->value[i][i] - sum <= 0.0) {
-            fprintf(stderr, "Cholesky failed: matrix not positive definite at i=%d\n", i);
+            fprintf(stderr, "Cholesky failed at i=%d\n", i);
             exit(1);
         }
-        matL->value[i][i] = sqrt(matS->value[i][i] - sum);
+        L[i][i] = sqrt(matS->value[i][i] - sum);
+
+		/* set upper triangle to zero */
+        for (int j = i + 1; j < n; j++)
+            L[i][j] = 0.0;
     }
+
+	/* write back to matL */
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            matL->value[i][j] = L[i][j];
+
+    for (int i = 0; i < n; i++) free(L[i]);
+    free(L);
 }
 
 void matrix_transpose(const matrix_t *mat, matrix_t *tmat)

@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 void compute_spectra_meson(const argsInput_t *input)
 {
@@ -43,8 +44,21 @@ void compute_spectra_meson(const argsInput_t *input)
     }
     else {
         array_free(&eigenvalue);
+        array_free(&rmsradius);
         matrix_free(&eigenvector);
         return;
+    }
+
+    /* debug the eigenvectors */
+    for (int n = 0; n < nmax && n < 20; n++) {
+        double norm = 0.0;
+        double maxc = 0.0;
+        for (int i = 0; i < nmax; i++) {
+            double c = fabs(eigenvector.value[n][i]);
+            norm += c * c;
+            if (c > maxc) maxc = c;
+        }
+        printf("State %2d:  mass=%.6f  max|c|=%.3f  ||c||^2=%.10f\n", n+1, eigenvalue.value[n], maxc, norm);
     }
 
     radius_meson_rms(input, &eigenvector, &rmsradius, nmax);
