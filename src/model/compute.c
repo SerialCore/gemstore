@@ -49,7 +49,9 @@ void compute_spectra_meson(const argsInput_t *input)
         return;
     }
 
-    /* debug the eigenvectors */
+    radius_meson_rms(input, &eigenvector, &rmsradius, nmax);
+
+    /* debug the results */
     for (int n = 0; n < nmax && n < 20; n++) {
         double norm = 0.0;
         double maxc = 0.0;
@@ -58,10 +60,9 @@ void compute_spectra_meson(const argsInput_t *input)
             norm += c * c;
             if (c > maxc) maxc = c;
         }
-        printf("State %2d:  mass=%.6f  max|c|=%.3f  ||c||^2=%.10f\n", n+1, eigenvalue.value[n], maxc, norm);
+        printf("State %2d:  mass=%.6f  RMS=%.6f  max|c|=%.3f  ||c||^2=%.10f\n", 
+            n+1, eigenvalue.value[n], rmsradius.value[n], maxc, norm);
     }
-
-    radius_meson_rms(input, &eigenvector, &rmsradius, nmax);
 
     write_meson_spectra(input, &eigenvalue, &rmsradius, &eigenvector, nmax);
 

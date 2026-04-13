@@ -34,6 +34,7 @@ void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t 
     argsOrbit_t args_bra;
     argsOrbit_t args_ket;
     double factor;
+    double coef;
     double r2sum;
     double oversum;
     double fm = 5.06773093854369882649;
@@ -53,51 +54,23 @@ void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t 
         }
     }
 
-    /* Cholesky decomposition and construct R' in the orthogonal basis */
-    matrix_t mL = matrix_init(nmax, nmax);
-    matrix_t mLinv = matrix_init(nmax, nmax);
-    matrix_cholesky_decomp(&mOver, &mL);
-    matrix_inverse_lowertri(&mL, &mLinv);
-
-    matrix_t temp = matrix_init(nmax, nmax);
-    matrix_t mLinvT = matrix_init(nmax, nmax);
-    matrix_t Rprime = matrix_init(nmax, nmax);
-    matrix_product(&mLinv, &mR2, &temp);         /* Linv * R */
-    matrix_transpose(&mLinv, &mLinvT);           /* Linv^T */
-    matrix_product(&temp, &mLinvT, &Rprime);     /* R' = Linv * R * Linv^T */
-
-    matrix_free(&temp); matrix_free(&mLinvT);
-
     /* calculate rms radius with orthogonalized coefficients */
     for (int n = 0; n < len; n++) {
-        double *d_vec = (double *)calloc(nmax, sizeof(double));
+        r2sum = 0.0;
         oversum = 0.0;
-        r2sum   = 0.0;
+        double norm = 0.0;
 
-        /* d = L^T c */
         for (int i = 0; i < nmax; i++) {
             for (int j = 0; j < nmax; j++) {
-                d_vec[i] += (double)mL.value[j][i] * vector->value[n][j];
+                coef = vector->value[n][i] * vector->value[n][j];
+                r2sum += coef * mR2.value[i][j];
+                oversum += coef * mOver.value[i][j];
             }
-            oversum += d_vec[i] * d_vec[i];
+            norm += vector->value[n][i] * vector->value[n][i];
         }
 
-        /* r2sum = d^T R' d */
-        for (int i = 0; i < nmax; i++) {
-            for (int j = 0; j < nmax; j++) {
-                r2sum += d_vec[i] * (double)Rprime.value[i][j] * d_vec[j];
-            }
-        }
-
-        radius->value[n] = (oversum > 1e-12) ? sqrt(r2sum / oversum) / fm : 0.0;
-
-        double maxd = 0.0;
-        for (int i = 0; i < nmax; i++) {
-            if (fabs(d_vec[i]) > maxd) maxd = (double)fabs(d_vec[i]);
-        }
-        printf("State %2d:  RMS=%.6f  max|d|=%.3f  oversum=%.12f\n", n+1, radius->value[n], maxd, oversum);
-
-        free(d_vec);
+        double rms2 = (norm > 1e-12) ? r2sum / norm : 0.0;
+        radius->value[n] = sqrt(rms2) / fm;
     }
 
     free(basis);
