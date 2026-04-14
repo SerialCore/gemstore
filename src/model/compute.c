@@ -11,7 +11,7 @@
 #include <gemstore/math/matrix.h>
 
 #include <gemstore/types.h>
-#include <gemstore/fileio.h>
+#include <gemstore/print.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +52,7 @@ void compute_spectra_meson(const argsInput_t *input)
     radius_meson_rms(input, &eigenvector, &rmsradius, nmax);
 
     /* debug the results */
-    for (int n = 0; n < nmax && n < 20; n++) {
+    for (int n = 0; n < nmax; n++) {
         double norm = 0.0;
         double maxc = 0.0;
         for (int i = 0; i < nmax; i++) {
@@ -60,7 +60,7 @@ void compute_spectra_meson(const argsInput_t *input)
             norm += c * c;
             if (c > maxc) maxc = c;
         }
-        printf("State %2d:  mass=%.6f  RMS=%.6f  max|c|=%.3f  ||c||^2=%.10f\n", 
+        printf("State %2d:  mass=%2.6f  RMS=%2.3f  max|c|=%.3f  ||c||^2=%.10f\n", 
             n+1, eigenvalue.value[n], rmsradius.value[n], maxc, norm);
     }
 

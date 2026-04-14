@@ -56,8 +56,8 @@ This template defines the input format for the gemstore meson spectra computatio
   J = 1
 &END
 &GAUSS
-  nmax = 20
-  rmax = 20.0
+  nmax = 16
+  rmax = 30.0
   rmin = 0.1
 &END
 ```

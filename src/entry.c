@@ -6,7 +6,7 @@
 
 #include <gemstore/entry.h>
 #include <gemstore/debug.h>
-#include <gemstore/fileio.h>
+#include <gemstore/print.h>
 #include <gemstore/model/compute.h>
 #include <gemstore/param/argset.h>
 #include <gemstore/param/fitting.h>

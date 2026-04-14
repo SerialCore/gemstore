@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/fileio.h>
+#include <gemstore/print.h>
 #include <gemstore/math/matrix.h>
 #include <gemstore/param/argset.h>
 

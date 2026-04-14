@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef GEMSTORE_FILEIO
-#define GEMSTORE_FILEIO
+#ifndef GEMSTORE_PRINT
+#define GEMSTORE_PRINT
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/param/argset.h>
