@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 void print_logo()
 {
@@ -19,7 +20,7 @@ void print_logo()
     printf("  ██████╗  ███████╗  ███╗   ███╗  ███████╗  ████████╗   ██████╗  ██████╗  ███████╗\n");
     printf(" ██╔════╝  ██╔════╝  ████╗ ████║  ██╔════╝  ╚══██╔══╝  ██╔═══██║ ██╔══██╗ ██╔════╝\n");
     printf(" ██║  ███╗ █████╗    ██╔████╔██║  ███████╗     ██║     ██║   ██║ ██████╔╝ █████╗  \n");
-    printf(" ██║   ██║ ██╔══╝    ██║╚██╔╝██║    ╚══██║     ██║     ██║   ██║ ██╔══██╗ ██╔══╝  \n");
+    printf(" ██║   ██║ ██╔══╝    ██║╚██╔╝██║  ╚════██║     ██║     ██║   ██║ ██╔══██╗ ██╔══╝  \n");
     printf(" ╚██████╔╝ ███████╗  ██║ ╚═╝ ██║  ███████║     ██║     ╚██████╔╝ ██║  ██║ ███████╗\n");
     printf("  ╚═════╝  ╚══════╝  ╚═╝     ╚═╝  ╚══════╝     ╚═╝      ╚═════╝  ╚═╝  ╚═╝ ╚══════╝\n");
     printf("\n");
@@ -47,7 +48,6 @@ void print_copyright()
     printf("================================================================================\n");
     printf("\n");
     printf("GEMSTORE - Hadron Spectroscopy Simulation Tools\n");
-    printf("Version 1.0\n");
     printf("\n");
     printf("Copyright (C) 2026, Wen-Xuan Zhang <serialcore@outlook.com>\n");
     printf("\n");
@@ -151,25 +151,78 @@ void print_debug_results(const array_t *eigenvalue, const array_t *rmsradius, co
     printf("================================================================================\n");
     printf("\n");
 
+    /* Compute global statistics */
+    double min_mass = eigenvalue->value[0];
+    double max_mass = eigenvalue->value[0];
+    double min_rms = rmsradius->value[0];
+    double max_rms = rmsradius->value[0];
+    double total_norm = 0.0;
+    int num_states = 0;
+
+    for (int n = 0; n < nmax; n++) {
+        if (n < eigenvalue->len) {
+            if (eigenvalue->value[n] < min_mass) min_mass = eigenvalue->value[n];
+            if (eigenvalue->value[n] > max_mass) max_mass = eigenvalue->value[n];
+        }
+        if (n < rmsradius->len) {
+            if (rmsradius->value[n] < min_rms) min_rms = rmsradius->value[n];
+            if (rmsradius->value[n] > max_rms) max_rms = rmsradius->value[n];
+        }
+        num_states++;
+    }
+
+    /* Print header row */
+    printf("%-6s%-12s%-12s%-12s%-12s%-15s\n", 
+        "State", "Mass(GeV)", "RMS(fm)", "max|c|", "||c||^2", "norm_check");
+    printf("------+----------+----------+----------+----------+---------------\n");
+
+    /* Print each state's information */
     for (int n = 0; n < nmax; n++) {
         double norm = 0.0;
         double maxc = 0.0;
+        
         for (int i = 0; i < nmax; i++) {
             double c = fabs(eigenvector->value[n][i]);
             norm += c * c;
             if (c > maxc) maxc = c;
         }
-        printf("State %2d:  mass=%9.6f  RMS=%6.3f  max|c|=%6.3f  ||c||^2=%13.10f\n", 
-            n+1, eigenvalue->value[n], rmsradius->value[n], maxc, norm);
+        
+        total_norm += norm;
+        
+        /* Determine normalization status */
+        const char *norm_status = "";
+        if (fabs(norm - 1.0) < 1e-6) {
+            norm_status = "✓ OK";
+        } else if (norm > 1.0) {
+            norm_status = "⚠ OVER";
+        } else {
+            norm_status = "⚠ UNDER";
+        }
+        
+        printf("%-6d%-12.6f%-12.6f%-12.6f%-12.10f%-15s\n", 
+            n+1, eigenvalue->value[n], rmsradius->value[n], maxc, norm, norm_status);
     }
 
+    printf("\n");
+    printf("GLOBAL STATISTICS:\n");
+    printf("  Number of states:    %d\n", num_states);
+    printf("  Mass range:          %.6f - %.6f GeV (Δ=%.6f GeV)\n", 
+        min_mass, max_mass, max_mass - min_mass);
+    printf("  RMS radius range:    %.6f - %.6f fm (Δ=%.6f fm)\n", 
+        min_rms, max_rms, max_rms - min_rms);
+    printf("  Total norm sum:      %.10f (should ≈ %d)\n", total_norm, nmax);
+    printf("  Average norm per state: %.10f\n", total_norm / num_states);
     printf("\n");
 }
 
 int write_meson_spectra(const argsInput_t *input, const array_t *mass, const array_t *radius, const matrix_t *vector, int len)
 {
-    int nmax = input->nmax;
+    if (input == NULL || mass == NULL || radius == NULL || vector == NULL || len <= 0) {
+        fprintf(stderr, "Error: Invalid input parameters to write_meson_spectra()\n");
+        return 0;
+    }
 
+    int nmax = input->nmax;
     FILE *pf;
     int state = 0;
 
@@ -177,16 +230,208 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
     sprintf(path, "%s%s", input->project, ".out");
     pf = fopen(path, "w");
 
-    fprintf(pf, "%s\t%s\t%s\t%s\n", "Radial", "Mass", "RMSRadius", "Eigenvectors");
-    if (pf != NULL) {
-        for (int n = 0; n < len; n++) {
-            fprintf(pf, "%d\t%10.6f\t%10.6f\t", n + 1, mass->value[n], radius->value[n]);
-            for (int d = 0; d < nmax; d++) {
-                fprintf(pf, "%10.10f ", vector->value[n][d]);
-            }
-            fprintf(pf, "\n");
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+
+    /* ========== HEADER SECTION ========== */
+    fprintf(pf, "================================================================================\n");
+    fprintf(pf, "                    HADRON SPECTROSCOPY RESULTS SUMMARY                       \n");
+    fprintf(pf, "================================================================================\n\n");
+
+    /* Timestamp and metadata */
+    time_t now = time(NULL);
+    struct tm *timeinfo = localtime(&now);
+    char time_str[80];
+    strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", timeinfo);
+    fprintf(pf, "Generated:   %s\n", time_str);
+    fprintf(pf, "Project:     %s\n\n", input->project);
+
+    /* ========== INPUT CONFIGURATION ========== */
+    fprintf(pf, "INPUT CONFIGURATION:\n");
+    fprintf(pf, "  Task:                %d\n", input->task);
+    fprintf(pf, "  Model:               %d\n", input->model);
+    fprintf(pf, "  System:              %d\n", input->system);
+    fprintf(pf, "  Quark Flavors:       f1=%d  f2=%d  f3=%d  f4=%d\n", 
+        input->f1, input->f2, input->f3, input->f4);
+    fprintf(pf, "  Angular Momentum:    S=%.1f  L=%.1f  J=%.1f  jl=%.1f\n",
+        input->S, input->L, input->J, input->jl);
+    fprintf(pf, "  Gaussian Basis:      nmax=%d  rmin=%.6f fm  rmax=%.6f fm\n",
+        input->nmax, input->rmin, input->rmax);
+    fprintf(pf, "\n");
+
+    /* ========== MODEL PARAMETERS ========== */
+    fprintf(pf, "MODEL PARAMETERS:\n");
+    fprintf(pf, "  Quark Masses:        mn=%.6f  ms=%.6f  mc=%.6f  mb=%.6f GeV\n",
+        input->params.mn, input->params.ms, input->params.mc, input->params.mb);
+    fprintf(pf, "  Potential:           b1=%.6f  b2=%.6f  mu=%.6f  c=%.6f\n",
+        input->params.b1, input->params.b2, input->params.mu, input->params.c);
+    fprintf(pf, "  GI Parameters:       sigma_0=%.6f  s=%.6f\n",
+        input->params.sigma_0, input->params.s);
+    fprintf(pf, "  Smearing:            epsilon_cont=%.6f  epsilon_sov=%.6f  epsilon_sos=%.6f  epsilon_tens=%.6f\n",
+        input->params.epsilon_cont, input->params.epsilon_sov, input->params.epsilon_sos, input->params.epsilon_tens);
+    fprintf(pf, "\n");
+
+    /* ========== COMPUTE STATISTICS ========== */
+    double min_mass = mass->value[0];
+    double max_mass = mass->value[0];
+    double sum_mass = 0.0;
+    double min_radius = radius->value[0];
+    double max_radius = radius->value[0];
+    double sum_radius = 0.0;
+
+    for (int n = 0; n < len; n++) {
+        sum_mass += mass->value[n];
+        sum_radius += radius->value[n];
+        if (mass->value[n] < min_mass) min_mass = mass->value[n];
+        if (mass->value[n] > max_mass) max_mass = mass->value[n];
+        if (radius->value[n] < min_radius) min_radius = radius->value[n];
+        if (radius->value[n] > max_radius) max_radius = radius->value[n];
+    }
+
+    double mean_mass = sum_mass / len;
+    double mean_radius = sum_radius / len;
+
+    /* Calculate standard deviation */
+    double var_mass = 0.0;
+    double var_radius = 0.0;
+    for (int n = 0; n < len; n++) {
+        var_mass += (mass->value[n] - mean_mass) * (mass->value[n] - mean_mass);
+        var_radius += (radius->value[n] - mean_radius) * (radius->value[n] - mean_radius);
+    }
+    double std_mass = sqrt(var_mass / len);
+    double std_radius = sqrt(var_radius / len);
+
+    /* ========== DETAILED SPECTRAL DATA ========== */
+    fprintf(pf, "SPECTRAL DATA:\n");
+    fprintf(pf, "%-6s%-12s%-12s%-12s%-15s%-15s%-15s\n",
+        "State", "Mass(GeV)", "RMS(fm)", "Δmass", "max|coeff|", "||coeff||^2", "norm_stat");
+    fprintf(pf, "------+----------+----------+----------+---------------+---------------+---------------\n");
+
+    for (int n = 0; n < len; n++) {
+        double norm = 0.0;
+        double maxc = 0.0;
+
+        for (int i = 0; i < nmax; i++) {
+            double c = fabs(vector->value[n][i]);
+            norm += c * c;
+            if (c > maxc) maxc = c;
         }
-        state = fclose(pf) == 0 ? 1 : 0;
+
+        /* Normalization status */
+        const char *norm_stat = "";
+        if (fabs(norm - 1.0) < 1e-6) {
+            norm_stat = "✓ OK";
+        } else if (norm > 1.0) {
+            norm_stat = "⚠ OVER";
+        } else {
+            norm_stat = "⚠ UNDER";
+        }
+
+        /* Mass difference from mean */
+        double delta_mass = mass->value[n] - mean_mass;
+
+        fprintf(pf, "%-6d%-12.6f%-12.6f%-12.6f%-15.8f%-15.10f%-15s\n",
+            n+1, mass->value[n], radius->value[n], delta_mass, maxc, norm, norm_stat);
+    }
+    fprintf(pf, "\n");
+
+    /* ========== EIGENVECTOR COMPONENTS ========== */
+    fprintf(pf, "EIGENVECTOR COMPONENTS:\n");
+    fprintf(pf, "(Each row represents one state; columns are eigenvector coefficients)\n\n");
+
+    /* Print column headers for eigenvector components */
+    fprintf(pf, "%-6s", "State");
+    for (int i = 0; i < nmax; i++) {
+        fprintf(pf, "%-14s", "");
+        fprintf(pf, "c[%d]", i);
+    }
+    fprintf(pf, "\n");
+
+    /* Print component separators */
+    fprintf(pf, "------");
+    for (int i = 0; i < nmax; i++) {
+        fprintf(pf, "+----------+----");
+    }
+    fprintf(pf, "\n");
+
+    /* Print eigenvector components */
+    for (int n = 0; n < len; n++) {
+        fprintf(pf, "%-6d", n+1);
+        for (int d = 0; d < nmax; d++) {
+            fprintf(pf, "%-14.10f ", vector->value[n][d]);
+        }
+        fprintf(pf, "\n");
+    }
+    fprintf(pf, "\n");
+
+    /* ========== STATISTICAL SUMMARY ========== */
+    fprintf(pf, "STATISTICAL SUMMARY:\n");
+    fprintf(pf, "  Number of states:    %d\n", len);
+    fprintf(pf, "  Gaussian basis size: %d\n", nmax);
+    fprintf(pf, "\n");
+    fprintf(pf, "  Mass Statistics (GeV):\n");
+    fprintf(pf, "    Min:               %.6f\n", min_mass);
+    fprintf(pf, "    Max:               %.6f\n", max_mass);
+    fprintf(pf, "    Mean:              %.6f\n", mean_mass);
+    fprintf(pf, "    Std Dev:           %.6f\n", std_mass);
+    fprintf(pf, "    Range:             %.6f\n", max_mass - min_mass);
+    fprintf(pf, "\n");
+    fprintf(pf, "  RMS Radius Statistics (fm):\n");
+    fprintf(pf, "    Min:               %.6f\n", min_radius);
+    fprintf(pf, "    Max:               %.6f\n", max_radius);
+    fprintf(pf, "    Mean:              %.6f\n", mean_radius);
+    fprintf(pf, "    Std Dev:           %.6f\n", std_radius);
+    fprintf(pf, "    Range:             %.6f\n", max_radius - min_radius);
+    fprintf(pf, "\n");
+
+    /* Eigenvector statistics */
+    double min_norm = 1.0;
+    double max_norm = 1.0;
+    double sum_norm = 0.0;
+    double min_maxc = 1.0;
+    double max_maxc = 0.0;
+    double sum_maxc = 0.0;
+
+    for (int n = 0; n < len; n++) {
+        double norm = 0.0;
+        double maxc = 0.0;
+        for (int i = 0; i < nmax; i++) {
+            double c = fabs(vector->value[n][i]);
+            norm += c * c;
+            if (c > maxc) maxc = c;
+        }
+        norm = sqrt(norm);
+        sum_norm += norm;
+        sum_maxc += maxc;
+        if (norm < min_norm) min_norm = norm;
+        if (norm > max_norm) max_norm = norm;
+        if (maxc < min_maxc) min_maxc = maxc;
+        if (maxc > max_maxc) max_maxc = maxc;
+    }
+
+    fprintf(pf, "  Eigenvector Normalization:\n");
+    fprintf(pf, "    Min ||coeff||:     %.10f\n", min_norm);
+    fprintf(pf, "    Max ||coeff||:     %.10f\n", max_norm);
+    fprintf(pf, "    Mean ||coeff||:    %.10f\n", sum_norm / len);
+    fprintf(pf, "\n");
+    fprintf(pf, "  Maximum Coefficient Statistics:\n");
+    fprintf(pf, "    Min max|c|:        %.10f\n", min_maxc);
+    fprintf(pf, "    Max max|c|:        %.10f\n", max_maxc);
+    fprintf(pf, "    Mean max|c|:       %.10f\n", sum_maxc / len);
+    fprintf(pf, "\n");
+
+    /* ========== FOOTER ========== */
+    fprintf(pf, "================================================================================\n");
+    fprintf(pf, "End of Hadron Spectroscopy Results\n");
+    fprintf(pf, "================================================================================\n");
+
+    state = fclose(pf) == 0 ? 1 : 0;
+    if (state == 1) {
+        printf("Successfully written hadron spectra to: %s\n", path);
+    } else {
+        fprintf(stderr, "Error: Failed to close file %s\n", path);
     }
 
     return state;
