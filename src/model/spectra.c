@@ -89,8 +89,6 @@ void spectra_meson_GI(const argsInput_t *args_input, const argsGIModel_t *args_m
     matrix_t Nfi = matrix_init(nmax, nmax);
 
     /* prepare variables */
-    argsOrbit_t args_bra;
-    argsOrbit_t args_ket;
     double factor;
     double factor_complex;
     double s1 = 0.5, s2 = 0.5;
@@ -107,11 +105,8 @@ void spectra_meson_GI(const argsInput_t *args_input, const argsGIModel_t *args_m
     /* calculate matrix elements */
     for (int i = 0; i < nmax; i++) {
         for (int j = 0; j < nmax; j++) {
-            args_bra = basis[i];
-            args_ket = basis[j];
-
-            factor = 1 / sqrt(args_bra.scale + args_ket.scale);
-            factor_complex =  sqrt(4 * args_bra.scale * args_ket.scale / (args_bra.scale + args_ket.scale));
+            factor = 1 / sqrt(basis[i].scale + basis[j].scale);
+            factor_complex =  sqrt(4 * basis[i].scale * basis[j].scale / (basis[i].scale + basis[j].scale));
 
             args_dynmc->OCent = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
             args_dynmc->OSdS = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
@@ -119,25 +114,25 @@ void spectra_meson_GI(const argsInput_t *args_input, const argsGIModel_t *args_m
             args_dynmc->OLSj = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
             args_dynmc->OTens = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
                 
-            mT.value[i][j] = integral_matrix_element_complex(GRnlp, GIVt, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
-            mbetaijCoul.value[i][j] = integral_matrix_element_complex(GRnlp, GIVbetaijcoul, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
-            mdeltaijCont.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaijcont, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
-            mdeltaiiSov.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaiisov, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
-            mdeltajjSov.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltajjsov, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
-            mdeltaijSov.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaijsov, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
-            mdeltaiiSos.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaiisos, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
-            mdeltajjSos.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltajjsos, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
-            mdeltaijTens.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaijtens, factor_complex, &args_bra, &args_ket, args_model, args_dynmc);
-            mVcoul.value[i][j] = integral_matrix_element(GRnlr, GIVcoul, factor, &args_bra, &args_ket, args_model, args_dynmc);
-            mVconf.value[i][j] = integral_matrix_element(GRnlr, GIVconf, factor, &args_bra, &args_ket, args_model, args_dynmc);
-            mVcont.value[i][j] = integral_matrix_element(GRnlr, GIVcont, factor, &args_bra, &args_ket, args_model, args_dynmc);
-            mVsovi.value[i][j] = integral_matrix_element(GRnlr, GIVsovi, factor, &args_bra, &args_ket, args_model, args_dynmc);
-            mVsovj.value[i][j] = integral_matrix_element(GRnlr, GIVsovj, factor, &args_bra, &args_ket, args_model, args_dynmc);
-            mVsovij.value[i][j] = integral_matrix_element(GRnlr, GIVsovij, factor, &args_bra, &args_ket, args_model, args_dynmc);
-            mVsosi.value[i][j] = integral_matrix_element(GRnlr, GIVsosi, factor, &args_bra, &args_ket, args_model, args_dynmc);
-            mVsosj.value[i][j] = integral_matrix_element(GRnlr, GIVsosj, factor, &args_bra, &args_ket, args_model, args_dynmc);
-            mVtens.value[i][j] = integral_matrix_element(GRnlr, GIVtens, factor, &args_bra, &args_ket, args_model, args_dynmc);
-            Nfi.value[i][j] = integral_wfn_overlap(GRnlr, factor, &args_bra, &args_ket);
+            mT.value[i][j] = integral_matrix_element_complex(GRnlp, GIVt, factor_complex, &basis[i], &basis[j], args_model, args_dynmc);
+            mbetaijCoul.value[i][j] = integral_matrix_element_complex(GRnlp, GIVbetaijcoul, factor_complex, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltaijCont.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaijcont, factor_complex, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltaiiSov.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaiisov, factor_complex, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltajjSov.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltajjsov, factor_complex, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltaijSov.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaijsov, factor_complex, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltaiiSos.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaiisos, factor_complex, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltajjSos.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltajjsos, factor_complex, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltaijTens.value[i][j] = integral_matrix_element_complex(GRnlp, GIVdeltaijtens, factor_complex, &basis[i], &basis[j], args_model, args_dynmc);
+            mVcoul.value[i][j] = integral_matrix_element(GRnlr, GIVcoul, factor, &basis[i], &basis[j], args_model, args_dynmc);
+            mVconf.value[i][j] = integral_matrix_element(GRnlr, GIVconf, factor, &basis[i], &basis[j], args_model, args_dynmc);
+            mVcont.value[i][j] = integral_matrix_element(GRnlr, GIVcont, factor, &basis[i], &basis[j], args_model, args_dynmc);
+            mVsovi.value[i][j] = integral_matrix_element(GRnlr, GIVsovi, factor, &basis[i], &basis[j], args_model, args_dynmc);
+            mVsovj.value[i][j] = integral_matrix_element(GRnlr, GIVsovj, factor, &basis[i], &basis[j], args_model, args_dynmc);
+            mVsovij.value[i][j] = integral_matrix_element(GRnlr, GIVsovij, factor, &basis[i], &basis[j], args_model, args_dynmc);
+            mVsosi.value[i][j] = integral_matrix_element(GRnlr, GIVsosi, factor, &basis[i], &basis[j], args_model, args_dynmc);
+            mVsosj.value[i][j] = integral_matrix_element(GRnlr, GIVsosj, factor, &basis[i], &basis[j], args_model, args_dynmc);
+            mVtens.value[i][j] = integral_matrix_element(GRnlr, GIVtens, factor, &basis[i], &basis[j], args_model, args_dynmc);
+            Nfi.value[i][j] = integral_wfn_overlap(GRnlr, factor, &basis[i], &basis[j]);
         }
     }
 

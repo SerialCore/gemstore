@@ -159,6 +159,7 @@ void entry_compute(const char* arg)
 {
     argsInput_t input = {0};
     parse_input_file(arg, &input);
+    print_input_parameters(&input);
 
     if (input.task == TASK_SPECTRA) compute_spectra_meson(&input);
 }

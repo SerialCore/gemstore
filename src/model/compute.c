@@ -9,6 +9,7 @@
 #include <gemstore/model/radius.h>
 #include <gemstore/param/argset.h>
 #include <gemstore/math/matrix.h>
+#include <gemstore/math/interplt.h>
 
 #include <gemstore/types.h>
 #include <gemstore/print.h>
@@ -22,6 +23,7 @@ void compute_spectra_meson(const argsInput_t *input)
 {
     int nmax = input->nmax;
 
+    /* compute mass eigenvalues and eigenvectors */
     array_t eigenvalue = array_init(nmax);
     array_t rmsradius = array_init(nmax);
     matrix_t eigenvector = matrix_init(nmax, nmax);
@@ -49,21 +51,13 @@ void compute_spectra_meson(const argsInput_t *input)
         return;
     }
 
+    /* compute RMS radius */
     radius_meson_rms(input, &eigenvector, &rmsradius, nmax);
 
-    /* debug the results */
-    for (int n = 0; n < nmax; n++) {
-        double norm = 0.0;
-        double maxc = 0.0;
-        for (int i = 0; i < nmax; i++) {
-            double c = fabs(eigenvector.value[n][i]);
-            norm += c * c;
-            if (c > maxc) maxc = c;
-        }
-        printf("State %2d:  mass=%2.6f  RMS=%2.3f  max|c|=%.3f  ||c||^2=%.10f\n", 
-            n+1, eigenvalue.value[n], rmsradius.value[n], maxc, norm);
-    }
+    /* interpolate anomalies in RMS radius */
+    interpolate_quadratic(&rmsradius);
 
+    print_debug_results(&eigenvalue, &rmsradius, &eigenvector, nmax);
     write_meson_spectra(input, &eigenvalue, &rmsradius, &eigenvector, nmax);
 
     array_free(&eigenvalue);

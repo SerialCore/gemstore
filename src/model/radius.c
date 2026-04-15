@@ -30,27 +30,25 @@ void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t 
         basis[i].scale = getnu(i + 1, nmax, rmax, rmin);
     }
 
-    /* prepare variables */
-    argsOrbit_t args_bra;
-    argsOrbit_t args_ket;
-    double factor;
-    double coef;
-    double r2sum;
-    double oversum;
-    double fm = 5.06773093854369882649;
-
     /* construct matrices */
     matrix_t mR2 = matrix_init(nmax, nmax);
     matrix_t mOver = matrix_init(nmax, nmax);
 
+    /* prepare variables */
+    double factor;
+    double coef;
+    double r2sum;
+    double oversum;
+    double norm;
+    double rms2;
+    double fm = 5.06773093854369882649;
+
+    /* calculate matrix elements */
     for (int i = 0; i < nmax; i++) {
         for (int j = 0; j < nmax; j++) {
-            args_bra = basis[i];
-            args_ket = basis[j];
-
-            factor = 1.0 / sqrt(args_bra.scale + args_ket.scale);
-            mR2.value[i][j] = integral_rms_radius(GRnlr, factor, &args_bra, &args_ket);
-            mOver.value[i][j] = integral_wfn_overlap(GRnlr, factor, &args_bra, &args_ket);
+            factor = 1.0 / sqrt(basis[i].scale + basis[j].scale);
+            mR2.value[i][j] = integral_rms_radius(GRnlr, factor, &basis[i], &basis[j]);
+            mOver.value[i][j] = integral_wfn_overlap(GRnlr, factor, &basis[i], &basis[j]);
         }
     }
 
@@ -58,7 +56,7 @@ void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t 
     for (int n = 0; n < len; n++) {
         r2sum = 0.0;
         oversum = 0.0;
-        double norm = 0.0;
+        norm = 0.0;
 
         for (int i = 0; i < nmax; i++) {
             for (int j = 0; j < nmax; j++) {
@@ -69,7 +67,7 @@ void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t 
             norm += vector->value[n][i] * vector->value[n][i];
         }
 
-        double rms2 = (norm > 1e-12) ? r2sum / norm : 0.0;
+        rms2 = (norm > 1e-12) ? r2sum / norm : 0.0;
         radius->value[n] = sqrt(rms2) / fm;
     }
 

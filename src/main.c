@@ -5,27 +5,15 @@
  */
 
 #include <gemstore/entry.h>
+#include <gemstore/print.h>
 
 #include <stdio.h>
 #include <string.h>
 #include <getopt.h>
 
-void print_help()
-{
-    printf("gemstore: hadron spectroscopy tools using Gaussian Expanding Method, Godfrey-Isgur models and more.\n\n");
-    printf("Usage: gemstore [--input FILE] [--fitting TARGET] [--print ITEM] [--debug UNIT]\n\n");
-    printf("Arguments:\n");
-    printf("  -i, --input           input FILE that constains full instructions\n");
-    printf("  -f, --fitting         fit TARGET such as GIScreen_meson, GIScreen_ccbar, GIScreen_bbbar, GIQuadra_light\n");
-    printf("  -d, --debug           debug UNIT such as su3_product, soc_operator, casimir_operator, \n");
-    printf("                        color_wfn, spin_wfn, isospin_wfn, orbit_wfn, eigen_system\n");
-    printf("  -p, --print           print ITEM such as potential, wavefunction\n");
-    printf("  -h,--help             show this help\n");
-    printf("  -v,--version          show version\n\n");
-}
-
 int main(int argc, char **argv)
 {
+    print_logo();
     if (argc == 1) {
         print_help();
         return 0;
@@ -59,10 +47,12 @@ int main(int argc, char **argv)
                 print_help();
                 return 0;
             case 'v':
-                printf("gemstore version 0.1.3\n");
+                printf("gemstore version 0.1.4\n");
                 return 0;
         }
     }
+
+    print_copyright();
 
     return 0;
 }
