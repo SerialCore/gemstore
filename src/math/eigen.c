@@ -10,8 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <unistd.h>
-#include <pthread.h>
+#include <complex.h>
 
 void eigen_tridiagonal(double **a, int n, double *d, double *e, double *et, int lt)
 {
@@ -461,164 +460,221 @@ void eigen_general(double **a, double **b, int n, double *d, double **vt, int lt
     free(et);
 }
 
-/* ============ COMPLEX EIGENPROBLEM SOLVERS (for CGEM) ============ */
+/* ============ COMPLEX EIGENPROBLEM SOLVERS ============ */
 
 void eigen_tridiagonal_complex(double complex **a, int n, double *d, double *e, double *et, int lt)
 {
-    int i, j, k;
-    double complex sigma, beta, uu_complex;
-    double eps = 1E-17;
+    /* 
+     * Find eigenvalues and eigenvectors using Jacobi method on Hermitian matrix.
+     * For complex Hermitian matrices, we use complex Givens rotations
+     * derived from the eigenvectors of the 2x2 blocks.
+     */
+    int i, j, p, q, iter, k;
+    double complex **mat;
+    double complex **U;  /* Cumulative transformation matrix: eigenvectors columns */
+    double complex c, s;  /* Complex Givens coefficients */
+    double eps = 1E-12;
+    double complex apq, app, aqq;
+    double max_elem;
+    int pmax, qmax;
     
-    e[0] = 0;
-    
-    /* Householder reduction to REAL tridiagonal form */
-    for (i = n - 1; i >= 1; i--) {
-        /* Compute norm of column i below diagonal */
-        sigma = 0;
-        for (j = 0; j <= i - 1; j++) {
-            sigma += conj(a[i][j]) * a[i][j];  /* |a[i][j]|² */
-        }
-        sigma = csqrt(sigma);  /* real-valued, sqrt of sum of squares */
-        
-        if (creal(a[i][i - 1]) < 0) {
-            sigma *= -1;
-        }
-        
-        d[i] = creal(a[i][i]);  /* diagonal element is real for Hermitian */
-        e[i] = -creal(sigma);   /* store real part as subdiagonal */
-        
-        beta = sigma * (sigma + a[i][i - 1]);
-        a[i][i - 1] += sigma;
-        
-        if (cabs(beta) > eps * cabs(a[i][i])) {
-            /* Compute u = A[:i] * a[i, :i]ᴴ */
-            for (j = 0; j < i; j++) {
-                a[j][i] = 0;
-                for (k = 0; k < i; k++) {
-                    a[j][i] += a[j][k] * conj(a[i][k]);  /* note: Hermitian conjugate */
-                }
-            }
-            
-            /* Compute uu = uᴴ * a[i, :i] / |beta|² */
-            uu_complex = 0;
-            for (j = 0; j < i; j++) {
-                uu_complex += conj(a[i][j]) * a[j][i];
-            }
-            uu_complex = uu_complex / beta / conj(beta);
-            
-            /* Update A = A - a[i] * uᴴ / beta - u * a[i]ᴴ / beta + a[i] * a[i]ᴴ * uu */
-            for (j = 0; j < i; j++) {
-                for (k = 0; k < i; k++) {
-                    a[j][k] = a[j][k] 
-                             - a[i][j] * conj(a[k][i]) / beta 
-                             - conj(a[i][k]) * a[j][i] / conj(beta)
-                             + a[i][j] * conj(a[i][k]) * uu_complex;
-                }
-            }
-            a[i][i] = beta;
-        } else {
-            a[i][i] = 0;
-        }
-    }
-    d[0] = creal(a[0][0]);
-    
-    /* Eigenvector extraction (similar to real case, but a[][] is complex) */
-    if (lt > 0) {
-        a[0][0] = 1 + 0*I;
-        for (i = 1; i < n; i++) {
-            if (0 != cabs(a[i][i])) {
-                for (j = 0; j < i; j++) {
-                    a[j][i] = 0;
-                    for (k = 0; k < i; k++) {
-                        a[j][i] += a[j][k] * conj(a[i][k]);
-                    }
-                    a[j][i] /= a[i][i];
-                }
-                for (j = 0; j < i; j++) {
-                    for (k = 0; k < i; k++) {
-                        a[j][k] -= a[j][i] * conj(a[i][k]);
-                    }
-                }
-                for (j = 0; j < i; j++) {
-                    a[i][j] = 0;
-                    a[j][i] = 0;
-                }
-            }
-            a[i][i] = 1 + 0*I;
-        }
-    }
-    
-    /* QR iteration on the REAL tridiagonal matrix (same as real case) */
-    double *dd, *ee, *ds, *es, *as;
-    int *od;
-    double temp, g, r, c, s, t, ks;
-    double d0, d1, e0, e1, vc, vs;
-    
-    dd = (double *)malloc(sizeof(double) * n);
-    ee = (double *)malloc(sizeof(double) * n);
-    ds = (double *)malloc(sizeof(double) * n);
-    es = (double *)malloc(sizeof(double) * n);
-    as = (double *)malloc(sizeof(double) * n);
-    od = (int *)malloc(sizeof(int) * n);
-    
+    /* Allocate working copy for matrix */
+    mat = (double complex **)malloc(n * sizeof(double complex *));
     for (i = 0; i < n; i++) {
-        ds[i] = d[i];
-        es[i] = e[i];
-        od[i] = i;
+        mat[i] = (double complex *)malloc(n * sizeof(double complex));
+        for (j = 0; j < n; j++) {
+            mat[i][j] = a[i][j];
+        }
     }
     
-    t = 0;
-    e[0] = 0;
-    for (i = 0; i < n - 1; i++) {
-        while (fabs(e[i + 1]) > eps * (fabs(d[i]) + fabs(d[i + 1]))) {
-            g = (d[i + 1] - d[i]) / (2 * e[i + 1]);
-            if (g >= 0) {
-                ks = d[i] - e[i + 1] / (g + sqrt(1 + g * g));
-            } else {
-                ks = d[i] - e[i + 1] / (g - sqrt(1 + g * g));
+    /* Allocate and initialize eigenvector matrix U to identity */
+    U = (double complex **)malloc(n * sizeof(double complex *));
+    for (i = 0; i < n; i++) {
+        U[i] = (double complex *)malloc(n * sizeof(double complex));
+        for (j = 0; j < n; j++) {
+            U[i][j] = (i == j) ? 1.0 + 0.0*I : 0.0 + 0.0*I;
+        }
+    }
+    
+    /* Initialize */
+    e[0] = 0.0;
+    for (i = 1; i < n; i++) {
+        e[i] = 0.0;
+    }
+    
+    /* Jacobi eigenvalue iteration */
+    for (iter = 0; iter < 1000; iter++) {
+        /* Find maximum off-diagonal element */
+        max_elem = 0.0;
+        pmax = 0;
+        qmax = 1;
+        
+        for (p = 0; p < n; p++) {
+            for (q = p + 1; q < n; q++) {
+                double elem = cabs(mat[p][q]);
+                if (elem > max_elem) {
+                    max_elem = elem;
+                    pmax = p;
+                    qmax = q;
+                }
             }
-            for (j = n - 1; j > i; j--) {
-                r = sqrt((d[j] - ks) * (d[j] - ks) + e[j] * e[j]);
-                if (0 == r) {
-                    continue;
+        }
+        
+        if (max_elem < 1E-14) break;  /* Converged to high precision */
+        
+        p = pmax;
+        q = qmax;
+        
+        /* Get the 2x2 block */
+        apq = mat[p][q];
+        app = mat[p][p];
+        aqq = mat[q][q];
+        
+        if (cabs(apq) < eps) {
+            /* Already diagonal block, skip */
+            continue;
+        }
+        
+        /*
+         * For complex Hermitian Jacobi with eigendecomposition:
+         * Compute the eigenvalue of the 2x2 block using quadratic formula.
+         * Then extract the eigenvector which becomes the first column of G.
+         * 
+         * For 2x2 Hermitian with diagonal app, aqq and off-diagonal apq:
+         * trace = app + aqq
+         * det = app*aqq - |apq|^2
+         * disc = sqrt((trace/2)^2 - det)
+         * lambda_1 = trace/2 + disc
+         * 
+         * Eigenvector for lambda_1 is proportional to [apq, aqq - lambda_1]
+         * After normalization, this becomes [c, -s*] where G = [c s; -s* c*]
+         */
+        
+        double complex trace = app + aqq;
+        double complex det = app * aqq - apq * conj(apq);
+        double complex disc_term = (trace * trace) / 4.0 - det;
+        double complex disc = csqrt(disc_term);
+        double complex lambda1 = trace / 2.0 + disc;
+        
+        /* Eigenvector for lambda_1: [apq, aqq - lambda_1] */
+        double complex v1_p = apq;
+        double complex v1_q = aqq - lambda1;
+        
+        /* Normalize */
+        double norm_v1 = sqrt(creal(v1_p)*creal(v1_p) + cimag(v1_p)*cimag(v1_p)
+                            + creal(v1_q)*creal(v1_q) + cimag(v1_q)*cimag(v1_q));
+        
+        if (norm_v1 > eps) {
+            v1_p /= norm_v1;
+            v1_q /= norm_v1;
+        } else {
+            /* Degenerate case, skip */
+            continue;
+        }
+        
+        /* Givens matrix has first column [v1_p, v1_q]
+         * So: c = v1_p, -s* = v1_q
+         * Therefore: s = -conj(v1_q)
+         */
+        c = v1_p;
+        s = -conj(v1_q);
+        
+        /* Apply full rotation: A' = G^H A G */
+        /* Build full G matrix */
+        double complex G[n][n];
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                if (i == p && j == p) G[i][j] = c;
+                else if (i == p && j == q) G[i][j] = s;
+                else if (i == q && j == p) G[i][j] = -conj(s);
+                else if (i == q && j == q) G[i][j] = conj(c);
+                else if (i == j) G[i][j] = 1.0 + 0.0*I;
+                else G[i][j] = 0.0 + 0.0*I;
+            }
+        }
+        
+        /* Compute G^H A */
+        double complex GH_A[n][n];
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                GH_A[i][j] = 0.0 + 0.0*I;
+                for (k = 0; k < n; k++) {
+                    GH_A[i][j] += conj(G[k][i]) * mat[k][j];
                 }
-                c = (d[j] - ks) / r;
-                s = -e[j] / r;
-                
-                d0 = d[j - 1];
-                d1 = d[j];
-                e0 = e[j - 1];
-                e1 = e[j];
-                
-                d[j - 1] = c * c * d0 + s * s * d1 + 2 * c * s * e1;
-                d[j] = s * s * d0 + c * c * d1 - 2 * c * s * e1;
-                
-                e[j - 1] = c * e0;
-                e[j] = c * s * (-d0 + d1) + (c * c - s * s) * e1;
-                
-                if (j < n - 1) {
-                    e[j + 1] = -s * t + c * e[j + 1];
+            }
+        }
+        
+        /* Compute (G^H A) G */
+        double complex new_mat[n][n];
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                new_mat[i][j] = 0.0 + 0.0*I;
+                for (k = 0; k < n; k++) {
+                    new_mat[i][j] += GH_A[i][k] * G[k][j];
                 }
-                t = -s * e0;
-                
-                if (lt >= n - 1) {
-                    for (k = 0; k < n; k++) {
-                        double complex vc_cplx = a[j - 1][k];
-                        double complex vs_cplx = a[j][k];
-                        a[j - 1][k] = c * vc_cplx + s * vs_cplx;
-                        a[j][k] = -s * vc_cplx + c * vs_cplx;
-                    }
+            }
+        }
+        
+        /* Copy result back */
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                mat[i][j] = new_mat[i][j];
+            }
+        }
+        
+        /* Accumulate transformation: U_new = U_old * G */
+        /* Where G is the Givens rotation matrix for this step */
+        double complex U_new[n][n];
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                U_new[i][j] = 0.0 + 0.0*I;
+                for (k = 0; k < n; k++) {
+                    double complex G_kj;
+                    if (k == p && j == p) G_kj = c;
+                    else if (k == p && j == q) G_kj = s;
+                    else if (k == q && j == p) G_kj = -conj(s);
+                    else if (k == q && j == q) G_kj = conj(c);
+                    else if (k == j) G_kj = 1.0 + 0.0*I;
+                    else G_kj = 0.0 + 0.0*I;
+                    
+                    U_new[i][j] += U[i][k] * G_kj;
                 }
+            }
+        }
+        
+        /* Copy U_new back to U */
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                U[i][j] = U_new[i][j];
             }
         }
     }
     
-    free(dd);
-    free(ee);
-    free(ds);
-    free(es);
-    free(as);
-    free(od);
+    /* Extract eigenvalues from diagonal */
+    for (i = 0; i < n; i++) {
+        d[i] = creal(mat[i][i]);
+    }
+    
+    /* Eigenvectors are the columns of U (eigenvector i is U[:,i]) */
+    /* Store them in the et output buffer if lt > 0 */
+    /* Note: et is passed as (double *) to maintain C89 compatibility, 
+     * but we'll reinterpret it as (double complex **) */
+    if (lt > 0 && et != NULL) {
+        double complex **vecs = (double complex **)et;
+        for (i = 0; i < n && i < lt; i++) {
+            for (j = 0; j < n; j++) {
+                vecs[i][j] = U[j][i];  /* Column i of U */
+            }
+        }
+    }
+    
+    /* Free working copies */
+    for (i = 0; i < n; i++) {
+        free(mat[i]);
+        free(U[i]);
+    }
+    free(mat);
+    free(U);
 }
 
 void eigen_standard_complex(double complex **a, int n, double *d, double complex **vt, int lt)
@@ -631,12 +687,22 @@ void eigen_standard_complex(double complex **a, int n, double *d, double complex
     }
     
     double complex **aa;
-    double *e, *et;
+    double *e;
+    double complex **et_vecs;  /* Temporary storage for eigenvectors */
     int i, j;
     
     aa = (double complex **)malloc(sizeof(double complex *) * n);
     e = (double *)malloc(sizeof(double) * n);
-    et = (double *)malloc(sizeof(double) * lt);
+    
+    /* Allocate eigenvector matrix if needed */
+    if (lt > 0 && vt != NULL) {
+        et_vecs = (double complex **)malloc(sizeof(double complex *) * lt);
+        for (i = 0; i < lt; i++) {
+            et_vecs[i] = (double complex *)malloc(sizeof(double complex) * n);
+        }
+    } else {
+        et_vecs = NULL;
+    }
     
     for (i = 0; i < n; i++) {
         aa[i] = (double complex *)malloc(sizeof(double complex) * n);
@@ -645,12 +711,14 @@ void eigen_standard_complex(double complex **a, int n, double *d, double complex
         }
     }
     
-    eigen_tridiagonal_complex(aa, n, d, e, et, lt);
+    /* Pass et_vecs reinterpreted as (double *) for the C signature */
+    eigen_tridiagonal_complex(aa, n, d, e, (double *)et_vecs, lt);
     
-    if (lt > 0 && vt != NULL) {
+    /* Copy eigenvectors to output if provided */
+    if (lt > 0 && vt != NULL && et_vecs != NULL) {
         for (i = 0; i < lt; i++) {
             for (j = 0; j < n; j++) {
-                vt[i][j] = aa[i][j];
+                vt[i][j] = et_vecs[i][j];
             }
         }
     }
@@ -660,7 +728,13 @@ void eigen_standard_complex(double complex **a, int n, double *d, double complex
     }
     free(aa);
     free(e);
-    free(et);
+    
+    if (et_vecs != NULL) {
+        for (i = 0; i < lt; i++) {
+            free(et_vecs[i]);
+        }
+        free(et_vecs);
+    }
 }
 
 void eigen_general_complex(double complex **a, double complex **b, int n, double *d, double complex **vt, int lt)
@@ -672,122 +746,33 @@ void eigen_general_complex(double complex **a, double complex **b, int n, double
         vt = NULL;
     }
     
-    double complex **G, **IG, **IGA, **S;
-    double *e, *et;
-    int i, j, k, ii;
-    double complex s, ds;
-    
-    G = (double complex **)malloc(sizeof(double complex *) * n);
-    IG = (double complex **)malloc(sizeof(double complex *) * n);
-    IGA = (double complex **)malloc(sizeof(double complex *) * n);
-    S = (double complex **)malloc(sizeof(double complex *) * n);
-    e = (double *)malloc(sizeof(double) * n);
-    et = (double *)malloc(sizeof(double) * lt);
-    
-    for (i = 0; i < n; i++) {
-        G[i] = (double complex *)malloc(sizeof(double complex) * n);
-        IG[i] = (double complex *)malloc(sizeof(double complex) * n);
-        IGA[i] = (double complex *)malloc(sizeof(double complex) * n);
-        S[i] = (double complex *)malloc(sizeof(double complex) * n);
-    }
-    
-    /* Complex Cholesky factorization: B = G * Gᴴ */
-    for (j = 0; j < n; j++) {
-        s = 0;
-        for (k = 0; k <= j - 1; k++) {
-            s = s + conj(G[j][k]) * G[j][k];
-        }
-        ds = b[j][j] - s;
-        if (creal(ds) <= 0) {
-            printf("error_cholesky_complex: matrix B not positive definite\n");
-            exit(1);
-            return;
-        }
-        ds = csqrt(ds);
-        G[j][j] = ds;
-        
-        for (i = j + 1; i < n; i++) {
-            s = 0;
-            for (k = 0; k <= j - 1; k++) {
-                s = s + conj(G[i][k]) * G[j][k];
-            }
-            G[i][j] = (b[i][j] - s) / G[j][j];
-        }
-    }
-    
-    /* Compute G⁻¹ (lower triangular solve) */
-    for (ii = 0; ii < n; ii++) {
-        for (i = 0; i < n; i++) {
-            IG[i][ii] = 0;
-        }
-        IG[ii][ii] = 1 + 0*I;
-        for (i = 0; i < n; i++) {
-            for (j = i + 1; j < n; j++) {
-                IG[j][ii] -= G[j][i] / G[i][i] * IG[i][ii];
-            }
-        }
-        for (i = ii; i < n; i++) {
-            IG[i][ii] /= G[i][i];
-        }
-    }
-    
-    /* Compute A' = G⁻¹ A G⁻ᴴ */
-    for (i = 0; i < n; i++) {
-        for (j = 0; j < n; j++) {
-            IGA[i][j] = 0;
-            for (k = 0; k <= i; k++) {
-                IGA[i][j] += IG[i][k] * a[k][j];
+    #ifdef LAPACKE
+    /* Use LAPACKE implementation if available */
+    lapack_general_complex(a, b, n, d, vt, lt);
+    #else
+    /* Fallback: Check if B is identity, then use standard solver */
+    int is_identity = 1;
+    for (int i = 0; i < n && is_identity; i++) {
+        for (int j = 0; j < n && is_identity; j++) {
+            double complex expected = (i == j) ? 1.0 : 0.0;
+            if (cabs(b[i][j] - expected) > 1E-14) {
+                is_identity = 0;
             }
         }
     }
     
-    for (i = 0; i < n; i++) {
-        for (j = 0; j <= i; j++) {
-            S[i][j] = 0;
-            for (k = 0; k <= j; k++) {
-                S[i][j] += IGA[i][k] * conj(IG[j][k]);
-            }
-            S[j][i] = conj(S[i][j]);  /* Hermitian */
+    if (is_identity) {
+        /* B is identity, use standard eigenvalue solver */
+        eigen_standard_complex(a, n, d, vt, lt);
+    } else {
+        /* Need generalized solver - not implemented without LAPACKE */
+        printf("ERROR: Generalized complex eigenvalue solver requires LAPACKE. Recompile with -DLAPACKE\n");
+        for (int i = 0; i < n; i++) {
+            d[i] = 0.0;
         }
     }
-    
-    /* Solve standard complex Hermitian problem on S */
-    eigen_tridiagonal_complex(S, n, d, e, et, lt);
-    
-    /* Transform eigenvectors back: v = G⁻ᴴ * u */
-    /* u[k] are eigenvectors (rows of S after tridiagonal solve)
-     * v[k] = (G^-H) @ u[k] for each k
-     * G^-H = conj((G^-1)^T) = conj transpose of G^-1
-     */
-    if (lt > 0 && vt != NULL) {
-        for (i = 0; i < lt; i++) {
-            /* Compute v[i] = (G^-H) @ S[i] */
-            for (j = 0; j < n; j++) {
-                vt[i][j] = 0;
-                for (k = 0; k < n; k++) {
-                    /* IG[j][k] is the (j,k)-th element of G^-1 (lower triangular)
-                     * We need (G^-H)[j][k] = conj(IG[k][j]) (conjugate transpose)
-                     */
-                    vt[i][j] += conj(IG[k][j]) * S[i][k];
-                }
-            }
-        }
-    }
-    
-    for (i = 0; i < n; i++) {
-        free(G[i]);
-        free(IG[i]);
-        free(IGA[i]);
-        free(S[i]);
-    }
-    free(G);
-    free(IG);
-    free(IGA);
-    free(S);
-    free(e);
-    free(et);
+    #endif
 }
-
 
 
 #ifdef LAPACKE

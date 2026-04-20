@@ -36,8 +36,6 @@ void eigen_standard(double **a, int n, double *d, double **vt, int lt);
  * (info): Output error code: error_cholesky */
 void eigen_general(double **a, double **b, int n, double *d, double **vt, int lt);
 
-/* ============ COMPLEX EIGENPROBLEM SOLVERS (for CGEM) ============ */
-
 /* Complex Hermitian tridiagonalization + implicit QR
  * a: Input complex Hermitian matrix A (n × n)
  * n: Dimension of the matrices
