@@ -1,7 +1,6 @@
 &GLOBAL
   project = charmonium
   task = SPECTRA
-  # task = RADIUS
   # task = DECAY3P0
   # task = COUPLCHN
   # task = SCATTER
@@ -9,7 +8,6 @@
 &SYSTEM
   # model = GI_STRING
   model = GI_SCREEN
-  # model = GI_QUADRA
   system = MESON
   # system = BARYON
   # system = MOLECULE
@@ -17,11 +15,8 @@
 &PARAMS
   # params = GIString_meson
   # params = GIScreen_meson
-  # params = GIQuadra_meson
   params = GIScreen_ccbar
   # params = GIScreen_bbbar
-  # params = GIQuadra_ccbar
-  # params = GIQuadra_bbbar
   # mn = 0.4713455847642
   # ms = 0.6283121820133
   # mc = 1.810505119204

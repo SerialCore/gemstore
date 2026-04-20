@@ -10,7 +10,6 @@ This template defines the input format for the gemstore meson spectra computatio
 &GLOBAL
   project = {file name}
   task = SPECTRA
-  # task = RADIUS
   # task = DECAY3P0
   # task = COUPLCHN
   # task = SCATTER
@@ -18,7 +17,6 @@ This template defines the input format for the gemstore meson spectra computatio
 &SYSTEM
   # model = GI_STRING
   model = GI_SCREEN
-  # model = GI_QUADRA
   system = MESON
   # system = BARYON
   # system = MOLECULE
@@ -26,16 +24,13 @@ This template defines the input format for the gemstore meson spectra computatio
 &PARAMS
   # params = GIString_meson
   # params = GIScreen_meson
-  # params = GIQuadra_meson
   params = GIScreen_ccbar
   # params = GIScreen_bbbar
-  # params = GIQuadra_ccbar
-  # params = GIQuadra_bbbar
   # mn = 0.4713455847642
   # ms = 0.6283121820133
   # mc = 1.810505119204
   # mb = 5.156014766761
-  # b1 = 0.2575467075473
+  # b = 0.2575467075473
   # mu = 0.1453562021339
   # c = -0.658943240626
   # sigma_0 = 1.884145499156
