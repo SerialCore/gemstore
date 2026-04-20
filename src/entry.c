@@ -64,7 +64,6 @@ static int parse_line(char *line, input_section_t sec, argsInput_t *input)
             strncpy(input->project, val, 255);
         } else if (strcmp(key, "task") == 0) {
             if (strcmp(val, "SPECTRA") == 0) input->task = TASK_SPECTRA;
-            else if (strcmp(val, "RADIUS") == 0) input->task = TASK_RADIUS;
             else if (strcmp(val, "DECAY3P0") == 0) input->task = TASK_DECAY3P0;
             else if (strcmp(val, "COUPLCHN") == 0) input->task = TASK_COUPLCHN;
             else if (strcmp(val, "SCATTER") == 0) input->task = TASK_SCATTER;
@@ -74,7 +73,6 @@ static int parse_line(char *line, input_section_t sec, argsInput_t *input)
         if (strcmp(key, "model") == 0) {
             if (strcmp(val, "GI_STRING") == 0) input->model = MODEL_GI_STRING;
             else if (strcmp(val, "GI_SCREEN") == 0) input->model = MODEL_GI_SCREEN;
-            else if (strcmp(val, "GI_QUADRA") == 0) input->model = MODEL_GI_QUADRA;
             else {fprintf(stderr, "Unknown model: %s\n", val); exit(1);}
         } else if (strcmp(key, "system") == 0) {
             if (strcmp(val, "MESON") == 0) input->system = SYSTEM_MESON;
@@ -89,18 +87,13 @@ static int parse_line(char *line, input_section_t sec, argsInput_t *input)
             else if (strcmp(val, "GIScreen_bbbar") == 0) input->params = argsGIScreen_bbbar;
             else if (strcmp(val, "GIScreen_ccbar") == 0) input->params = argsGIScreen_ccbar;
             else if (strcmp(val, "GIScreen_light") == 0) input->params = argsGIScreen_light;
-            else if (strcmp(val, "GIQuadra_meson") == 0) input->params = argsGIQuadra_meson;
-            else if (strcmp(val, "GIQuadra_bbbar") == 0) input->params = argsGIQuadra_bbbar;
-            else if (strcmp(val, "GIQuadra_ccbar") == 0) input->params = argsGIQuadra_ccbar;
-            else if (strcmp(val, "GIQuadra_light") == 0) input->params = argsGIQuadra_light;
             else {fprintf(stderr, "Unknown paramset: %s\n", val); exit(1);}
         }
         else if (strcmp(key, "mn") == 0) input->params.mn = atof(val);
         else if (strcmp(key, "ms") == 0) input->params.ms = atof(val);
         else if (strcmp(key, "mc") == 0) input->params.mc = atof(val);
         else if (strcmp(key, "mb") == 0) input->params.mb = atof(val);
-        else if (strcmp(key, "b1") == 0) input->params.b1 = atof(val);
-        else if (strcmp(key, "b2") == 0) input->params.b2 = atof(val);
+        else if (strcmp(key, "b") == 0) input->params.b = atof(val);
         else if (strcmp(key, "mu") == 0) input->params.mu = atof(val);
         else if (strcmp(key, "c") == 0) input->params.c = atof(val);
         else if (strcmp(key, "sigma_0") == 0) input->params.sigma_0 = atof(val);
@@ -176,7 +169,6 @@ void entry_fitting(const char* arg)
     strncpy(prefix, arg, prefix_len);
 
     if (strcmp(prefix, "GIScreen") == 0) call_minuit2_GIScreen(suffix);
-    else if (strcmp(prefix, "GIQuadra") == 0) call_minuit2_GIQuadra(suffix);
     else {fprintf(stderr, "Unknown fitting model: %s\n", arg); exit(1);}
 }
 

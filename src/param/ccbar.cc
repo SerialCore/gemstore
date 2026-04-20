@@ -48,7 +48,7 @@ void minuit2_ccbar_GIScreen(double *params_out)
     upar.Add("ms", 0.5283844975353, 0.01, 0.3, 0.7);
     upar.Add("mc", 1.747603574365, 0.01, 1.5, 2.0);
     upar.Add("mb", 5.095838715, 0.01, 4.5, 5.5);
-    upar.Add("b1", 0.248247135518, 0.01, 0.1, 0.3);
+    upar.Add("b", 0.248247135518, 0.01, 0.1, 0.3);
     upar.Add("mu", 0.1333931469096, 0.01, 0.1, 0.2);
     upar.Add("c", -0.5334999044266, 0.01, -2.0, 0.0);
     upar.Add("sig0", 1.56552865791, 0.01, 1.0, 3.0);
@@ -73,52 +73,6 @@ void minuit2_ccbar_GIScreen(double *params_out)
     /* perform the fit */
     ROOT::Minuit2::FunctionMinimum min_result = migrad();
     compute_chi2(DATA_CCBAR, min_result.UserParameters().Params(), MODEL_GI_SCREEN, true);
-    dual << min_result.UserParameters() << std::endl;
-
-    auto params = min_result.UserParameters().Params();
-    for (int i = 0; i < N_PARAMS; i++) {
-        params_out[i] = params[i];
-    }
-}
-
-void minuit2_ccbar_GIQuadra(double *params_out)
-{
-    srand(time(0));
-    DualStream dual("Fitting.out");
-
-    /* set parameters */
-    ROOT::Minuit2::MnUserParameters upar;
-    //upar.Add(name, value, init_step, lower_limit, upper_limit);
-    upar.Add("mn", 0.4024291451329, 0.01, 0.1, 0.5);
-    upar.Add("ms", 0.5749451022621, 0.01, 0.3, 0.7);
-    upar.Add("mc", 1.773779650685, 0.01, 1.5, 2.0);
-    upar.Add("mb", 5.119870696908, 0.01, 4.5, 5.5);
-    upar.Add("b1", 0.2020007923859, 0.01, 0.1, 0.3);
-    upar.Add("b2", 0.01106920061884, 0.01, 0.0, 0.1);
-    upar.Add("mu", 0.1079930218451, 0.01, 0.1, 0.2);
-    upar.Add("c", -0.5485460827658, 0.01, -2.0, 0.0);
-    upar.Add("sig0", 1.700037337287, 0.01, 1.0, 3.0);
-    upar.Add("s", 1.288608951331, 0.01, 1.0, 3.0);
-    upar.Add("econt", -0.273180413884, 0.01, -0.5, 0.0);
-    upar.Add("esov", -0.7373105432325, 0.01, -1.0, 1.0);
-    upar.Add("esos", 0.9890025702377, 0.01, -1.0, 1.0);
-    upar.Add("etens", -0.5045346358157, 0.01, -1.0, 1.0);
-    upar.Fix("mn");
-    upar.Fix("ms");
-    upar.Fix("mc");
-    upar.Fix("mb");
-    upar.Fix("c");
-    upar.Fix("sig0");
-    upar.Fix("s");
-    int N_PARAMS = upar.Params().size();
-
-    /* use of Migrad algorithm with strategy 2, high precision */
-    Chi2Minimizer minuit_fit(DATA_CCBAR, MODEL_GI_QUADRA, N_PARAMS, 1.0);
-    ROOT::Minuit2::MnMigrad migrad(minuit_fit, upar, 2);
-
-    /* perform the fit */
-    ROOT::Minuit2::FunctionMinimum min_result = migrad();
-    compute_chi2(DATA_CCBAR, min_result.UserParameters().Params(), MODEL_GI_QUADRA, true);
     dual << min_result.UserParameters() << std::endl;
 
     auto params = min_result.UserParameters().Params();

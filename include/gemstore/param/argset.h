@@ -28,8 +28,7 @@ typedef struct argsGIModel {
     double ms;              /* mass of s quark */
     double mc;              /* mass of c quark */
     double mb;              /* mass of b quark */
-    double b1;              /* string tension */
-    double b2;              /* surface tension */
+    double b;              /* string tension */
     double mu;              /* screen length */
     double c;               /* constant potential */
     double sigma_0;         /* GI smearing parameter for sigma */
@@ -88,17 +87,5 @@ extern const argsGIModel_t argsGIScreen_ccbar;
 
 /* Default light meson parameters for model GIScreen */
 extern const argsGIModel_t argsGIScreen_light;
-
-/* Default heavy meson parameters for model GISQuadra */
-extern const argsGIModel_t argsGIQuadra_meson;
-
-/* Default bbbar meson parameters for model GISQuadra */
-extern const argsGIModel_t argsGIQuadra_bbbar;
-
-/* Default ccbar meson parameters for model GISQuadra */
-extern const argsGIModel_t argsGIQuadra_ccbar;
-
-/* Default light meson parameters for model GISQuadra */
-extern const argsGIModel_t argsGIQuadra_light;
 
 #endif

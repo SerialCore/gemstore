@@ -39,11 +39,6 @@ void compute_spectra_meson(const argsInput_t *input)
         args_dynmc.system = SYSTEM_MESON;
         spectra_meson_GI(input, &input->params, &args_dynmc, &eigenvalue, &eigenvector, nmax);
     }
-    else if (input->model == MODEL_GI_QUADRA) {
-        args_dynmc.model = MODEL_GI_QUADRA;
-        args_dynmc.system = SYSTEM_MESON;
-        spectra_meson_GI(input, &input->params, &args_dynmc, &eigenvalue, &eigenvector, nmax);
-    }
     else {
         array_free(&eigenvalue);
         array_free(&rmsradius);

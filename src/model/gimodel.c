@@ -133,8 +133,7 @@ double GIVconf(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
     if (r == 0.0) return 0.0;
 
     model_type_t model = args_dynmc->model;
-    double b1 = args_model->b1;
-    double b2 = args_model->b2;
+    double b = args_model->b;
     double mu = args_model->mu;
     double c = args_model->c;
     double Cij = args_dynmc->Cij;
@@ -144,32 +143,24 @@ double GIVconf(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
     if (model == MODEL_GI_STRING) {
         double rsig = r * sigmaij;
 
-        double pref = -3.0 * Cij * cent * b1 / (8.0 * r * sigmaij * sigmaij);
+        double pref = -3.0 * Cij * cent * b / (8.0 * r * sigmaij * sigmaij);
         double inner1 = M_2_SQRTPI * r * sigmaij * exp(-rsig * rsig);
         double inner2 = (1.0 + 2.0 * rsig * rsig) * erf(rsig);
         
         return pref * (inner1 + inner2) - 0.75 * Cij * cent * c;
     }
-    else if (model == MODEL_GI_SCREEN || model == MODEL_GI_QUADRA) {
+    else if (model == MODEL_GI_SCREEN) {
         double sig2 = sigmaij * sigmaij;
         double mu2_4sig2 = mu * mu / (4.0 * sig2);
         double mu_m_2rsig2 = mu - 2.0 * r * sig2;
         double mu_p_2rsig2 = mu + 2.0 * r * sig2;
 
-        double pref = -3.0 * Cij * cent * b1 * exp(-r * mu) / (16.0 * r * mu * sig2);
+        double pref = -3.0 * Cij * cent * b * exp(-r * mu) / (16.0 * r * mu * sig2);
         double inner1 = 4.0 * r * sig2 * exp(r * mu);
         double inner2 = mu_m_2rsig2 * exp(mu2_4sig2) * erfc(mu_m_2rsig2 / (2.0 * sigmaij));
         double inner3 = mu_p_2rsig2 * exp(mu2_4sig2 + 2 * r * mu) * erfc(mu_p_2rsig2 / (2.0 * sigmaij));
 
-        if (model == MODEL_GI_SCREEN) {
-            return pref * (inner1 + inner2 - inner3) - 0.75 * Cij * cent * c;
-        }
-        if (model == MODEL_GI_QUADRA) {
-            double pref_quadra = -3.0 * Cij * cent * b2 / (4.0 * mu);
-            double inner_quadra = 1.0 - sig2 * sigmaij * exp(-mu * r * r * sig2 / (mu + sig2)) / pow(mu + sig2, 1.5);
-            
-            return pref * (inner1 + inner2 - inner3) + pref_quadra * inner_quadra - 0.75 * Cij * cent * c;
-        }
+        return pref * (inner1 + inner2 - inner3) - 0.75 * Cij * cent * c;
     }
 
     return 0.0;

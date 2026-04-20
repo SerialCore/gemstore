@@ -14,8 +14,6 @@ extern "C" {
 
 void minuit2_meson_GIScreen(double *params_out);
 
-void minuit2_meson_GIQuadra(double *params_out);
-
 #ifdef __cplusplus
 }
 #endif

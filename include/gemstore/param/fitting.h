@@ -14,14 +14,10 @@ extern "C" {
 
 double call_meson_GIScreen(int f1, int f2, int N, double S, double L, double J, int nmax, double rmax, double rmin, const double *params);
 
-double call_meson_GIQuadra(int f1, int f2, int N, double S, double L, double J, int nmax, double rmax, double rmin, const double *params);
-
 #ifdef __cplusplus
 }
 #endif
 
 void call_minuit2_GIScreen(const char* system);
-
-void call_minuit2_GIQuadra(const char* system);
 
 #endif

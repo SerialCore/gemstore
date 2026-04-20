@@ -123,8 +123,7 @@ void print_input_parameters(const argsInput_t *input)
     printf("\n");
 
     printf("  Potential Parameters:\n");
-    printf("    String Tension (b1):     %-46.6f\n", input->params.b1);
-    printf("    Surface Tension (b2):    %-46.6f\n", input->params.b2);
+    printf("    String Tension (b):      %-46.6f\n", input->params.b);
     printf("    Screen Length (mu):      %-46.6f\n", input->params.mu);
     printf("    Constant Potential (c):  %-46.6f\n", input->params.c);
     printf("\n");
@@ -265,8 +264,8 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
     fprintf(pf, "MODEL PARAMETERS:\n");
     fprintf(pf, "  Quark Masses:        mn=%.6f  ms=%.6f  mc=%.6f  mb=%.6f GeV\n",
         input->params.mn, input->params.ms, input->params.mc, input->params.mb);
-    fprintf(pf, "  Potential:           b1=%.6f  b2=%.6f  mu=%.6f  c=%.6f\n",
-        input->params.b1, input->params.b2, input->params.mu, input->params.c);
+    fprintf(pf, "  Potential:           b=%.6f  mu=%.6f  c=%.6f\n",
+        input->params.b, input->params.mu, input->params.c);
     fprintf(pf, "  GI Parameters:       sigma_0=%.6f  s=%.6f\n",
         input->params.sigma_0, input->params.s);
     fprintf(pf, "  Smearing:            epsilon_cont=%.6f  epsilon_sov=%.6f  epsilon_sos=%.6f  epsilon_tens=%.6f\n",
