@@ -31,4 +31,7 @@ void debug_orbit_wfn();
 /* Debug eigen system */
 void debug_eigen_system();
 
+/* Debug complex eigen system */
+void debug_eigen_system_complex();
+
 #endif

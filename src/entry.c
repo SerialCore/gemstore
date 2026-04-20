@@ -182,6 +182,7 @@ void entry_debug(const char* arg)
     else if (strcmp(arg, "isospin_wfn") == 0) debug_isospin_wfn();
     else if (strcmp(arg, "orbit_wfn") == 0) debug_orbit_wfn();
     else if (strcmp(arg, "eigen_system") == 0) debug_eigen_system();
+    else if (strcmp(arg, "eigen_system_complex") == 0) debug_eigen_system_complex();
     else {fprintf(stderr, "Unknown debug unit: %s\n", arg); exit(1);}
 }
 
