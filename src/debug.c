@@ -16,6 +16,7 @@
 #include <gemstore/math/integral.h>
 #include <gemstore/math/matrix.h>
 #include <gemstore/math/eigen.h>
+#include <gemstore/math/ceigen.h>
 #include <gemstore/math/cmi.h>
 #include <gemstore/math/soc.h>
 #include <gemstore/math/su3.h>

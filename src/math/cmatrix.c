@@ -4,20 +4,20 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/math/matrix.h>
+#include <gemstore/math/cmatrix.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <time.h>
+#include <complex.h>
 
-matrix_t matrix_init(int row, int col)
+cmatrix_t cmatrix_init(int row, int col)
 {
-	matrix_t mat;
+	cmatrix_t mat;
 
-	double **value = (double**)malloc(row*sizeof(double*));
+	complex **value = (complex**)malloc(row*sizeof(complex*));
 	for (int i = 0; i < row; i++) {
-		value[i] = (double*)malloc(col*sizeof(double));
+		value[i] = (complex*)malloc(col*sizeof(complex));
 	}
 	mat.value = value;
 	mat.row = row;
@@ -26,7 +26,7 @@ matrix_t matrix_init(int row, int col)
 	return mat;
 }
 
-void matrix_inverse(const matrix_t *mat, matrix_t *imat)
+void cmatrix_inverse(const cmatrix_t *mat, cmatrix_t *imat)
 {
 	if (mat->row != mat->col || imat->row != imat->col || mat->row != imat->row) {
 		printf("error_matrix_inverse: dimension mismatch\n");
@@ -40,14 +40,14 @@ void matrix_inverse(const matrix_t *mat, matrix_t *imat)
     }
 
  	/* construct [A | I] */
-    double **aug = (double **)malloc((n) * sizeof(double *));
+    complex **aug = (complex **)malloc((n) * sizeof(complex *));
     for (int i = 0; i < n; i++) {
-        aug[i] = (double *)malloc((2 * n) * sizeof(double));
+        aug[i] = (complex *)malloc((2 * n) * sizeof(complex));
     }
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             aug[i][j] = mat->value[i][j];           /* matrix A */
-            aug[i][j + n] = (i == j) ? 1.0 : 0.0;   /* matrix I */
+            aug[i][j + n] = (i == j) ? 1.0 + 0.0*I : 0.0 + 0.0*I;   /* matrix I */
         }
     }
 
@@ -57,13 +57,13 @@ void matrix_inverse(const matrix_t *mat, matrix_t *imat)
 		/* find the row with the largest pivot element */
 		int max_row = p;
         for (int i = p + 1; i < n; i++) {
-            if (fabs(aug[i][p]) > fabs(aug[max_row][p])) {
+            if (cabs(aug[i][p]) > cabs(aug[max_row][p])) {
                 max_row = i;
             }
         }
 
 		/* strange matrix, return */
-        if (fabs(aug[max_row][p]) < EPS) {
+        if (cabs(aug[max_row][p]) < EPS) {
             printf("error_matrix_inverse: matrix is singular (or nearly singular)\n");
             for (int i = 0; i < n; i++) free(aug[i]);
             free(aug);
@@ -72,13 +72,13 @@ void matrix_inverse(const matrix_t *mat, matrix_t *imat)
 
 		/* swap rows */
         if (max_row != p) {
-            double *temp = aug[p];
+            complex *temp = aug[p];
             aug[p] = aug[max_row];
             aug[max_row] = temp;
         }
 
 		/* pivot normalization */
-        double pivot = aug[p][p];
+        complex pivot = aug[p][p];
         for (int j = 0; j < 2 * n; j++) {
             aug[p][j] /= pivot;
         }
@@ -86,7 +86,7 @@ void matrix_inverse(const matrix_t *mat, matrix_t *imat)
 		/* Gauss-Jordan elimination */
         for (int i = 0; i < n; i++) {
             if (i == p) continue;
-            double factor = aug[i][p];
+            complex factor = aug[i][p];
             for (int j = 0; j < 2 * n; j++) {
                 aug[i][j] -= factor * aug[p][j];
             }
@@ -106,7 +106,7 @@ void matrix_inverse(const matrix_t *mat, matrix_t *imat)
     free(aug);
 }
 
-void matrix_inverse_lowertri(const matrix_t *mat, matrix_t *imat)
+void cmatrix_inverse_lowertri(const cmatrix_t *mat, cmatrix_t *imat)
 {
 	if (mat->row != mat->col || imat->row != imat->col || mat->row != imat->row) {
 		printf("error_matrix_inverse_lowertri: dimension mismatch\n");
@@ -114,19 +114,19 @@ void matrix_inverse_lowertri(const matrix_t *mat, matrix_t *imat)
 	}
 
     int n = mat->row;
-    double **Linv = (double**)malloc(n * sizeof(double*));
-    for (int i = 0; i < n; i++) Linv[i] = (double*)malloc(n * sizeof(double));
+    complex **Linv = (complex**)malloc(n * sizeof(complex*));
+    for (int i = 0; i < n; i++) Linv[i] = (complex*)malloc(n * sizeof(complex));
 
     for (int i = 0; i < n; i++) {
         /* initialize */
-        for (int j = 0; j < n; j++) Linv[i][j] = 0.0;
+        for (int j = 0; j < n; j++) Linv[i][j] = 0.0 + 0.0*I;
 
 		/* diagonal */
         Linv[i][i] = 1.0 / mat->value[i][i];
 
 		/* lower triangle */
         for (int j = i - 1; j >= 0; j--) {
-            double sum = 0.0;
+            complex sum = 0.0 + 0.0*I;
             for (int k = j; k < i; k++)
                 sum += mat->value[i][k] * Linv[k][j];
             Linv[i][j] = -sum / mat->value[i][i];
@@ -134,7 +134,7 @@ void matrix_inverse_lowertri(const matrix_t *mat, matrix_t *imat)
 
 		/* set upper triangle to zero */
         for (int j = i + 1; j < n; j++)
-            Linv[i][j] = 0.0;
+            Linv[i][j] = 0.0 + 0.0*I;
     }
 
 	/* write back to imat */
@@ -146,7 +146,7 @@ void matrix_inverse_lowertri(const matrix_t *mat, matrix_t *imat)
     free(Linv);
 }
 
-void matrix_cholesky_decomp(const matrix_t *matS, matrix_t *matL)
+void cmatrix_cholesky_decomp(const cmatrix_t *matS, cmatrix_t *matL)
 {
 	if (matS->row != matS->col || matL->row != matL->col || matS->row != matL->row) {
 		printf("error_matrix_cholesky_decomp: dimension mismatch\n");
@@ -154,30 +154,31 @@ void matrix_cholesky_decomp(const matrix_t *matS, matrix_t *matL)
 	}
 
     int n = matS->row;
-    double **L = (double**)malloc(n * sizeof(double*));
-    for (int i = 0; i < n; i++) L[i] = (double*)malloc(n * sizeof(double));
+    complex **L = (complex**)malloc(n * sizeof(complex*));
+    for (int i = 0; i < n; i++) L[i] = (complex*)malloc(n * sizeof(complex));
 
     for (int i = 0; i < n; i++) {
 		/* lower triangle */
         for (int j = 0; j < i; j++) {
-            double sum = 0.0;
+            complex sum = 0.0 + 0.0*I;
             for (int k = 0; k < j; k++)
-                sum += L[i][k] * L[j][k];
+                sum += L[i][k] * conj(L[j][k]);
             L[i][j] = (matS->value[i][j] - sum) / L[j][j];
         }
 		/* diagonal */
-        double sum = 0.0;
+        complex sum = 0.0 + 0.0*I;
         for (int k = 0; k < i; k++)
-            sum += L[i][k] * L[i][k];
-        if (matS->value[i][i] - sum <= 0.0) {
+            sum += L[i][k] * conj(L[i][k]);
+        complex diag_val = matS->value[i][i] - sum;
+        if (creal(diag_val) <= 0.0 || cimag(diag_val) != 0.0) {
             fprintf(stderr, "Cholesky failed at i=%d\n", i);
             exit(1);
         }
-        L[i][i] = sqrt(matS->value[i][i] - sum);
+        L[i][i] = csqrt(diag_val);
 
 		/* set upper triangle to zero */
         for (int j = i + 1; j < n; j++)
-            L[i][j] = 0.0;
+            L[i][j] = 0.0 + 0.0*I;
     }
 
 	/* write back to matL */
@@ -189,7 +190,7 @@ void matrix_cholesky_decomp(const matrix_t *matS, matrix_t *matL)
     free(L);
 }
 
-void matrix_transpose(const matrix_t *mat, matrix_t *tmat)
+void cmatrix_transpose(const cmatrix_t *mat, cmatrix_t *tmat)
 {
 	if (mat->row != tmat->row || mat->col != tmat->col) {
 		printf("error_matrix_transpose: dimension mismatch\n");
@@ -203,7 +204,7 @@ void matrix_transpose(const matrix_t *mat, matrix_t *tmat)
 	}
 }
 
-void matrix_sum(const matrix_t *matA, const matrix_t *matB, matrix_t *matC)
+void cmatrix_sum(const cmatrix_t *matA, const cmatrix_t *matB, cmatrix_t *matC)
 {
 	if (matA->row != matB->row || matA->col != matB->col
 		|| matA->row != matC->row || matA->col != matC->col) {
@@ -218,7 +219,7 @@ void matrix_sum(const matrix_t *matA, const matrix_t *matB, matrix_t *matC)
 	}
 }
 
-void matrix_product(const matrix_t *matA, const matrix_t *matB, matrix_t *matC)
+void cmatrix_product(const cmatrix_t *matA, const cmatrix_t *matB, cmatrix_t *matC)
 {
 	if (matA->col != matB->row || matA->row != matC->row || matB->col != matC->col) {
 		printf("error_matrix_product: dimension mismatch\n");
@@ -227,7 +228,7 @@ void matrix_product(const matrix_t *matA, const matrix_t *matB, matrix_t *matC)
 
 	for (int i = 0; i < matA->row; i++) {
 		for (int j = 0; j < matB->col; j++) {
-			matC->value[i][j] = 0.0;
+			matC->value[i][j] = 0.0 + 0.0*I;
 			for (int k = 0; k < matA->col; k++) {
 				matC->value[i][j] += matA->value[i][k] * matB->value[k][j];
 			}
@@ -235,7 +236,7 @@ void matrix_product(const matrix_t *matA, const matrix_t *matB, matrix_t *matC)
 	}
 }
 
-void matrix_productT(const matrix_t *matA, const matrix_t *matB, matrix_t *matC)
+void cmatrix_productT(const cmatrix_t *matA, const cmatrix_t *matB, cmatrix_t *matC)
 {
 	if (matA->col != matB->row || matB->col != matA->col
 		|| matA->row != matC->row || matA->row != matC->col) {
@@ -245,19 +246,19 @@ void matrix_productT(const matrix_t *matA, const matrix_t *matB, matrix_t *matC)
 
 	for (int i = 0; i < matA->row; i++) {
 		for (int j = 0; j < matC->col; j++) {
-			matC->value[i][j] = 0.0;
+			matC->value[i][j] = 0.0 + 0.0*I;
 			for (int k = 0; k < matA->col; k++) {
 				for (int l = 0; l < matB->col; l++) {
-					matC->value[i][j] += matA->value[i][k] * matB->value[k][l] * matA->value[j][l];
+					matC->value[i][j] += matA->value[i][k] * matB->value[k][l] * conj(matA->value[j][l]);
 				}
 			}
 		}
 	}
 }
 
-void matrix_print(const matrix_t *mat)
+void cmatrix_print(const cmatrix_t *mat)
 {
-	double **value = mat->value;
+	complex **value = mat->value;
 	int row = mat->row, col = mat->col;
 
 	printf("     ");
@@ -268,16 +269,16 @@ void matrix_print(const matrix_t *mat)
 	for (int i = 0; i < row; i++) {
 		printf("%3d: ", i+1);
 		for (int j = 0; j < col; j++) {
-			printf("%10.6f ", value[i][j]);
+			printf("%10.6f%+10.6fi ", creal(value[i][j]), cimag(value[i][j]));
 		}
 		printf("\n");
 	}
 	printf("\n");
 }
 
-void matrix_free(matrix_t *mat)
+void cmatrix_free(cmatrix_t *mat)
 {
-	double **value = mat->value;
+	complex **value = mat->value;
 	int row = mat->row;
 
 	for (int i = 0; i < row; i++) {
@@ -286,26 +287,26 @@ void matrix_free(matrix_t *mat)
 	free(value);
 }
 
-array_t array_init(int len)
+carray_t carray_init(int len)
 {
-	array_t arr;
+	carray_t arr;
 
-	double *value = (double*)malloc(len*sizeof(double));
+	complex *value = (complex*)malloc(len*sizeof(complex));
 	arr.value = value;
 	arr.len = len;
 
 	return arr;
 }
 
-void array_print(const array_t *ary)
+void carray_print(const carray_t *ary)
 {
 	for (int i = 0; i < ary->len; i++) {
-		printf("%10.6f ", ary->value[i]);
+		printf("%10.6f%+10.6fi ", creal(ary->value[i]), cimag(ary->value[i]));
 	}
 	printf("\n");
 }
 
-void array_free(array_t *ary)
+void carray_free(carray_t *ary)
 {
 	free(ary->value);
 }
