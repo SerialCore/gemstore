@@ -5,7 +5,6 @@
  */
 
 #include <gemstore/math/interplt.h>
-#include <gemstore/math/matrix.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,9 +16,9 @@ typedef struct {
     int anomaly;    /* anomaly flag (1=anomaly, 0=normal) */
 } Point;
 
-void interpolate_quadratic(array_t *data)
+void interpolate_quadratic(double *data, int n)
 {
-    if (data == NULL || data->len < 4 || data->value == NULL) {
+    if (data == NULL || n < 4) {
         return;
     }
 
@@ -29,7 +28,7 @@ void interpolate_quadratic(array_t *data)
     printf("================================================================================\n");
     printf("\n");
 
-    int N = data->len;
+    int N = n;
     
     /* temporary Point array */
     Point *points = (Point *)malloc(N * sizeof(Point));
@@ -38,7 +37,7 @@ void interpolate_quadratic(array_t *data)
     /* initialize */
     for (int i = 0; i < N; i++) {
         points[i].n = i + 1;
-        points[i].value = data->value[i];
+        points[i].value = data[i];
         points[i].anomaly = 0;
     }
 
@@ -84,7 +83,7 @@ void interpolate_quadratic(array_t *data)
     
     for (int i = 1; i < N - 1; i++) {
         if (!points[i].anomaly) {
-            data->value[i] = points[i].value;   // normal state keeps original value
+            data[i] = points[i].value;   // normal state keeps original value
             printf("%-8d%-20.10e%-20s%-20s%-15s\n", i, points[i].value, "---", "---", "NORMAL");
             continue;
         }
@@ -133,7 +132,7 @@ void interpolate_quadratic(array_t *data)
         }
 
         /* write back the result */
-        data->value[i] = fixed_value;
+        data[i] = fixed_value;
         points[i].value = fixed_value;   // update temporary array to avoid using fixed value later
         
         /* DEBUG: Print change details */
@@ -149,7 +148,7 @@ void interpolate_quadratic(array_t *data)
     printf("%-8s%-20s\n", "Index", "Value");
     printf("--------+--------------------\n");
     for (int i = 0; i < N; i++) {
-        printf("%-8d%-20.10e\n", i, data->value[i]);
+        printf("%-8d%-20.10e\n", i, data[i]);
     }
     printf("\n");
 

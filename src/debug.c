@@ -24,6 +24,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <time.h>
 
 void debug_su3_product()
 {
@@ -431,4 +433,3 @@ void debug_eigen_system_complex()
     carray_free(&res1);
     carray_free(&res2);
 }
-

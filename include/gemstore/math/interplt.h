@@ -7,9 +7,7 @@
 #ifndef GEMSTORE_MATH_INTERPLT
 #define GEMSTORE_MATH_INTERPLT
 
-#include <gemstore/math/matrix.h>
-
 /* use quadratic interpolation to fix anomalies */
-void interpolate_quadratic(array_t *data);
+void interpolate_quadratic(double *data, int n);
 
 #endif

@@ -51,7 +51,7 @@ void compute_spectra_meson(const argsInput_t *input)
     print_debug_results(&eigenvalue, &rmsradius, &eigenvector, nmax);
 
     /* interpolate anomalies in RMS radius */
-    interpolate_quadratic(&rmsradius);
+    interpolate_quadratic(rmsradius.value, rmsradius.len);
     print_debug_results(&eigenvalue, &rmsradius, &eigenvector, nmax);
     
     write_meson_spectra(input, &eigenvalue, &rmsradius, &eigenvector, nmax);
