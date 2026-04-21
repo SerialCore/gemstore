@@ -15,6 +15,7 @@
 
 #include <gemstore/math/integral.h>
 #include <gemstore/math/matrix.h>
+#include <gemstore/math/cmatrix.h>
 #include <gemstore/math/eigen.h>
 #include <gemstore/math/ceigen.h>
 #include <gemstore/math/cmi.h>
@@ -356,151 +357,78 @@ void debug_eigen_system_complex()
 {
     int n = 3;
     
-    /* Allocate complex matrices */
-    double complex **a = (double complex **)malloc(n * sizeof(double complex *));
-    double complex **b = (double complex **)malloc(n * sizeof(double complex *));
-    double complex **v = (double complex **)malloc(n * sizeof(double complex *));
-    for (int i = 0; i < n; i++) {
-        a[i] = (double complex *)malloc(n * sizeof(double complex));
-        b[i] = (double complex *)malloc(n * sizeof(double complex));
-        v[i] = (double complex *)malloc(n * sizeof(double complex));
-    }
-    
-    double *e = (double *)malloc(n * sizeof(double));
+    cmatrix_t a = cmatrix_init(n, n);
+    cmatrix_t b = cmatrix_init(n, n);
+    cmatrix_t v = cmatrix_init(n, n);
+    array_t e = array_init(n);  /* eigenvalues are real for Hermitian matrices */
     
     /* Create a simple 3x3 complex Hermitian matrix A
      * A = [ 3     1+i   0.5-0.5i ]
      *     [ 1-i   2     0.3+0.2i ]
      *     [ 0.5+0.5i  0.3-0.2i  1 ]
      */
-    a[0][0] = 3.0 + 0.0*I;
-    a[0][1] = 1.0 + 1.0*I;
-    a[0][2] = 0.5 - 0.5*I;
+    a.value[0][0] = 3.0 + 0.0*I;
+    a.value[0][1] = 1.0 + 1.0*I;
+    a.value[0][2] = 0.5 - 0.5*I;
     
-    a[1][0] = 1.0 - 1.0*I;
-    a[1][1] = 2.0 + 0.0*I;
-    a[1][2] = 0.3 + 0.2*I;
+    a.value[1][0] = 1.0 - 1.0*I;
+    a.value[1][1] = 2.0 + 0.0*I;
+    a.value[1][2] = 0.3 + 0.2*I;
     
-    a[2][0] = 0.5 + 0.5*I;
-    a[2][1] = 0.3 - 0.2*I;
-    a[2][2] = 1.0 + 0.0*I;
+    a.value[2][0] = 0.5 + 0.5*I;
+    a.value[2][1] = 0.3 - 0.2*I;
+    a.value[2][2] = 1.0 + 0.0*I;
     
     /* Create identity matrix B for standard eigenvalue problem */
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            b[i][j] = (i == j) ? 1.0 + 0.0*I : 0.0 + 0.0*I;
+            b.value[i][j] = (i == j) ? 1.0 + 0.0*I : 0.0 + 0.0*I;
         }
     }
     
-    printf("========== Complex Eigenvalue System Test ==========\n");
-    printf("Matrix A (Complex Hermitian):\n");
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            printf("  (%.2f + %.2fi) ", creal(a[i][j]), cimag(a[i][j]));
-        }
-        printf("\n");
-    }
-    printf("\nMatrix B (Identity):\n");
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            printf("  (%.2f + %.2fi) ", creal(b[i][j]), cimag(b[i][j]));
-        }
-        printf("\n");
-    }
+    printf("A:\n");
+    cmatrix_print(&a);
+    printf("B:\n");
+    cmatrix_print(&b);
     
     /* Call complex eigenvalue solver */
 #ifdef LAPACKE
-    lapack_general_complex(a, b, n, e, v, n);
-    printf("\n[Using LAPACKE ZHEGV]\n");
+    lapack_general_complex(a.value, b.value, n, e.value, v.value, n);
 #else
-    eigen_general_complex(a, b, n, e, v, n);
-    printf("\n[Using Pure C Complex Solver]\n");
+    eigen_general_complex(a.value, b.value, n, e.value, v.value, n);
 #endif
     
-    /* Print eigenvalues (should be real) */
-    printf("\nEigenvalues (should be REAL):\n");
-    for (int k = 0; k < n; k++) {
-        printf("  λ_%d = %.6f\n", k, e[k]);
-    }
+    printf("e:\n");
+    array_print(&e);
+    printf("v:\n");
+    cmatrix_print(&v);
     
-    /* Print eigenvectors (complex) */
-    printf("\nEigenvectors (COMPLEX):\n");
+    /* verify eigen vectors */
+    printf("Residual of Av - eBv:\n");
+    carray_t res1 = carray_init(n);
+    carray_t res2 = carray_init(n);
     for (int k = 0; k < n; k++) {
-        printf("  v_%d = [ ", k);
         for (int i = 0; i < n; i++) {
-            printf("(%.4f + %.4fi) ", creal(v[k][i]), cimag(v[k][i]));
-        }
-        printf("]\n");
-    }
-    
-    /* Verify residuals: |A v_k - λ_k B v_k| should be small */
-    printf("\nResiduals |A v_k - λ_k B v_k| (should be near zero):\n");
-    for (int k = 0; k < n; k++) {
-        double complex *av = (double complex *)malloc(n * sizeof(double complex));
-        double complex *bv = (double complex *)malloc(n * sizeof(double complex));
-        
-        /* Compute A*v_k */
-        for (int i = 0; i < n; i++) {
-            av[i] = 0.0;
+            complex sum1 = 0.0;
+            complex sum2 = 0.0;
             for (int j = 0; j < n; j++) {
-                av[i] += a[i][j] * v[k][j];
+                sum1 += a.value[i][j] * v.value[k][j];
+                sum2 += b.value[i][j] * v.value[k][j];
             }
+            res1.value[i] = sum1;
+            res2.value[i] = sum2;
         }
-        
-        /* Compute B*v_k */
         for (int i = 0; i < n; i++) {
-            bv[i] = 0.0;
-            for (int j = 0; j < n; j++) {
-                bv[i] += b[i][j] * v[k][j];
-            }
+            res1.value[i] -= e.value[k] * res2.value[i];
         }
-        
-        /* Compute residual and its magnitude */
-        double residual_norm = 0.0;
-        for (int i = 0; i < n; i++) {
-            double complex res = av[i] - e[k] * bv[i];
-            residual_norm += creal(res) * creal(res) + cimag(res) * cimag(res);
-        }
-        residual_norm = sqrt(residual_norm);
-        
-        printf("  residual[%d] = %.2e\n", k, residual_norm);
-        
-        free(av);
-        free(bv);
+        carray_print(&res1);
     }
     
-    /* Verify orthogonality: v_i^H * B * v_j = δ_ij */
-    printf("\nOrthogonality v_i^H * B * v_j (should be δ_ij):\n");
-    for (int k = 0; k < n; k++) {
-        for (int l = 0; l < n; l++) {
-            double complex ortho = 0.0;
-            for (int i = 0; i < n; i++) {
-                double complex sum = 0.0;
-                for (int j = 0; j < n; j++) {
-                    sum += conj(v[k][j]) * b[i][j] * v[l][i];
-                }
-                ortho += conj(v[k][i]) * b[i][i] * v[l][i];
-            }
-            /* Simpler: v_i^H * v_j (since B = I) */
-            ortho = 0.0;
-            for (int i = 0; i < n; i++) {
-                ortho += conj(v[k][i]) * v[l][i];
-            }
-            printf("  (%.4f + %.4fi) ", creal(ortho), cimag(ortho));
-        }
-        printf("\n");
-    }
-    printf("====================================================\n\n");
-    
-    /* Cleanup */
-    for (int i = 0; i < n; i++) {
-        free(a[i]);
-        free(b[i]);
-        free(v[i]);
-    }
-    free(a);
-    free(b);
-    free(v);
-    free(e);
+    cmatrix_free(&a);
+    cmatrix_free(&b);
+    array_free(&e);
+    cmatrix_free(&v);
+    carray_free(&res1);
+    carray_free(&res2);
 }
 

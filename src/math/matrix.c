@@ -257,16 +257,22 @@ void matrix_productT(const matrix_t *matA, const matrix_t *matB, matrix_t *matC)
 
 void matrix_print(const matrix_t *mat)
 {
+	/* Print a matrix with row/column indices and formatted elements
+	 * Format: 10 characters per element with 6 decimal places
+	 */
 	double **value = mat->value;
 	int row = mat->row, col = mat->col;
 
+	/* Print column headers */
 	printf("     ");
 	for (int j = 0; j < col; j++) {
-		printf("   %4d    ", j+1);
+		printf("   %4d    ", j + 1);
 	}
 	printf("\n");
+
+	/* Print rows with row index and elements */
 	for (int i = 0; i < row; i++) {
-		printf("%3d: ", i+1);
+		printf("%3d: ", i + 1);
 		for (int j = 0; j < col; j++) {
 			printf("%10.6f ", value[i][j]);
 		}
@@ -299,6 +305,9 @@ array_t array_init(int len)
 
 void array_print(const array_t *ary)
 {
+	/* Print an array with formatted elements
+	 * Format: 10 characters per element with 6 decimal places
+	 */
 	for (int i = 0; i < ary->len; i++) {
 		printf("%10.6f ", ary->value[i]);
 	}

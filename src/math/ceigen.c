@@ -295,30 +295,145 @@ void eigen_general_complex(double complex **a, double complex **b, int n, double
     if (lt <= 0) {
         vt = NULL;
     }
+
+    double complex **G, **IG, **IGA, **S, **et_vecs;
+    double *e;
+    int i, j, k, ii;
+    double complex s, ds;
+
+    G = (double complex **)malloc(sizeof(double complex *) * n);
+    IG = (double complex **)malloc(sizeof(double complex *) * n);
+    IGA = (double complex **)malloc(sizeof(double complex *) * n);
+    S = (double complex **)malloc(sizeof(double complex *) * n);
+    e = (double *)malloc(sizeof(double) * n);
     
-    /* Fallback: Check if B is identity, then use standard solver */
-    int is_identity = 1;
-    for (int i = 0; i < n && is_identity; i++) {
-        for (int j = 0; j < n && is_identity; j++) {
-            double complex expected = (i == j) ? 1.0 : 0.0;
-            if (cabs(b[i][j] - expected) > 1E-14) {
-                is_identity = 0;
+    /* Allocate eigenvector matrix if needed */
+    et_vecs = NULL;
+    if (lt > 0 && vt != NULL) {
+        et_vecs = (double complex **)malloc(sizeof(double complex *) * n);
+        for (i = 0; i < n; i++) {
+            et_vecs[i] = (double complex *)malloc(sizeof(double complex) * n);
+        }
+    }
+
+    for (i = 0; i < n; i++) {
+        G[i] = (double complex *)malloc(sizeof(double complex) * n);
+        IG[i] = (double complex *)malloc(sizeof(double complex) * n);
+        IGA[i] = (double complex *)malloc(sizeof(double complex) * n);
+        S[i] = (double complex *)malloc(sizeof(double complex) * n);
+    }
+
+    /*
+     * Cholesky decomposition of B (Hermitian positive definite)
+     * B = G^H * G, where G is lower triangular with real positive diagonal
+     */
+    for (j = 0; j < n; j++) {
+        s = 0.0 + 0.0*I;
+        for (k = 0; k <= j - 1; k++) {
+            s += conj(G[j][k]) * G[j][k];
+        }
+        ds = b[j][j] - s;
+        
+        /* Check if B is positive definite */
+        if (creal(ds) <= 0.0) {
+            printf("error_cholesky_complex: B is not positive definite\n");
+            exit(1);
+            return;
+        }
+        
+        /* Diagonal should be real and positive */
+        G[j][j] = sqrt(creal(ds));
+
+        for (i = j + 1; i < n; i++) {
+            s = 0.0 + 0.0*I;
+            for (k = 0; k <= j - 1; k++) {
+                s += conj(G[i][k]) * G[j][k];
+            }
+            G[i][j] = (b[i][j] - s) / G[j][j];
+        }
+    }
+
+    /*
+     * Compute IG = G^-1 using back-substitution
+     * Since G is lower triangular, solve G * IG = I column by column
+     */
+    for (ii = 0; ii < n; ii++) {
+        for (i = 0; i < n; i++) {
+            IG[i][ii] = 0.0 + 0.0*I;
+        }
+        IG[ii][ii] = 1.0 + 0.0*I;
+        
+        for (i = ii + 1; i < n; i++) {
+            for (j = ii; j < i; j++) {
+                IG[i][ii] -= G[i][j] * IG[j][ii];
+            }
+            IG[i][ii] /= G[i][i];
+        }
+    }
+
+    /*
+     * Transform A: IGA = IG^H * A
+     * Note: IG^H means conjugate transpose
+     */
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            IGA[i][j] = 0.0 + 0.0*I;
+            for (k = 0; k <= i; k++) {
+                IGA[i][j] += conj(IG[i][k]) * a[k][j];
             }
         }
     }
-    
-    if (is_identity) {
-        /* B is identity, use standard eigenvalue solver */
-        eigen_standard_complex(a, n, d, vt, lt);
-    } else {
-        /* Need generalized solver - not implemented without LAPACKE */
-        printf("ERROR: Generalized complex eigenvalue solver requires LAPACKE. Recompile with -DLAPACKE\n");
-        for (int i = 0; i < n; i++) {
-            d[i] = 0.0;
+
+    /*
+     * Form S = IGA * IG = (IG^H * A) * IG
+     * This should be Hermitian
+     */
+    for (i = 0; i < n; i++) {
+        for (j = 0; j <= i; j++) {
+            S[i][j] = 0.0 + 0.0*I;
+            for (k = 0; k <= j; k++) {
+                S[i][j] += IGA[i][k] * IG[j][k];
+            }
+            S[j][i] = conj(S[i][j]);
         }
     }
-}
 
+    /* Solve the standard eigenvalue problem for S */
+    /* Pass et_vecs as (double *) cast to match function signature */
+    eigen_tridiagonal_complex(S, n, d, e, (double *)et_vecs, lt);
+
+    /* Transform eigenvectors back: v = IG * u, where u are the eigenvectors of S */
+    if (lt > 0 && vt != NULL && et_vecs != NULL) {
+        for (j = 0; j < n; j++) {
+            for (i = 0; i < lt; i++) {
+                vt[i][j] = 0.0 + 0.0*I;
+                for (k = j; k < n; k++) {
+                    vt[i][j] += et_vecs[i][k] * IG[k][j];
+                }
+            }
+        }
+    }
+
+    /* Free allocated memory */
+    for (i = 0; i < n; i++) {
+        free(G[i]);
+        free(IG[i]);
+        free(IGA[i]);
+        free(S[i]);
+    }
+    free(G);
+    free(IG);
+    free(IGA);
+    free(S);
+    free(e);
+    
+    if (et_vecs != NULL) {
+        for (i = 0; i < lt; i++) {
+            free(et_vecs[i]);
+        }
+        free(et_vecs);
+    }
+}
 
 #ifdef LAPACKE
 

@@ -258,18 +258,25 @@ void cmatrix_productT(const cmatrix_t *matA, const cmatrix_t *matB, cmatrix_t *m
 
 void cmatrix_print(const cmatrix_t *mat)
 {
+	/* Print a complex matrix with row/column indices and formatted complex elements
+	 * Format: (real+imag*i) with 6 decimal places each
+	 * Each complex number occupies approximately 24 characters per element
+	 */
 	complex **value = mat->value;
 	int row = mat->row, col = mat->col;
 
+	/* Print column headers */
 	printf("     ");
 	for (int j = 0; j < col; j++) {
-		printf("   %4d    ", j+1);
+		printf("        %3d        ", j + 1);
 	}
 	printf("\n");
+
+	/* Print rows with row index and complex elements */
 	for (int i = 0; i < row; i++) {
-		printf("%3d: ", i+1);
+		printf("%3d: ", i + 1);
 		for (int j = 0; j < col; j++) {
-			printf("%10.6f%+10.6fi ", creal(value[i][j]), cimag(value[i][j]));
+			printf("(%8.4f%+8.4fi) ", creal(value[i][j]), cimag(value[i][j]));
 		}
 		printf("\n");
 	}
@@ -300,8 +307,12 @@ carray_t carray_init(int len)
 
 void carray_print(const carray_t *ary)
 {
+	/* Print a complex array with formatted complex elements
+	 * Format: (real+imag*i) with 6 decimal places each
+	 * Each complex number occupies approximately 24 characters per element
+	 */
 	for (int i = 0; i < ary->len; i++) {
-		printf("%10.6f%+10.6fi ", creal(ary->value[i]), cimag(ary->value[i]));
+		printf("(%8.4f%+8.4fi) ", creal(ary->value[i]), cimag(ary->value[i]));
 	}
 	printf("\n");
 }
