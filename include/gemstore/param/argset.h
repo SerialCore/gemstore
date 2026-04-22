@@ -9,10 +9,13 @@
 
 #include <gemstore/types.h>
 
+#include <complex.h>
+
 typedef struct argsOrbit {
     int n;                  /* radial number & gaussian parameter */
     int l;                  /* orbital momentum */
     double scale;           /* scale factor, nu for GEM and beta for SHO */
+    complex scale;          /* scale factor, nu for GEM and beta for SHO */
 } argsOrbit_t;
 
 typedef struct argsModel {
@@ -69,6 +72,7 @@ typedef struct argsInput {
     int nmax;               /* Gaussian parameter */
     double rmax;            /* Gaussian parameter */
     double rmin;            /* Gaussian parameter */
+    double theta;           /* Gaussian parameter */
     argsGIModel_t params;   /* initial parameters */
     char project[256];      /* project name */
 } argsInput_t;

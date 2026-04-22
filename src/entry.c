@@ -117,6 +117,7 @@ static int parse_line(char *line, input_section_t sec, argsInput_t *input)
         if (strcmp(key, "nmax") == 0) input->nmax = atoi(val);
         else if (strcmp(key, "rmax") == 0) input->rmax = atof(val);
         else if (strcmp(key, "rmin") == 0) input->rmin = atof(val);
+        else if (strcmp(key, "theta") == 0) input->theta = atof(val);
         else {fprintf(stderr, "Unknown gauss parameter: %s\n", key); exit(1);}
     }
 

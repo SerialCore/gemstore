@@ -9,6 +9,7 @@
 
 typedef enum orbit_type {
     ORBIT_GEM,
+    ORBIT_CSM,
     ORBIT_CRG,
     ORBIT_SHO
 } orbit_type_t;
