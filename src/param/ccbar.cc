@@ -67,12 +67,12 @@ void minuit2_ccbar_GIScreen(double *params_out)
     int N_PARAMS = upar.Params().size();
 
     /* use of Migrad algorithm with strategy 2, high precision */
-    Chi2Minimizer minuit_fit(DATA_CCBAR, MODEL_GI_SCREEN, N_PARAMS, 1.0);
+    Chi2Minimizer minuit_fit(DATA_CCBAR, MODEL_GISCREEN, N_PARAMS, 1.0);
     ROOT::Minuit2::MnMigrad migrad(minuit_fit, upar, 2);
 
     /* perform the fit */
     ROOT::Minuit2::FunctionMinimum min_result = migrad();
-    compute_chi2(DATA_CCBAR, min_result.UserParameters().Params(), MODEL_GI_SCREEN, true);
+    compute_chi2(DATA_CCBAR, min_result.UserParameters().Params(), MODEL_GISCREEN, true);
     dual << min_result.UserParameters() << std::endl;
 
     auto params = min_result.UserParameters().Params();

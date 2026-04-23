@@ -9,7 +9,6 @@
 #include <gemstore/param/meson.h>
 #include <gemstore/param/bbbar.h>
 #include <gemstore/param/ccbar.h>
-#include <gemstore/param/light.h>
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/model/gimodel.h>
@@ -49,7 +48,7 @@ double call_meson_GIScreen(int f1, int f2, int N, double S, double L, double J, 
         .epsilon_tens = params[12]
     };
     argsGIModelDy_t args_dynmc = {
-        .model = MODEL_GI_SCREEN,
+        .model = MODEL_GISCREEN,
         .system = SYSTEM_MESON
     };
 
@@ -66,7 +65,6 @@ void call_minuit2_GIScreen(const char* system)
     if (strcmp(system, "meson") == 0) minuit2_meson_GIScreen(params);
     else if (strcmp(system, "bbbar") == 0) minuit2_bbbar_GIScreen(params);
     else if (strcmp(system, "ccbar") == 0) minuit2_ccbar_GIScreen(params);
-    else if (strcmp(system, "light") == 0) minuit2_light_GIScreen(params);
     else {fprintf(stderr, "Unknown fitting system: %s\n", system); exit(1);}
 
     free(params);

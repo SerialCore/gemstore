@@ -77,7 +77,7 @@ static double compute_chi2(const std::vector<State> data, const std::vector<doub
     for (const auto& state : data) {
         double e_out;
         switch (model) {
-            case MODEL_GI_SCREEN:
+            case MODEL_GISCREEN:
                 e_out = call_meson_GIScreen(state.f1, state.f2, state.N, state.S, state.L, state.J, 16, 30.0, 0.1, params.data());
                 break;
             default:

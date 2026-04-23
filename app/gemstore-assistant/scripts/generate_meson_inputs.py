@@ -1,29 +1,27 @@
-import os
+import json
 
-template = """&GLOBAL
-  project = name
-  task = SPECTRA
-&END
-&SYSTEM
-  model = GI_SCREEN
-  system = MESON
-&END
-&PARAMS
-  params = GIScreen_meson
-&END
-&QUANTUM
-  f1 = 3
-  f2 = 3
-  S = 1
-  L = 0
-  J = 1
-&END
-&GAUSS
-  nmax = 16
-  rmax = 30.0
-  rmin = 0.1
-&END
-"""
+template = {
+    "project": "name",
+    "task": "SPECTRA",
+    "system": {
+        "type": "MESON",
+        "f1": 3,
+        "f2": 3,
+        "S": 1,
+        "L": 0,
+        "J": 1,
+    },
+    "model": {
+        "type": "GISCREEN",
+        "param": "GISCREEN_MESON",
+    },
+    "basis": {
+        "type": "GEM",
+        "nmax": 16,
+        "rmax": 30.0,
+        "rmin": 0.1,
+    },
+}
 
 states = [
     ("1S0", 0, 0, 0),
@@ -39,112 +37,34 @@ states = [
 ]
 
 
-def generate_ccbar_inputs():
-    # For charmonium f1=f2=3
-    content = template.replace("f1 = 3", f"f1 = 3")
-    content = content.replace("f2 = 3", f"f2 = 3")
-    content = content.replace("params = GIScreen_meson", f"params = GIScreen_ccbar")
+def write_input_file(data, filename):
+    with open(filename, "w", encoding="ascii") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+
+
+def generate_family_inputs(prefix, f1, f2, param_name):
     for name, S, L, J in states:
-        content = content.replace("project = name", f"project = charmonium_{name}")
-        content = content.replace("S = 1", f"S = {S}")
-        content = content.replace("L = 0", f"L = {L}")
-        content = content.replace("J = 1", f"J = {J}")
-        fname = f"charmonium_{name}.inp"
-        with open(fname, "w") as f:
-            f.write(content)
+        content = json.loads(json.dumps(template))
+        content["project"] = f"{prefix}_{name}"
+        content["system"]["f1"] = f1
+        content["system"]["f2"] = f2
+        content["system"]["S"] = S
+        content["system"]["L"] = L
+        content["system"]["J"] = J
+        content["model"]["param"] = param_name
+
+        fname = f"{prefix}_{name}.json"
+        write_input_file(content, fname)
         print(f"Created {fname}")
 
-def generate_bbbar_inputs():
-    # For bottomonium
-    content = template.replace("f1 = 3", f"f1 = 4")
-    content = content.replace("f2 = 3", f"f2 = 4")
-    content = content.replace("params = GIScreen_meson", f"params = GIScreen_bbbar")
-    for name, S, L, J in states:
-        content = content.replace("project = name", f"project = bottomonium_{name}")
-        content = content.replace("S = 1", f"S = {S}")
-        content = content.replace("L = 0", f"L = {L}")
-        content = content.replace("J = 1", f"J = {J}")
-        fname = f"bottomonium_{name}.inp"
-        with open(fname, "w") as f:
-            f.write(content)
-        print(f"Created {fname}")
-
-def generate_cbbar_inputs():
-    # For Bc
-    content = template.replace("f1 = 3", f"f1 = 3")
-    content = content.replace("f2 = 3", f"f2 = 4")
-    for name, S, L, J in states:
-        content = content.replace("project = name", f"project = Bc_{name}")
-        content = content.replace("S = 1", f"S = {S}")
-        content = content.replace("L = 0", f"L = {L}")
-        content = content.replace("J = 1", f"J = {J}")
-        fname = f"Bc_{name}.inp"
-        with open(fname, "w") as f:
-            f.write(content)
-        print(f"Created {fname}")
-
-def generate_sbbar_inputs():
-    # For Bs
-    content = template.replace("f1 = 3", f"f1 = 2")
-    content = content.replace("f2 = 3", f"f2 = 4")
-    for name, S, L, J in states:
-        content = content.replace("project = name", f"project = Bs_{name}")
-        content = content.replace("S = 1", f"S = {S}")
-        content = content.replace("L = 0", f"L = {L}")
-        content = content.replace("J = 1", f"J = {J}")
-        fname = f"Bs_{name}.inp"
-        with open(fname, "w") as f:
-            f.write(content)
-        print(f"Created {fname}")
-
-def generate_scbar_inputs():
-    # For Ds
-    content = template.replace("f1 = 3", f"f1 = 2")
-    content = content.replace("f2 = 3", f"f2 = 3")
-    for name, S, L, J in states:
-        content = content.replace("project = name", f"project = Ds_{name}")
-        content = content.replace("S = 1", f"S = {S}")
-        content = content.replace("L = 0", f"L = {L}")
-        content = content.replace("J = 1", f"J = {J}")
-        fname = f"Ds_{name}.inp"
-        with open(fname, "w") as f:
-            f.write(content)
-        print(f"Created {fname}")
-
-def generate_nbbar_inputs():
-    # For B
-    content = template.replace("f1 = 3", f"f1 = 1")
-    content = content.replace("f2 = 3", f"f2 = 4")
-    for name, S, L, J in states:
-        content = content.replace("project = name", f"project = B_{name}")
-        content = content.replace("S = 1", f"S = {S}")
-        content = content.replace("L = 0", f"L = {L}")
-        content = content.replace("J = 1", f"J = {J}")
-        fname = f"B_{name}.inp"
-        with open(fname, "w") as f:
-            f.write(content)
-        print(f"Created {fname}")
-
-def generate_ncbar_inputs():
-    # For D
-    content = template.replace("f1 = 3", f"f1 = 1")
-    content = content.replace("f2 = 3", f"f2 = 3")
-    for name, S, L, J in states:
-        content = content.replace("project = name", f"project = D_{name}")
-        content = content.replace("S = 1", f"S = {S}")
-        content = content.replace("L = 0", f"L = {L}")
-        content = content.replace("J = 1", f"J = {J}")
-        fname = f"D_{name}.inp"
-        with open(fname, "w") as f:
-            f.write(content)
-        print(f"Created {fname}")
 
 if __name__ == "__main__":
-    generate_ccbar_inputs()
-    #generate_bbbar_inputs()
-    #generate_cbbar_inputs()
-    #generate_sbbar_inputs()
-    #generate_scbar_inputs()
-    #generate_nbbar_inputs()
-    #generate_ncbar_inputs()
+    generate_family_inputs("charmonium", 3, 3, "GISCREEN_CCBAR")
+    # generate_family_inputs("bottomonium", 4, 4, "GISCREEN_BBBAR")
+    # generate_family_inputs("Bc", 3, 4, "GISCREEN_MESON")
+    # generate_family_inputs("Bs", 2, 4, "GISCREEN_MESON")
+    # generate_family_inputs("Ds", 2, 3, "GISCREEN_MESON")
+    # generate_family_inputs("B", 1, 4, "GISCREEN_MESON")
+    # generate_family_inputs("D", 1, 3, "GISCREEN_MESON")
     print("All input files generated successfully.")

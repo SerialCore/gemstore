@@ -41,19 +41,10 @@ void interpolate_quadratic(double *data, int n)
         points[i].anomaly = 0;
     }
 
-    /* DEBUG: Print original array */
-    printf("ORIGINAL ARRAY:\n");
-    printf("%-8s%-20s\n", "Index", "Value");
-    printf("--------+--------------------\n");
-    for (int i = 0; i < N; i++) {
-        printf("%-8d%-20.10e\n", i, points[i].value);
-    }
-    printf("\n");
-
     /* first step: detect anomalies (i=1 to N-2) */
     printf("ANOMALY DETECTION:\n");
-    printf("%-8s%-20s%-20s%-15s%-15s\n", "Index", "Δprev", "Δcurr", "Status", "Reason");
-    printf("--------+--------------------+--------------------+---------------+---------------\n");
+    printf("%-6s%-21s%-21s%-15s%-15s\n", "Index", "Δprev", "Δcurr", "Status", "Reason");
+    printf("------+-------------------+-------------------+--------------+------------------\n");
     
     for (int i = 1; i < N - 1; i++) {
         double delta_prev = points[i].value - points[i - 1].value;
@@ -69,22 +60,22 @@ void interpolate_quadratic(double *data, int n)
             } else if (i + 1 < N && delta_curr <= delta_prev) {
                 reason = "Δ decreasing";
             }
-            printf("%-8d%-20.10e%-20.10e%-15s%-15s\n", i, delta_prev, delta_curr, "ANOMALY", reason);
+            printf("%-6d%-20.10e%-20.10e%-15s%-15s\n", i, delta_prev, delta_curr, "ANOMALY", reason);
         } else {
-            printf("%-8d%-20.10e%-20.10e%-15s%-15s\n", i, delta_prev, delta_curr, "NORMAL", "OK");
+            printf("%-6d%-20.10e%-20.10e%-15s%-15s\n", i, delta_prev, delta_curr, "NORMAL", "OK");
         }
     }
     printf("\n");
 
     /* second step: fix anomalies and write back to data->value */
     printf("ANOMALY FIXING & CHANGES:\n");
-    printf("%-8s%-20s%-20s%-20s%-15s\n", "Index", "Original", "Fixed Value", "Change (Δ)", "Method");
-    printf("--------+--------------------+--------------------+--------------------+---------------\n");
+    printf("%-6s%-20s%-20s%-21s%-15s\n", "Index", "Original", "Fixed Value", "Change (Δ)", "Method");
+    printf("------+-------------------+-------------------+-------------------+------------\n");
     
     for (int i = 1; i < N - 1; i++) {
         if (!points[i].anomaly) {
             data[i] = points[i].value;   // normal state keeps original value
-            printf("%-8d%-20.10e%-20s%-20s%-15s\n", i, points[i].value, "---", "---", "NORMAL");
+            printf("%-6d%-20.10e%-20s%-20s%-15s\n", i, points[i].value, "---", "---", "NORMAL");
             continue;
         }
 
@@ -137,18 +128,7 @@ void interpolate_quadratic(double *data, int n)
         
         /* DEBUG: Print change details */
         double change = fixed_value - original_value;
-        printf("%-8d%-20.10e%-20.10e%-20.10e%-15s\n", i, original_value, fixed_value, change, method);
-    }
-    printf("\n");
-
-    printf("\n");
-
-    /* DEBUG: Print final array */
-    printf("FINAL CORRECTED ARRAY:\n");
-    printf("%-8s%-20s\n", "Index", "Value");
-    printf("--------+--------------------\n");
-    for (int i = 0; i < N; i++) {
-        printf("%-8d%-20.10e\n", i, data[i]);
+        printf("%-6d%-20.10e%-20.10e%-20.10e%-15s\n", i, original_value, fixed_value, change, method);
     }
     printf("\n");
 

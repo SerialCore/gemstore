@@ -1,0 +1,22 @@
+{
+  "project": "amethyst",
+  "task": "SPECTRA",
+  "system": {
+    "type": "MESON",
+    "f1": 3,
+    "f2": 3,
+    "S": 1,
+    "L": 0,
+    "J": 1
+  },
+  "model": {
+    "type": "GISCREEN",
+    "param": "GISCREEN_CCBAR"
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 16,
+    "rmax": 30.0,
+    "rmin": 0.1
+  }
+}

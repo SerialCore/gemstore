@@ -23,9 +23,18 @@ typedef enum system_type {
 
 /* used for determining potential and dispatching fitting task */
 typedef enum model_type {
-    MODEL_GI_STRING,
-    MODEL_GI_SCREEN
+    MODEL_GISTRING,
+    MODEL_GISCREEN
 } model_type_t;
+
+/* used for determining parameter type */
+typedef enum param_type {
+    PARAM_GISTRING_MESON,
+    PARAM_GISCREEN_MESON,
+    PARAM_GISCREEN_BBBAR,
+    PARAM_GISCREEN_CCBAR,
+    PARAM_GISCREEN_LIGHT
+} param_type_t;
 
 /* used for dispatching task */
 typedef enum task_type {
@@ -34,15 +43,5 @@ typedef enum task_type {
     TASK_COUPLCHN,
     TASK_SCATTER
 } task_type_t;
-
-/* used for parsing input */
-typedef enum input_section {
-    SECTION_NONE,
-    SECTION_GLOBAL,
-    SECTION_SYSTEM,
-    SECTION_PARAMS,
-    SECTION_QUANTUM,
-    SECTION_GAUSS,
-} input_section_t;
 
 #endif

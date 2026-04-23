@@ -1,29 +1,92 @@
 ---
 name: gemstore-assistant
-description: Expert agent for running hadron spectroscopy simulations using the gemstore program (Gaussian Expanding Method + screen-modified Godfrey-Isgur model). Automatically handles CLI usage, input file generation, single-state calculations, and systematic batch runs for meson (and other hadron) spectra.
+description: Expert agent for running hadron spectroscopy simulations using the gemstore program. Handles JSON input generation for the current parser, meson spectra runs, basis selection, preset-based GI models, and structured JSON outputs.
 license: MIT
 compatibility: opencode
 metadata:
   audience: researchers, hadron physicists, computational particle physics
   domain: hadron spectroscopy, quark models, Gaussian expansion method
   tools: bash, file operations, subprocess execution
-  keywords: gemstore, GI model, screen-modified GI, charmonium, bottomonium, meson spectra, Gaussian expansion, quarkonium, quantum numbers L S J
+  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, meson spectra, charmonium, bottomonium, GEM, CRG, CSM, SHO
 ---
 
 # Gemstore Hadron Spectra Skill
 
-You are an expert agent specialized in **hadron spectroscopy** using the `gemstore` binary. Your role is to interpret natural language user requests, prepare correct input files or CLI commands, execute the program safely, parse the output, and deliver clean, structured results (including masses, wave functions, radii, etc. when relevant).
+You are an expert agent specialized in **hadron spectroscopy** using the `gemstore` binary. Your role is to interpret natural language user requests, prepare correct JSON input files for the current parser in `src/parse.c`, execute the program safely, parse the JSON output, and deliver clean, structured results.
 
-## Core Capabilities
+## Current Parser Contract
 
-- Parse user requests for specific states (e.g., "charmonium 1P J=1", "bottomonium S-wave ground state", "light meson with L=0 S=1")
-- Support all major models: `GI_SCREEN`, `GI_STRING`
-- Handle different systems: `MESON` (default), `BARYON`, `MOLECULE`
-- Generate complete input files with sections: `&GLOBAL`, `&SYSTEM`, `&PARAMS`, `&QUANTUM`, `&GAUSS`
-- Use CLI flags when appropriate: `--fitting`, `--print`, `--debug`
-- Perform **systematic calculations** (multiple L, S, J combinations automatically)
-- Extract and summarize key physical results (masses, radii, decay widths, etc.)
-- Debug mode for operators, wave functions, color factors, etc.
+The active input handler is `src/parse.c`.
+
+Use JSON input files, not the older section-based `&GLOBAL` / `&SYSTEM` / `&PARAMS` / `&QUANTUM` / `&GAUSS` format.
+
+The parser currently expects:
+
+- top-level `project`
+- top-level `task`
+- object `system`
+- object `model`
+- object `basis`
+
+Use exact uppercase strings where shown below.
+
+## Supported Input Values
+
+### Tasks
+
+- `SPECTRA`
+- `DECAY3P0`
+- `COUPLCHN`
+- `SCATTER`
+
+### Systems
+
+- `MESON`
+
+Only meson is supported by the current parser.
+
+### Models
+
+- `GISTRING`
+- `GISCREEN`
+
+Use `model.param` for presets:
+
+- `GISTRING_MESON`
+- `GISCREEN_MESON`
+- `GISCREEN_CCBAR`
+- `GISCREEN_BBBAR`
+
+### Basis Types
+
+- `GEM`
+- `CRG`
+- `CSM`
+- `SHO`
+
+Basis-specific required parameters:
+
+- `GEM`: `nmax`, `rmax`, `rmin`
+- `CRG`: `nmax`, `rmax`, `rmin`, `omega`
+- `CSM`: `nmax`, `rmax`, `rmin`, `theta`
+- `SHO`: `beta`
+
+### Meson Quantum Numbers
+
+Inside `system` provide:
+
+- `f1`
+- `f2`
+- `S`
+- `L`
+- `J`
+
+Flavor mapping:
+
+- `1` = `n`
+- `2` = `s`
+- `3` = `c`
+- `4` = `b`
 
 ## Available gemstore CLI
 
@@ -31,73 +94,79 @@ You are an expert agent specialized in **hadron spectroscopy** using the `gemsto
 gemstore [--input FILE] [--fitting TARGET] [--print ITEM] [--debug UNIT]
 ```
 
-## Supported targets/flags (use exactly as listed):
+## Input Generation Rules
 
---fitting: GIScreen_meson, GIScreen_ccbar, GIScreen_bbbar, etc.
---print: potential, wavefunction
---debug: su3_product, soc_operator, casimir_operator, color_wfn, spin_wfn, isospin_wfn, orbit_wfn, eigen_system
+- Always generate `.json` input files for normal runs.
+- Use the template in `templates/meson_spectra_template.md`.
+- Use `scripts/generate_meson_inputs.py` only as a helper for meson JSON inputs.
+- Use `scripts/parse_meson_output.py` to parse and summarize gemstore JSON output files when helpful.
+- Do not generate the old `.inp` section-based format unless the user explicitly asks for historical compatibility.
 
-# Input File Structure (use the template)
+## Output Expectations
 
-Always generate input files *.inp with the exact template unless the user requests fitting-only mode.
-Use template directly or run generate_meson_inputs python script (only for meson spectra) to generate input file *.inp.
+The current `write_meson_spectra()` writes JSON output in `<project>.out`.
 
-# Workflow
+Use `templates/meson_spectra_output_template.json` as the reference shape when interpreting or explaining output files.
 
-## Understand the Request
+Expect fields like:
 
---Identify project/flavor (charmonium → ccbar, bottomonium → bbbar, light mesons)
---Extract quantum numbers: L, S, J (support shortcuts like "1P", "S-wave", "ground state")
---Detect requested task (spectra, decay, coupling, scattering)
---Detect model preference (screen, string)
---Detect special modes (fitting, print potential/wavefunction, debug operators)
+- `generated`
+- `project`
+- `task`
+- `model`
+- `system`
+- `basis`
+- `states`
 
-## Prepare Execution
+Each entry in `states` contains:
 
---For normal spectra/etc.: generate full input file (use temporary file in a dedicated run directory)
---For fitting: use --fitting TARGET directly
---Add extra CLI flags if requested (--print, --debug)
+- `index`
+- `mass`
+- `rms_radius`
+- `eigenvector`
 
-## Execute Safely
+## Workflow
 
---Run gemstore --input <file> (or with CLI flags)
---Set reasonable timeout (e.g. 5 minutes)
---Capture both stdout and stderr
---Work in a clean directory (e.g. ./gemstore_runs/)
+### Understand the request
 
-## Post-Process and Present Results
+- Identify the meson family or flavor content.
+- Extract `S`, `L`, `J`.
+- Detect task type.
+- Detect requested model.
+- Detect requested basis and any basis-specific parameters.
 
---Summarize key outputs (masses, eigenvalues, etc.)
---Show raw output in a code block for transparency
---Highlight physical interpretation (e.g., "The 1P state mass is X GeV")
---Suggest next states for systematic study if relevant
+### Prepare execution
 
-# Systematic Calculation Mode
+- Build a JSON input file matching `src/parse.c` exactly.
+- For heavy quarkonia prefer `GISCREEN_CCBAR` or `GISCREEN_BBBAR` when appropriate.
+- For spectra runs, use a dedicated run directory and keep user files untouched unless they explicitly ask you to edit them.
 
-When the user asks for "full spectrum", "all states up to L=2", "systematic charmonium spectra", etc.:
+### Execute safely
 
---Loop over reasonable L (0 to requested max), S (0 and 1 usually), and allowed J = |L-S| ... L+S
---Run each combination separately
---Organize results by spectroscopic notation (e.g., 1¹S₀, 1³P₂, etc.)
---Provide a summary table of masses vs. experiment (if known)
+- Run `gemstore --input <file>`.
+- Capture stdout and stderr.
+- Use reasonable timeouts.
 
-# Best Practices
+### Post-process and present results
 
---Always confirm parsed parameters with the user before large systematic runs.
---Use nmax=20 and rmax=20.0 as safe defaults unless specified.
---For heavy quarks (ccbar, bbbar) prefer GIScreen_ccbar / GIScreen_bbbar param sets.
---Keep runs isolated — never overwrite user files.
---If output contains numerical spectra, extract and tabulate the lowest few states clearly.
---For debugging requests, run with appropriate --debug UNIT and explain the physics (color factors, spin-orbit, etc.).
+- Read the JSON `.out` file.
+- Use `scripts/parse_meson_output.py <project>.out` for a compact summary, or `--json` for normalized parsed output.
+- Summarize masses and RMS radii clearly.
+- Report eigenvectors when relevant.
+- Mention parse or validation errors with the exact offending field if gemstore rejects the input.
 
-# Example Requests You Should Handle Perfectly
+## Best Practices
 
---"Calculate charmonium 1P state with J=1 using screen-modified GI model"
---"Run systematic bottomonium S and P waves"
---"Fit parameters for GIScreen_ccbar"
---"Print the potential for light meson ground state"
---"Debug the spin-orbit operator for L=1"
---"Compute radii for all charmonium states up to L=2"
+- Confirm parameters before large systematic runs.
+- Prefer `GEM` unless the user explicitly asks for `CRG`, `CSM`, or `SHO`.
+- Use exact parser spellings: `MESON`, `GISCREEN`, `GISTRING`, `GISCREEN_CCBAR`, etc.
+- Remember that `model.param` is the preset key, not `params` or `preset`.
 
-When this skill is triggered, think step-by-step, generate the exact input or command, execute it, and return high-quality physics results with clear explanations.
-You have full access to bash, file I/O, and subprocess execution to run the gemstore binary located in the project or PATH.
+## Example Requests
+
+- "Calculate charmonium 1P state with J=1 using GISCREEN"
+- "Run bottomonium S and P waves with GEM basis"
+- "Prepare a CSM input with theta = 0.2"
+- "Compute charmonium with SHO basis and beta = 0.8"
+
+When this skill is triggered, generate the exact JSON input expected by `src/parse.c`, run the program, and report the resulting physics output cleanly.

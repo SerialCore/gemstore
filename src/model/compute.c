@@ -29,13 +29,13 @@ void compute_spectra_meson(const argsInput_t *input)
     matrix_t eigenvector = matrix_init(nmax, nmax);
     argsGIModelDy_t args_dynmc = {0};
 
-    if (input->model == MODEL_GI_STRING) {
-        args_dynmc.model = MODEL_GI_STRING;
+    if (input->model == MODEL_GISTRING) {
+        args_dynmc.model = MODEL_GISTRING;
         args_dynmc.system = SYSTEM_MESON;
         spectra_meson_GI(input, &input->params, &args_dynmc, &eigenvalue, &eigenvector, nmax);
     }
-    else if (input->model == MODEL_GI_SCREEN) {
-        args_dynmc.model = MODEL_GI_SCREEN;
+    else if (input->model == MODEL_GISCREEN) {
+        args_dynmc.model = MODEL_GISCREEN;
         args_dynmc.system = SYSTEM_MESON;
         spectra_meson_GI(input, &input->params, &args_dynmc, &eigenvalue, &eigenvector, nmax);
     }

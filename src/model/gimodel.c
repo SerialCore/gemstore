@@ -140,7 +140,7 @@ double GIVconf(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
     double cent = args_dynmc->OCent;
     double sigmaij = args_dynmc->Sigij;
 
-    if (model == MODEL_GI_STRING) {
+    if (model == MODEL_GISTRING) {
         double rsig = r * sigmaij;
 
         double pref = -3.0 * Cij * cent * b / (8.0 * r * sigmaij * sigmaij);
@@ -149,7 +149,7 @@ double GIVconf(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
         
         return pref * (inner1 + inner2) - 0.75 * Cij * cent * c;
     }
-    else if (model == MODEL_GI_SCREEN) {
+    else if (model == MODEL_GISCREEN) {
         double sig2 = sigmaij * sigmaij;
         double mu2_4sig2 = mu * mu / (4.0 * sig2);
         double mu_m_2rsig2 = mu - 2.0 * r * sig2;

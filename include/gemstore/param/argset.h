@@ -15,7 +15,6 @@ typedef struct argsOrbit {
     int n;                  /* radial number & gaussian parameter */
     int l;                  /* orbital momentum */
     double scale;           /* scale factor, nu for GEM and beta for SHO */
-    complex scale;          /* scale factor, nu for GEM and beta for SHO */
 } argsOrbit_t;
 
 typedef struct argsModel {
@@ -61,6 +60,7 @@ typedef struct argsInput {
     task_type_t task;
     model_type_t model;
     system_type_t system;
+    orbit_type_t orbit;
     int f1;                 /* flavor 1 */
     int f2;                 /* flavor 2 */
     int f3;                 /* flavor 3 */
@@ -72,6 +72,8 @@ typedef struct argsInput {
     int nmax;               /* Gaussian parameter */
     double rmax;            /* Gaussian parameter */
     double rmin;            /* Gaussian parameter */
+    double omega;           /* complex-range Gaussian parameter */
+    double beta;            /* harmonic oscillator parameter */
     double theta;           /* Gaussian parameter */
     argsGIModel_t params;   /* initial parameters */
     char project[256];      /* project name */
@@ -88,8 +90,5 @@ extern const argsGIModel_t argsGIScreen_bbbar;
 
 /* Default ccbar meson parameters for model GIScreen */
 extern const argsGIModel_t argsGIScreen_ccbar;
-
-/* Default light meson parameters for model GIScreen */
-extern const argsGIModel_t argsGIScreen_light;
 
 #endif

@@ -68,19 +68,3 @@ const argsGIModel_t argsGIScreen_ccbar = {
     .epsilon_sos = 0.9999999547283,
     .epsilon_tens = -0.499991780808,
 };
-
-const argsGIModel_t argsGIScreen_light = {
-    .mn = 0.1900789406605,
-    .ms = 0.3749102203931,
-    .mc = 1.6280000000000,
-    .mb = 4.9770000000000,
-    .b = 0.1896566656219,
-    .mu = 0.1415061851699,
-    .c = -0.09704127536562,
-    .sigma_0 = 2.932063386845,
-    .s = 2.996550471363,
-    .epsilon_cont = -0.1093693330821,
-    .epsilon_sov = -0.4854708991856,
-    .epsilon_sos = 0.2508266958497,
-    .epsilon_tens = 0.9703114587698
-};

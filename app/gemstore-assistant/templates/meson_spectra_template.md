@@ -1,65 +1,54 @@
-# Gemstore Meson Spectra Input Template
+# Gemstore Meson Spectra JSON Template
 
-This template defines the input format for the gemstore meson spectra computation.
+This template matches the current parser in `src/parse.c`.
 
----
-
-## Charmonium Spectra
-
-```
-&GLOBAL
-  project = {file name}
-  task = SPECTRA
-  # task = DECAY3P0
-  # task = COUPLCHN
-  # task = SCATTER
-&END
-&SYSTEM
-  # model = GI_STRING
-  model = GI_SCREEN
-  system = MESON
-  # system = BARYON
-  # system = MOLECULE
-&END
-&PARAMS
-  # params = GIString_meson
-  # params = GIScreen_meson
-  params = GIScreen_ccbar
-  # params = GIScreen_bbbar
-  # mn = 0.4713455847642
-  # ms = 0.6283121820133
-  # mc = 1.810505119204
-  # mb = 5.156014766761
-  # b = 0.2575467075473
-  # mu = 0.1453562021339
-  # c = -0.658943240626
-  # sigma_0 = 1.884145499156
-  # s = 1.113514380624
-  # epsilon_cont = -0.32452949845
-  # epsilon_sov = -0.5404734834836
-  # epsilon_sos = 0.9999999508829
-  # epsilon_tens = -0.4999502878773
-&END
-&QUANTUM
-  f1 = 3
-  f2 = 3
-  # f3 = 1
-  # f4 = 1
-  S = 1
-  L = 0
-  # jl = 0.5
-  J = 1
-&END
-&GAUSS
-  nmax = 16
-  rmax = 30.0
-  rmin = 0.1
-&END
+```json
+{
+  "project": "amethyst",
+  "task": "SPECTRA",
+  "system": {
+    "type": "MESON",
+    "f1": 3,
+    "f2": 3,
+    "S": 1,
+    "L": 0,
+    "J": 1
+  },
+  "model": {
+    "type": "GISCREEN",
+    "param": "GISCREEN_CCBAR"
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 16,
+    "rmax": 30.0,
+    "rmin": 0.1
+  }
+}
 ```
 
-## Parameter Definition
+## Allowed Values
 
---f1, f2, quark flavor, 1 for n, 2 for s, 3 for c, 4 for b.
---S for spin, L for orbital angular momentum, J for total angular momentum.
---jl=s1+L for Jj coupling
---nmax, rmax, rmin will be usually fixed
+- `task`: `SPECTRA`, `DECAY3P0`, `COUPLCHN`, `SCATTER`
+- `system.type`: `MESON`
+- `model.type`: `GISTRING`, `GISCREEN`
+- `model.param`:
+  - `GISTRING_MESON`
+  - `GISCREEN_MESON`
+  - `GISCREEN_CCBAR`
+  - `GISCREEN_BBBAR`
+- `basis.type`: `GEM`, `CRG`, `CSM`, `SHO`
+
+## Basis Parameters
+
+- `GEM`: `nmax`, `rmax`, `rmin`
+- `CRG`: `nmax`, `rmax`, `rmin`, `omega`
+- `CSM`: `nmax`, `rmax`, `rmin`, `theta`
+- `SHO`: `beta`
+
+## Meson Quantum Numbers
+
+- `f1`, `f2`: quark flavors, where `1=n`, `2=s`, `3=c`, `4=b`
+- `S`: total spin
+- `L`: orbital angular momentum
+- `J`: total angular momentum
