@@ -9,8 +9,6 @@
 
 #include <gemstore/types.h>
 
-#include <complex.h>
-
 typedef struct argsOrbit {
     int n;                  /* radial number & gaussian parameter */
     int l;                  /* orbital momentum */
@@ -58,9 +56,10 @@ typedef struct argsGIModelDy {
 
 typedef struct argsInput {
     task_type_t task;
-    model_type_t model;
-    system_type_t system;
     orbit_type_t orbit;
+    model_type_t model;
+    param_type_t param;
+    system_type_t system;
     int f1;                 /* flavor 1 */
     int f2;                 /* flavor 2 */
     int f3;                 /* flavor 3 */
@@ -75,8 +74,8 @@ typedef struct argsInput {
     double omega;           /* complex-range Gaussian parameter */
     double beta;            /* harmonic oscillator parameter */
     double theta;           /* Gaussian parameter */
-    argsGIModel_t params;   /* initial parameters */
     char project[256];      /* project name */
+    char param_file[256];   /* parameter file name */
 } argsInput_t;
 
 /* Default meson parameters for model GISstring */
@@ -90,5 +89,8 @@ extern const argsGIModel_t argsGIScreen_bbbar;
 
 /* Default ccbar meson parameters for model GIScreen */
 extern const argsGIModel_t argsGIScreen_ccbar;
+
+/* Get GI model parameters from input */
+argsGIModel_t argsGIModel_from(const argsInput_t *input);
 
 #endif

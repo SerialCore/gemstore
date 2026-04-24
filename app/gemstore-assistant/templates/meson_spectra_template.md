@@ -34,10 +34,54 @@ This template matches the current parser in `src/parse.c`.
 - `model.type`: `GISTRING`, `GISCREEN`
 - `model.param`:
   - `GISTRING_MESON`
+  - `GISTRING_CUSTOM`
   - `GISCREEN_MESON`
   - `GISCREEN_CCBAR`
   - `GISCREEN_BBBAR`
+  - `GISCREEN_CUSTOM`
 - `basis.type`: `GEM`, `CRG`, `CSM`, `SHO`
+
+## Custom Parameter Files
+
+If `model.param` is `GISTRING_CUSTOM` or `GISCREEN_CUSTOM`, also provide:
+
+```json
+"file": "app/param_GISTRING.json"
+```
+
+or
+
+```json
+"file": "app/param_GISCREEN.json"
+```
+
+Example:
+
+```json
+{
+  "project": "amethyst",
+  "task": "SPECTRA",
+  "system": {
+    "type": "MESON",
+    "f1": 3,
+    "f2": 3,
+    "S": 1,
+    "L": 0,
+    "J": 1
+  },
+  "model": {
+    "type": "GISCREEN",
+    "param": "GISCREEN_CUSTOM",
+    "file": "app/param_GISCREEN.json"
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 16,
+    "rmax": 30.0,
+    "rmin": 0.1
+  }
+}
+```
 
 ## Basis Parameters
 

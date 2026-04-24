@@ -62,6 +62,36 @@ def summarize_output(data, limit=None):
     lines = []
     lines.append(f"project: {data.get('project')}")
     lines.append(f"generated: {data.get('generated')}")
+    lines.append(f"task: {data.get('task')}")
+
+    model = data.get("model")
+    if isinstance(model, dict):
+        model_text = f"{model.get('type')} / {model.get('param')}"
+        if model.get("file"):
+            model_text += f" / file={model.get('file')}"
+        lines.append(f"model: {model_text}")
+
+    system = data.get("system")
+    if isinstance(system, dict):
+        lines.append(
+            "system: {type} f1={f1} f2={f2} S={S} L={L} J={J}".format(
+                type=system.get("type"),
+                f1=system.get("f1"),
+                f2=system.get("f2"),
+                S=system.get("S"),
+                L=system.get("L"),
+                J=system.get("J"),
+            )
+        )
+
+    basis = data.get("basis")
+    if isinstance(basis, dict):
+        basis_text = f"basis: {basis.get('type')}"
+        for key in ("nmax", "rmax", "rmin", "omega", "theta", "beta"):
+            if key in basis:
+                basis_text += f" {key}={basis[key]}"
+        lines.append(basis_text)
+
     lines.append(f"states: {len(data['states'])}")
 
     for state in states:

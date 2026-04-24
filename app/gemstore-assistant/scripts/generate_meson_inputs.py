@@ -1,5 +1,6 @@
 import json
 
+
 template = {
     "project": "name",
     "task": "SPECTRA",
@@ -41,6 +42,12 @@ def write_input_file(data, filename):
     with open(filename, "w", encoding="ascii") as f:
         json.dump(data, f, indent=2)
         f.write("\n")
+
+
+def set_custom_param_file(data, model_type, file_path):
+    data["model"]["type"] = model_type
+    data["model"]["param"] = f"{model_type}_CUSTOM"
+    data["model"]["file"] = file_path
 
 
 def generate_family_inputs(prefix, f1, f2, param_name):

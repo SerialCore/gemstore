@@ -1,13 +1,13 @@
 ---
 name: gemstore-assistant
-description: Expert agent for running hadron spectroscopy simulations using the gemstore program. Handles JSON input generation for the current parser, meson spectra runs, basis selection, preset-based GI models, and structured JSON outputs.
+description: Expert agent for running hadron spectroscopy simulations using the gemstore program. Handles JSON input generation for the current parser, meson spectra runs, basis selection, preset or custom parameter-file GI models, and structured JSON outputs.
 license: MIT
 compatibility: opencode
 metadata:
   audience: researchers, hadron physicists, computational particle physics
   domain: hadron spectroscopy, quark models, Gaussian expansion method
   tools: bash, file operations, subprocess execution
-  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, meson spectra, charmonium, bottomonium, GEM, CRG, CSM, SHO
+  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, meson spectra, charmonium, bottomonium, GEM, CRG, CSM, SHO, custom parameter file
 ---
 
 # Gemstore Hadron Spectra Skill
@@ -53,9 +53,33 @@ Only meson is supported by the current parser.
 Use `model.param` for presets:
 
 - `GISTRING_MESON`
+- `GISTRING_CUSTOM`
 - `GISCREEN_MESON`
 - `GISCREEN_CCBAR`
 - `GISCREEN_BBBAR`
+- `GISCREEN_CUSTOM`
+
+For custom parameter sets, the model object must also include:
+
+- `file`: path to the JSON parameter file
+
+Examples:
+
+```json
+"model": {
+  "type": "GISCREEN",
+  "param": "GISCREEN_CUSTOM",
+  "file": "app/param_GISCREEN.json"
+}
+```
+
+```json
+"model": {
+  "type": "GISTRING",
+  "param": "GISTRING_CUSTOM",
+  "file": "app/param_GISTRING.json"
+}
+```
 
 ### Basis Types
 
@@ -104,7 +128,7 @@ gemstore [--input FILE] [--fitting TARGET] [--print ITEM] [--debug UNIT]
 
 ## Output Expectations
 
-The current `write_meson_spectra()` writes JSON output in `<project>.out`.
+The current `write_meson_spectra()` writes JSON output in `<project>.out.json`.
 
 Use `templates/meson_spectra_output_template.json` as the reference shape when interpreting or explaining output files.
 
@@ -117,6 +141,16 @@ Expect fields like:
 - `system`
 - `basis`
 - `states`
+
+The top-level output contains structured objects for:
+
+- `model`
+- `system`
+- `basis`
+
+For custom parameter sets, the output model object also includes:
+
+- `file`
 
 Each entry in `states` contains:
 
@@ -139,6 +173,7 @@ Each entry in `states` contains:
 
 - Build a JSON input file matching `src/parse.c` exactly.
 - For heavy quarkonia prefer `GISCREEN_CCBAR` or `GISCREEN_BBBAR` when appropriate.
+- Use `GISTRING_CUSTOM` or `GISCREEN_CUSTOM` only when the user explicitly wants external parameter files.
 - For spectra runs, use a dedicated run directory and keep user files untouched unless they explicitly ask you to edit them.
 
 ### Execute safely
@@ -149,8 +184,8 @@ Each entry in `states` contains:
 
 ### Post-process and present results
 
-- Read the JSON `.out` file.
-- Use `scripts/parse_meson_output.py <project>.out` for a compact summary, or `--json` for normalized parsed output.
+- Read the JSON `.out.json` file.
+- Use `scripts/parse_meson_output.py <project>.out.json` for a compact summary, or `--json` for normalized parsed output.
 - Summarize masses and RMS radii clearly.
 - Report eigenvectors when relevant.
 - Mention parse or validation errors with the exact offending field if gemstore rejects the input.
@@ -160,7 +195,8 @@ Each entry in `states` contains:
 - Confirm parameters before large systematic runs.
 - Prefer `GEM` unless the user explicitly asks for `CRG`, `CSM`, or `SHO`.
 - Use exact parser spellings: `MESON`, `GISCREEN`, `GISTRING`, `GISCREEN_CCBAR`, etc.
-- Remember that `model.param` is the preset key, not `params` or `preset`.
+- Remember that `model.param` is the parameter-set key, not `params` or `preset`.
+- For `*_CUSTOM`, always include `model.file`.
 
 ## Example Requests
 

@@ -1,10 +1,9 @@
 {
-  "project": "amethyst",
+  "project": "diamond",
   "task": "SPECTRA",
   "model": {
     "type": "GISCREEN",
-    "param": "GISCREEN_CUSTOM",
-    "file": "param_GISCREEN.json"
+    "param": "GISCREEN_CCBAR"
   },
   "system": {
     "type": "MESON",

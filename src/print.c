@@ -6,6 +6,7 @@
 
 #include <gemstore/print.h>
 #include <gemstore/math/matrix.h>
+#include <gemstore/parse.h>
 #include <gemstore/param/argset.h>
 
 #include "cJSON.h"
@@ -87,10 +88,14 @@ void print_input_parameters(const argsInput_t *input)
     /* Task and Model Configuration */
     printf("Configuration Settings:\n");
     printf("  Project Name:         %-50s\n", input->project);
-    printf("  Task Type:            %-50d\n", input->task);
-    printf("  Model Type:           %-50d\n", input->model);
-    printf("  System Type:          %-50d\n", input->system);
-    printf("  Basis Type:           %-50d\n", input->orbit);
+    printf("  Task Type:            %-50s\n", task_type_str[input->task]);
+    printf("  Model Type:           %-50s\n", model_type_str[input->model]);
+    printf("  Parameter Set:        %-50s\n", param_type_str[input->param]);
+    printf("  System Type:          %-50s\n", system_type_str[input->system]);
+    printf("  Basis Type:           %-50s\n", orbit_type_str[input->orbit]);
+    if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM) {
+        printf("  Parameter File:       %-50s\n", input->param_file);
+    }
     printf("\n");
 
     /* Quark Flavor Configuration */
@@ -128,31 +133,32 @@ void print_input_parameters(const argsInput_t *input)
     printf("\n");
 
     /* Model Parameters */
+    argsGIModel_t args_model = argsGIModel_from(input);
     printf("Model Parameters:\n");
     printf("  Quark Masses:\n");
-    printf("    Light Quark (n)   (mn):  %-46.6f GeV\n", input->params.mn);
-    printf("    Strange Quark (s) (ms):  %-46.6f GeV\n", input->params.ms);
-    printf("    Charm Quark (c)   (mc):  %-46.6f GeV\n", input->params.mc);
-    printf("    Bottom Quark (b)  (mb):  %-46.6f GeV\n", input->params.mb);
+    printf("    Light Quark (n)   (mn):  %-46.6f GeV\n", args_model.mn);
+    printf("    Strange Quark (s) (ms):  %-46.6f GeV\n", args_model.ms);
+    printf("    Charm Quark (c)   (mc):  %-46.6f GeV\n", args_model.mc);
+    printf("    Bottom Quark (b)  (mb):  %-46.6f GeV\n", args_model.mb);
     printf("\n");
 
     printf("  Potential Parameters:\n");
-    printf("    String Tension (b):      %-46.6f\n", input->params.b);
-    printf("    Screen Length (mu):      %-46.6f\n", input->params.mu);
-    printf("    Constant Potential (c):  %-46.6f\n", input->params.c);
+    printf("    String Tension (b):      %-46.6f\n", args_model.b);
+    printf("    Screen Length (mu):      %-46.6f\n", args_model.mu);
+    printf("    Constant Potential (c):  %-46.6f\n", args_model.c);
     printf("\n");
 
     printf("  Gaunov-Isgur Smearing Parameters:\n");
-    printf("    sigma_0 (Center):        %-46.6f\n", input->params.sigma_0);
-    printf("    sigma (Spin-Spin):       %-46.6f\n", input->params.s);
-    printf("    epsilon_cont (Contact):  %-46.6f\n", input->params.epsilon_cont);
-    printf("    epsilon_sov (Spin-Orbit):%-46.6f\n", input->params.epsilon_sov);
-    printf("    epsilon_sos (Thomas):    %-46.6f\n", input->params.epsilon_sos);
-    printf("    epsilon_tens (Tensor):   %-46.6f\n", input->params.epsilon_tens);
+    printf("    sigma_0 (Center):        %-46.6f\n", args_model.sigma_0);
+    printf("    sigma (Spin-Spin):       %-46.6f\n", args_model.s);
+    printf("    epsilon_cont (Contact):  %-46.6f\n", args_model.epsilon_cont);
+    printf("    epsilon_sov (Spin-Orbit):%-46.6f\n", args_model.epsilon_sov);
+    printf("    epsilon_sos (Thomas):    %-46.6f\n", args_model.epsilon_sos);
+    printf("    epsilon_tens (Tensor):   %-46.6f\n", args_model.epsilon_tens);
     printf("\n");
 }
 
-void print_debug_results(const array_t *eigenvalue, const array_t *rmsradius, const matrix_t *eigenvector, int nmax)
+void print_meson_spectra(const array_t *eigenvalue, const array_t *rmsradius, const matrix_t *eigenvector, int nmax)
 {
     if (eigenvalue == NULL || rmsradius == NULL || eigenvector == NULL) {
         return;
@@ -238,6 +244,9 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
     int nmax = input->nmax;
     FILE *pf;
     cJSON *root = NULL;
+    cJSON *model = NULL;
+    cJSON *system = NULL;
+    cJSON *basis = NULL;
     cJSON *states = NULL;
     char *json_text = NULL;
     int state = 0;
@@ -265,10 +274,59 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
     strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", timeinfo);
     cJSON_AddStringToObject(root, "generated", time_str);
     cJSON_AddStringToObject(root, "project", input->project);
-    cJSON_AddNumberToObject(root, "task", input->task);
-    cJSON_AddNumberToObject(root, "model", input->model);
-    cJSON_AddNumberToObject(root, "system", input->system);
-    cJSON_AddNumberToObject(root, "basis", input->orbit);
+    cJSON_AddStringToObject(root, "task", task_type_str[input->task]);
+
+    model = cJSON_AddObjectToObject(root, "model");
+    if (model == NULL) {
+        fprintf(stderr, "Error: Cannot allocate model object for %s\n", path);
+        cJSON_Delete(root);
+        fclose(pf);
+        return 0;
+    }
+    cJSON_AddStringToObject(model, "type", model_type_str[input->model]);
+    cJSON_AddStringToObject(model, "param", param_type_str[input->param]);
+    if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM) {
+        cJSON_AddStringToObject(model, "file", input->param_file);
+    }
+
+    system = cJSON_AddObjectToObject(root, "system");
+    if (system == NULL) {
+        fprintf(stderr, "Error: Cannot allocate system object for %s\n", path);
+        cJSON_Delete(root);
+        fclose(pf);
+        return 0;
+    }
+    cJSON_AddStringToObject(system, "type", system_type_str[input->system]);
+    if (input->system == SYSTEM_MESON) {
+        cJSON_AddNumberToObject(system, "f1", input->f1);
+        cJSON_AddNumberToObject(system, "f2", input->f2);
+        cJSON_AddNumberToObject(system, "S", input->S);
+        cJSON_AddNumberToObject(system, "L", input->L);
+        cJSON_AddNumberToObject(system, "J", input->J);
+    }
+
+    basis = cJSON_AddObjectToObject(root, "basis");
+    if (basis == NULL) {
+        fprintf(stderr, "Error: Cannot allocate basis object for %s\n", path);
+        cJSON_Delete(root);
+        fclose(pf);
+        return 0;
+    }
+    cJSON_AddStringToObject(basis, "type", orbit_type_str[input->orbit]);
+    if (input->orbit == ORBIT_GEM || input->orbit == ORBIT_CRG || input->orbit == ORBIT_CSM) {
+        cJSON_AddNumberToObject(basis, "nmax", input->nmax);
+        cJSON_AddNumberToObject(basis, "rmax", input->rmax);
+        cJSON_AddNumberToObject(basis, "rmin", input->rmin);
+    }
+    if (input->orbit == ORBIT_CRG) {
+        cJSON_AddNumberToObject(basis, "omega", input->omega);
+    }
+    if (input->orbit == ORBIT_CSM) {
+        cJSON_AddNumberToObject(basis, "theta", input->theta);
+    }
+    if (input->orbit == ORBIT_SHO) {
+        cJSON_AddNumberToObject(basis, "beta", input->beta);
+    }
 
     states = cJSON_AddArrayToObject(root, "states");
     if (states == NULL) {

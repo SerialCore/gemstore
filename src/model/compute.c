@@ -12,6 +12,7 @@
 #include <gemstore/math/interplt.h>
 
 #include <gemstore/types.h>
+#include <gemstore/parse.h>
 #include <gemstore/print.h>
 
 #include <stdio.h>
@@ -27,17 +28,35 @@ void compute_spectra_meson(const argsInput_t *input)
     array_t eigenvalue = array_init(nmax);
     array_t rmsradius = array_init(nmax);
     matrix_t eigenvector = matrix_init(nmax, nmax);
+    argsGIModel_t args_model = argsGIModel_from(input);
     argsGIModelDy_t args_dynmc = {0};
+
+    if (input->param == PARAM_GISTRING_MESON) args_model = argsGIString_meson;
+    else if (input->param == PARAM_GISCREEN_MESON) args_model = argsGIScreen_meson;
+    else if (input->param == PARAM_GISCREEN_BBBAR) args_model = argsGIScreen_bbbar;
+    else if (input->param == PARAM_GISCREEN_CCBAR) args_model = argsGIScreen_ccbar;
+    else if (input->param == PARAM_GISTRING_CUSTOM) {
+        parse_param_GISTRING(input->param_file, &args_model);
+    }
+    else if (input->param == PARAM_GISCREEN_CUSTOM) {
+        parse_param_GISCREEN(input->param_file, &args_model);
+    }
+    else {
+        array_free(&eigenvalue);
+        array_free(&rmsradius);
+        matrix_free(&eigenvector);
+        return;
+    }
 
     if (input->model == MODEL_GISTRING) {
         args_dynmc.model = MODEL_GISTRING;
         args_dynmc.system = SYSTEM_MESON;
-        spectra_meson_GI(input, &input->params, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+        spectra_meson_GI(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
     }
     else if (input->model == MODEL_GISCREEN) {
         args_dynmc.model = MODEL_GISCREEN;
         args_dynmc.system = SYSTEM_MESON;
-        spectra_meson_GI(input, &input->params, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+        spectra_meson_GI(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
     }
     else {
         array_free(&eigenvalue);
@@ -48,11 +67,11 @@ void compute_spectra_meson(const argsInput_t *input)
 
     /* compute RMS radius */
     radius_meson_rms(input, &eigenvector, &rmsradius, nmax);
-    print_debug_results(&eigenvalue, &rmsradius, &eigenvector, nmax);
+    print_meson_spectra(&eigenvalue, &rmsradius, &eigenvector, nmax);
 
     /* interpolate anomalies in RMS radius */
     interpolate_quadratic(rmsradius.value, rmsradius.len);
-    print_debug_results(&eigenvalue, &rmsradius, &eigenvector, nmax);
+    print_meson_spectra(&eigenvalue, &rmsradius, &eigenvector, nmax);
     
     write_meson_spectra(input, &eigenvalue, &rmsradius, &eigenvector, nmax);
 

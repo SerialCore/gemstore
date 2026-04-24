@@ -9,6 +9,13 @@
 
 #include <gemstore/param/argset.h>
 
-int parse_input_file(const char *filename, argsInput_t *input);
+/* parse input file */
+void parse_input_file(const char *filename, argsInput_t *input);
+
+/* parse GISTRING parameters */
+void parse_param_GISTRING(const char *filename, argsGIModel_t *args_model);
+
+/* parse GISCREEN parameters */
+void parse_param_GISCREEN(const char *filename, argsGIModel_t *args_model);
 
 #endif

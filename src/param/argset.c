@@ -6,6 +6,9 @@
 
 #include <gemstore/param/argset.h>
 
+#include <gemstore/types.h>
+#include <gemstore/parse.h>
+
 const argsGIModel_t argsGIString_meson = {
     .mn = 0.220,
     .ms = 0.419,
@@ -68,3 +71,21 @@ const argsGIModel_t argsGIScreen_ccbar = {
     .epsilon_sos = 0.9999999547283,
     .epsilon_tens = -0.499991780808,
 };
+
+argsGIModel_t argsGIModel_from(const argsInput_t *input)
+{
+    argsGIModel_t args_model = {0};
+
+    if (input->param == PARAM_GISTRING_MESON) args_model = argsGIString_meson;
+    else if (input->param == PARAM_GISCREEN_MESON) args_model = argsGIScreen_meson;
+    else if (input->param == PARAM_GISCREEN_BBBAR) args_model = argsGIScreen_bbbar;
+    else if (input->param == PARAM_GISCREEN_CCBAR) args_model = argsGIScreen_ccbar;
+    else if (input->param == PARAM_GISTRING_CUSTOM) {
+        parse_param_GISTRING(input->param_file, &args_model);
+    }
+    else if (input->param == PARAM_GISCREEN_CUSTOM) {
+        parse_param_GISCREEN(input->param_file, &args_model);
+    }
+
+    return args_model;
+}
