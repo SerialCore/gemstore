@@ -362,7 +362,7 @@ void debug_eigen_system_complex()
     cmatrix_t a = cmatrix_init(n, n);
     cmatrix_t b = cmatrix_init(n, n);
     cmatrix_t v = cmatrix_init(n, n);
-    array_t e = array_init(n);  /* eigenvalues are real for Hermitian matrices */
+    carray_t e = carray_init(n);  /* eigenvalues can now be complex */
     
     /* Create a simple 3x3 complex Hermitian matrix A
      * A = [ 3     1+i   0.5-0.5i ]
@@ -401,7 +401,7 @@ void debug_eigen_system_complex()
 #endif
     
     printf("e:\n");
-    array_print(&e);
+    carray_print(&e);
     printf("v:\n");
     cmatrix_print(&v);
     
@@ -428,7 +428,7 @@ void debug_eigen_system_complex()
     
     cmatrix_free(&a);
     cmatrix_free(&b);
-    array_free(&e);
+    carray_free(&e);
     cmatrix_free(&v);
     carray_free(&res1);
     carray_free(&res2);

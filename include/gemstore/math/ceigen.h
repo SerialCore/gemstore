@@ -12,32 +12,32 @@
 /* Complex Hermitian tridiagonalization + implicit QR
  * a: Input complex Hermitian matrix A (n × n)
  * n: Dimension of the matrices
- * d: Output array of REAL eigenvalues (length at least n)
- * e: Output / working array: REAL subdiagonal elements (length ≥ n)
- * et: Output REAL subdiagonal elements for selected eigenvalues
+ * d: Output array of COMPLEX eigenvalues (length at least n)
+ * e: Output / working array: COMPLEX subdiagonal elements (length ≥ n)
+ * et: Output COMPLEX subdiagonal elements for selected eigenvalues
  * lt: Number of eigenvectors requested */
-void eigen_tridiagonal_complex(double complex **a, int n, double *d, double *e, double *et, int lt);
+void eigen_tridiagonal_complex(double complex **a, int n, double complex *d, double complex *e, double complex *et, int lt);
 
 /* Wrapper for complex Hermitian eigenproblem: copies matrix, calls tridiagonal, extracts eigenvectors
  * a: Input complex Hermitian matrix A (n × n)
  * n: Dimension
- * d: Output array of REAL eigenvalues
+ * d: Output array of COMPLEX eigenvalues
  * vt: Output matrix of selected COMPLEX eigenvectors (lt rows × n columns)
  * lt: Number of eigenvectors */
-void eigen_standard_complex(double complex **a, int n, double *d, double complex **vt, int lt);
+void eigen_standard_complex(double complex **a, int n, double complex *d, double complex **vt, int lt);
 
 /* Generalized complex Hermitian eigenproblem: A x = λ B x using complex Cholesky + reduction
  * a: Input complex Hermitian matrix A (n × n)
  * b: Input complex Hermitian positive-definite matrix B (n × n)
  * n: Dimension
- * d: Output array of REAL eigenvalues
+ * d: Output array of COMPLEX eigenvalues
  * vt: Output matrix of selected COMPLEX eigenvectors (lt rows × n columns)
  * lt: Number of eigenvectors */
-void eigen_general_complex(double complex **a, double complex **b, int n, double *d, double complex **vt, int lt);
+void eigen_general_complex(double complex **a, double complex **b, int n, double complex *d, double complex **vt, int lt);
 
 #ifdef LAPACKE
 
-void lapack_general_complex(double complex **a, double complex **b, int n, double *e, double complex **vt, int lt);
+void lapack_general_complex(double complex **a, double complex **b, int n, double complex *e, double complex **vt, int lt);
 
 #endif
 

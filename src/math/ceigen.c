@@ -12,7 +12,7 @@
 #include <math.h>
 #include <complex.h>
 
-void eigen_tridiagonal_complex(double complex **a, int n, double *d, double *e, double *et, int lt)
+void eigen_tridiagonal_complex(double complex **a, int n, double complex *d, double complex *e, double complex *et, int lt)
 {
     /* 
      * Find eigenvalues and eigenvectors using Jacobi method on Hermitian matrix.
@@ -47,9 +47,9 @@ void eigen_tridiagonal_complex(double complex **a, int n, double *d, double *e, 
     }
     
     /* Initialize */
-    e[0] = 0.0;
+    e[0] = 0.0 + 0.0*I;
     for (i = 1; i < n; i++) {
-        e[i] = 0.0;
+        e[i] = 0.0 + 0.0*I;
     }
     
     /* Jacobi eigenvalue iteration */
@@ -200,9 +200,9 @@ void eigen_tridiagonal_complex(double complex **a, int n, double *d, double *e, 
         }
     }
     
-    /* Extract eigenvalues from diagonal */
+    /* Extract eigenvalues from diagonal (as complex numbers) */
     for (i = 0; i < n; i++) {
-        d[i] = creal(mat[i][i]);
+        d[i] = mat[i][i];
     }
     
     /* Eigenvectors are the columns of U (eigenvector i is U[:,i]) */
@@ -227,7 +227,7 @@ void eigen_tridiagonal_complex(double complex **a, int n, double *d, double *e, 
     free(U);
 }
 
-void eigen_standard_complex(double complex **a, int n, double *d, double complex **vt, int lt)
+void eigen_standard_complex(double complex **a, int n, double complex *d, double complex **vt, int lt)
 {
     if (vt == NULL) {
         lt = 0;
@@ -237,12 +237,12 @@ void eigen_standard_complex(double complex **a, int n, double *d, double complex
     }
     
     double complex **aa;
-    double *e;
+    double complex *e;
     double complex **et_vecs;  /* Temporary storage for eigenvectors */
     int i, j;
     
     aa = (double complex **)malloc(sizeof(double complex *) * n);
-    e = (double *)malloc(sizeof(double) * n);
+    e = (double complex *)malloc(sizeof(double complex) * n);
     
     /* Allocate eigenvector matrix if needed */
     if (lt > 0 && vt != NULL) {
@@ -261,8 +261,8 @@ void eigen_standard_complex(double complex **a, int n, double *d, double complex
         }
     }
     
-    /* Pass et_vecs reinterpreted as (double *) for the C signature */
-    eigen_tridiagonal_complex(aa, n, d, e, (double *)et_vecs, lt);
+    /* Pass et_vecs reinterpreted as (double complex *) for the C signature */
+    eigen_tridiagonal_complex(aa, n, d, e, (double complex *)et_vecs, lt);
     
     /* Copy eigenvectors to output if provided */
     if (lt > 0 && vt != NULL && et_vecs != NULL) {
@@ -287,7 +287,7 @@ void eigen_standard_complex(double complex **a, int n, double *d, double complex
     }
 }
 
-void eigen_general_complex(double complex **a, double complex **b, int n, double *d, double complex **vt, int lt)
+void eigen_general_complex(double complex **a, double complex **b, int n, double complex *d, double complex **vt, int lt)
 {
     if (vt == NULL) {
         lt = 0;
@@ -297,7 +297,7 @@ void eigen_general_complex(double complex **a, double complex **b, int n, double
     }
 
     double complex **G, **IG, **IGA, **S, **et_vecs;
-    double *e;
+    double complex *e;
     int i, j, k, ii;
     double complex s, ds;
 
@@ -305,7 +305,7 @@ void eigen_general_complex(double complex **a, double complex **b, int n, double
     IG = (double complex **)malloc(sizeof(double complex *) * n);
     IGA = (double complex **)malloc(sizeof(double complex *) * n);
     S = (double complex **)malloc(sizeof(double complex *) * n);
-    e = (double *)malloc(sizeof(double) * n);
+    e = (double complex *)malloc(sizeof(double complex) * n);
     
     /* Allocate eigenvector matrix if needed */
     et_vecs = NULL;
@@ -399,8 +399,8 @@ void eigen_general_complex(double complex **a, double complex **b, int n, double
     }
 
     /* Solve the standard eigenvalue problem for S */
-    /* Pass et_vecs as (double *) cast to match function signature */
-    eigen_tridiagonal_complex(S, n, d, e, (double *)et_vecs, lt);
+    /* Pass et_vecs as (double complex *) cast to match function signature */
+    eigen_tridiagonal_complex(S, n, d, e, (double complex *)et_vecs, lt);
 
     /* Transform eigenvectors back: v = IG * u, where u are the eigenvectors of S */
     if (lt > 0 && vt != NULL && et_vecs != NULL) {
@@ -440,7 +440,7 @@ void eigen_general_complex(double complex **a, double complex **b, int n, double
 #include <stdio.h>
 #include <lapacke.h>
 
-void lapack_general_complex(double complex **a, double complex **b, int n, double *e, double complex **vt, int lt)
+void lapack_general_complex(double complex **a, double complex **b, int n, double complex *e, double complex **vt, int lt)
 {
     lapack_int N = n;
     double complex *A = (double complex *)malloc(sizeof(double complex) * N * N);
