@@ -1,0 +1,23 @@
+{
+  "project": "test_ccbar_CSM_3S1_nmax16_theta0",
+  "task": "SPECTRA",
+  "model": {
+    "type": "GISCREEN",
+    "param": "GISCREEN_CCBAR"
+  },
+  "system": {
+    "type": "MESON",
+    "f1": 3,
+    "f2": 3,
+    "S": 1,
+    "L": 0,
+    "J": 1
+  },
+  "basis": {
+    "type": "CSM",
+    "nmax": 16,
+    "rmax": 30.0,
+    "rmin": 0.1,
+    "theta": 1.57
+  }
+}
