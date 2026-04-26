@@ -178,14 +178,13 @@ static void parse_basis_section(const cJSON *root, argsInput_t *input)
 
     if (strcmp(type, "GEM") == 0) input->orbit = ORBIT_GEM;
     else if (strcmp(type, "CRG") == 0) input->orbit = ORBIT_CRG;
-    else if (strcmp(type, "CSM") == 0) input->orbit = ORBIT_CSM;
     else if (strcmp(type, "SHO") == 0) input->orbit = ORBIT_SHO;
     else {
         fprintf(stderr, "Unknown basis type: %s\n", type);
         exit(1);
     }
 
-    if (input->orbit == ORBIT_GEM || input->orbit == ORBIT_CRG || input->orbit == ORBIT_CSM) {
+    if (input->orbit == ORBIT_GEM || input->orbit == ORBIT_CRG) {
         input->nmax = read_number_item(basis_json, "nmax")->valueint;
         input->rmax = read_number_item(basis_json, "rmax")->valuedouble;
         input->rmin = read_number_item(basis_json, "rmin")->valuedouble;
@@ -193,10 +192,6 @@ static void parse_basis_section(const cJSON *root, argsInput_t *input)
 
     if (input->orbit == ORBIT_CRG) {
         input->omega = read_number_item(basis_json, "omega")->valuedouble;
-    }
-
-    if (input->orbit == ORBIT_CSM) {
-        input->theta = read_number_item(basis_json, "theta")->valuedouble;
     }
 
     if (input->orbit == ORBIT_SHO) {

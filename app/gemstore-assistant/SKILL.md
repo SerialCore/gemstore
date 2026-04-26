@@ -7,7 +7,7 @@ metadata:
   audience: researchers, hadron physicists, computational particle physics
   domain: hadron spectroscopy, quark models, Gaussian expansion method
   tools: bash, file operations, subprocess execution
-  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, meson spectra, charmonium, bottomonium, GEM, CRG, CSM, SHO, custom parameter file
+  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, meson spectra, charmonium, bottomonium, GEM, CRG, SHO, custom parameter file
 ---
 
 # Gemstore Hadron Spectra Skill
@@ -85,14 +85,12 @@ Examples:
 
 - `GEM`
 - `CRG`
-- `CSM`
 - `SHO`
 
 Basis-specific required parameters:
 
 - `GEM`: `nmax`, `rmax`, `rmin`
 - `CRG`: `nmax`, `rmax`, `rmin`, `omega`
-- `CSM`: `nmax`, `rmax`, `rmin`, `theta`
 - `SHO`: `beta`
 
 ### Meson Quantum Numbers
@@ -193,7 +191,7 @@ Each entry in `states` contains:
 ## Best Practices
 
 - Confirm parameters before large systematic runs.
-- Prefer `GEM` unless the user explicitly asks for `CRG`, `CSM`, or `SHO`.
+- Prefer `GEM` unless the user explicitly asks for `CRG`, or `SHO`.
 - Use exact parser spellings: `MESON`, `GISCREEN`, `GISTRING`, `GISCREEN_CCBAR`, etc.
 - Remember that `model.param` is the parameter-set key, not `params` or `preset`.
 - For `*_CUSTOM`, always include `model.file`.
@@ -202,7 +200,7 @@ Each entry in `states` contains:
 
 - "Calculate charmonium 1P state with J=1 using GISCREEN"
 - "Run bottomonium S and P waves with GEM basis"
-- "Prepare a CSM input with theta = 0.2"
+- "Prepare a CRG input with omega = 0.2"
 - "Compute charmonium with SHO basis and beta = 0.8"
 
 When this skill is triggered, generate the exact JSON input expected by `src/parse.c`, run the program, and report the resulting physics output cleanly.

@@ -13,6 +13,7 @@ typedef struct argsOrbit {
     int n;                  /* radial number & gaussian parameter */
     int l;                  /* orbital momentum */
     double scale;           /* scale factor, nu for GEM and beta for SHO */
+    double param;           /* additional parameter, omega for CRG */
 } argsOrbit_t;
 
 typedef struct argsModel {
@@ -71,9 +72,9 @@ typedef struct argsInput {
     int nmax;               /* Gaussian parameter */
     double rmax;            /* Gaussian parameter */
     double rmin;            /* Gaussian parameter */
-    double omega;           /* complex-range Gaussian parameter */
     double beta;            /* harmonic oscillator parameter */
-    double theta;           /* Gaussian parameter */
+    double omega;           /* complex-range Gaussian parameter */
+    double theta;           /* complex scaling angle */
     char project[256];      /* project name */
     char param_file[256];   /* parameter file name */
 } argsInput_t;

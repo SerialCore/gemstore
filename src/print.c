@@ -116,16 +116,13 @@ void print_input_parameters(const argsInput_t *input)
 
     /* Basis Parameters */
     printf("Basis Parameters:\n");
-    if (input->orbit == ORBIT_GEM || input->orbit == ORBIT_CRG || input->orbit == ORBIT_CSM) {
+    if (input->orbit == ORBIT_GEM || input->orbit == ORBIT_CRG) {
         printf("  Number of Gaussians (nmax): %-46d\n", input->nmax);
         printf("  Minimum Range (rmin):       %-46.6f fm\n", input->rmin);
         printf("  Maximum Range (rmax):       %-46.6f fm\n", input->rmax);
     }
     if (input->orbit == ORBIT_CRG) {
         printf("  Oscillation Scale (omega):  %-46.6f\n", input->omega);
-    }
-    if (input->orbit == ORBIT_CSM) {
-        printf("  Rotation Angle (theta):     %-46.6f\n", input->theta);
     }
     if (input->orbit == ORBIT_SHO) {
         printf("  Harmonic Scale (beta):      %-46.6f\n", input->beta);
@@ -313,16 +310,13 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
         return 0;
     }
     cJSON_AddStringToObject(basis, "type", orbit_type_str[input->orbit]);
-    if (input->orbit == ORBIT_GEM || input->orbit == ORBIT_CRG || input->orbit == ORBIT_CSM) {
+    if (input->orbit == ORBIT_GEM || input->orbit == ORBIT_CRG) {
         cJSON_AddNumberToObject(basis, "nmax", input->nmax);
         cJSON_AddNumberToObject(basis, "rmax", input->rmax);
         cJSON_AddNumberToObject(basis, "rmin", input->rmin);
     }
     if (input->orbit == ORBIT_CRG) {
         cJSON_AddNumberToObject(basis, "omega", input->omega);
-    }
-    if (input->orbit == ORBIT_CSM) {
-        cJSON_AddNumberToObject(basis, "theta", input->theta);
     }
     if (input->orbit == ORBIT_SHO) {
         cJSON_AddNumberToObject(basis, "beta", input->beta);

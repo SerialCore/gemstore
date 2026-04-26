@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include <stdio.h>
 #include <gemstore/math/integral.h>
 #include <gemstore/basis/orbit.h>
 #include <gemstore/param/argset.h>
@@ -40,7 +41,7 @@ static const double nodes[50] = {
     8.88668005924412897894E+000, 9.28749674141648604654E+000, 9.72416586588463146083E+000, 1.02158862585784281522E+001, 1.08129860729453608573E+001
 };
 
-double integral_rms_radius(
+double integral_wfn_radius(
     orbit_wfn_t wfn,
     double node_factor,
     const argsOrbit_t *args_bra,
@@ -94,7 +95,7 @@ double integral_wfn_overlap_complex(
     return sum;
 }
 
-double integral_matrix_element(
+double integral_wfn_hamilton(
     orbit_wfn_t wfn,
     potential_t pot,
     double node_factor,
@@ -116,7 +117,7 @@ double integral_matrix_element(
     return sum;
 }
 
-double integral_matrix_element_complex(
+double integral_wfn_hamilton_complex(
     orbit_wfn_complex_t wfn,
     potential_t pot,
     double node_factor,

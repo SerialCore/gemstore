@@ -5,7 +5,7 @@
   "model": {
     "type": "GISCREEN",
     "param": "GISCREEN_CUSTOM",
-    "file": "app/param_GISCREEN.json"
+    "file": "param_GISCREEN.json"
   },
   "system": {
     "type": "MESON",

@@ -12,7 +12,7 @@
 #include <gemstore/model/gimodel.h>
 
 /* Integrate rms radius */
-double integral_rms_radius(
+double integral_wfn_radius(
     orbit_wfn_t wfn,
     double node_factor,
     const argsOrbit_t *args_bra,
@@ -33,7 +33,7 @@ double integral_wfn_overlap_complex(
     const argsOrbit_t *args_ket);
 
 /* Integrate matrix elements with given potential */
-double integral_matrix_element(
+double integral_wfn_hamilton(
     orbit_wfn_t wfn,
     potential_t pot,
     double node_factor,
@@ -43,8 +43,35 @@ double integral_matrix_element(
     const argsGIModelDy_t *args_dynmc);
 
 /* Integrate matrix elements with given potential (complex) */
-double integral_matrix_element_complex(
+double integral_wfn_hamilton_complex(
     orbit_wfn_complex_t wfn,
+    potential_t pot,
+    double node_factor,
+    const argsOrbit_t *args_bra,
+    const argsOrbit_t *args_ket,
+    const argsGIModel_t *args_model,
+    const argsGIModelDy_t *args_dynmc);
+
+/* Integrate rms radius for CRG basis functions */
+double integral_crg_radius(
+    orbit_crg_t crg_bra,
+    orbit_crg_t crg_ket,
+    double node_factor,
+    const argsOrbit_t *args_bra,
+    const argsOrbit_t *args_ket);
+
+/* Integrate wavefunction overlaps for CRG basis functions */
+double integral_crg_overlap(
+    orbit_crg_t crg_bra,
+    orbit_crg_t crg_ket,
+    double node_factor,
+    const argsOrbit_t *args_bra,
+    const argsOrbit_t *args_ket);
+
+/* Integrate Hamiltonian matrix elements for CRG basis functions */
+double integral_crg_hamilton(
+    orbit_crg_t crg_bra,
+    orbit_crg_t crg_ket,
     potential_t pot,
     double node_factor,
     const argsOrbit_t *args_bra,

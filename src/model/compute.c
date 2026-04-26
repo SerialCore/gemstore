@@ -51,12 +51,32 @@ void compute_spectra_meson(const argsInput_t *input)
     if (input->model == MODEL_GISTRING) {
         args_dynmc.model = MODEL_GISTRING;
         args_dynmc.system = SYSTEM_MESON;
-        spectra_meson_GI(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+        
+        /* Route to appropriate basis dispatcher */
+        if (input->orbit == ORBIT_GEM) {
+            spectra_meson_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+        }
+        else if (input->orbit == ORBIT_CRG) {
+            spectra_meson_CRG(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+        }
+        else {
+            fprintf(stderr, "Unknown orbit basis type: %d\n", input->orbit);
+        }
     }
     else if (input->model == MODEL_GISCREEN) {
         args_dynmc.model = MODEL_GISCREEN;
         args_dynmc.system = SYSTEM_MESON;
-        spectra_meson_GI(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+        
+        /* Route to appropriate basis dispatcher */
+        if (input->orbit == ORBIT_GEM) {
+            spectra_meson_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+        }
+        else if (input->orbit == ORBIT_CRG) {
+            spectra_meson_CRG(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+        }
+        else {
+            fprintf(stderr, "Unknown orbit basis type: %d\n", input->orbit);
+        }
     }
     else {
         array_free(&eigenvalue);

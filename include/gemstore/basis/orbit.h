@@ -10,20 +10,6 @@
 #include <math.h>
 #include <complex.h>
 
-/* Scale ν[n, nmax, rmax, rmin] = 1/rmin^2 * (rmax/rmin)^((2 - 2n)/(nmax-1)) */
-static inline double getnu(int n, int nmax, double rmax, double rmin)
-{
-    double fm = 5.06773093854369882649;
-    double r1 = rmin * fm;
-
-    if (nmax <= 1) {
-        return 1.0 / (r1 * r1);
-    }
-
-    double exponent = (2.0 - 2.0 * n) / (nmax - 1.0);
-    return pow(rmax / rmin, exponent) / (r1 * r1);
-}
-
 /* Associated Laguerre L_k^alpha(x) (exact recurrence from Mathematica LaguerreL) */
 static inline double laguerrel(int k, double alpha, double x)
 {
@@ -42,22 +28,36 @@ static inline double laguerrel(int k, double alpha, double x)
     return L_curr;
 }
 
+/* Scale ν[n, nmax, rmax, rmin] = 1/rmin^2 * (rmax/rmin)^((2 - 2n)/(nmax-1)) */
+static inline double getnu(int n, int nmax, double rmax, double rmin)
+{
+    double fm = 5.06773093854369882649;
+    double r1 = rmin * fm;
+
+    if (nmax <= 1) {
+        return 1.0 / (r1 * r1);
+    }
+
+    double exponent = (2.0 - 2.0 * n) / (nmax - 1.0);
+    return pow(rmax / rmin, exponent) / (r1 * r1);
+}
+
 /* define orbit wave function in coordinate space */
 typedef double (*orbit_wfn_t)(double x, int n, int l, double scale);
 
 /* define orbit wave function in momentum space */
 typedef complex (*orbit_wfn_complex_t)(double x, int n, int l, double scale);
 
-/* Gaussian basis in coordinate space without exponential */
-double GRnlr(double r, int n, int l, double nu);
-
-/* Gaussian basis in momentum space without exponential */
-complex GRnlp(double p, int n, int l, double nu);
-
 /* Spherical harmonic oscillator basis in coordinate space without exponential */
 double SRnlr(double r, int n, int l, double beta);
 
 /* Spherical harmonic oscillator basis in momentum space without exponential */
 complex SRnlp(double p, int n, int l, double beta);
+
+/* Gaussian basis in coordinate space without exponential */
+double GRnlr(double r, int n, int l, double nu);
+
+/* Gaussian basis in momentum space without exponential */
+complex GRnlp(double p, int n, int l, double nu);
 
 #endif

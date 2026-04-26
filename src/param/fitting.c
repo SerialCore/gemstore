@@ -52,7 +52,7 @@ double call_meson_GIScreen(int f1, int f2, int N, double S, double L, double J, 
         .system = SYSTEM_MESON
     };
 
-    spectra_meson_GI(&args_input, &args_model, &args_dynmc, &eigenvalue, NULL, 0);
+    spectra_meson_GEM(&args_input, &args_model, &args_dynmc, &eigenvalue, NULL, 0);
     double e_out = eigenvalue.value[N - 1];
 
     array_free(&eigenvalue);

@@ -16,8 +16,7 @@ const char *task_type_str[] = {
 const char *orbit_type_str[] = {
     "SHO",
     "GEM",
-    "CRG",
-    "CSM"
+    "CRG"
 };
 
 const char *model_type_str[] = {

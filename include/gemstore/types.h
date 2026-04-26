@@ -21,8 +21,7 @@ extern const char *task_type_str[];
 typedef enum orbit_type {
     ORBIT_SHO,
     ORBIT_GEM,
-    ORBIT_CRG,
-    ORBIT_CSM
+    ORBIT_CRG
 } orbit_type_t;
 
 extern const char *orbit_type_str[];

@@ -47,7 +47,7 @@ void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t 
     for (int i = 0; i < nmax; i++) {
         for (int j = 0; j < nmax; j++) {
             factor = 1.0 / sqrt(basis[i].scale + basis[j].scale);
-            mR2.value[i][j] = integral_rms_radius(GRnlr, factor, &basis[i], &basis[j]);
+            mR2.value[i][j] = integral_wfn_radius(GRnlr, factor, &basis[i], &basis[j]);
             mOver.value[i][j] = integral_wfn_overlap(GRnlr, factor, &basis[i], &basis[j]);
         }
     }

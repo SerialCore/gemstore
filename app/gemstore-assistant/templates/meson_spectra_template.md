@@ -39,7 +39,7 @@ This template matches the current parser in `src/parse.c`.
   - `GISCREEN_CCBAR`
   - `GISCREEN_BBBAR`
   - `GISCREEN_CUSTOM`
-- `basis.type`: `GEM`, `CRG`, `CSM`, `SHO`
+- `basis.type`: `GEM`, `CRG`, `SHO`
 
 ## Custom Parameter Files
 
@@ -87,7 +87,6 @@ Example:
 
 - `GEM`: `nmax`, `rmax`, `rmin`
 - `CRG`: `nmax`, `rmax`, `rmin`, `omega`
-- `CSM`: `nmax`, `rmax`, `rmin`, `theta`
 - `SHO`: `beta`
 
 ## Meson Quantum Numbers

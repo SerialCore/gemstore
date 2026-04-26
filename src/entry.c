@@ -28,8 +28,8 @@ void entry_compute(const char* arg)
             exit(1);
         }
 
-        if (input.orbit != ORBIT_GEM) {
-            fprintf(stderr, "SPECTRA meson compute currently supports only GEM basis\n");
+        if (input.orbit != ORBIT_GEM && input.orbit != ORBIT_CRG) {
+            fprintf(stderr, "SPECTRA meson compute supports: GEM, CRG basis\n");
             exit(1);
         }
 
