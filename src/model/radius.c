@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t *radius, int len)
+void radius_meson_GEM(const argsInput_t *input, const matrix_t *vector, array_t *radius, int len)
 {
     int nmax = input->nmax;
     double rmax = input->rmax;

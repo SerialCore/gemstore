@@ -52,31 +52,4 @@ double integral_wfn_hamilton_complex(
     const argsGIModel_t *args_model,
     const argsGIModelDy_t *args_dynmc);
 
-/* Integrate rms radius for CRG basis functions */
-double integral_crg_radius(
-    orbit_crg_t crg_bra,
-    orbit_crg_t crg_ket,
-    double node_factor,
-    const argsOrbit_t *args_bra,
-    const argsOrbit_t *args_ket);
-
-/* Integrate wavefunction overlaps for CRG basis functions */
-double integral_crg_overlap(
-    orbit_crg_t crg_bra,
-    orbit_crg_t crg_ket,
-    double node_factor,
-    const argsOrbit_t *args_bra,
-    const argsOrbit_t *args_ket);
-
-/* Integrate Hamiltonian matrix elements for CRG basis functions */
-double integral_crg_hamilton(
-    orbit_crg_t crg_bra,
-    orbit_crg_t crg_ket,
-    potential_t pot,
-    double node_factor,
-    const argsOrbit_t *args_bra,
-    const argsOrbit_t *args_ket,
-    const argsGIModel_t *args_model,
-    const argsGIModelDy_t *args_dynmc);
-
 #endif

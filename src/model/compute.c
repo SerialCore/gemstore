@@ -86,7 +86,7 @@ void compute_spectra_meson(const argsInput_t *input)
     }
 
     /* compute RMS radius */
-    radius_meson_rms(input, &eigenvector, &rmsradius, nmax);
+    radius_meson_GEM(input, &eigenvector, &rmsradius, nmax);
     print_meson_spectra(&eigenvalue, &rmsradius, &eigenvector, nmax);
 
     /* interpolate anomalies in RMS radius */

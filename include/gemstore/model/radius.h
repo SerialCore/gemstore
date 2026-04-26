@@ -11,6 +11,6 @@
 #include <gemstore/math/matrix.h>
 
 /* Compute the root-mean-square radius of mesons with {len} of eigen vectors */
-void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t *radius, int len);
+void radius_meson_GEM(const argsInput_t *input, const matrix_t *vector, array_t *radius, int len);
 
 #endif
