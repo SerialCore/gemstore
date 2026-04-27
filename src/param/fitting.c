@@ -6,13 +6,13 @@
 
 #include <gemstore/param/fitting.h>
 #include <gemstore/param/argset.h>
-#include <gemstore/param/meson.h>
-#include <gemstore/param/bbbar.h>
-#include <gemstore/param/ccbar.h>
+#include <gemstore/param/fmeson.h>
+#include <gemstore/param/fbbbar.h>
+#include <gemstore/param/fccbar.h>
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/model/gimodel.h>
-#include <gemstore/model/spectra.h>
+#include <gemstore/model/mesongem.h>
 
 #include <stdio.h>
 #include <stdlib.h>

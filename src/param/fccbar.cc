@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/param/bbbar.h>
+#include <gemstore/param/fccbar.h>
 #include <gemstore/param/minuit.h>
 #include <gemstore/types.h>
 
@@ -15,30 +15,28 @@
 #include <vector>
 #include <ctime>
 
-static const std::vector<State> DATA_BBBAR = {
-    // bottomonium (b b-bar) 19
-    {4, 4, 1, 0, 0, 0, 9398.7,   2},   // ηb(1S)
-    {4, 4, 2, 0, 0, 0, 9999.0,   4},   // ηb(2S)
-    {4, 4, 1, 1, 0, 1, 9460.4,   1},   // Υ(1S)
-    {4, 4, 2, 1, 0, 1, 10023.4,  1},   // Υ(2S)
-    {4, 4, 3, 1, 0, 1, 10355.1,  1},   // Υ(3S)
-    {4, 4, 4, 1, 0, 1, 10579.4,  2},   // Υ(4S)
-    {4, 4, 5, 1, 0, 1, 10885.2,  3},   // Υ(5S)
-    {4, 4, 6, 1, 0, 1, 11000.0,  4},   // Υ(6S)
-    {4, 4, 1, 1, 2, 2, 10163.7,  2},   // Υ2(1D)
-    {4, 4, 1, 0, 1, 1, 9899.3,   1},   // hb(1P)
-    {4, 4, 2, 0, 1, 1, 10259.8,  2},   // hb(2P)
-    {4, 4, 1, 1, 1, 0, 9859.4,   1},   // χb0(1P)
-    {4, 4, 1, 1, 1, 1, 9892.8,   1},   // χb1(1P)
-    {4, 4, 1, 1, 1, 2, 9912.2,   1},   // χb2(1P)
-    {4, 4, 2, 1, 1, 0, 10232.5,  1},   // χb0(2P)
-    {4, 4, 2, 1, 1, 1, 10255.5,  1},   // χb1(2P)
-    {4, 4, 2, 1, 1, 2, 10268.7,  1},   // χb2(2P)
-    {4, 4, 3, 1, 1, 1, 10513.4,  1},   // χb1(3P)
-    {4, 4, 3, 1, 1, 2, 10524.0,  1}    // χb2(3P)
+static const std::vector<State> DATA_CCBAR = {
+    // charmonium (c c-bar) 17
+    {3, 3, 1, 0, 0, 0, 2984.1,   1},   // ηc(1S)
+    {3, 3, 2, 0, 0, 0, 3637.8,   1},   // ηc(2S)
+    {3, 3, 1, 1, 0, 1, 3096.9,   1},   // ψ(1S)
+    {3, 3, 2, 1, 0, 1, 3686.1,   1},   // ψ(2S)
+    {3, 3, 3, 1, 0, 1, 4039.6,   4},   // ψ(3S)
+    {3, 3, 4, 1, 0, 1, 4222.2,   3},   // ψ(4S)
+    {3, 3, 5, 1, 0, 1, 4415.0,   5},   // ψ(5S)
+    {3, 3, 1, 1, 2, 1, 3778.1,   1},   // ψ(1D)
+    {3, 3, 1, 1, 2, 2, 3823.5,   1},   // ψ2(1D)
+    {3, 3, 1, 1, 2, 3, 3842.7,   1},   // ψ3(1D)
+    {3, 3, 2, 1, 2, 1, 4191.0,   5},   // ψ(2D)
+    {3, 3, 3, 1, 2, 1, 4374.0,   7},   // ψ(3D)
+    {3, 3, 1, 0, 1, 1, 3525.4,   1},   // hc(1P)
+    {3, 3, 1, 1, 1, 0, 3414.7,   1},   // χc0(1P)
+    {3, 3, 1, 1, 1, 1, 3510.7,   1},   // χc1(1P)
+    {3, 3, 1, 1, 1, 2, 3556.2,   1},   // χc2(1P)
+    {3, 3, 2, 1, 1, 2, 3922.5,   1},   // χc2(2P)
 };
 
-void minuit2_bbbar_GIScreen(double *params_out)
+void minuit2_ccbar_GIScreen(double *params_out)
 {
     srand(time(0));
     DualStream dual("Fitting.out");
@@ -51,7 +49,7 @@ void minuit2_bbbar_GIScreen(double *params_out)
     upar.Add("mc", 1.747603574365, 0.01, 1.5, 2.0);
     upar.Add("mb", 5.095838715, 0.01, 4.5, 5.5);
     upar.Add("b", 0.248247135518, 0.01, 0.1, 0.3);
-    upar.Add("mu", 0.1333931469096, 0.01, 0.05, 0.2);
+    upar.Add("mu", 0.1333931469096, 0.01, 0.1, 0.2);
     upar.Add("c", -0.5334999044266, 0.01, -2.0, 0.0);
     upar.Add("sig0", 1.56552865791, 0.01, 1.0, 3.0);
     upar.Add("s", 1.285723132711, 0.01, 1.0, 3.0);
@@ -69,12 +67,12 @@ void minuit2_bbbar_GIScreen(double *params_out)
     int N_PARAMS = upar.Params().size();
 
     /* use of Migrad algorithm with strategy 2, high precision */
-    Chi2Minimizer minuit_fit(DATA_BBBAR, MODEL_GISCREEN, N_PARAMS, 1.0);
+    Chi2Minimizer minuit_fit(DATA_CCBAR, MODEL_GISCREEN, N_PARAMS, 1.0);
     ROOT::Minuit2::MnMigrad migrad(minuit_fit, upar, 2);
 
     /* perform the fit */
     ROOT::Minuit2::FunctionMinimum min_result = migrad();
-    compute_chi2(DATA_BBBAR, min_result.UserParameters().Params(), MODEL_GISCREEN, true);
+    compute_chi2(DATA_CCBAR, min_result.UserParameters().Params(), MODEL_GISCREEN, true);
     dual << min_result.UserParameters() << std::endl;
 
     auto params = min_result.UserParameters().Params();

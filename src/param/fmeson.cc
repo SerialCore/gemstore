@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/param/meson.h>
+#include <gemstore/param/fmeson.h>
 #include <gemstore/param/minuit.h>
 #include <gemstore/types.h>
 

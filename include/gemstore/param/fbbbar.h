@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef GEMSTORE_PARAM_CCBAR
-#define GEMSTORE_PARAM_CCBAR
+#ifndef GEMSTORE_PARAM_FBBBAR
+#define GEMSTORE_PARAM_FBBBAR
 
 /* Make sure c program can only see this c++ entry function */
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void minuit2_ccbar_GIScreen(double *params_out);
+void minuit2_bbbar_GIScreen(double *params_out);
 
 #ifdef __cplusplus
 }

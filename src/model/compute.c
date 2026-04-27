@@ -5,12 +5,13 @@
  */
 
 #include <gemstore/model/compute.h>
-#include <gemstore/model/spectra.h>
-#include <gemstore/model/radius.h>
-#include <gemstore/param/argset.h>
+#include <gemstore/model/mesongem.h>
+#include <gemstore/model/mesoncrg.h>
+
 #include <gemstore/math/matrix.h>
-#include <gemstore/math/cmatrix.h>
 #include <gemstore/math/interplt.h>
+
+#include <gemstore/param/argset.h>
 
 #include <gemstore/types.h>
 #include <gemstore/parse.h>
@@ -18,8 +19,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <math.h>
 
 void compute_spectra_meson(const argsInput_t *input)
 {
@@ -27,33 +26,30 @@ void compute_spectra_meson(const argsInput_t *input)
 
     /* compute mass eigenvalues and eigenvectors */
     array_t eigenvalue = array_init(nmax);
-    carray_t ceigenvalue = carray_init(nmax);
     array_t rmsradius = array_init(nmax);
     matrix_t eigenvector = matrix_init(nmax, nmax);
-    cmatrix_t ceigenvector = cmatrix_init(nmax, nmax);
     argsGIModel_t args_model = argsGIModel_from(input);
     argsGIModelDy_t args_dynmc = {0};
 
     if (input->model == MODEL_GISTRING) {
         args_dynmc.model = MODEL_GISTRING;
-        args_dynmc.system = SYSTEM_MESON;
     }
     else if (input->model == MODEL_GISCREEN) {
         args_dynmc.model = MODEL_GISCREEN;
+    }
+
+    /* Route to appropriate basis and system dispatcher */
+    if (input->system == SYSTEM_MESON) {
         args_dynmc.system = SYSTEM_MESON;
+        if (input->orbit == ORBIT_GEM) {
+            spectra_meson_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+            radius_meson_GEM(input, &eigenvector, &rmsradius, nmax);
+        }
+        else if (input->orbit == ORBIT_CRG) {
+            spectra_meson_CRG(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+            radius_meson_CRG(input, &eigenvector, &rmsradius, nmax);
+        }
     }
-
-    /* Route to appropriate basis dispatcher */
-    if (input->orbit == ORBIT_GEM) {
-        spectra_meson_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
-    }
-    else if (input->orbit == ORBIT_CRG) {
-        spectra_meson_CRG(input, &args_model, &args_dynmc, &ceigenvalue, &ceigenvector, nmax);
-        carray_print(&ceigenvalue);
-    }
-
-    /* compute RMS radius */
-    radius_meson_GEM(input, &eigenvector, &rmsradius, nmax);
 
     /* interpolate anomalies in RMS radius */
     print_meson_spectra(&eigenvalue, &rmsradius, &eigenvector, nmax);
