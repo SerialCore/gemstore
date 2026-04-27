@@ -250,26 +250,46 @@ void debug_orbit_wfn()
     argsOrbit_t args_ket = {
         .n = 2,
         .l = 0,
-        .scale = nu2
+        .scale = nu2,
     };
 
     double factor, overlap;
 
     factor = 1 / sqrt(2 * nu1);
-    overlap = integral_wfn_overlap(GRnlr, factor, &args_bra, &args_bra);
+    overlap = integral_nlr_overlap(GRnlr, factor, &args_bra, &args_bra);
     printf("Normalized overlap for Gr: %f\n", overlap);
 
     factor = 1 / sqrt(nu1 + nu2);
-    overlap = integral_wfn_overlap(GRnlr, factor, &args_bra, &args_ket);
+    overlap = integral_nlr_overlap(GRnlr, factor, &args_bra, &args_ket);
     printf("Orthogonal overlap for Gr: %f\n", overlap);
 
     factor = sqrt(2 * nu1);
-    overlap = integral_wfn_overlap_complex(GRnlp, factor, &args_bra, &args_bra);
+    overlap = integral_nlp_overlap(GRnlp, factor, &args_bra, &args_bra);
     printf("Normalized overlap for Gp: %f\n", overlap);
 
     factor = sqrt(4 * nu1 * nu2 / (nu1 + nu2));
-    overlap = integral_wfn_overlap_complex(GRnlp, factor, &args_bra, &args_ket);
+    overlap = integral_nlp_overlap(GRnlp, factor, &args_bra, &args_ket);
     printf("Orthogonal overlap for Gp: %f\n", overlap);
+
+    double omega = 0.5;
+    args_bra.param = omega;
+    args_ket.param = omega;
+
+    factor = 1 / sqrt(2 * nu1);
+    overlap = integral_crg_overlap(CGRnlr, factor, &args_bra, &args_bra);
+    printf("Normalized overlap for CGr: %f\n", overlap);
+
+    factor = 1 / sqrt(nu1 + nu2);
+    overlap = integral_crg_overlap(CGRnlr, factor, &args_bra, &args_ket);
+    printf("Orthogonal overlap for CGr: %f\n", overlap);
+
+    factor = sqrt(2 * nu1 * (1 + omega * omega));
+    overlap = integral_crg_overlap(CGRnlp, factor, &args_bra, &args_bra);
+    printf("Normalized overlap for CGp: %f\n", overlap);
+
+    factor = sqrt(4 * nu1 * nu2 * (1 + omega * omega) / (nu1 + nu2));
+    overlap = integral_crg_overlap(CGRnlp, factor, &args_bra, &args_ket);
+    printf("Orthogonal overlap for CGp: %f\n", overlap);
 
     double beta1 = 0.8;
     args_bra.scale = beta1;
@@ -277,19 +297,19 @@ void debug_orbit_wfn()
     args_ket.scale = beta2;
 
     factor = 1 / beta1;
-    overlap = integral_wfn_overlap(SRnlr, factor, &args_bra, &args_bra);
+    overlap = integral_nlr_overlap(SRnlr, factor, &args_bra, &args_bra);
     printf("Normalized overlap for Sr: %f\n", overlap);
 
     factor = sqrt(2 / (beta1 * beta1 + beta2 * beta2));
-    overlap = integral_wfn_overlap(SRnlr, factor, &args_bra, &args_ket);
+    overlap = integral_nlr_overlap(SRnlr, factor, &args_bra, &args_ket);
     printf("Orthogonal overlap for Sr: %f\n", overlap);
 
     factor = beta1;
-    overlap = integral_wfn_overlap_complex(SRnlp, factor, &args_bra, &args_bra);
+    overlap = integral_nlp_overlap(SRnlp, factor, &args_bra, &args_bra);
     printf("Normalized overlap for Sp: %f\n", overlap);
 
     factor = sqrt(2 * beta1 * beta1 * beta2 * beta2 / (beta1 * beta1 + beta2 * beta2));
-    overlap = integral_wfn_overlap_complex(SRnlp, factor, &args_bra, &args_ket);
+    overlap = integral_nlp_overlap(SRnlp, factor, &args_bra, &args_ket);
     printf("Orthogonal overlap for Sp: %f\n", overlap);
 }
 

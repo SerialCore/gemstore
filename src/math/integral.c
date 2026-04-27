@@ -41,8 +41,8 @@ static const double nodes[50] = {
     8.88668005924412897894E+000, 9.28749674141648604654E+000, 9.72416586588463146083E+000, 1.02158862585784281522E+001, 1.08129860729453608573E+001
 };
 
-double integral_wfn_radius(
-    orbit_wfn_t wfn,
+double integral_nlr_radius(
+    orbit_nlr_t wfn,
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket)
@@ -59,8 +59,26 @@ double integral_wfn_radius(
     return sum;
 }
 
-double integral_wfn_overlap(
-    orbit_wfn_t wfn,
+complex integral_crg_radius(
+    orbit_crg_t wfn,
+    double node_factor,
+    const argsOrbit_t *args_bra,
+    const argsOrbit_t *args_ket)
+{
+    complex sum = 0.0;
+
+    for (int i = 0; i < OHP; i++) {
+        sum += node_factor * weights[i]
+             * conj(wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale, args_bra->param))
+             * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale, args_ket->param)
+             * node_factor * node_factor * node_factor * node_factor * nodes[i] * nodes[i] * nodes[i] * nodes[i];
+    }
+
+    return sum;
+}
+
+double integral_nlr_overlap(
+    orbit_nlr_t wfn,
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket)
@@ -77,8 +95,8 @@ double integral_wfn_overlap(
     return sum;
 }
 
-double integral_wfn_overlap_complex(
-    orbit_wfn_complex_t wfn,
+double integral_nlp_overlap(
+    orbit_nlp_t wfn,
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket)
@@ -95,8 +113,26 @@ double integral_wfn_overlap_complex(
     return sum;
 }
 
-double integral_wfn_hamilton(
-    orbit_wfn_t wfn,
+complex integral_crg_overlap(
+    orbit_crg_t wfn,
+    double node_factor,
+    const argsOrbit_t *args_bra,
+    const argsOrbit_t *args_ket)
+{
+    complex sum = 0.0;
+
+    for (int i = 0; i < OHP; i++) {
+        sum += node_factor * weights[i]
+             * conj(wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale, args_bra->param))
+             * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale, args_ket->param)
+             * node_factor * node_factor * nodes[i] * nodes[i];
+    }
+
+    return sum;
+}
+
+double integral_nlr_hamilton(
+    orbit_nlr_t wfn,
     potential_t pot,
     double node_factor,
     const argsOrbit_t *args_bra,
@@ -117,8 +153,8 @@ double integral_wfn_hamilton(
     return sum;
 }
 
-double integral_wfn_hamilton_complex(
-    orbit_wfn_complex_t wfn,
+double integral_nlp_hamilton(
+    orbit_nlp_t wfn,
     potential_t pot,
     double node_factor,
     const argsOrbit_t *args_bra,
@@ -132,6 +168,28 @@ double integral_wfn_hamilton_complex(
         sum += node_factor * weights[i]
              * conj(wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale))
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
+             * pot(node_factor * nodes[i], args_model, args_dynmc)
+             * node_factor * node_factor * nodes[i] * nodes[i];
+    }
+
+    return sum;
+}
+
+complex integral_crg_hamilton(
+    orbit_crg_t wfn,
+    potential_t pot,
+    double node_factor,
+    const argsOrbit_t *args_bra,
+    const argsOrbit_t *args_ket,
+    const argsGIModel_t *args_model,
+    const argsGIModelDy_t *args_dynmc)
+{
+    complex sum = 0.0;
+
+    for (int i = 0; i < OHP; i++) {
+        sum += node_factor * weights[i]
+             * conj(wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale, args_bra->param))
+             * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale, args_ket->param)
              * pot(node_factor * nodes[i], args_model, args_dynmc)
              * node_factor * node_factor * nodes[i] * nodes[i];
     }

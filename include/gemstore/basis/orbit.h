@@ -43,10 +43,10 @@ static inline double getnu(int n, int nmax, double rmax, double rmin)
 }
 
 /* define orbit wave function in coordinate space */
-typedef double (*orbit_wfn_t)(double x, int n, int l, double scale);
+typedef double (*orbit_nlr_t)(double x, int n, int l, double scale);
 
 /* define orbit wave function in momentum space */
-typedef complex (*orbit_wfn_complex_t)(double x, int n, int l, double scale);
+typedef complex (*orbit_nlp_t)(double x, int n, int l, double scale);
 
 /* Spherical harmonic oscillator basis in coordinate space without exponential */
 double SRnlr(double r, int n, int l, double beta);
@@ -59,5 +59,14 @@ double GRnlr(double r, int n, int l, double nu);
 
 /* Gaussian basis in momentum space without exponential */
 complex GRnlp(double p, int n, int l, double nu);
+
+/* define orbit wave function in complex-range Gaussian basis */
+typedef complex (*orbit_crg_t)(double x, int n, int l, double scale, double param);
+
+/* Complex-range Gaussian basis in coordinate space without exponential */
+complex CGRnlr(double r, int n, int l, double nu, double omega);
+
+/* Complex-range Gaussian basis in momentum space without exponential */
+complex CGRnlp(double p, int n, int l, double nu, double omega);
 
 #endif
