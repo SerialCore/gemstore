@@ -149,39 +149,60 @@ void cmatrix_inverse_lowertri(const cmatrix_t *mat, cmatrix_t *imat)
 void cmatrix_cholesky_decomp(const cmatrix_t *matS, cmatrix_t *matL)
 {
 	if (matS->row != matS->col || matL->row != matL->col || matS->row != matL->row) {
-		printf("error_matrix_cholesky_decomp: dimension mismatch\n");
-		return;
-	}
+        printf("error_matrix_cholesky_decomp: dimension mismatch\n");
+        return;
+    }
 
     int n = matS->row;
     complex **L = (complex**)malloc(n * sizeof(complex*));
     for (int i = 0; i < n; i++) L[i] = (complex*)malloc(n * sizeof(complex));
 
+    const double eps = 1e-12;
+
+	/* Hermitianlize */
+	for (int i = 0; i < n; i++) {
+    	for (int j = 0; j < i; j++) {
+        	complex avg = 0.5 * (matS->value[i][j] + conj(matS->value[j][i]));
+        	matS->value[i][j] = avg;
+        	matS->value[j][i] = conj(avg);
+    	}
+    	matS->value[i][i] = creal(matS->value[i][i]) + 0.0*I;
+	}
+
     for (int i = 0; i < n; i++) {
-		/* lower triangle */
+        /* lower triangle */
         for (int j = 0; j < i; j++) {
             complex sum = 0.0 + 0.0*I;
             for (int k = 0; k < j; k++)
                 sum += L[i][k] * conj(L[j][k]);
             L[i][j] = (matS->value[i][j] - sum) / L[j][j];
         }
-		/* diagonal */
+
+        /* diagonal */
         complex sum = 0.0 + 0.0*I;
         for (int k = 0; k < i; k++)
             sum += L[i][k] * conj(L[i][k]);
+
         complex diag_val = matS->value[i][i] - sum;
-        if (creal(diag_val) <= 0.0 || cimag(diag_val) != 0.0) {
-            fprintf(stderr, "Cholesky failed at i=%d\n", i);
+
+		/* define tolerance  */
+        double real_part = creal(diag_val);
+        double imag_part = cimag(diag_val);
+        if (real_part <= 0.0 || fabs(imag_part) > eps) {
+            fprintf(stderr, "Cholesky failed at i=%d: real=%g, imag=%g\n", 
+                    i, real_part, imag_part);
             exit(1);
         }
-        L[i][i] = csqrt(diag_val);
 
-		/* set upper triangle to zero */
+		/* only use real part of diagonal elements */
+        L[i][i] = csqrt(real_part);
+
+        /* upper triangle to zero */
         for (int j = i + 1; j < n; j++)
             L[i][j] = 0.0 + 0.0*I;
     }
 
-	/* write back to matL */
+    /* write back */
     for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++)
             matL->value[i][j] = L[i][j];
