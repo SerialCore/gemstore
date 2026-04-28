@@ -59,13 +59,13 @@ double integral_nlr_radius(
     return sum;
 }
 
-complex integral_crg_radius(
+double integral_crg_radius(
     orbit_crg_t wfn,
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket)
 {
-    complex sum = 0.0;
+    double sum = 0.0;
 
     for (int i = 0; i < OHP; i++) {
         sum += node_factor * weights[i]
@@ -113,13 +113,13 @@ double integral_nlp_overlap(
     return sum;
 }
 
-complex integral_crg_overlap(
+double integral_crg_overlap(
     orbit_crg_t wfn,
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket)
 {
-    complex sum = 0.0;
+    double sum = 0.0;
 
     for (int i = 0; i < OHP; i++) {
         sum += node_factor * weights[i]
@@ -175,7 +175,7 @@ double integral_nlp_hamilton(
     return sum;
 }
 
-complex integral_crg_hamilton(
+double integral_crg_hamilton(
     orbit_crg_t wfn,
     potential_t pot,
     double node_factor,
@@ -184,7 +184,7 @@ complex integral_crg_hamilton(
     const argsGIModel_t *args_model,
     const argsGIModelDy_t *args_dynmc)
 {
-    complex sum = 0.0;
+    double sum = 0.0;
 
     for (int i = 0; i < OHP; i++) {
         sum += node_factor * weights[i]
