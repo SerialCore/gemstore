@@ -21,8 +21,8 @@
 
 ### Key Features
 
-- 🎯 **Multiple Quark Models**: GI-Screen, GI-String, GI-Quadratic, MIT Bag Model
-- 📊 **Comprehensive Spectral Calculations**: Masses, radii, decay widths, coupling constants
+- 🎯 **Multiple Quark Models**: GI-Screen, GI-String
+- 📊 **Spectral Calculations**: Masses, RMS radii, eigenvector analysis
 - 🔧 **Flexible Quantum Numbers**: Full support for arbitrary L, S, J combinations
 - 🤖 **AI-Assisted Workflows**: Integrated OpenCode assistant for intelligent task automation
 - 📈 **Advanced Data Analysis**: Eigenvector analysis, normalization validation, statistical summaries
@@ -55,22 +55,20 @@
 |-------|-------------|----------|
 | **GI-Screen** | Screen-modified Godfrey-Isgur potential with Coulomb screening | Heavy quarkonium (charmonium, bottomonium) |
 | **GI-String** | String-like linear confinement | Light mesons and general meson spectra |
-| **GI-Quadratic** | Quadratic confinement potential | Theoretical studies, precision fits |
-| **MIT Bag** | Bag model confinement | Baryon spectroscopy, validation studies |
 
 ### Calculation Types
 
-- **SPECTRA**: Calculate complete hadron mass spectra
+- **SPECTRA**: Calculate complete hadron mass spectra with eigenvectors
 - **RADIUS**: Compute RMS radii and spatial distributions
-- **DECAY3P0**: Calculate 3P₀ OZI-allowed decay widths
-- **COUPLCHN**: Compute coupling constants to meson channels
-- **SCATTER**: Scattering amplitudes and cross sections
 
 ### System Types
 
-- **MESON**: Quark-antiquark bound states
-- **BARYON**: Three-quark systems
-- **MOLECULE**: Multi-hadron clusters and exotics
+- **MESON**: Quark-antiquark bound states (qq̄)
+
+### Basis Set Options
+
+- **GEM** (Generalized Exponential Morse): Efficient Gaussian basis with exponential envelope
+- **CRG** (Complex-Range Gaussian): Hiyama's complex scaling method
 
 ---
 
@@ -131,55 +129,236 @@ make uninstall
 ### Basic Usage
 
 ```bash
-# Run a charmonium calculation
-./gemstore --input app/amethyst.inp
+# Run a meson spectroscopy calculation with JSON input
+./gemstore --input test/amethyst.json
 
-# Print the confinement potential
-./gemstore --print potential --input app/amethyst.inp
+# Run calculation with CRG basis (complex scaling)
+./gemstore --input test/ruby.json
 
-# Debug spin-orbit coupling operator
-./gemstore --debug soc_operator --input app/amethyst.inp
+# Run with predefined parameters
+./gemstore --input test/diamond.json
+
+# Fit parameters using Minuit2
+./gemstore --fitting GIScreen_ccbar
 ```
 
-### Create Input File
+### JSON Input Format
 
-Create `my_meson.inp`:
+GEMSTORE uses JSON for configuration. Create `my_meson.json`:
 
-```ini
-&GLOBAL
-  project = my_project
-  task = SPECTRA              # SPECTRA | RADIUS | DECAY3P0
-&END
-
-&SYSTEM
-  model = GI_SCREEN           # GI_SCREEN | GI_STRING | GI_QUADRA
-  system = MESON              # MESON | BARYON
-&END
-
-&PARAMS
-  params = GIScreen_ccbar      # Predefined parameter set
-&END
-
-&QUANTUM
-  f1 = 3            # Quark flavor 1 (3=charm)
-  f2 = 3            # Quark flavor 2
-  S = 1             # Spin quantum number
-  L = 0             # Orbital angular momentum
-  J = 1             # Total angular momentum
-&END
-
-&GAUSS
-  nmax = 16         # Number of Gaussian basis functions
-  rmax = 30.0       # Maximum radius (fm)
-  rmin = 0.1        # Minimum radius (fm)
-&END
+```json
+{
+  "project": "my_project",
+  "task": "SPECTRA",
+  "model": {
+    "type": "GISCREEN",
+    "param": "GISCREEN_CCBAR"
+  },
+  "system": {
+    "type": "MESON",
+    "f1": 3,
+    "f2": 3,
+    "S": 1,
+    "L": 0,
+    "J": 1
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 16,
+    "rmax": 30.0,
+    "rmin": 0.1
+  }
+}
 ```
 
 Run it:
 
 ```bash
-./gemstore --input my_meson.inp
+./gemstore --input my_meson.json
 ```
+
+### JSON Input Structure
+
+#### Global Configuration
+
+| Field | Type | Description | Examples |
+|-------|------|-------------|----------|
+| `project` | string | Project name (used for output files) | `"amethyst"`, `"myproject"` |
+| `task` | string | Calculation type | `"SPECTRA"` |
+
+#### Model Configuration
+
+```json
+"model": {
+  "type": "GISCREEN" or "GISTRING",
+  "param": "GISCREEN_CCBAR" or "GISTRING_CUSTOM",
+  "file": "param_file.json"  // Only for CUSTOM params
+}
+```
+
+**Predefined Parameter Sets:**
+- `GISCREEN_CCBAR` - Charm-anticharm with GI-Screen model
+- `GISCREEN_BBBAR` - Bottom-antibottom with GI-Screen model
+- `GISTRING_MESON` - General mesons with GI-String model
+- `GISCREEN_CUSTOM` - Custom parameters from file (requires `"file"` field)
+- `GISTRING_CUSTOM` - Custom GI-String parameters from file
+
+#### System Configuration
+
+```json
+"system": {
+  "type": "MESON",
+  "f1": <flavor_index>,
+  "f2": <flavor_index>,
+  "S": <spin>,
+  "L": <orbital>,
+  "J": <total_angular_momentum>
+}
+```
+
+**Quark Flavors (indices):**
+| Index | Quark | Mass (GeV) |
+|-------|-------|-----------|
+| 1 | n (up/down) | ~0.3-0.35 |
+| 2 | s (strange) | ~0.42-0.53 |
+| 3 | c (charm) | ~1.6-1.8 |
+| 4 | b (bottom) | ~4.9-5.1 |
+
+**Quantum Numbers:**
+- `S`: Spin (0 = singlet, 1 = triplet)
+- `L`: Orbital angular momentum (0, 1, 2, ...)
+- `J`: Total angular momentum J = L + S or |L - S|
+
+#### Basis Configuration
+
+**GEM (Generalized Exponential Morse):**
+```json
+"basis": {
+  "type": "GEM",
+  "nmax": 16,
+  "rmax": 30.0,
+  "rmin": 0.1
+}
+```
+
+**CRG (Complex-Range Gaussian):**
+```json
+"basis": {
+  "type": "CRG",
+  "nmax": 16,
+  "rmax": 30.0,
+  "rmin": 0.1,
+  "omega": 0.1
+}
+```
+
+| Field | Type | Description | Range |
+|-------|------|-------------|-------|
+| `type` | string | Basis set type | `"GEM"`, `"CRG"` |
+| `nmax` | int | Number of Gaussian basis functions | 8-32 (typical: 16) |
+| `rmax` | float | Maximum radius (fm) | 20.0-50.0 |
+| `rmin` | float | Minimum radius (fm) | 0.01-0.5 |
+| `omega` | float | Complex scaling angle (CRG only) | 0.05-0.5 |
+
+### JSON Output Format
+
+Generated by `write_meson_spectra()` in `src/print.c` (lines 234-379), GEMSTORE automatically creates `<project>.out.json`:
+
+```json
+{
+  "generated": "2026-04-25 18:33:25",
+  "project": "amethyst",
+  "task": "SPECTRA",
+  "model": { ... },
+  "system": { ... },
+  "basis": { ... },
+  "states": [
+    {
+      "index": 1,
+      "mass": 3.101986299943893,
+      "rms_radius": 0.324597538486162,
+      "eigenvector": [0.43147459..., 0.56587312..., ...]
+    },
+    ...
+  ]
+}
+```
+
+**Output Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `generated` | string | ISO 8601 timestamp of calculation |
+| `project` | string | Project name (from input) |
+| `task` | string | Calculation type (from input) |
+| `model` | object | Model configuration (echoed from input) |
+| `system` | object | System configuration (echoed from input) |
+| `basis` | object | Basis configuration (echoed from input) |
+| `states` | array | Array of eigenstate results |
+
+**Per-State Data:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `index` | int | State index (1 to nmax) |
+| `mass` | float | Eigenvalue/mass in GeV |
+| `rms_radius` | float | Root-mean-square radius in fm |
+| `eigenvector` | array | Expansion coefficients (length = nmax) |
+
+### JSON Parameter File Format
+
+Custom parameters can be supplied via external JSON file:
+
+**param_custom.json:**
+```json
+{
+  "param": {
+    "mn": 0.220,
+    "ms": 0.419,
+    "mc": 1.628,
+    "mb": 4.977,
+    "b": 0.18,
+    "c": -0.253,
+    "sigma_0": 1.8,
+    "s": 1.55,
+    "epsilon_cont": -0.168,
+    "epsilon_sov": -0.035,
+    "epsilon_sos": 0.055,
+    "epsilon_tens": 0.025
+  }
+}
+```
+
+**Reference to custom parameters:**
+```json
+{
+  ...
+  "model": {
+    "type": "GISTRING",
+    "param": "GISTRING_CUSTOM",
+    "file": "param_custom.json"
+  },
+  ...
+}
+```
+
+**Parameter Definitions:**
+
+| Parameter | Description | Typical Range |
+|-----------|-------------|----------------|
+| `mn` | Up/down quark mass (GeV) | 0.2-0.35 |
+| `ms` | Strange quark mass (GeV) | 0.4-0.6 |
+| `mc` | Charm quark mass (GeV) | 1.6-1.8 |
+| `mb` | Bottom quark mass (GeV) | 4.9-5.2 |
+| `b` | String tension (GI-String) | 0.15-0.25 |
+| `mu` | Screening length (GI-Screen) | 0.1-0.2 |
+| `c` | Constant offset | -0.7 to 0.0 |
+| `sigma_0` | Gaussian smearing width | 1.5-2.0 |
+| `s` | Additional smearing parameter | 1.2-1.6 |
+| `epsilon_cont` | Contact term strength | -0.3 to 0.0 |
+| `epsilon_sov` | Spin-orbit coupling strength | -0.4 to 0.0 |
+| `epsilon_sos` | Thomas precession strength | 0.0-1.0 |
+| `epsilon_tens` | Tensor force strength | -0.5 to 0.1 |
 
 ---
 
@@ -339,26 +518,42 @@ For details: see `app/gemstore-assistant/SKILL.md`
 
 | Function | Algorithm | Output |
 |----------|-----------|--------|
-| `spectra_meson_GI()` | Solve Schrödinger equation | Eigenvalues (masses) |
-| `radius_meson_rms()` | Compute ⟨r²⟩^(1/2) | RMS radii |
+| `spectra_meson_GEM()` | Solve Schrödinger equation (GEM basis) | Eigenvalues (masses) + eigenvectors |
+| `spectra_meson_CRG()` | Solve Schrödinger equation (CRG basis) | Eigenvalues (masses) + eigenvectors |
+| `radius_meson_GEM()` | Compute ⟨r²⟩^(1/2) with GEM basis | RMS radii |
+| `radius_meson_CRG()` | Compute ⟨r²⟩^(1/2) with CRG basis | RMS radii |
 | `interpolate_quadratic()` | Fix anomalies in spectra | Corrected data |
-| `write_meson_spectra()` | Generate report | `.out` file |
+| `write_meson_spectra()` | Serialize results to JSON | `.out.json` file |
 
 ### Potential Functions (src/model/gimodel.c)
 
+The implementation includes 22 complete potential components:
+
+**Primary Interactions:**
 ```c
-double GIVconf(double r, ...)     // Confinement
-double GIVcoul(double r, ...)     // Coulomb
-double GIVcont(double r, ...)     // Contact (spin-spin)
-double GIVsovij(double r, ...)    // Spin-orbit
+double GIVconf(double r, ...)     // Confinement (string or screened)
+double GIVcoul(double r, ...)     // Coulomb (Gaussian screened)
+double GIVcont(double r, ...)     // Contact term (delta-like)
+```
+
+**Spin-Dependent Interactions:**
+```c
+double GIVsovi(double r, ...)     // Spin-orbit coupling (quark 1)
+double GIVsovj(double r, ...)     // Spin-orbit coupling (quark 2)
+double GIVsovij(double r, ...)    // Mixed spin-orbit coupling
+double GIVsosi(double r, ...)     // Thomas precession (quark 1)
+double GIVsosj(double r, ...)     // Thomas precession (quark 2)
 double GIVtens(double r, ...)     // Tensor force
 ```
+
+**Smearing Parameters (9 functions):**
+Gaussian smearing regularization for all potential components.
 
 ### Basis Functions (src/basis/)
 
 | Module | Purpose |
 |--------|---------|
-| `orbit.c` | Orbital angular momentum basis |
+| `orbit.c` | GEM and CRG orbital basis functions |
 | `spin.c` | Spin SU(2) Clebsch-Gordan coefficients |
 | `color.c` | SU(3) color factors |
 | `isospin.c` | Isospin basis states |
@@ -380,97 +575,281 @@ double GIVtens(double r, ...)     // Tensor force
 
 ## Usage Examples
 
-### Example 1: Charmonium Ground State
+### Example 1: Charmonium Ground State with Predefined Parameters
 
-**Input file** (`cc_ground.inp`):
-```ini
-&GLOBAL
-  project = charmonium_ground
-  task = SPECTRA
-&END
-&SYSTEM
-  model = GI_SCREEN
-  system = MESON
-&END
-&PARAMS
-  params = GIScreen_ccbar
-&END
-&QUANTUM
-  f1 = 3  f2 = 3        # Both charm quarks
-  S = 0   L = 0  J = 0  # S-wave, singlet
-&END
-&GAUSS
-  nmax = 16  rmax = 30.0  rmin = 0.1
-&END
+**Input file** (`cc_ground.json`):
+```json
+{
+  "project": "charmonium_ground",
+  "task": "SPECTRA",
+  "model": {
+    "type": "GISCREEN",
+    "param": "GISCREEN_CCBAR"
+  },
+  "system": {
+    "type": "MESON",
+    "f1": 3,
+    "f2": 3,
+    "S": 0,
+    "L": 0,
+    "J": 0
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 16,
+    "rmax": 30.0,
+    "rmin": 0.1
+  }
+}
 ```
 
 **Run**:
 ```bash
-./gemstore --input cc_ground.inp
+./gemstore --input cc_ground.json
 ```
 
-**Output excerpt** (`charmonium_ground.out`):
-```
-State    Mass(GeV)    RMS(fm)      Δmass        max|coeff|   ||coeff||^2   norm_stat
-------+----------+----------+----------+---------------+---------------+---------------
-1        3.096788    0.524365    -0.001234    0.98765432    1.000000000   ✓ OK
+**Output** (`charmonium_ground.out.json`):
+```json
+{
+  "generated": "2026-04-25 18:33:25",
+  "project": "charmonium_ground",
+  "states": [
+    {
+      "index": 1,
+      "mass": 3.096788,
+      "rms_radius": 0.524365,
+      "eigenvector": [0.43147..., 0.56587..., ...]
+    },
+    ...
+  ]
+}
 ```
 
-### Example 2: Print Potential
+### Example 2: Charmonium with Custom Parameters
+
+**Parameter file** (`my_params.json`):
+```json
+{
+  "param": {
+    "mn": 0.220,
+    "ms": 0.419,
+    "mc": 1.747603574365,
+    "mb": 5.095838715,
+    "b": 0.248247135518,
+    "mu": 0.1333931469096,
+    "c": -0.5334999044266,
+    "sigma_0": 1.56552865791,
+    "s": 1.285723132711,
+    "epsilon_cont": -0.2864647624566,
+    "epsilon_sov": -0.349573212139,
+    "epsilon_sos": 0.7905135472165,
+    "epsilon_tens": -0.487322874302
+  }
+}
+```
+
+**Input file** (`cc_custom.json`):
+```json
+{
+  "project": "charmonium_custom",
+  "task": "SPECTRA",
+  "model": {
+    "type": "GISCREEN",
+    "param": "GISCREEN_CUSTOM",
+    "file": "my_params.json"
+  },
+  "system": {
+    "type": "MESON",
+    "f1": 3,
+    "f2": 3,
+    "S": 1,
+    "L": 1,
+    "J": 1
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 16,
+    "rmax": 30.0,
+    "rmin": 0.1
+  }
+}
+```
+
+**Run**:
+```bash
+./gemstore --input cc_custom.json
+```
+
+### Example 3: CRG Basis (Complex-Range Gaussian)
+
+For resonance calculations, use complex scaling:
+
+```json
+{
+  "project": "charmonium_crg",
+  "task": "SPECTRA",
+  "model": {
+    "type": "GISCREEN",
+    "param": "GISCREEN_CCBAR"
+  },
+  "system": {
+    "type": "MESON",
+    "f1": 3,
+    "f2": 3,
+    "S": 1,
+    "L": 0,
+    "J": 1
+  },
+  "basis": {
+    "type": "CRG",
+    "nmax": 16,
+    "rmax": 30.0,
+    "rmin": 0.1,
+    "omega": 0.1
+  }
+}
+```
+
+**Run**:
+```bash
+./gemstore --input charmonium_crg.json
+```
+
+### Example 4: Parameter Fitting
+
+Fit GI-Screen parameters to experimental data using Minuit2:
 
 ```bash
-./gemstore --print potential --input app/amethyst.inp
+./gemstore --fitting GIScreen_ccbar
 ```
 
-### Example 3: Debug Analysis
+This runs Minuit2 optimization to find parameters that best match experimental meson masses.
 
-```bash
-./gemstore --debug soc_operator --input app/amethyst.inp
+### Example 5: Light Mesons with GI-String Model
+
+For light mesons (pions, kaons), GI-String model works better:
+
+```json
+{
+  "project": "light_mesons",
+  "task": "SPECTRA",
+  "model": {
+    "type": "GISTRING",
+    "param": "GISTRING_MESON"
+  },
+  "system": {
+    "type": "MESON",
+    "f1": 1,
+    "f2": 1,
+    "S": 0,
+    "L": 0,
+    "J": 0
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 16,
+    "rmax": 30.0,
+    "rmin": 0.1
+  }
+}
 ```
 
 ---
 
 ## Output Files
 
-### Standard Output (.out)
+### JSON Output (.out.json)
 
-Generated by `write_meson_spectra()`:
+Generated by `write_meson_spectra()` function in `src/print.c`:
 
+When you run:
+```bash
+./gemstore --input myfile.json
 ```
-================================================================================
-                      MESON SPECTROSCOPY RESULTS SUMMARY
-================================================================================
 
-Generated:   2026-04-15 14:30:45
-Project:     charmonium
+GEMSTORE automatically generates `myfile.out.json` with complete results in JSON format.
 
-INPUT CONFIGURATION:
-  Quark Flavors:       f1=3  f2=3
-  Angular Momentum:    S=1.0  L=0.0  J=1.0
-  Gaussian Basis:      nmax=16  rmin=0.1 fm  rmax=30.0 fm
+**Output File Structure:**
 
-MODEL PARAMETERS:
-  Quark Masses:        mn=0.471346  ms=0.628312  mc=1.810505  mb=5.156015 GeV
-  Potential:           b1=0.257547  mu=0.145356  c=-0.658943
-
-SPECTRAL DATA:
-State    Mass(GeV)    RMS(fm)      Δmass        max|coeff|   ||coeff||^2   norm_stat
-...
-
-EIGENVECTOR COMPONENTS:
-State    c[0]         c[1]         c[2]  ...
-...
-
-STATISTICAL SUMMARY:
-  Number of states:    12
-  Mass Statistics (GeV):
-    Min:               0.770000
-    Max:               2.110000
-    Mean:              1.234567
-    Std Dev:           0.123456
-
-================================================================================
+```json
+{
+  "generated": "2026-04-25 18:33:25",
+  "project": "myproject",
+  "task": "SPECTRA",
+  "model": {
+    "type": "GISCREEN",
+    "param": "GISCREEN_CCBAR"
+  },
+  "system": {
+    "type": "MESON",
+    "f1": 3,
+    "f2": 3,
+    "S": 1,
+    "L": 0,
+    "J": 1
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 16,
+    "rmax": 30,
+    "rmin": 0.1
+  },
+  "states": [
+    {
+      "index": 1,
+      "mass": 3.101986299943893,
+      "rms_radius": 0.324597538486162,
+      "eigenvector": [0.43147459135290689, 0.56587312869939621, 0.56203519231094468, ...]
+    },
+    {
+      "index": 2,
+      "mass": 3.6707285768604248,
+      "rms_radius": 0.53640308338098519,
+      "eigenvector": [-0.31500074209555717, -0.28193707412502728, 0.0019418306107957378, ...]
+    },
+    ...
+  ]
+}
 ```
+
+**Output Field Definitions:**
+
+| Top-level Field | Type | Content |
+|-----------------|------|---------|
+| `generated` | string | ISO 8601 timestamp when calculation was performed |
+| `project` | string | Project name from input (used as filename base) |
+| `task` | string | Calculation type (e.g., `"SPECTRA"`) |
+| `model` | object | Model configuration (echoed from input) |
+| `system` | object | System quantum numbers (echoed from input) |
+| `basis` | object | Basis set configuration (echoed from input) |
+| `states` | array | Array of eigenstate results |
+
+**Per-State Fields:**
+
+| State Field | Type | Description |
+|-------------|------|-------------|
+| `index` | integer | State number (1 to nmax) |
+| `mass` | float | Eigenvalue/mass in GeV |
+| `rms_radius` | float | Root-mean-square radius in fm |
+| `eigenvector` | array | Gaussian expansion coefficients (length = nmax) |
+
+**Example Files in test/:**
+
+- `test/amethyst.out.json` - Sample output with 16 states (GEM basis)
+- `test/ruby.out.json` - Sample output with CRG basis
+- `test/diamond.out.json` - Sample output with predefined parameters
+
+**Output Generation Details:**
+
+The `write_meson_spectra()` function (src/print.c:234-379):
+1. Echoes all input configuration for reproducibility
+2. Records generation timestamp
+3. Outputs all eigenvalues as masses
+4. Computes and outputs RMS radii
+5. Includes normalized eigenvectors (expansion coefficients)
+6. Writes to `<project>.out.json` in the current directory
+
+This ensures all calculations are fully reproducible and can be analyzed with standard JSON tools or parsed by other applications.
 
 ---
 
@@ -502,17 +881,20 @@ gemstore/
 ├── lib/                           # External libraries
 │   └── Minuit2/                   # Numerical optimization (CERN)
 │
-├── app/                           # Applications
-│   ├── amethyst.inp               # Example: charmonium
-│   └── gemstore-assistant/        # AI Integration
+├── app/                           # AI Assistant for GEMSTORE
+│   └── gemstore-assistant/        # OpenCode integration
 │       ├── SKILL.md               # Skill definition
-│       ├── scripts/
-│       └── templates/
+│       ├── scripts/               # Helper scripts
+│       └── templates/             # Templates
 │
-├── doc/                           # Documentation
-│   └── logo.png                   # GEMSTORE logo
-│
-└── test/                          # Test suite
+├── test/                          # Test cases & examples
+│   ├── amethyst.json              # Example: GEM basis
+│   ├── ruby.json                  # Example: CRG basis
+│   ├── diamond.json               # Example: predefined params
+│   ├── amethyst.out.json          # Sample output
+│   ├── param_GISCREEN.json        # GI-Screen parameters
+│   ├── param_GISTRING.json        # GI-String parameters
+│   └── ScreenFitting-*/           # Fitting datasets
 
 Total LOC: ~7,800 (C + C++ + Headers)
 ```
@@ -560,7 +942,7 @@ git push origin feature/my-algorithm
 
 ---
 
-## Citation
+## Citation (not completed)
 
 If you use GEMSTORE in research, please cite:
 
