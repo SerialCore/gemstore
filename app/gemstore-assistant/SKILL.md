@@ -140,41 +140,37 @@ Use `--compute <file.json>` for spectroscopy runs with the new parser.
 
 ## Output Expectations
 
-The current `write_meson_spectra()` writes JSON output in `<project>.out.json`.
+The `gemstore` program writes JSON output to `<project>.state.json` with the following structure:
+
+```json
+{
+  "states": [
+    {
+      "index": 1,
+      "mass": 3.1043137618250256,
+      "rms_radius": 0.3248640927951712,
+      "eigenvector": [0.4314763615098784, 0.565769603960552, ...]
+    },
+    {
+      "index": 2,
+      "mass": 3.670680972467695,
+      "rms_radius": 0.5430166015432547,
+      "eigenvector": [-0.31343804644812767, -0.28099014148751866, ...]
+    }
+  ]
+}
+```
+
+Each entry in `states` contains:
+
+- `index` — state number (1-indexed)
+- `mass` — computed meson mass (GeV)
+- `rms_radius` — root-mean-square radius (fm)
+- `eigenvector` — array of expansion coefficients (GEM basis coefficients)
 
 When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional text files are generated:
 - `<project>.pot.dat` — radial potential (r, V)
 - `<project>.wfn.N.dat` — wavefunction per state (r, φ(r)), 990 points from 0.01–10.0 fm
-
-Use `templates/meson_spectra_output_template.json` as the reference for JSON output.
-
-Expect fields like:
-
-- `generated`
-- `project`
-- `task`
-- `model`
-- `system`
-- `basis`
-- `print`
-- `states`
-
-The top-level output contains structured objects for:
-
-- `model`
-- `system`
-- `basis`
-
-For custom parameter sets, the output model object also includes:
-
-- `file`
-
-Each entry in `states` contains:
-
-- `index`
-- `mass`
-- `rms_radius`
-- `eigenvector`
 
 ## Workflow
 
@@ -201,9 +197,8 @@ Each entry in `states` contains:
 
 ### Post-process and present results
 
-- Read the JSON `<project>.out.json` file.
+- Read the JSON `<project>.state.json` file.
 - Check for new text outputs: `<project>.pot.dat` (potential) and `<project>.wfn.N.dat` (wavefunctions per state) when `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set.
-- Use `scripts/parse_meson_output.py <project>.out.json` for a compact summary.
 - Summarize masses, RMS radii, and (if requested) potential/wavefunction file locations.
 - Report eigenvectors when relevant.
 - Mention parse or validation errors with the exact offending field if gemstore rejects the input.

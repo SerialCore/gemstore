@@ -220,6 +220,34 @@ static void parse_print_section(const cJSON *root, argsInput_t *input)
     input->print_wfn = (strcmp(wfn_str, "true") == 0) ? 1 : 0;
 }
 
+void parse_input_file(const char *filename, argsInput_t *input)
+{
+    char *json_text = read_input_file(filename);
+    const char *parse_error = NULL;
+    cJSON *root = cJSON_Parse(json_text);
+
+    if (!root) {
+        parse_error = cJSON_GetErrorPtr();
+        fprintf(stderr, "Invalid JSON input in %s", filename);
+        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
+        fprintf(stderr, "\n");
+        free(json_text);
+        exit(1);
+    }
+
+    strncpy(input->project, read_string_item(root, "project")->valuestring, 256);
+    input->project[255] = '\0';
+
+    parse_task_string(read_string_item(root, "task")->valuestring, input);
+    parse_model_section(root, input);
+    parse_system_section(root, input);
+    parse_basis_section(root, input);
+    parse_print_section(root, input);
+
+    cJSON_Delete(root);
+    free(json_text);
+}
+
 void parse_param_GISTRING(const char *filename, argsGIModel_t *args_model)
 {
     char *json_text = read_input_file(filename);
@@ -290,29 +318,134 @@ void parse_param_GISCREEN(const char *filename, argsGIModel_t *args_model)
     free(json_text);
 }
 
-void parse_input_file(const char *filename, argsInput_t *input)
+void parse_meson_state(const char *filename, array_t *mass, array_t *radius, matrix_t *eigenvector)
 {
+    if (filename == NULL || mass == NULL || radius == NULL || eigenvector == NULL) {
+        fprintf(stderr, "Error: Invalid input parameters to parse_meson_state()\n");
+        exit(1);
+    }
+
+    if (mass->value == NULL || radius->value == NULL || eigenvector->value == NULL) {
+        fprintf(stderr, "Error: Arrays must be pre-allocated (non-NULL values)\n");
+        exit(1);
+    }
+
     char *json_text = read_input_file(filename);
     const char *parse_error = NULL;
     cJSON *root = cJSON_Parse(json_text);
 
     if (!root) {
         parse_error = cJSON_GetErrorPtr();
-        fprintf(stderr, "Invalid JSON input in %s", filename);
+        fprintf(stderr, "Invalid JSON in state file %s", filename);
         if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
         fprintf(stderr, "\n");
         free(json_text);
         exit(1);
     }
 
-    strncpy(input->project, read_string_item(root, "project")->valuestring, 256);
-    input->project[255] = '\0';
+    /* Get states array */
+    cJSON *states_json = cJSON_GetObjectItemCaseSensitive(root, "states");
+    if (!cJSON_IsArray(states_json)) {
+        fprintf(stderr, "Error: Missing or invalid 'states' array in %s\n", filename);
+        cJSON_Delete(root);
+        free(json_text);
+        exit(1);
+    }
+    int num_states = cJSON_GetArraySize(states_json);
+    if (num_states <= 0) {
+        fprintf(stderr, "Error: Empty states array in %s\n", filename);
+        cJSON_Delete(root);
+        free(json_text);
+        exit(1);
+    }
 
-    parse_task_string(read_string_item(root, "task")->valuestring, input);
-    parse_model_section(root, input);
-    parse_system_section(root, input);
-    parse_basis_section(root, input);
-    parse_print_section(root, input);
+    /* Verify array dimensions match */
+    if (num_states != mass->len || num_states != radius->len || num_states != eigenvector->row) {
+        fprintf(stderr, "Error: State count mismatch (expected %d, got %d states in file)\n", 
+                mass->len, num_states);
+        cJSON_Delete(root);
+        free(json_text);
+        exit(1);
+    }
+
+    /* Get eigenvector length from first state */
+    cJSON *first_state = cJSON_GetArrayItem(states_json, 0);
+    cJSON *first_eigenvector = cJSON_GetObjectItemCaseSensitive(first_state, "eigenvector");
+    if (!cJSON_IsArray(first_eigenvector)) {
+        fprintf(stderr, "Error: Missing or invalid 'eigenvector' in first state\n");
+        cJSON_Delete(root);
+        free(json_text);
+        exit(1);
+    }
+    int eigenvector_len = cJSON_GetArraySize(first_eigenvector);
+    if (eigenvector_len != eigenvector->col) {
+        fprintf(stderr, "Error: Eigenvector length mismatch (expected %d, got %d)\n",
+                eigenvector->col, eigenvector_len);
+        cJSON_Delete(root);
+        free(json_text);
+        exit(1);
+    }
+
+    /* Parse states data */
+    for (int n = 0; n < num_states; n++) {
+        cJSON *state = cJSON_GetArrayItem(states_json, n);
+        if (!cJSON_IsObject(state)) {
+            fprintf(stderr, "Error: Invalid state object at index %d\n", n);
+            cJSON_Delete(root);
+            free(json_text);
+            exit(1);
+        }
+
+        /* Parse mass */
+        cJSON *mass_item = cJSON_GetObjectItemCaseSensitive(state, "mass");
+        if (!cJSON_IsNumber(mass_item)) {
+            fprintf(stderr, "Error: Missing or invalid 'mass' in state %d\n", n);
+            cJSON_Delete(root);
+            free(json_text);
+            exit(1);
+        }
+        mass->value[n] = mass_item->valuedouble;
+
+        /* Parse rms_radius */
+        cJSON *radius_item = cJSON_GetObjectItemCaseSensitive(state, "rms_radius");
+        if (!cJSON_IsNumber(radius_item)) {
+            fprintf(stderr, "Error: Missing or invalid 'rms_radius' in state %d\n", n);
+            cJSON_Delete(root);
+            free(json_text);
+            exit(1);
+        }
+        radius->value[n] = radius_item->valuedouble;
+
+        /* Parse eigenvector */
+        cJSON *eigen_array = cJSON_GetObjectItemCaseSensitive(state, "eigenvector");
+        if (!cJSON_IsArray(eigen_array)) {
+            fprintf(stderr, "Error: Missing or invalid 'eigenvector' in state %d\n", n);
+            cJSON_Delete(root);
+            free(json_text);
+            exit(1);
+        }
+
+        int current_eigen_len = cJSON_GetArraySize(eigen_array);
+        if (current_eigen_len != eigenvector_len) {
+            fprintf(stderr, "Error: Eigenvector length mismatch in state %d (expected %d, got %d)\n",
+                    n, eigenvector_len, current_eigen_len);
+            cJSON_Delete(root);
+            free(json_text);
+            exit(1);
+        }
+
+        /* Extract eigenvector coefficients */
+        for (int d = 0; d < eigenvector_len; d++) {
+            cJSON *coeff = cJSON_GetArrayItem(eigen_array, d);
+            if (!cJSON_IsNumber(coeff)) {
+                fprintf(stderr, "Error: Invalid eigenvector coefficient at state %d, index %d\n", n, d);
+                cJSON_Delete(root);
+                free(json_text);
+                exit(1);
+            }
+            eigenvector->value[n][d] = coeff->valuedouble;
+        }
+    }
 
     cJSON_Delete(root);
     free(json_text);

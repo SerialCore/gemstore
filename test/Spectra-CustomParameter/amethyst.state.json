@@ -1,26 +1,4 @@
 {
-	"generated":	"2026-04-25 18:33:25",
-	"project":	"amethyst",
-	"task":	"SPECTRA",
-	"model":	{
-		"type":	"GISCREEN",
-		"param":	"GISCREEN_CUSTOM",
-		"file":	"param_GISCREEN.json"
-	},
-	"system":	{
-		"type":	"MESON",
-		"f1":	3,
-		"f2":	3,
-		"S":	1,
-		"L":	0,
-		"J":	1
-	},
-	"basis":	{
-		"type":	"GEM",
-		"nmax":	16,
-		"rmax":	30,
-		"rmin":	0.1
-	},
 	"states":	[{
 			"index":	1,
 			"mass":	3.101986299943893,

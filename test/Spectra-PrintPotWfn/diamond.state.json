@@ -1,25 +1,4 @@
 {
-	"generated":	"2026-04-28 11:35:34",
-	"project":	"diamond",
-	"task":	"SPECTRA",
-	"model":	{
-		"type":	"GISCREEN",
-		"param":	"GISCREEN_CCBAR"
-	},
-	"system":	{
-		"type":	"MESON",
-		"f1":	3,
-		"f2":	3,
-		"S":	1,
-		"L":	0,
-		"J":	1
-	},
-	"basis":	{
-		"type":	"GEM",
-		"nmax":	16,
-		"rmax":	30,
-		"rmin":	0.1
-	},
 	"states":	[{
 			"index":	1,
 			"mass":	3.1043137618250256,

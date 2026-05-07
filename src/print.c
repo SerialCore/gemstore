@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <time.h>
 #include <complex.h>
 
 void print_logo()
@@ -244,15 +243,12 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
     int nmax = input->nmax;
     FILE *pf;
     cJSON *root = NULL;
-    cJSON *model = NULL;
-    cJSON *system = NULL;
-    cJSON *basis = NULL;
     cJSON *states = NULL;
     char *json_text = NULL;
     int state = 0;
 
-    char path[265];
-    sprintf(path, "%s%s", input->project, ".out.json");
+    char path[267];
+    sprintf(path, "%s%s", input->project, ".state.json");
     pf = fopen(path, "w");
 
     if (pf == NULL) {
@@ -260,69 +256,12 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
         return 0;
     }
 
+    /* Create root object with "states" array (no other metadata) */
     root = cJSON_CreateObject();
     if (root == NULL) {
         fprintf(stderr, "Error: Cannot allocate JSON root for %s\n", path);
         fclose(pf);
         return 0;
-    }
-
-    /* Timestamp and metadata */
-    time_t now = time(NULL);
-    struct tm *timeinfo = localtime(&now);
-    char time_str[80];
-    strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", timeinfo);
-    cJSON_AddStringToObject(root, "generated", time_str);
-    cJSON_AddStringToObject(root, "project", input->project);
-    cJSON_AddStringToObject(root, "task", task_type_str[input->task]);
-
-    model = cJSON_AddObjectToObject(root, "model");
-    if (model == NULL) {
-        fprintf(stderr, "Error: Cannot allocate model object for %s\n", path);
-        cJSON_Delete(root);
-        fclose(pf);
-        return 0;
-    }
-    cJSON_AddStringToObject(model, "type", model_type_str[input->model]);
-    cJSON_AddStringToObject(model, "param", param_type_str[input->param]);
-    if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM) {
-        cJSON_AddStringToObject(model, "file", input->param_file);
-    }
-
-    system = cJSON_AddObjectToObject(root, "system");
-    if (system == NULL) {
-        fprintf(stderr, "Error: Cannot allocate system object for %s\n", path);
-        cJSON_Delete(root);
-        fclose(pf);
-        return 0;
-    }
-    cJSON_AddStringToObject(system, "type", system_type_str[input->system]);
-    if (input->system == SYSTEM_MESON) {
-        cJSON_AddNumberToObject(system, "f1", input->f1);
-        cJSON_AddNumberToObject(system, "f2", input->f2);
-        cJSON_AddNumberToObject(system, "S", input->S);
-        cJSON_AddNumberToObject(system, "L", input->L);
-        cJSON_AddNumberToObject(system, "J", input->J);
-    }
-
-    basis = cJSON_AddObjectToObject(root, "basis");
-    if (basis == NULL) {
-        fprintf(stderr, "Error: Cannot allocate basis object for %s\n", path);
-        cJSON_Delete(root);
-        fclose(pf);
-        return 0;
-    }
-    cJSON_AddStringToObject(basis, "type", orbit_type_str[input->orbit]);
-    if (input->orbit == ORBIT_GEM || input->orbit == ORBIT_CRG) {
-        cJSON_AddNumberToObject(basis, "nmax", input->nmax);
-        cJSON_AddNumberToObject(basis, "rmax", input->rmax);
-        cJSON_AddNumberToObject(basis, "rmin", input->rmin);
-    }
-    if (input->orbit == ORBIT_CRG) {
-        cJSON_AddNumberToObject(basis, "omega", input->omega);
-    }
-    if (input->orbit == ORBIT_SHO) {
-        cJSON_AddNumberToObject(basis, "beta", input->beta);
     }
 
     states = cJSON_AddArrayToObject(root, "states");
@@ -333,6 +272,7 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
         return 0;
     }
 
+    /* Populate states array with state objects */
     for (int n = 0; n < len; n++) {
         cJSON *state_obj = cJSON_CreateObject();
         cJSON *eigenvector = cJSON_CreateArray();
