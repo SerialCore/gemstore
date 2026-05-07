@@ -1,13 +1,13 @@
 ---
 name: gemstore-assistant
-description: Expert agent for running hadron spectroscopy simulations using the gemstore program. Handles JSON input generation for the current parser, meson spectra runs, basis selection, preset or custom parameter-file GI models, and structured JSON outputs.
+description: Expert agent for running hadron spectroscopy simulations using the gemstore program. Handles JSON input generation for the current parser, meson spectra runs, basis selection, preset or custom parameter-file GI models, potential/wavefunction output control, and structured JSON + text outputs.
 license: MIT
 compatibility: opencode
 metadata:
   audience: researchers, hadron physicists, computational particle physics
   domain: hadron spectroscopy, quark models, Gaussian expansion method
   tools: bash, file operations, subprocess execution
-  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, meson spectra, charmonium, bottomonium, GEM, CRG, SHO, custom parameter file
+  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, meson spectra, charmonium, bottomonium, GEM, CRG, SHO, custom parameter file, print section, potential output, wavefunction output
 ---
 
 # Gemstore Hadron Spectra Skill
@@ -16,17 +16,16 @@ You are an expert agent specialized in **hadron spectroscopy** using the `gemsto
 
 ## Current Parser Contract
 
-The active input handler is `src/parse.c`.
+Use JSON input files with `--compute FILE`.
 
-Use JSON input files, not the older section-based `&GLOBAL` / `&SYSTEM` / `&PARAMS` / `&QUANTUM` / `&GAUSS` format.
-
-The parser currently expects:
+The parser expects:
 
 - top-level `project`
 - top-level `task`
-- object `system`
 - object `model`
+- object `system`
 - object `basis`
+- object `print`
 
 Use exact uppercase strings where shown below.
 
@@ -93,6 +92,19 @@ Basis-specific required parameters:
 - `CRG`: `nmax`, `rmax`, `rmin`, `omega`
 - `SHO`: `beta`
 
+### Print Control
+
+```json
+"print": {
+  "pot": "false",
+  "wfn": "false"
+}
+```
+
+- `"true"` → enable output (1)
+- `"false"` → disable output (0)
+- Controls generation of `.pot.dat` and `.wfn.N.dat` files
+
 ### Meson Quantum Numbers
 
 Inside `system` provide:
@@ -113,8 +125,10 @@ Flavor mapping:
 ## Available gemstore CLI
 
 ```bash
-gemstore [--input FILE] [--fitting TARGET] [--print ITEM] [--debug UNIT]
+gemstore [--compute FILE] [--fitting TARGET] [--debug UNIT]
 ```
+
+Use `--compute <file.json>` for spectroscopy runs with the new parser.
 
 ## Input Generation Rules
 
@@ -128,7 +142,11 @@ gemstore [--input FILE] [--fitting TARGET] [--print ITEM] [--debug UNIT]
 
 The current `write_meson_spectra()` writes JSON output in `<project>.out.json`.
 
-Use `templates/meson_spectra_output_template.json` as the reference shape when interpreting or explaining output files.
+When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional text files are generated:
+- `<project>.pot.dat` — radial potential (r, V)
+- `<project>.wfn.N.dat` — wavefunction per state (r, φ(r)), 990 points from 0.01–10.0 fm
+
+Use `templates/meson_spectra_output_template.json` as the reference for JSON output.
 
 Expect fields like:
 
@@ -138,6 +156,7 @@ Expect fields like:
 - `model`
 - `system`
 - `basis`
+- `print`
 - `states`
 
 The top-level output contains structured objects for:
@@ -176,31 +195,33 @@ Each entry in `states` contains:
 
 ### Execute safely
 
-- Run `gemstore --input <file>`.
+- Run `gemstore --compute <file.json>`.
 - Capture stdout and stderr.
 - Use reasonable timeouts.
 
 ### Post-process and present results
 
-- Read the JSON `.out.json` file.
-- Use `scripts/parse_meson_output.py <project>.out.json` for a compact summary, or `--json` for normalized parsed output.
-- Summarize masses and RMS radii clearly.
+- Read the JSON `<project>.out.json` file.
+- Check for new text outputs: `<project>.pot.dat` (potential) and `<project>.wfn.N.dat` (wavefunctions per state) when `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set.
+- Use `scripts/parse_meson_output.py <project>.out.json` for a compact summary.
+- Summarize masses, RMS radii, and (if requested) potential/wavefunction file locations.
 - Report eigenvectors when relevant.
 - Mention parse or validation errors with the exact offending field if gemstore rejects the input.
 
 ## Best Practices
 
 - Confirm parameters before large systematic runs.
-- Prefer `GEM` unless the user explicitly asks for `CRG`, or `SHO`.
+- Use the new `"print"` section to control output of potential (`.pot.dat`) and wavefunction (`.wfn.N.dat`) files.
+- Prefer `GEM` unless the user explicitly asks for `CRG` or `SHO`.
 - Use exact parser spellings: `MESON`, `GISCREEN`, `GISTRING`, `GISCREEN_CCBAR`, etc.
 - Remember that `model.param` is the parameter-set key, not `params` or `preset`.
 - For `*_CUSTOM`, always include `model.file`.
 
 ## Example Requests
 
-- "Calculate charmonium 1P state with J=1 using GISCREEN"
-- "Run bottomonium S and P waves with GEM basis"
-- "Prepare a CRG input with omega = 0.2"
-- "Compute charmonium with SHO basis and beta = 0.8"
+- "Calculate charmonium 1P state with J=1 using GISCREEN and print both potential and wavefunction"
+- "Run bottomonium S and P waves with GEM basis, enable potential output only"
+- "Prepare a CRG input with omega = 0.2 and print wavefunctions"
+- "Compute charmonium with SHO basis, beta = 0.8, and do not print potential"
 
-When this skill is triggered, generate the exact JSON input expected by `src/parse.c`, run the program, and report the resulting physics output cleanly.
+When this skill is triggered, generate the exact JSON input expected by `src/parse.c` (including the new `"print"` section when relevant), run `gemstore --compute <file>`, and report the resulting physics output cleanly, mentioning any generated `.pot.dat` or `.wfn.N.dat` files.

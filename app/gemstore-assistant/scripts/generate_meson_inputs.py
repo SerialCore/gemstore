@@ -22,6 +22,10 @@ template = {
         "rmax": 30.0,
         "rmin": 0.1,
     },
+    "print": {
+        "pot": "false",
+        "wfn": "false"
+    }
 }
 
 states = [

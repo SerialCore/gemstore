@@ -65,8 +65,3 @@ void entry_debug(const char* arg)
     else if (strcmp(arg, "eigen_system_complex") == 0) debug_eigen_system_complex();
     else {fprintf(stderr, "Unknown debug unit: %s\n", arg); exit(1);}
 }
-
-void entry_print(const char* arg)
-{
-    //
-}

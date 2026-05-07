@@ -23,6 +23,10 @@ This template matches the current parser in `src/parse.c`.
     "nmax": 16,
     "rmax": 30.0,
     "rmin": 0.1
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
   }
 }
 ```
@@ -40,6 +44,7 @@ This template matches the current parser in `src/parse.c`.
   - `GISCREEN_BBBAR`
   - `GISCREEN_CUSTOM`
 - `basis.type`: `GEM`, `CRG`, `SHO`
+- `print.pot`, `print.wfn`: `"true"` or `"false"` (controls output of `.pot.dat` and `.wfn.N.dat` files)
 
 ## Custom Parameter Files
 
@@ -79,6 +84,10 @@ Example:
     "nmax": 16,
     "rmax": 30.0,
     "rmin": 0.1
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
   }
 }
 ```

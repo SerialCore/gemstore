@@ -19,7 +19,7 @@
     "nmax": 16,
     "rmax": 30.0,
     "rmin": 0.1
-  },
+  }
   "states": [
     {
       "index": 1,

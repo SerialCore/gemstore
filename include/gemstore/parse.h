@@ -7,15 +7,16 @@
 #ifndef GEMSTORE_PARSE
 #define GEMSTORE_PARSE
 
+#include <gemstore/math/matrix.h>
 #include <gemstore/param/argset.h>
-
-/* parse input file */
-void parse_input_file(const char *filename, argsInput_t *input);
 
 /* parse GISTRING parameters */
 void parse_param_GISTRING(const char *filename, argsGIModel_t *args_model);
 
 /* parse GISCREEN parameters */
 void parse_param_GISCREEN(const char *filename, argsGIModel_t *args_model);
+
+/* parse input file */
+void parse_input_file(const char *filename, argsInput_t *input);
 
 #endif

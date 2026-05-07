@@ -19,7 +19,4 @@ void entry_fitting(const char* arg);
 /* dispatch the debug tasks */
 void entry_debug(const char* arg);
 
-/* dispatch the print tasks */
-void entry_print(const char* arg);
-
 #endif

@@ -5,8 +5,11 @@
  */
 
 #include <gemstore/print.h>
-#include <gemstore/math/matrix.h>
 #include <gemstore/parse.h>
+#include <gemstore/math/soc.h>
+#include <gemstore/math/matrix.h>
+#include <gemstore/basis/orbit.h>
+#include <gemstore/model/gimodel.h>
 #include <gemstore/param/argset.h>
 
 #include "cJSON.h"
@@ -16,6 +19,7 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <complex.h>
 
 void print_logo()
 {
@@ -32,13 +36,12 @@ void print_logo()
 void print_help()
 {
     printf("gemstore: hadron spectroscopy tools using Gaussian Expanding Method, Godfrey-Isgur models and more.\n\n");
-    printf("Usage: gemstore [--input FILE] [--fitting TARGET] [--print ITEM] [--debug UNIT]\n\n");
+    printf("Usage: gemstore [--compute FILE] [--fitting TARGET] [--debug UNIT]\n\n");
     printf("Arguments:\n");
-    printf("  -i, --input           input FILE that constains full instructions\n");
+    printf("  -c, --compute         perform computation with input FILE that contains full instructions\n");
     printf("  -f, --fitting         fit TARGET such as GIScreen_meson, GIScreen_ccbar, GIScreen_bbbar, GIQuadra_light\n");
     printf("  -d, --debug           debug UNIT such as su3_product, soc_operator, casimir_operator, \n");
     printf("                        color_wfn, spin_wfn, isospin_wfn, orbit_wfn, eigen_system\n");
-    printf("  -p, --print           print ITEM such as potential, wavefunction\n");
     printf("  -h,--help             show this help\n");
     printf("  -v,--version          show version\n\n");
 }
@@ -100,10 +103,10 @@ void print_input_parameters(const argsInput_t *input)
 
     /* Quark Flavor Configuration */
     printf("Quark Flavor Configuration:\n");
-    printf("  Flavor 1 (f1):        %-50d\n", input->f1);
-    printf("  Flavor 2 (f2):        %-50d\n", input->f2);
-    printf("  Flavor 3 (f3):        %-50d\n", input->f3);
-    printf("  Flavor 4 (f4):        %-50d\n", input->f4);
+    if (input->system == SYSTEM_MESON) {
+        printf("  Flavor 1 (f1):        %-50d\n", input->f1);
+        printf("  Flavor 2 (f2):        %-50d\n", input->f2);
+    }
     printf("\n");
 
     /* Angular Momentum Quantum Numbers */
@@ -376,4 +379,148 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
     free(json_text);
 
     return state;
+}
+
+static void write_state_wfn(const argsInput_t *input, const double *eigenvector, FILE *file)
+{
+    if (input == NULL || eigenvector == NULL || file == NULL) {
+        return;
+    }
+
+    /* variables for printing */
+    int L = (int)input->L;
+    double rmin = 0.01;
+    double rmax = 10.0;
+    double dr = 0.01;
+    double fm = 5.06773093854369882649; /* fm to GeV^-1 conversion */
+
+    int nmax = input->nmax;
+
+    /* Evaluate wave function at each radial point */
+    for (double r = rmin; r <= rmax; r += dr) {
+        double rGeV = r * fm; /* convert fm to GeV^-1 for consistency with potential */
+        double psi_r = 0.0;
+
+        /* Sum over basis functions: psi(r) = sum_n c[n] * phi_n(r) */
+        for (int n = 0; n < nmax; n++) {
+            double N = n + 1;
+            double c_n = eigenvector[n];
+            double basis_func = 0.0;
+
+            /* Compute basis function phi_n(r) depending on basis type */
+            if (input->orbit == ORBIT_GEM) {
+                double nu = getnu(N, nmax, input->rmax, input->rmin);
+                basis_func = GRnlr(rGeV, N, L, nu) * exp(-nu * rGeV * rGeV);
+            }
+            else if (input->orbit == ORBIT_CRG) {
+                double nu = getnu(N, nmax, input->rmax, input->rmin);
+                double omega = input->omega;
+                complex basis_func_complex = CGRnlr(rGeV, N, L, nu, omega) * exp(-nu * rGeV * rGeV);
+                basis_func = creal(basis_func_complex);
+            }
+            else if (input->orbit == ORBIT_SHO) {
+                double beta = input->beta;
+                basis_func = SRnlr(rGeV, n, L, beta) * exp(-0.5 * beta * beta * rGeV * rGeV);
+            }
+
+            psi_r += c_n * basis_func;
+        }
+
+        /* Output: radial coordinate and wave function value */
+        fprintf(file, "%.8f    %.8e\n", r, psi_r);
+    }
+}
+
+int write_meson_wfn(const argsInput_t *input, const matrix_t *vector)
+{
+    if (input == NULL || vector == NULL) {
+        fprintf(stderr, "Error: Invalid input parameters to write_meson_wfn()\n");
+        return 0;
+    }
+
+    int nmax = input->nmax;
+    int state = 1;
+
+    for (int n = 0; n < nmax; n++) {
+        FILE *pf;
+        char path[275];
+
+        sprintf(path, "%s.wfn.%d.dat", input->project, n + 1);
+        pf = fopen(path, "w");
+        if (pf == NULL) {
+            fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+            state = 0;
+            continue;
+        }
+
+        write_state_wfn(input, vector->value[n], pf);
+
+        if (fclose(pf) != 0) {
+            fprintf(stderr, "Error: Failed to close file %s\n", path);
+            state = 0;
+        }
+    }
+
+    return state;
+}
+
+int write_potential_GI(const argsInput_t *input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc)
+{
+    if (input == NULL || args_model == NULL || args_dynmc == NULL) {
+        fprintf(stderr, "Error: Invalid input parameters to write_potential_GI()\n");
+        return 0;
+    }
+
+    /* prepare variables */
+    int f1 = input->f1, f2 = input->f2;
+    double s1 = 0.5, s2 = 0.5;
+    double S = input->S, L = input->L, J = input->J;
+    double m1 = getmq(f1, args_model);
+    double m2 = getmq(f2, args_model);
+    double sigmaij = sigma_ij(m1, m2, args_model->sigma_0, args_model->s);
+    args_dynmc->mi = m1;
+    args_dynmc->mj = m2;
+    args_dynmc->Cij = -4.0 / 3.0;
+    args_dynmc->OCent = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
+    args_dynmc->OSdS = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
+    args_dynmc->OLSi = operator_ldotsi_sl(s1, s2, S, L, s1, s2, S, L, J);
+    args_dynmc->OLSj = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
+    args_dynmc->OTens = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
+    args_dynmc->Sigij = sigmaij;
+    sigma_k_ij(sigmaij, args_dynmc->Sigkij);
+
+    FILE *pf;
+    char path[264];
+    sprintf(path, "%s%s", input->project, ".pot.dat");
+    pf = fopen(path, "w");
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+
+    double fm = 5.06773093854369882649;
+    double rmin = 0.01;
+    double rmax = 10.0;
+    double dr = 0.01;
+    for (double r = rmin; r <= rmax; r += dr) {
+        double rGeV = r * fm; /* convert fm to GeV^-1 */
+        double potential = GIVconf(rGeV, args_model, args_dynmc)
+            + GIVcoul(rGeV, args_model, args_dynmc)
+            + GIVcont(rGeV, args_model, args_dynmc)
+            + GIVsovi(rGeV, args_model, args_dynmc)
+            + GIVsovj(rGeV, args_model, args_dynmc)
+            + GIVsovij(rGeV, args_model, args_dynmc)
+            + GIVsosi(rGeV, args_model, args_dynmc)
+            + GIVsosj(rGeV, args_model, args_dynmc)
+            + GIVtens(rGeV, args_model, args_dynmc);
+
+        fprintf(pf, "%.8f    %.8e\n", r, potential);
+    }
+
+    if (fclose(pf) != 0) {
+        fprintf(stderr, "Error: Failed to close file %s\n", path);
+        return 0;
+    }
+
+    return 1;
 }

@@ -6,6 +6,7 @@
 
 #include <gemstore/parse.h>
 #include <gemstore/types.h>
+#include <gemstore/math/matrix.h>
 #include <gemstore/param/argset.h>
 
 #include "cJSON.h"
@@ -93,6 +94,16 @@ static cJSON *read_number_item(const cJSON *object, const char *key)
     return item;
 }
 
+static cJSON *read_array_item(const cJSON *object, const char *key)
+{
+    cJSON *item = cJSON_GetObjectItemCaseSensitive(object, key);
+    if (!cJSON_IsArray(item)) {
+        fprintf(stderr, "Missing or invalid array: %s\n", key);
+        exit(1);
+    }
+    return item;
+}
+
 static void parse_task_string(const char *value, argsInput_t *input)
 {
     if (strcmp(value, "SPECTRA") == 0) input->task = TASK_SPECTRA;
@@ -141,7 +152,7 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
     if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM) {
         const char *file = read_string_item(model_json, "file")->valuestring;
         if (strlen(file) > 0) {
-            strncpy(input->param_file, file, 255);
+            strncpy(input->param_file, file, 256);
             input->param_file[255] = '\0';
         }
         else {
@@ -199,31 +210,14 @@ static void parse_basis_section(const cJSON *root, argsInput_t *input)
     }
 }
 
-void parse_input_file(const char *filename, argsInput_t *input)
+static void parse_print_section(const cJSON *root, argsInput_t *input)
 {
-    char *json_text = read_input_file(filename);
-    const char *parse_error = NULL;
-    cJSON *root = cJSON_Parse(json_text);
+    cJSON *print_json = read_object_item(root, "print");
+    const char *pot_str = read_string_item(print_json, "pot")->valuestring;
+    const char *wfn_str = read_string_item(print_json, "wfn")->valuestring;
 
-    if (!root) {
-        parse_error = cJSON_GetErrorPtr();
-        fprintf(stderr, "Invalid JSON input in %s", filename);
-        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
-        fprintf(stderr, "\n");
-        free(json_text);
-        exit(1);
-    }
-
-    strncpy(input->project, read_string_item(root, "project")->valuestring, 255);
-    input->project[255] = '\0';
-
-    parse_task_string(read_string_item(root, "task")->valuestring, input);
-    parse_model_section(root, input);
-    parse_system_section(root, input);
-    parse_basis_section(root, input);
-
-    cJSON_Delete(root);
-    free(json_text);
+    input->print_pot = (strcmp(pot_str, "true") == 0) ? 1 : 0;
+    input->print_wfn = (strcmp(wfn_str, "true") == 0) ? 1 : 0;
 }
 
 void parse_param_GISTRING(const char *filename, argsGIModel_t *args_model)
@@ -291,6 +285,34 @@ void parse_param_GISCREEN(const char *filename, argsGIModel_t *args_model)
     args_model->epsilon_sov = read_number_item(param_json, "epsilon_sov")->valuedouble;
     args_model->epsilon_sos = read_number_item(param_json, "epsilon_sos")->valuedouble;
     args_model->epsilon_tens = read_number_item(param_json, "epsilon_tens")->valuedouble;
+
+    cJSON_Delete(root);
+    free(json_text);
+}
+
+void parse_input_file(const char *filename, argsInput_t *input)
+{
+    char *json_text = read_input_file(filename);
+    const char *parse_error = NULL;
+    cJSON *root = cJSON_Parse(json_text);
+
+    if (!root) {
+        parse_error = cJSON_GetErrorPtr();
+        fprintf(stderr, "Invalid JSON input in %s", filename);
+        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
+        fprintf(stderr, "\n");
+        free(json_text);
+        exit(1);
+    }
+
+    strncpy(input->project, read_string_item(root, "project")->valuestring, 256);
+    input->project[255] = '\0';
+
+    parse_task_string(read_string_item(root, "task")->valuestring, input);
+    parse_model_section(root, input);
+    parse_system_section(root, input);
+    parse_basis_section(root, input);
+    parse_print_section(root, input);
 
     cJSON_Delete(root);
     free(json_text);

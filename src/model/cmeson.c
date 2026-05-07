@@ -19,17 +19,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static inline double getmq(int index, const argsGIModel_t *args_model)
-{
-    switch (index) {
-        case 1: return args_model->mn;
-        case 2: return args_model->ms;
-        case 3: return args_model->mc;
-        case 4: return args_model->mb;
-        default: return args_model->mn;
-    }
-}
-
 void spectra_meson_GEM(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
     array_t *e_out, matrix_t *v_out, int v_len)
 {

@@ -12,7 +12,7 @@
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/model/gimodel.h>
-#include <gemstore/model/mesongem.h>
+#include <gemstore/model/cmeson.h>
 
 #include <stdio.h>
 #include <stdlib.h>

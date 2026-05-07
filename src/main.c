@@ -21,17 +21,16 @@ int main(int argc, char **argv)
 
     int option;
     static struct option long_options[] = {
-        {"input",   required_argument, 0, 'i'},
+        {"compute", required_argument, 0, 'c'},
         {"fitting", required_argument, 0, 'f'},
         {"debug",   required_argument, 0, 'd'},
-        {"print",   required_argument, 0, 'p'},
         {"help",    no_argument, 0, 'h'},
         {"version", no_argument, 0, 'v'},
         {0, 0, 0, 0}
     };
-    while ((option = getopt_long(argc, argv, "i:f:d:p:hv", long_options, NULL)) != -1) {
+    while ((option = getopt_long(argc, argv, ":c:f:d:hv", long_options, NULL)) != -1) {
         switch (option) {
-            case 'i':
+            case 'c':
                 entry_compute(optarg);
                 break;
             case 'f':
@@ -40,14 +39,14 @@ int main(int argc, char **argv)
             case 'd':
                 entry_debug(optarg);
                 break;
-            case 'p':
-                entry_print(optarg);
-                break;
             case 'h':
                 print_help();
                 return 0;
             case 'v':
                 printf("gemstore version 1.1\n");
+                return 0;
+            default:
+                print_help();
                 return 0;
         }
     }

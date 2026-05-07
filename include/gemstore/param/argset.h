@@ -29,7 +29,7 @@ typedef struct argsGIModel {
     double ms;              /* mass of s quark */
     double mc;              /* mass of c quark */
     double mb;              /* mass of b quark */
-    double b;              /* string tension */
+    double b;               /* string tension */
     double mu;              /* screen length */
     double c;               /* constant potential */
     double sigma_0;         /* GI smearing parameter for sigma */
@@ -61,6 +61,8 @@ typedef struct argsInput {
     model_type_t model;
     param_type_t param;
     system_type_t system;
+    int print_pot;          /* if print potential */
+    int print_wfn;          /* if print wavefunction */
     int f1;                 /* flavor 1 */
     int f2;                 /* flavor 2 */
     int f3;                 /* flavor 3 */
@@ -74,7 +76,6 @@ typedef struct argsInput {
     double rmin;            /* Gaussian parameter */
     double beta;            /* harmonic oscillator parameter */
     double omega;           /* complex-range Gaussian parameter */
-    double theta;           /* complex scaling angle */
     char project[256];      /* project name */
     char param_file[256];   /* parameter file name */
 } argsInput_t;
@@ -93,5 +94,17 @@ extern const argsGIModel_t argsGIScreen_ccbar;
 
 /* Get GI model parameters from input */
 argsGIModel_t argsGIModel_from(const argsInput_t *input);
+
+/* Get quark mass from GI model */
+static inline double getmq(int index, const argsGIModel_t *args_model)
+{
+    switch (index) {
+        case 1: return args_model->mn;
+        case 2: return args_model->ms;
+        case 3: return args_model->mc;
+        case 4: return args_model->mb;
+        default: return args_model->mn;
+    }
+}
 
 #endif
