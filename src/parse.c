@@ -168,6 +168,7 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
     const char *type = read_string_item(system_json, "type")->valuestring;
 
     if (strcmp(type, "MESON") == 0) input->system = SYSTEM_MESON;
+    else if (strcmp(type, "BARYON") == 0) input->system = SYSTEM_BARYON;
     else {
         fprintf(stderr, "Unsupported system type: %s\n", type);
         exit(1);
@@ -179,6 +180,15 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
         input->S = read_number_item(system_json, "S")->valuedouble;
         input->L = read_number_item(system_json, "L")->valuedouble;
         input->J = read_number_item(system_json, "J")->valuedouble;
+    }
+    else if (input->system == SYSTEM_BARYON) {
+        input->f1 = read_number_item(system_json, "f1")->valueint;
+        input->f2 = read_number_item(system_json, "f2")->valueint;
+        input->f3 = read_number_item(system_json, "f3")->valueint;
+        input->J = read_number_item(system_json, "J")->valuedouble;
+        input->P = read_number_item(system_json, "P")->valueint;
+        input->f12 = read_number_item(system_json, "sym12")->valueint;
+        input->Lmax = read_number_item(system_json, "Lmax")->valueint;
     }
 }
 

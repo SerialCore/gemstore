@@ -10,5 +10,6 @@
 #include <gemstore/param/argset.h>
 
 void compute_spectra_meson(const argsInput_t *input);
+void compute_spectra_baryon(const argsInput_t *input);
 
 #endif

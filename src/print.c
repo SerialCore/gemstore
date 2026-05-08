@@ -106,13 +106,24 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Flavor 1 (f1):        %-50d\n", input->f1);
         printf("  Flavor 2 (f2):        %-50d\n", input->f2);
     }
+    else if (input->system == SYSTEM_BARYON) {
+        printf("  Flavor 1 (f1):        %-50d\n", input->f1);
+        printf("  Flavor 2 (f2):        %-50d\n", input->f2);
+        printf("  Flavor 3 (f3):        %-50d\n", input->f3);
+    }
     printf("\n");
 
     /* Angular Momentum Quantum Numbers */
     printf("Angular Momentum Quantum Numbers:\n");
-    printf("  Spin Momentum (S):    %-50.6f\n", input->S);
-    printf("  Orbital Momentum (L): %-50.6f\n", input->L);
-    printf("  jl (Orbital jl):      %-50.6f\n", input->jl);
+    if (input->system == SYSTEM_MESON) {
+        printf("  Spin Momentum (S):    %-50.6f\n", input->S);
+        printf("  Orbital Momentum (L): %-50.6f\n", input->L);
+    }
+    else if (input->system == SYSTEM_BARYON) {
+        printf("  1<->2 symmetry:       %-50d\n", input->f12);
+        printf("  Parity (P):           %-50d\n", input->P);
+        printf("  Jacobi Lmax:          %-50d\n", input->Lmax);
+    }
     printf("  Total Momentum (J):   %-50.6f\n", input->J);
     printf("\n");
 
@@ -233,6 +244,60 @@ void print_meson_spectra(const array_t *eigenvalue, const array_t *rmsradius, co
     printf("\n");
 }
 
+void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, const matrix_t *overlap, int len)
+{
+    if (eigenvalue == NULL || eigenvector == NULL || overlap == NULL) {
+        return;
+    }
+
+    printf("\n");
+    printf("================================================================================\n");
+    printf("                           BARYON RESULTS SUMMARY                              \n");
+    printf("================================================================================\n");
+    printf("\n");
+
+    double min_mass = eigenvalue->value[0];
+    double max_mass = eigenvalue->value[0];
+    double total_norm = 0.0;
+
+    printf("%-6s%-12s%-12s%-15s%-15s\n",
+        "State", "Mass(GeV)", "max|c|", "c^T N c", "norm_check");
+    printf("------+-----------+-----------+--------------+--------------\n");
+
+    for (int n = 0; n < len; n++) {
+        double norm = 0.0;
+        double maxc = 0.0;
+
+        if (eigenvalue->value[n] < min_mass) min_mass = eigenvalue->value[n];
+        if (eigenvalue->value[n] > max_mass) max_mass = eigenvalue->value[n];
+
+        for (int i = 0; i < eigenvector->col; i++) {
+            double c = fabs(eigenvector->value[n][i]);
+            if (c > maxc) maxc = c;
+        }
+
+        for (int i = 0; i < eigenvector->col; i++) {
+            for (int j = 0; j < eigenvector->col; j++) {
+                norm += eigenvector->value[n][i] * overlap->value[i][j] * eigenvector->value[n][j];
+            }
+        }
+
+        total_norm += norm;
+
+        printf("%-6d%-12.6f%-12.6f%-15.10f%-15s\n",
+            n + 1, eigenvalue->value[n], maxc, norm,
+            (fabs(norm - 1.0) < 1e-6) ? "OK" : "CHECK");
+    }
+
+    printf("\n");
+    printf("GLOBAL STATISTICS:\n");
+    printf("  Number of states:    %d\n", len);
+    printf("  Mass range:          %.6f - %.6f GeV (Δ=%.6f GeV)\n",
+        min_mass, max_mass, max_mass - min_mass);
+    printf("  Total norm sum:      %.10f\n", total_norm);
+    printf("\n");
+}
+
 int write_meson_spectra(const argsInput_t *input, const array_t *mass, const array_t *radius, const matrix_t *vector, int len)
 {
     if (input == NULL || mass == NULL || radius == NULL || vector == NULL || len <= 0) {
@@ -291,6 +356,90 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
         cJSON_AddNumberToObject(state_obj, "rms_radius", radius->value[n]);
 
         for (int d = 0; d < nmax; d++) {
+            cJSON_AddItemToArray(eigenvector, cJSON_CreateNumber(vector->value[n][d]));
+        }
+
+        cJSON_AddItemToObject(state_obj, "eigenvector", eigenvector);
+        cJSON_AddItemToArray(states, state_obj);
+    }
+
+    json_text = cJSON_Print(root);
+    if (json_text == NULL) {
+        fprintf(stderr, "Error: Cannot serialize JSON output for %s\n", path);
+        cJSON_Delete(root);
+        fclose(pf);
+        return 0;
+    }
+
+    if (fputs(json_text, pf) == EOF) {
+        fprintf(stderr, "Error: Failed writing JSON output to %s\n", path);
+        cJSON_Delete(root);
+        free(json_text);
+        fclose(pf);
+        return 0;
+    }
+
+    state = fclose(pf) == 0 ? 1 : 0;
+    cJSON_Delete(root);
+    free(json_text);
+
+    return state;
+}
+
+int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const matrix_t *vector, int len)
+{
+    if (input == NULL || mass == NULL || vector == NULL || len <= 0) {
+        fprintf(stderr, "Error: Invalid input parameters to write_baryon_spectra()\n");
+        return 0;
+    }
+
+    FILE *pf;
+    cJSON *root = NULL;
+    cJSON *states = NULL;
+    char *json_text = NULL;
+    int state = 0;
+
+    char path[267];
+    sprintf(path, "%s%s", input->project, ".state.json");
+    pf = fopen(path, "w");
+
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+
+    root = cJSON_CreateObject();
+    if (root == NULL) {
+        fprintf(stderr, "Error: Cannot allocate JSON root for %s\n", path);
+        fclose(pf);
+        return 0;
+    }
+
+    states = cJSON_AddArrayToObject(root, "states");
+    if (states == NULL) {
+        fprintf(stderr, "Error: Cannot allocate states array for %s\n", path);
+        cJSON_Delete(root);
+        fclose(pf);
+        return 0;
+    }
+
+    for (int n = 0; n < len; n++) {
+        cJSON *state_obj = cJSON_CreateObject();
+        cJSON *eigenvector = cJSON_CreateArray();
+
+        if (state_obj == NULL || eigenvector == NULL) {
+            cJSON_Delete(eigenvector);
+            cJSON_Delete(state_obj);
+            fprintf(stderr, "Error: Cannot allocate state JSON for %s\n", path);
+            cJSON_Delete(root);
+            fclose(pf);
+            return 0;
+        }
+
+        cJSON_AddNumberToObject(state_obj, "index", n + 1);
+        cJSON_AddNumberToObject(state_obj, "mass", mass->value[n]);
+
+        for (int d = 0; d < vector->col; d++) {
             cJSON_AddItemToArray(eigenvector, cJSON_CreateNumber(vector->value[n][d]));
         }
 

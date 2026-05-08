@@ -71,6 +71,9 @@ typedef struct argsInput {
     double L;               /* orbit momentum L */
     double jl;              /* orbit momentum jl */
     double J;               /* total momentum J */
+    int P;                  /* parity */
+    int f12;                /* symmetry under 1<->2 exchange */
+    int Lmax;               /* baryon orbital truncation */
     int nmax;               /* Gaussian parameter */
     double rmax;            /* Gaussian parameter */
     double rmin;            /* Gaussian parameter */

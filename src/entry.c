@@ -23,17 +23,24 @@ void entry_compute(const char* arg)
     print_input_parameters(&input);
 
     if (input.task == TASK_SPECTRA) {
-        if (input.system != SYSTEM_MESON) {
-            fprintf(stderr, "SPECTRA currently supports only MESON systems\n");
+        if (input.system == SYSTEM_MESON) {
+            if (input.orbit != ORBIT_GEM && input.orbit != ORBIT_CRG) {
+                fprintf(stderr, "SPECTRA meson compute supports: GEM, CRG basis\n");
+                exit(1);
+            }
+            compute_spectra_meson(&input);
+        }
+        else if (input.system == SYSTEM_BARYON) {
+            if (input.orbit != ORBIT_GEM) {
+                fprintf(stderr, "SPECTRA baryon compute supports: GEM basis\n");
+                exit(1);
+            }
+            compute_spectra_baryon(&input);
+        }
+        else {
+            fprintf(stderr, "SPECTRA currently supports only MESON and BARYON systems\n");
             exit(1);
         }
-
-        if (input.orbit != ORBIT_GEM && input.orbit != ORBIT_CRG) {
-            fprintf(stderr, "SPECTRA meson compute supports: GEM, CRG basis\n");
-            exit(1);
-        }
-
-        compute_spectra_meson(&input);
     }
 }
 
