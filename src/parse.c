@@ -343,14 +343,8 @@ void parse_meson_state(const char *filename, array_t *mass, array_t *radius, mat
         exit(1);
     }
 
-    /* Get states array */
-    cJSON *states_json = cJSON_GetObjectItemCaseSensitive(root, "states");
-    if (!cJSON_IsArray(states_json)) {
-        fprintf(stderr, "Error: Missing or invalid 'states' array in %s\n", filename);
-        cJSON_Delete(root);
-        free(json_text);
-        exit(1);
-    }
+    /* Get states array using read_array_item */
+    cJSON *states_json = read_array_item(root, "states");
     int num_states = cJSON_GetArraySize(states_json);
     if (num_states <= 0) {
         fprintf(stderr, "Error: Empty states array in %s\n", filename);
@@ -370,13 +364,7 @@ void parse_meson_state(const char *filename, array_t *mass, array_t *radius, mat
 
     /* Get eigenvector length from first state */
     cJSON *first_state = cJSON_GetArrayItem(states_json, 0);
-    cJSON *first_eigenvector = cJSON_GetObjectItemCaseSensitive(first_state, "eigenvector");
-    if (!cJSON_IsArray(first_eigenvector)) {
-        fprintf(stderr, "Error: Missing or invalid 'eigenvector' in first state\n");
-        cJSON_Delete(root);
-        free(json_text);
-        exit(1);
-    }
+    cJSON *first_eigenvector = read_array_item(first_state, "eigenvector");
     int eigenvector_len = cJSON_GetArraySize(first_eigenvector);
     if (eigenvector_len != eigenvector->col) {
         fprintf(stderr, "Error: Eigenvector length mismatch (expected %d, got %d)\n",
@@ -397,34 +385,15 @@ void parse_meson_state(const char *filename, array_t *mass, array_t *radius, mat
         }
 
         /* Parse mass */
-        cJSON *mass_item = cJSON_GetObjectItemCaseSensitive(state, "mass");
-        if (!cJSON_IsNumber(mass_item)) {
-            fprintf(stderr, "Error: Missing or invalid 'mass' in state %d\n", n);
-            cJSON_Delete(root);
-            free(json_text);
-            exit(1);
-        }
+        cJSON *mass_item = read_number_item(state, "mass");
         mass->value[n] = mass_item->valuedouble;
 
         /* Parse rms_radius */
-        cJSON *radius_item = cJSON_GetObjectItemCaseSensitive(state, "rms_radius");
-        if (!cJSON_IsNumber(radius_item)) {
-            fprintf(stderr, "Error: Missing or invalid 'rms_radius' in state %d\n", n);
-            cJSON_Delete(root);
-            free(json_text);
-            exit(1);
-        }
+        cJSON *radius_item = read_number_item(state, "rms_radius");
         radius->value[n] = radius_item->valuedouble;
 
-        /* Parse eigenvector */
-        cJSON *eigen_array = cJSON_GetObjectItemCaseSensitive(state, "eigenvector");
-        if (!cJSON_IsArray(eigen_array)) {
-            fprintf(stderr, "Error: Missing or invalid 'eigenvector' in state %d\n", n);
-            cJSON_Delete(root);
-            free(json_text);
-            exit(1);
-        }
-
+        /* Parse eigenvector using read_array_item */
+        cJSON *eigen_array = read_array_item(state, "eigenvector");
         int current_eigen_len = cJSON_GetArraySize(eigen_array);
         if (current_eigen_len != eigenvector_len) {
             fprintf(stderr, "Error: Eigenvector length mismatch in state %d (expected %d, got %d)\n",
