@@ -23,6 +23,9 @@ typedef struct carray {
 /* Initialize a matrix with given dimensions */
 cmatrix_t cmatrix_init(int row, int col);
 
+/* Initialize a matrix with random values between -1 and 1 */
+cmatrix_t cmatrix_random(int row, int col);
+
 /* Calculate the inverse of a matrix */
 void cmatrix_inverse(const cmatrix_t *mat, cmatrix_t *imat);
 

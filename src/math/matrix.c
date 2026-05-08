@@ -26,6 +26,20 @@ matrix_t matrix_init(int row, int col)
 	return mat;
 }
 
+matrix_t matrix_random(int row, int col)
+{
+	matrix_t mat = matrix_init(row, col);
+
+	srand(time(NULL));
+	for (int i = 0; i < row; i++) {
+		for (int j = 0; j < col; j++) {
+			mat.value[i][j] = (rand() / (double)RAND_MAX) * 2.0 - 1.0;
+		}
+	}
+
+	return mat;
+}
+
 void matrix_inverse(const matrix_t *mat, matrix_t *imat)
 {
 	if (mat->row != mat->col || imat->row != imat->col || mat->row != imat->row) {

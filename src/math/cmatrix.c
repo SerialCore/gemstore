@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include <complex.h>
 
 cmatrix_t cmatrix_init(int row, int col)
@@ -22,6 +23,20 @@ cmatrix_t cmatrix_init(int row, int col)
 	mat.value = value;
 	mat.row = row;
 	mat.col = col;
+
+	return mat;
+}
+
+cmatrix_t cmatrix_random(int row, int col)
+{
+	cmatrix_t mat = cmatrix_init(row, col);
+
+	srand(time(NULL));
+	for (int i = 0; i < row; i++) {
+		for (int j = 0; j < col; j++) {
+			mat.value[i][j] = (rand() / (double)RAND_MAX) * 2.0 - 1.0;
+		}
+	}
 
 	return mat;
 }

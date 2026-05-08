@@ -21,6 +21,9 @@ typedef struct array {
 /* Initialize a matrix with given dimensions */
 matrix_t matrix_init(int row, int col);
 
+/* Initialize a matrix with random values between -1 and 1 */
+matrix_t matrix_random(int row, int col);
+
 /* Calculate the inverse of a matrix */
 void matrix_inverse(const matrix_t *mat, matrix_t *imat);
 
