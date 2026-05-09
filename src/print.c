@@ -8,6 +8,7 @@
 #include <gemstore/parse.h>
 #include <gemstore/math/soc.h>
 #include <gemstore/math/matrix.h>
+#include <gemstore/math/integral.h>
 #include <gemstore/basis/orbit.h>
 #include <gemstore/model/gimodel.h>
 #include <gemstore/param/argset.h>
@@ -484,6 +485,38 @@ static void write_state_wfn(const argsInput_t *input, const double *eigenvector,
     double fm = 5.06773093854369882649; /* fm to GeV^-1 conversion */
 
     int nmax = input->nmax;
+    double normalized = 1.0;
+    double overlap_sum = 0.0;
+    argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
+    for (int i = 0; i < nmax; i++) {
+        basis[i].n = i + 1;
+        basis[i].l = L;
+        basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
+        basis[i].param = input->omega;
+    }
+
+    for (int i = 0; i < nmax; i++) {
+        for (int j = 0; j < nmax; j++) {
+            double factor = 1.0 / sqrt(basis[i].scale + basis[j].scale);
+            double overlap_ij = 0.0;
+
+            if (input->orbit == ORBIT_GEM) {
+                overlap_ij = integral_nlr_overlap(GRnlr, factor, &basis[i], &basis[j]);
+            }
+            else if (input->orbit == ORBIT_CRG) {
+                overlap_ij = integral_crg_overlap(CGRnlr, factor, &basis[i], &basis[j]);
+            }
+            else if (input->orbit == ORBIT_SHO) {
+                overlap_ij = (i == j) ? 1.0 : 0.0;
+            }
+
+            overlap_sum += eigenvector[i] * overlap_ij * eigenvector[j];
+        }
+    }
+
+    if (fabs(overlap_sum) > 1e-12) {
+        normalized = sqrt(1.0 / overlap_sum);
+    }
 
     /* Evaluate wave function at each radial point */
     for (double r = rmin; r <= rmax; r += dr) {
@@ -515,9 +548,11 @@ static void write_state_wfn(const argsInput_t *input, const double *eigenvector,
             psi_r += c_n * basis_func;
         }
 
-        /* Output: radial coordinate and wave function value */
-        fprintf(file, "%.8f    %.8e\n", r, psi_r);
+        /* Output the overlap-normalized radial wave function. */
+        fprintf(file, "%.8f    %.8e\n", r, psi_r * normalized);
     }
+
+    free(basis);
 }
 
 int write_meson_wfn(const argsInput_t *input, const matrix_t *vector)
