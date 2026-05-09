@@ -176,7 +176,7 @@ void print_meson_spectra(const array_t *eigenvalue, const array_t *rmsradius, co
 
     printf("\n");
     printf("================================================================================\n");
-    printf("                            DEBUG RESULTS SUMMARY                             \n");
+    printf("                            MESON RESULTS SUMMARY                             \n");
     printf("================================================================================\n");
     printf("\n");
 

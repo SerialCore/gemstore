@@ -56,7 +56,6 @@ void compute_spectra_meson(const argsInput_t *input)
     }
 
     /* fix anomalies in mass and RMS radius */
-    print_meson_spectra(&eigenvalue, &rmsradius, &eigenvector, nmax);
     interpolate_fix_divergence(rmsradius.value, rmsradius.len);
     interpolate_fix_divergence(rmsradius.value, rmsradius.len);
     print_meson_spectra(&eigenvalue, &rmsradius, &eigenvector, nmax);
