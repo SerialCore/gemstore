@@ -7,7 +7,10 @@
 #ifndef GEMSTORE_MATH_INTERPLT
 #define GEMSTORE_MATH_INTERPLT
 
-/* use quadratic interpolation to fix anomalies */
-void interpolate_quadratic(double *data, int n);
+/* fix divergent anomalies with cubic interpolation */
+void interpolate_fix_divergence(double *data, int n);
+
+/* fix convergent anomalies with cubic interpolation */
+void interpolate_fix_convergence(double *data, int n);
 
 #endif
