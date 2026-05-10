@@ -7,6 +7,7 @@
 #include <gemstore/model/compute.h>
 #include <gemstore/model/cbaryon.h>
 #include <gemstore/model/cmeson.h>
+#include <gemstore/model/wfntrans.h>
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/math/interplt.h>
@@ -43,16 +44,16 @@ void compute_spectra_meson(const argsInput_t *input)
         args_dynmc.system = SYSTEM_MESON;
         if (input->orbit == ORBIT_GEM) {
             spectra_meson_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
-            radius_meson_GEM(input, &eigenvector, &rmsradius, nmax);
         }
         else if (input->orbit == ORBIT_CRG) {
             spectra_meson_CRG(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
-            radius_meson_CRG(input, &eigenvector, &rmsradius, nmax);
         }
         else {
             fprintf(stderr, "Error: Unsupported orbit type for meson system.\n");
             exit(1);
         }
+
+        get_meson_rmsradii(input, &eigenvector, &rmsradius, nmax);
     }
 
     /* fix anomalies in mass and RMS radius */

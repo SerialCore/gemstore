@@ -38,6 +38,6 @@ int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const ma
 int write_meson_wfn(const argsInput_t *input, const matrix_t *vector);
 
 /* Write GI potential to a file */
-int write_potential_GI(const argsInput_t *input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc);
+int write_meson_pot(const argsInput_t *input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc);
 
 #endif

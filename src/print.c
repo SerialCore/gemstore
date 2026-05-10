@@ -8,9 +8,8 @@
 #include <gemstore/parse.h>
 #include <gemstore/math/soc.h>
 #include <gemstore/math/matrix.h>
-#include <gemstore/math/integral.h>
-#include <gemstore/basis/orbit.h>
 #include <gemstore/model/gimodel.h>
+#include <gemstore/model/wfntrans.h>
 #include <gemstore/param/argset.h>
 
 #include "cJSON.h"
@@ -19,7 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <complex.h>
 
 void print_logo()
 {
@@ -471,90 +469,6 @@ int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const ma
     return state;
 }
 
-static void write_state_wfn(const argsInput_t *input, const double *eigenvector, FILE *file)
-{
-    if (input == NULL || eigenvector == NULL || file == NULL) {
-        return;
-    }
-
-    /* variables for printing */
-    int L = (int)input->L;
-    double rmin = 0.01;
-    double rmax = 10.0;
-    double dr = 0.01;
-    double fm = 5.06773093854369882649; /* fm to GeV^-1 conversion */
-
-    int nmax = input->nmax;
-    double normalized = 1.0;
-    double overlap_sum = 0.0;
-    argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
-    for (int i = 0; i < nmax; i++) {
-        basis[i].n = i + 1;
-        basis[i].l = L;
-        basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
-        basis[i].param = input->omega;
-    }
-
-    for (int i = 0; i < nmax; i++) {
-        for (int j = 0; j < nmax; j++) {
-            double factor = 1.0 / sqrt(basis[i].scale + basis[j].scale);
-            double overlap_ij = 0.0;
-
-            if (input->orbit == ORBIT_GEM) {
-                overlap_ij = integral_nlr_overlap(GRnlr, factor, &basis[i], &basis[j]);
-            }
-            else if (input->orbit == ORBIT_CRG) {
-                overlap_ij = integral_crg_overlap(CGRnlr, factor, &basis[i], &basis[j]);
-            }
-            else if (input->orbit == ORBIT_SHO) {
-                overlap_ij = (i == j) ? 1.0 : 0.0;
-            }
-
-            overlap_sum += eigenvector[i] * overlap_ij * eigenvector[j];
-        }
-    }
-
-    if (fabs(overlap_sum) > 1e-12) {
-        normalized = sqrt(1.0 / overlap_sum);
-    }
-
-    /* Evaluate wave function at each radial point */
-    for (double r = rmin; r <= rmax; r += dr) {
-        double rGeV = r * fm; /* convert fm to GeV^-1 for consistency with potential */
-        double psi_r = 0.0;
-
-        /* Sum over basis functions: psi(r) = sum_n c[n] * phi_n(r) */
-        for (int n = 0; n < nmax; n++) {
-            double N = n + 1;
-            double c_n = eigenvector[n];
-            double basis_func = 0.0;
-
-            /* Compute basis function phi_n(r) depending on basis type */
-            if (input->orbit == ORBIT_GEM) {
-                double nu = getnu(N, nmax, input->rmax, input->rmin);
-                basis_func = GRnlr(rGeV, N, L, nu) * exp(-nu * rGeV * rGeV);
-            }
-            else if (input->orbit == ORBIT_CRG) {
-                double nu = getnu(N, nmax, input->rmax, input->rmin);
-                double omega = input->omega;
-                complex basis_func_complex = CGRnlr(rGeV, N, L, nu, omega) * exp(-nu * rGeV * rGeV);
-                basis_func = creal(basis_func_complex);
-            }
-            else if (input->orbit == ORBIT_SHO) {
-                double beta = input->beta;
-                basis_func = SRnlr(rGeV, n, L, beta) * exp(-0.5 * beta * beta * rGeV * rGeV);
-            }
-
-            psi_r += c_n * basis_func;
-        }
-
-        /* Output the overlap-normalized radial wave function. */
-        fprintf(file, "%.8f    %.8e\n", r, psi_r * normalized);
-    }
-
-    free(basis);
-}
-
 int write_meson_wfn(const argsInput_t *input, const matrix_t *vector)
 {
     if (input == NULL || vector == NULL) {
@@ -562,12 +476,16 @@ int write_meson_wfn(const argsInput_t *input, const matrix_t *vector)
         return 0;
     }
 
+    double rmin = 0.01;
+    double rmax = 10.0;
+    double dr = 0.01;
     int nmax = input->nmax;
     int state = 1;
 
     for (int n = 0; n < nmax; n++) {
         FILE *pf;
         char path[275];
+        double normalized;
 
         sprintf(path, "%s.wfn.%d.dat", input->project, n + 1);
         pf = fopen(path, "w");
@@ -577,7 +495,11 @@ int write_meson_wfn(const argsInput_t *input, const matrix_t *vector)
             continue;
         }
 
-        write_state_wfn(input, vector->value[n], pf);
+        normalized = get_normalized_factor(input, vector->value[n]);
+
+        for (double r = rmin; r <= rmax; r += dr) {
+            fprintf(pf, "%.8f    %.8e\n", r, get_state_wfn_value(input, vector->value[n], normalized, r));
+        }
 
         if (fclose(pf) != 0) {
             fprintf(stderr, "Error: Failed to close file %s\n", path);
@@ -588,10 +510,10 @@ int write_meson_wfn(const argsInput_t *input, const matrix_t *vector)
     return state;
 }
 
-int write_potential_GI(const argsInput_t *input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc)
+int write_meson_pot(const argsInput_t *input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc)
 {
     if (input == NULL || args_model == NULL || args_dynmc == NULL) {
-        fprintf(stderr, "Error: Invalid input parameters to write_potential_GI()\n");
+        fprintf(stderr, "Error: Invalid input parameters to write_meson_pot()\n");
         return 0;
     }
 
