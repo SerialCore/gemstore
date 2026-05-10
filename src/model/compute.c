@@ -53,7 +53,7 @@ void compute_spectra_meson(const argsInput_t *input)
             exit(1);
         }
 
-        get_meson_rmsradii(input, &eigenvector, &rmsradius, nmax);
+        radius_meson_rms(input, &eigenvector, &rmsradius, nmax);
     }
 
     /* fix anomalies in mass and RMS radius */
@@ -66,7 +66,7 @@ void compute_spectra_meson(const argsInput_t *input)
 
     /* choose to write potential or wavefunction */
     if (input->print_pot) {
-        write_potential_GI(input, &args_model, &args_dynmc);
+        write_meson_pot(input, &args_model, &args_dynmc);
     }
     if (input->print_wfn) {
         write_meson_wfn(input, &eigenvector);

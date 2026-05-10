@@ -24,11 +24,6 @@ double get_normalized_factor(const argsInput_t *input, const double *vector)
     double normalized = 1.0;
     double overlap_sum = 0.0;
     argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
-
-    if (basis == NULL) {
-        return normalized;
-    }
-
     for (int i = 0; i < nmax; i++) {
         basis[i].n = i + 1;
         basis[i].l = L;
@@ -98,7 +93,7 @@ double get_state_wfn_value(const argsInput_t *input, const double *vector, doubl
     return psi_r * normalized;
 }
 
-void get_meson_rmsradii(const argsInput_t *input, const matrix_t *vector, array_t *radius, int len)
+void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t *radius, int len)
 {
     if (input == NULL || vector == NULL || radius == NULL) {
         return;
@@ -148,4 +143,25 @@ void get_meson_rmsradii(const argsInput_t *input, const matrix_t *vector, array_
 
     free(basis);
     matrix_free(&mR2);
+}
+
+void effective_beta_sho(const argsInput_t *input, const array_t *radius, array_t *ebeta, int len)
+{
+    if (input == NULL || radius == NULL || ebeta == NULL) {
+        return;
+    }
+
+    int L = (int)input->L;
+    double fm = 5.06773093854369882649;
+
+    for (int n = 0; n < len; n++) {
+        double target = radius->value[n];
+
+        if (target <= 0.0) {
+            ebeta->value[n] = 0.0;
+            continue;
+        }
+
+        ebeta->value[n] = sqrt(2.0 * n + L + 1.5) / (target * fm);
+    }
 }
