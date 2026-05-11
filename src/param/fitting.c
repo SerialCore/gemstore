@@ -9,6 +9,7 @@
 #include <gemstore/param/fmeson.h>
 #include <gemstore/param/fbbbar.h>
 #include <gemstore/param/fccbar.h>
+#include <gemstore/param/fscbar.h>
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/model/gimodel.h>
@@ -65,6 +66,7 @@ void call_minuit2_GIScreen(const char* system)
     if (strcmp(system, "meson") == 0) minuit2_meson_GIScreen(params);
     else if (strcmp(system, "bbbar") == 0) minuit2_bbbar_GIScreen(params);
     else if (strcmp(system, "ccbar") == 0) minuit2_ccbar_GIScreen(params);
+    else if (strcmp(system, "scbar") == 0) minuit2_scbar_GIScreen(params);
     else {fprintf(stderr, "Unknown fitting system: %s\n", system); exit(1);}
 
     free(params);
