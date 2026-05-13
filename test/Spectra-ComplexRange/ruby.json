@@ -15,7 +15,7 @@
   },
   "basis": {
     "type": "CRG",
-    "nmax": 16,
+    "nmax": 20,
     "rmax": 30.0,
     "rmin": 0.1,
     "omega": 0.1

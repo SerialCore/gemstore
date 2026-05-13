@@ -85,19 +85,19 @@ void minuit2_meson_GIScreen(double *params_out)
     /* set parameters */
     ROOT::Minuit2::MnUserParameters upar;
     //upar.Add(name, value, init_step, lower_limit, upper_limit);
-    upar.Add("mn", 0.220, 0.01, 0.1, 0.5);
-    upar.Add("ms", 0.419, 0.01, 0.3, 0.7);
-    upar.Add("mc", 1.628, 0.01, 1.5, 2.0);
-    upar.Add("mb", 4.977, 0.01, 4.5, 5.5);
-    upar.Add("b", 0.18, 0.01, 0.1, 0.3);
-    upar.Add("mu", 0.15, 0.01, 0.1, 0.2);
-    upar.Add("c", -0.253, 0.01, -2.0, 0.0);
-    upar.Add("sig0", 1.8, 0.01, 1.0, 3.0);
-    upar.Add("s", 1.55, 0.01, 1.0, 3.0);
-    upar.Add("econt", -0.168, 0.01, -0.5, 0.0);
-    upar.Add("esov", -0.035, 0.01, -1.0, 1.0);
-    upar.Add("esos", 0.055, 0.01, -1.0, 1.0);
-    upar.Add("etens", 0.025, 0.01, -1.0, 1.0);
+    upar.Add("mn", 0.3349266291038, 0.01, 0.1, 0.5);
+    upar.Add("ms", 0.5283844975353, 0.01, 0.3, 0.7);
+    upar.Add("mc", 1.747603574365, 0.01, 1.5, 2.0);
+    upar.Add("mb", 5.095838715, 0.01, 4.5, 5.5);
+    upar.Add("b", 0.248247135518, 0.01, 0.1, 0.3);
+    upar.Add("mu", 0.1333931469096, 0.01, 0.1, 0.2);
+    upar.Add("c", -0.5334999044266, 0.01, -2.0, 0.0);
+    upar.Add("sig0", 1.56552865791, 0.01, 1.0, 3.0);
+    upar.Add("s", 1.285723132711, 0.01, 1.0, 3.0);
+    upar.Add("econt", -0.2864647624566, 0.01, -0.5, 0.0);
+    upar.Add("esov", -0.349573212139, 0.01, -1.0, 1.0);
+    upar.Add("esos", 0.7905135472165, 0.01, -1.0, 1.0);
+    upar.Add("etens", -0.487322874302, 0.01, -1.0, 1.0);
     int N_PARAMS = upar.Params().size();
 
     /* use of Migrad algorithm with strategy 2, high precision */
