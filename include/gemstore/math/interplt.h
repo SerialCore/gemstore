@@ -8,9 +8,9 @@
 #define GEMSTORE_MATH_INTERPLT
 
 /* fix divergent anomalies with cubic interpolation */
-void interpolate_fix_divergence(double *data, int n);
+void interpolate_divergence(double *data, int n);
 
-/* fix convergent anomalies with cubic interpolation */
-void interpolate_fix_convergence(double *data, int n);
+/* fix divergent anomalies with slop-based extrapolation */
+void extrapolate_divergence(double *data, int n);
 
 #endif
