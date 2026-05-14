@@ -2,6 +2,45 @@
  * Copyright (C) 2026, Wen-Xuan Zhang <serialcore@outlook.com>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * Unit and normalization conventions used in this file:
+ *
+ * The coordinate-space meson wavefunction is treated as the radial function
+ * R(r), not the reduced wavefunction u(r) = r R(r). In this convention,
+ * normalization and radius moments are
+ *
+ *     integral dr r^2 |R(r)|^2 = 1,
+ *     <r^2> = integral dr r^4 |R(r)|^2.
+ *
+ * This means get_normalized_factor() and radius_meson_rms() work with R(r)
+ * together with the radial measure. The overlap integrals in
+ * src/math/integral.c therefore include the extra r^2 factor, and the radius
+ * integrals include r^4. This is mathematically equivalent to the reduced
+ * wavefunction convention
+ *
+ *     u(r) = r R(r),
+ *     integral dr |u(r)|^2 = 1,
+ *     <r^2> = integral dr r^2 |u(r)|^2,
+ *
+ * but the code here does not build u(r) explicitly; it constructs and exports
+ * R(r), and derives u(r) later only for output when needed.
+ *
+ * Internally, the orbital basis parameters are defined in natural units. The
+ * basis scale nu returned by getnu() is in GeV^2, the radial argument used in
+ * the Gaussian/CRG/SHO basis functions is in GeV^-1, and beta is combined with
+ * the radius in the same natural-unit convention. For that reason,
+ * get_state_wfn_value() converts the plotting radius from fm to GeV^-1 before
+ * evaluating the basis.
+ *
+ * After the basis sum is formed, the overlap-based normalization factor
+ * normalized = 1 / sqrt(c^T S c) is applied to the pointwise wavefunction.
+ * The final return value is then converted back to an fm-based radial
+ * wavefunction so that the normalization condition above holds with r measured
+ * in fm. The exported quantities should therefore be interpreted as
+ *
+ *     R(r)            [fm^(-3/2)],
+ *     u(r) = r R(r)   [fm^(-1/2)],
+ *     r^2 |R(r)|^2    [fm^(-1)].
  */
 
 #include <gemstore/model/wfntrans.h>
@@ -90,7 +129,7 @@ double get_state_wfn_value(const argsInput_t *input, const double *vector, doubl
         psi_r += vector[n] * basis_func;
     }
 
-    return psi_r * normalized;
+    return psi_r * normalized * pow(fm, 1.5);
 }
 
 void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t *radius, int len)

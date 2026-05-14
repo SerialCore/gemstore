@@ -496,9 +496,13 @@ int write_meson_wfn(const argsInput_t *input, const matrix_t *vector)
         }
 
         normalized = get_normalized_factor(input, vector->value[n]);
+        fprintf(pf, "# r[fm]    R(r)[fm^(-3/2)]    u(r)=rR(r)[fm^(-1/2)]    r^2|R(r)|^2[fm^(-1)]\n");
 
         for (double r = rmin; r <= rmax; r += dr) {
-            fprintf(pf, "%.8f    %.8e\n", r, get_state_wfn_value(input, vector->value[n], normalized, r));
+            double wfn = get_state_wfn_value(input, vector->value[n], normalized, r);
+            double uwfn = r * wfn;
+            double density = r * r * wfn * wfn;
+            fprintf(pf, "%.8f    %.8e    %.8e    %.8e\n", r, wfn, uwfn, density);
         }
 
         if (fclose(pf) != 0) {
