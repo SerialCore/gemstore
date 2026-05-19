@@ -92,6 +92,9 @@ extern const argsGIModel_t argsGIScreen_meson;
 /* Default bbbar meson parameters for model GIScreen */
 extern const argsGIModel_t argsGIScreen_bbbar;
 
+/* Default bcbar meson parameters for model GIScreen */
+extern const argsGIModel_t argsGIScreen_bcbar;
+
 /* Default ccbar meson parameters for model GIScreen */
 extern const argsGIModel_t argsGIScreen_ccbar;
 

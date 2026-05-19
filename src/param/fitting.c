@@ -8,8 +8,10 @@
 #include <gemstore/param/argset.h>
 #include <gemstore/param/fmeson.h>
 #include <gemstore/param/fbbbar.h>
+#include <gemstore/param/fbcbar.h>
+#include <gemstore/param/fbsbar.h>
 #include <gemstore/param/fccbar.h>
-#include <gemstore/param/fscbar.h>
+#include <gemstore/param/fcsbar.h>
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/model/gimodel.h>
@@ -65,8 +67,10 @@ void call_minuit2_GIScreen(const char* system)
     double *params = (double *)malloc(13 * sizeof(double));
     if (strcmp(system, "meson") == 0) minuit2_meson_GIScreen(params);
     else if (strcmp(system, "bbbar") == 0) minuit2_bbbar_GIScreen(params);
+    else if (strcmp(system, "bcbar") == 0) minuit2_bcbar_GIScreen(params);
+    else if (strcmp(system, "bsbar") == 0) minuit2_bsbar_GIScreen(params);
     else if (strcmp(system, "ccbar") == 0) minuit2_ccbar_GIScreen(params);
-    else if (strcmp(system, "scbar") == 0) minuit2_scbar_GIScreen(params);
+    else if (strcmp(system, "csbar") == 0) minuit2_csbar_GIScreen(params);
     else {fprintf(stderr, "Unknown fitting system: %s\n", system); exit(1);}
 
     free(params);

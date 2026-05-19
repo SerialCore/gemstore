@@ -56,6 +56,22 @@ const argsGIModel_t argsGIScreen_bbbar = {
     .epsilon_tens = -0.8456374804674,
 };
 
+const argsGIModel_t argsGIScreen_bcbar = {
+    .mn = 0.4560806209112,
+    .ms = 0.6173440068792,
+    .mc = 1.805387067165,
+    .mb = 5.151269542382,
+    .b = 0.2540369218251,
+    .mu = 0.1346,
+    .c = -0.6482214863381,
+    .sigma_0 = 1.770545357386,
+    .s = 1.146340880694,
+    .epsilon_cont = -0.3199525941084,
+    .epsilon_sov = -0.3428467195716,
+    .epsilon_sos = 0.9999999905835,
+    .epsilon_tens = -0.5000469699086,
+};
+
 const argsGIModel_t argsGIScreen_ccbar = {
     .mn = 0.4560806209112,
     .ms = 0.6173440068792,
@@ -79,6 +95,7 @@ argsGIModel_t argsGIModel_from(const argsInput_t *input)
     if (input->param == PARAM_GISTRING_MESON) args_model = argsGIString_meson;
     else if (input->param == PARAM_GISCREEN_MESON) args_model = argsGIScreen_meson;
     else if (input->param == PARAM_GISCREEN_BBBAR) args_model = argsGIScreen_bbbar;
+    else if (input->param == PARAM_GISCREEN_BCBAR) args_model = argsGIScreen_bcbar;
     else if (input->param == PARAM_GISCREEN_CCBAR) args_model = argsGIScreen_ccbar;
     else if (input->param == PARAM_GISTRING_CUSTOM) {
         parse_param_GISTRING(input->param_file, &args_model);

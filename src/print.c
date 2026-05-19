@@ -37,7 +37,8 @@ void print_help()
     printf("Usage: gemstore [--compute FILE] [--fitting TARGET] [--debug UNIT]\n\n");
     printf("Arguments:\n");
     printf("  -c, --compute         perform computation with input FILE that contains full instructions\n");
-    printf("  -f, --fitting         fit TARGET such as GIScreen_meson, GIScreen_ccbar, GIScreen_bbbar, GIQuadra_light\n");
+    printf("  -f, --fitting         fit TARGET such as GIScreen_meson, GIScreen_ccbar, GIScreen_bbbar, \n");
+    printf("                        GIScreen_bcbar, GIScreen_bsbar, GIScreen_csbar\n");
     printf("  -d, --debug           debug UNIT such as su3_product, soc_operator, casimir_operator, \n");
     printf("                        color_wfn, spin_wfn, isospin_wfn, orbit_wfn, eigen_system\n");
     printf("  -h,--help             show this help\n");
