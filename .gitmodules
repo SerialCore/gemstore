@@ -1,0 +1,3 @@
+[submodule "lib/Minuit2"]
+	path = lib/Minuit2
+	url = https://github.com/GooFit/Minuit2.git

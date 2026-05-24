@@ -95,7 +95,7 @@
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/serialcore/gemstore.git
+git clone --recursive https://github.com/serialcore/gemstore.git
 cd gemstore
 ```
 
@@ -130,13 +130,13 @@ make uninstall
 
 ```bash
 # Run a meson spectroscopy calculation with JSON input
-./gemstore --compute test/amethyst.json
+./gemstore --compute amethyst.json
 
 # Run calculation with CRG basis (complex scaling)
-./gemstore --compute test/ruby.json
+./gemstore --compute ruby.json
 
 # Run with predefined parameters
-./gemstore --compute test/diamond.json
+./gemstore --compute diamond.json
 
 # Fit parameters using Minuit2
 ./gemstore --fitting GIScreen_ccbar
