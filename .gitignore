@@ -1,5 +1,6 @@
 /gemstore
 !gemstore/
+.vscode/
 
 *.o
 *.a
