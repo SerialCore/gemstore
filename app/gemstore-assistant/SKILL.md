@@ -41,6 +41,7 @@ Use exact uppercase strings where shown below.
 ### Systems
 
 - `MESON`
+- `BAYRON`
 
 Only meson is supported by the current parser.
 
@@ -54,8 +55,11 @@ Use `model.param` for presets:
 - `GISTRING_MESON`
 - `GISTRING_CUSTOM`
 - `GISCREEN_MESON`
-- `GISCREEN_CCBAR`
 - `GISCREEN_BBBAR`
+- `GISCREEN_BCBAR`
+- `GISCREEN_BSBAR`
+- `GISCREEN_CCBAR`
+- `GISCREEN_CSBAR`
 - `GISCREEN_CUSTOM`
 
 For custom parameter sets, the model object must also include:
@@ -68,7 +72,7 @@ Examples:
 "model": {
   "type": "GISCREEN",
   "param": "GISCREEN_CUSTOM",
-  "file": "app/param_GISCREEN.json"
+  "file": "param_GISCREEN.json"
 }
 ```
 
@@ -76,7 +80,7 @@ Examples:
 "model": {
   "type": "GISTRING",
   "param": "GISTRING_CUSTOM",
-  "file": "app/param_GISTRING.json"
+  "file": "param_GISTRING.json"
 }
 ```
 
@@ -184,9 +188,9 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 
 ### Prepare execution
 
-- Build a JSON input file matching `src/parse.c` exactly.
+- Build a JSON input file.
 - For heavy quarkonia prefer `GISCREEN_CCBAR` or `GISCREEN_BBBAR` when appropriate.
-- Use `GISTRING_CUSTOM` or `GISCREEN_CUSTOM` only when the user explicitly wants external parameter files.
+- Use `GISTRING_CUSTOM` or `GISCREEN_CUSTOM` only when the user explicitly has external parameter files.
 - For spectra runs, use a dedicated run directory and keep user files untouched unless they explicitly ask you to edit them.
 
 ### Execute safely
@@ -206,10 +210,10 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 ## Best Practices
 
 - Confirm parameters before large systematic runs.
-- Use the new `"print"` section to control output of potential (`.pot.dat`) and wavefunction (`.wfn.N.dat`) files.
+- Use the `"print"` section to control output of potential (`.pot.dat`) and wavefunction (`.wfn.N.dat`) files.
 - Prefer `GEM` unless the user explicitly asks for `CRG` or `SHO`.
 - Use exact parser spellings: `MESON`, `GISCREEN`, `GISTRING`, `GISCREEN_CCBAR`, etc.
-- Remember that `model.param` is the parameter-set key, not `params` or `preset`.
+- Remember that `model.param` is the parameter-set key.
 - For `*_CUSTOM`, always include `model.file`.
 
 ## Example Requests
@@ -219,4 +223,4 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - "Prepare a CRG input with omega = 0.2 and print wavefunctions"
 - "Compute charmonium with SHO basis, beta = 0.8, and do not print potential"
 
-When this skill is triggered, generate the exact JSON input expected by `src/parse.c` (including the new `"print"` section when relevant), run `gemstore --compute <file>`, and report the resulting physics output cleanly, mentioning any generated `.pot.dat` or `.wfn.N.dat` files.
+When this skill is triggered, generate the exact JSON input, run `gemstore --compute <file>`, and report the resulting physics output cleanly, mentioning any generated `.pot.dat` or `.wfn.N.dat` files.

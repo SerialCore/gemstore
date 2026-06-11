@@ -141,7 +141,10 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
     if (input->model == MODEL_GISCREEN) {
         if (strcmp(param, "GISCREEN_MESON") == 0) input->param = PARAM_GISCREEN_MESON;
         else if (strcmp(param, "GISCREEN_BBBAR") == 0) input->param = PARAM_GISCREEN_BBBAR;
+        else if (strcmp(param, "GISCREEN_BCBAR") == 0) input->param = PARAM_GISCREEN_BCBAR;
+        else if (strcmp(param, "GISCREEN_BSBAR") == 0) input->param = PARAM_GISCREEN_BSBAR;
         else if (strcmp(param, "GISCREEN_CCBAR") == 0) input->param = PARAM_GISCREEN_CCBAR;
+        else if (strcmp(param, "GISCREEN_CSBAR") == 0) input->param = PARAM_GISCREEN_CSBAR;
         else if (strcmp(param, "GISCREEN_CUSTOM") == 0) input->param = PARAM_GISCREEN_CUSTOM;
         else {
             fprintf(stderr, "Unknown GISCREEN parameter set: %s\n", param);

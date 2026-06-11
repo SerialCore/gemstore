@@ -34,14 +34,17 @@ This template matches the current parser in `src/parse.c`.
 ## Allowed Values
 
 - `task`: `SPECTRA`, `DECAY3P0`, `COUPLCHN`, `SCATTER`
-- `system.type`: `MESON`
+- `system.type`: `MESON`, `BAYRON`
 - `model.type`: `GISTRING`, `GISCREEN`
 - `model.param`:
   - `GISTRING_MESON`
   - `GISTRING_CUSTOM`
   - `GISCREEN_MESON`
-  - `GISCREEN_CCBAR`
   - `GISCREEN_BBBAR`
+  - `GISCREEN_BCBAR`
+  - `GISCREEN_BSBAR`
+  - `GISCREEN_CCBAR`
+  - `GISCREEN_CSBAR`
   - `GISCREEN_CUSTOM`
 - `basis.type`: `GEM`, `CRG`, `SHO`
 - `print.pot`, `print.wfn`: `"true"` or `"false"` (controls output of `.pot.dat` and `.wfn.N.dat` files)
@@ -51,13 +54,13 @@ This template matches the current parser in `src/parse.c`.
 If `model.param` is `GISTRING_CUSTOM` or `GISCREEN_CUSTOM`, also provide:
 
 ```json
-"file": "app/param_GISTRING.json"
+"file": "param_GISTRING.json"
 ```
 
 or
 
 ```json
-"file": "app/param_GISCREEN.json"
+"file": "param_GISCREEN.json"
 ```
 
 Example:
@@ -77,7 +80,7 @@ Example:
   "model": {
     "type": "GISCREEN",
     "param": "GISCREEN_CUSTOM",
-    "file": "app/param_GISCREEN.json"
+    "file": "param_GISCREEN.json"
   },
   "basis": {
     "type": "GEM",

@@ -28,7 +28,10 @@ const char *param_type_str[] = {
     "GISTRING_MESON",
     "GISCREEN_MESON",
     "GISCREEN_BBBAR",
+    "GISCREEN_BCBAR",
+    "GISCREEN_BSBAR",
     "GISCREEN_CCBAR",
+    "GISCREEN_CSBAR",
     "GISTRING_CUSTOM",
     "GISCREEN_CUSTOM"
 };
