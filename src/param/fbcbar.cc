@@ -34,7 +34,7 @@ void minuit2_bcbar_GIScreen(double *params_out)
     upar.Add("mc", 1.805387067165, 0.01, 1.5, 2.0);
     upar.Add("mb", 5.151269542382, 0.01, 4.5, 5.5);
     upar.Add("b", 0.2522010221331, 0.01, 0.1, 0.3);
-    upar.Add("mu", 0.1346, 0.01, 0.1, 0.2);
+    upar.Add("mu", 0.13694, 0.01, 0.1, 0.2);
     upar.Add("c", -0.6482214863381, 0.01, -2.0, 0.0);
     upar.Add("sig0", 1.770545357386, 0.01, 1.0, 3.0);
     upar.Add("s", 1.146340880694, 0.01, 1.0, 3.0);
@@ -50,10 +50,6 @@ void minuit2_bcbar_GIScreen(double *params_out)
     upar.Fix("c");
     upar.Fix("sig0");
     upar.Fix("s");
-    upar.Fix("econt");
-    upar.Fix("esov");
-    upar.Fix("esos");
-    upar.Fix("etens");
     int N_PARAMS = upar.Params().size();
 
     /* use of Migrad algorithm with strategy 2, high precision */
