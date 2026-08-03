@@ -48,6 +48,9 @@ void compute_spectra_meson(const argsInput_t *input)
         else if (input->orbit == ORBIT_CRG) {
             spectra_meson_CRG(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
         }
+        else if (input->orbit == ORBIT_SHO) {
+            spectra_meson_SHO(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+        }
         else {
             fprintf(stderr, "Error: Unsupported orbit type for meson system.\n");
             exit(1);

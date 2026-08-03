@@ -498,3 +498,143 @@ void spectra_meson_CRG(const argsInput_t *args_input, const argsGIModel_t *args_
     matrix_free(&Hfi);
     matrix_free(&Nfi);
 }
+
+void spectra_meson_SHO(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
+    array_t *e_out, matrix_t *v_out, int v_len)
+{
+    int nmax = args_input->nmax;
+    double beta = args_input->beta;
+    int f1 = args_input->f1, f2 = args_input->f2;
+    double S = args_input->S, L = args_input->L, J = args_input->J;
+
+    /* construct basis */
+    argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
+    for (int i = 0; i < nmax; i++) {
+        basis[i].n = i;
+        basis[i].l = L;
+        basis[i].scale = beta;
+    }
+
+    /* construct matrices */
+    matrix_t mT = matrix_init(nmax, nmax);
+    matrix_t mbetaijCoul = matrix_init(nmax, nmax);
+    matrix_t mdeltaijCont = matrix_init(nmax, nmax);
+    matrix_t mdeltaiiSov = matrix_init(nmax, nmax);
+    matrix_t mdeltajjSov = matrix_init(nmax, nmax);
+    matrix_t mdeltaijSov = matrix_init(nmax, nmax);
+    matrix_t mdeltaiiSos = matrix_init(nmax, nmax);
+    matrix_t mdeltajjSos = matrix_init(nmax, nmax);
+    matrix_t mdeltaijTens = matrix_init(nmax, nmax);
+    matrix_t mVcoul = matrix_init(nmax, nmax);
+    matrix_t mVconf = matrix_init(nmax, nmax);
+    matrix_t mVcont = matrix_init(nmax, nmax);
+    matrix_t mVsovi = matrix_init(nmax, nmax);
+    matrix_t mVsovj = matrix_init(nmax, nmax);
+    matrix_t mVsovij = matrix_init(nmax, nmax);
+    matrix_t mVsosi = matrix_init(nmax, nmax);
+    matrix_t mVsosj = matrix_init(nmax, nmax);
+    matrix_t mVtens = matrix_init(nmax, nmax);
+    matrix_t Hfi = matrix_init(nmax, nmax);
+    matrix_t Nfi = matrix_init(nmax, nmax);
+
+    /* prepare variables */
+    double factor_r;
+    double factor_p;
+    double s1 = 0.5, s2 = 0.5;
+    double m1 = getmq(f1, args_model);
+    double m2 = getmq(f2, args_model);
+    double C12 = -4.0 / 3.0;
+    double sigmaij = sigma_ij(m1, m2, args_model->sigma_0, args_model->s);
+    args_dynmc->mi = m1;
+    args_dynmc->mj = m2;
+    args_dynmc->Cij = C12;
+    args_dynmc->Sigij = sigmaij;
+    sigma_k_ij(sigmaij, args_dynmc->Sigkij);
+
+    /* calculate matrix elements */
+    for (int i = 0; i < nmax; i++) {
+        for (int j = 0; j < nmax; j++) {
+            factor_r = sqrt(2 / (basis[i].scale * basis[i].scale + basis[j].scale * basis[j].scale));
+            factor_p = sqrt(2 * basis[i].scale * basis[i].scale * basis[j].scale * basis[j].scale 
+                / (basis[i].scale * basis[i].scale + basis[j].scale * basis[j].scale));
+
+            args_dynmc->OCent = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OSdS = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OLSi = operator_ldotsi_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OLSj = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
+            args_dynmc->OTens = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
+                
+            mT.value[i][j] = integral_nlp_hamilton(SRnlp, GIVt, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
+            mbetaijCoul.value[i][j] = integral_nlp_hamilton(SRnlp, GIVbetaijcoul, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltaijCont.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaijcont, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltaiiSov.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaiisov, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltajjSov.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltajjsov, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltaijSov.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaijsov, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltaiiSos.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaiisos, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltajjSos.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltajjsos, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
+            mdeltaijTens.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaijtens, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
+            mVcoul.value[i][j] = integral_nlr_hamilton(SRnlr, GIVcoul, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
+            mVconf.value[i][j] = integral_nlr_hamilton(SRnlr, GIVconf, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
+            mVcont.value[i][j] = integral_nlr_hamilton(SRnlr, GIVcont, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
+            mVsovi.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsovi, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
+            mVsovj.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsovj, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
+            mVsovij.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsovij, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
+            mVsosi.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsosi, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
+            mVsosj.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsosj, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
+            mVtens.value[i][j] = integral_nlr_hamilton(SRnlr, GIVtens, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
+            Nfi.value[i][j] = integral_nlr_overlap(SRnlr, factor_r, &basis[i], &basis[j]);
+        }
+    }
+
+    /* construct Hamiltonian matrix */
+    matrix_t temp = matrix_init(nmax, nmax);
+    matrix_sum(&mT, &mVconf, &Hfi);
+    matrix_productT(&mbetaijCoul, &mVcoul, &temp);
+    matrix_sum(&Hfi, &temp, &Hfi);
+    matrix_productT(&mdeltaijCont, &mVcont, &temp);
+    matrix_sum(&Hfi, &temp, &Hfi);
+    matrix_productT(&mdeltaiiSov, &mVsovi, &temp);
+    matrix_sum(&Hfi, &temp, &Hfi);
+    matrix_productT(&mdeltajjSov, &mVsovj, &temp);
+    matrix_sum(&Hfi, &temp, &Hfi);
+    matrix_productT(&mdeltaijSov, &mVsovij, &temp);
+    matrix_sum(&Hfi, &temp, &Hfi);
+    matrix_productT(&mdeltaiiSos, &mVsosi, &temp);
+    matrix_sum(&Hfi, &temp, &Hfi);
+    matrix_productT(&mdeltajjSos, &mVsosj, &temp);
+    matrix_sum(&Hfi, &temp, &Hfi);
+    matrix_productT(&mdeltaijTens, &mVtens, &temp);
+    matrix_sum(&Hfi, &temp, &Hfi);
+
+/* In GI model, the final basis should be orthogonal.
+ * Therefore this could be general eigen system with orthogonal basis and diagonal Nfi,
+ * or just standard eigen system directly. */
+#ifdef LAPACKE
+    lapack_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, v_len);
+#else
+    eigen_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, v_len);
+#endif
+
+    free(basis);
+    matrix_free(&temp);
+    matrix_free(&mT);
+    matrix_free(&mbetaijCoul);
+    matrix_free(&mdeltaijCont);
+    matrix_free(&mdeltaiiSov);
+    matrix_free(&mdeltajjSov);
+    matrix_free(&mdeltaijSov);
+    matrix_free(&mdeltaiiSos);
+    matrix_free(&mdeltajjSos);
+    matrix_free(&mdeltaijTens);
+    matrix_free(&mVcoul);
+    matrix_free(&mVconf);
+    matrix_free(&mVcont);
+    matrix_free(&mVsovi);
+    matrix_free(&mVsovj);
+    matrix_free(&mVsovij);
+    matrix_free(&mVsosi);
+    matrix_free(&mVsosj);
+    matrix_free(&mVtens);
+    matrix_free(&Hfi);
+    matrix_free(&Nfi);
+}

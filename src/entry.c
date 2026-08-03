@@ -24,8 +24,8 @@ void entry_compute(const char* arg)
 
     if (input.task == TASK_SPECTRA) {
         if (input.system == SYSTEM_MESON) {
-            if (input.orbit != ORBIT_GEM && input.orbit != ORBIT_CRG) {
-                fprintf(stderr, "SPECTRA meson compute supports: GEM, CRG basis\n");
+            if (input.orbit != ORBIT_GEM && input.orbit != ORBIT_CRG && input.orbit != ORBIT_SHO) {
+                fprintf(stderr, "SPECTRA meson compute supports: GEM, CRG, SHO basis\n");
                 exit(1);
             }
             compute_spectra_meson(&input);

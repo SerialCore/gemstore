@@ -138,7 +138,8 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Oscillation Scale (omega):  %-46.6f\n", input->omega);
     }
     if (input->orbit == ORBIT_SHO) {
-        printf("  Harmonic Scale (beta):      %-46.6f\n", input->beta);
+        printf("  Number of Oscillators (nmax): %-44d\n", input->nmax);
+        printf("  Harmonic Scale (beta):        %-44.6f GeV\n", input->beta);
     }
     printf("\n");
 

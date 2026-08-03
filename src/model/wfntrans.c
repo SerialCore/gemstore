@@ -60,16 +60,32 @@ double get_normalized_factor(const argsInput_t *input, const double *vector)
 
     int L = (int)input->L;
     int nmax = input->nmax;
-    double normalized = 1.0;
-    double overlap_sum = 0.0;
     argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
-    for (int i = 0; i < nmax; i++) {
-        basis[i].n = i + 1;
-        basis[i].l = L;
-        basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
-        basis[i].param = input->omega;
+    if (input->orbit == ORBIT_GEM) {
+        for (int i = 0; i < nmax; i++) {
+            basis[i].n = i + 1;
+            basis[i].l = L;
+            basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
+        }
+    }
+    else if (input->orbit == ORBIT_CRG) {
+        for (int i = 0; i < nmax; i++) {
+            basis[i].n = i + 1;
+            basis[i].l = L;
+            basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
+            basis[i].param = input->omega;
+        }
+    }
+    else if (input->orbit == ORBIT_SHO) {
+        for (int i = 0; i < nmax; i++) {
+            basis[i].n = i;
+            basis[i].l = L;
+            basis[i].scale = input->beta;
+        }
     }
 
+    double normalized = 1.0;
+    double overlap_sum = 0.0;
     for (int i = 0; i < nmax; i++) {
         for (int j = 0; j < nmax; j++) {
             double overlap_ij = 0.0;
@@ -141,26 +157,43 @@ void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t 
     int nmax = input->nmax;
     int L = (int)input->L;
     argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
-    for (int i = 0; i < nmax; i++) {
-        basis[i].n = i + 1;
-        basis[i].l = L;
-        basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
-        basis[i].param = input->omega;
+    if (input->orbit == ORBIT_GEM) {
+        for (int i = 0; i < nmax; i++) {
+            basis[i].n = i + 1;
+            basis[i].l = L;
+            basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
+        }
+    }
+    else if (input->orbit == ORBIT_CRG) {
+        for (int i = 0; i < nmax; i++) {
+            basis[i].n = i + 1;
+            basis[i].l = L;
+            basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
+            basis[i].param = input->omega;
+        }
+    }
+    else if (input->orbit == ORBIT_SHO) {
+        for (int i = 0; i < nmax; i++) {
+            basis[i].n = i;
+            basis[i].l = L;
+            basis[i].scale = input->beta;
+        }
     }
 
     matrix_t mR2 = matrix_init(nmax, nmax);
     for (int i = 0; i < nmax; i++) {
         for (int j = 0; j < nmax; j++) {
-            double factor = 1.0 / sqrt(basis[i].scale + basis[j].scale);
-
             if (input->orbit == ORBIT_GEM) {
+                double factor = 1.0 / sqrt(basis[i].scale + basis[j].scale);
                 mR2.value[i][j] = integral_nlr_radius(GRnlr, factor, &basis[i], &basis[j]);
             }
             else if (input->orbit == ORBIT_CRG) {
+                double factor = 1.0 / sqrt(basis[i].scale + basis[j].scale);
                 mR2.value[i][j] = integral_crg_radius(CGRnlr, factor, &basis[i], &basis[j]);
             }
-            else {
-                mR2.value[i][j] = (i == j) ? 1.0 : 0.0;
+            else if (input->orbit == ORBIT_SHO) {
+                double factor = sqrt(2 / (basis[i].scale * basis[i].scale + basis[j].scale * basis[j].scale));
+                mR2.value[i][j] = integral_nlr_radius(SRnlr, factor, &basis[i], &basis[j]);
             }
         }
     }

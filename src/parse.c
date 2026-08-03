@@ -219,6 +219,7 @@ static void parse_basis_section(const cJSON *root, argsInput_t *input)
     }
 
     if (input->orbit == ORBIT_SHO) {
+        input->nmax = read_number_item(basis_json, "nmax")->valueint;
         input->beta = read_number_item(basis_json, "beta")->valuedouble;
     }
 }

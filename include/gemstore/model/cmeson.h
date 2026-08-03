@@ -18,4 +18,8 @@ void spectra_meson_GEM(const argsInput_t *args_input, const argsGIModel_t *args_
 void spectra_meson_CRG(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
     array_t *e_out, matrix_t *v_out, int v_len);
 
+/* Calculate meson spectra using SHO (Spherical harmonic oscillator) */
+void spectra_meson_SHO(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
+    array_t *e_out, matrix_t *v_out, int v_len);
+
 #endif

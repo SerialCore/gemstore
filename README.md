@@ -257,13 +257,23 @@ Run it:
 }
 ```
 
+**SHO (Spherical Harmonic Oscillator):**
+```json
+"basis": {
+  "type": "SHO",
+  "nmax": 16,
+  "beta": 0.8
+}
+```
+
 | Field | Type | Description | Range |
 |-------|------|-------------|-------|
-| `type` | string | Basis set type | `"GEM"`, `"CRG"` |
-| `nmax` | int | Number of Gaussian basis functions | 8-32 (typical: 16) |
-| `rmax` | float | Maximum radius (fm) | 20.0-50.0 |
-| `rmin` | float | Minimum radius (fm) | 0.01-0.5 |
+| `type` | string | Basis set type | `"GEM"`, `"CRG"`, `"SHO"` |
+| `nmax` | int | Number of basis functions | 8-32 (typical: 16) |
+| `rmax` | float | Maximum radius (fm; GEM/CRG) | 20.0-50.0 |
+| `rmin` | float | Minimum radius (fm; GEM/CRG) | 0.01-0.5 |
 | `omega` | float | Complex scaling angle (CRG only) | 0.05-0.5 |
+| `beta` | float | HO scale parameter (GeV; SHO only) | 0.2-2.0 |
 
 #### Print Configuration
 

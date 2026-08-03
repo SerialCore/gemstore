@@ -99,7 +99,37 @@ Example:
 
 - `GEM`: `nmax`, `rmax`, `rmin`
 - `CRG`: `nmax`, `rmax`, `rmin`, `omega`
-- `SHO`: `beta`
+- `SHO`: `nmax`, `beta`
+
+## SHO Example
+
+```json
+{
+  "project": "topaz",
+  "task": "SPECTRA",
+  "system": {
+    "type": "MESON",
+    "f1": 3,
+    "f2": 3,
+    "S": 1,
+    "L": 0,
+    "J": 1
+  },
+  "model": {
+    "type": "GISCREEN",
+    "param": "GISCREEN_CCBAR"
+  },
+  "basis": {
+    "type": "SHO",
+    "nmax": 16,
+    "beta": 0.8
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
+  }
+}
+```
 
 ## Meson Quantum Numbers
 

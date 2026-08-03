@@ -94,7 +94,7 @@ Basis-specific required parameters:
 
 - `GEM`: `nmax`, `rmax`, `rmin`
 - `CRG`: `nmax`, `rmax`, `rmin`, `omega`
-- `SHO`: `beta`
+- `SHO`: `nmax`, `beta`
 
 ### Print Control
 
@@ -221,6 +221,6 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - "Calculate charmonium 1P state with J=1 using GISCREEN and print both potential and wavefunction"
 - "Run bottomonium S and P waves with GEM basis, enable potential output only"
 - "Prepare a CRG input with omega = 0.2 and print wavefunctions"
-- "Compute charmonium with SHO basis, beta = 0.8, and do not print potential"
+- "Compute charmonium with SHO basis, nmax = 16, beta = 0.8, and do not print potential"
 
 When this skill is triggered, generate the exact JSON input, run `gemstore --compute <file>`, and report the resulting physics output cleanly, mentioning any generated `.pot.dat` or `.wfn.N.dat` files.
