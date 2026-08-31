@@ -7,7 +7,10 @@ void getijk(double x1,double x2,double x3,double *xi,double *xj,double *xk,int c
                 case 1: *xi=x1;*xj=x2;*xk=x3;break;             
                 case 2: *xi=x3;*xj=x1;*xk=x2;break;             
                 case 3: *xi=x2;*xj=x3;*xk=x1;break;             
-                default: break;                                 
+                default: 
+			printf("error_getijk\n");
+			*xi=0;*xj=0;*xk=0;
+			break;                                 
         }                                                       
 }                                                               
                                                         
@@ -18,7 +21,10 @@ void get123(double *x1,double *x2,double *x3,double xi,double xj,double xk,int c
                 case 1: *x1=xi;*x2=xj;*x3=xk;break;
                 case 2: *x1=xj;*x2=xk;*x3=xi;break;
                 case 3: *x1=xk;*x2=xi;*x3=xj;break;
-                default: break;
+                default: 
+			printf("error_get123\n");
+			*x1=0;*x2=0;*x3=0;
+			break;                                 
         }
 }
 
@@ -129,7 +135,23 @@ void sumckdk_scdk_vtype(sumckdk_scdk *scdk,vtype vsodt,int fg,basis_list qnlist,
 				scdk->nfgh[i][18]=2*mf+4;
 				break;
 
+			case 4:
+				scdk->coe[i]*=factorial[mf+1]/(factorial[2*mf+3]*factorial[mf])/factorial[mg];
+				scdk->nfgh[i][18]=2*mf+4;
+				break;
+
+			case 5:
+				scdk->coe[i]*=factorial[mf+1]/(factorial[2*mf+3]*factorial[mf])/factorial[mg];
+				scdk->nfgh[i][18]=2*mf+4;
+				break;
+
+			case 6:
+				scdk->coe[i]*=factorial[mf+1]/(factorial[2*mf+3]*factorial[mf])/factorial[mg];
+				scdk->nfgh[i][18]=2*mf+4;
+				break;
+
 			default:
+				printf("error_sumckdk_scdk_vtype %d\n",fg);
 				break;
 		}
 	}
@@ -187,11 +209,11 @@ void vtens(sumckdk_scdk *scdk,double coef,double coei,double msai,double msaj,do
 }
 
 
-void vsorp(sumckdk_scdk *scdk,double coef,double coei,double msai,double msaj,double msak,double msbi,double msbj,double msbk,int l1,int l2,int l3,int l4,int ml1,int ml2,int ml3,int ml4,basis_qnum qa,basis_qnum qb,pthread_mutex_t *mutex,int lock,int c)
+void vsoii(sumckdk_scdk *scdk,double coef,double coei,double msai,double msaj,double msak,double msbi,double msbj,double msbk,int l1,int l2,int l3,int l4,int ml1,int ml2,int ml3,int ml4,basis_qnum qa,basis_qnum qb,pthread_mutex_t *mutex,int lock,int c)
 {
 	int M,mu;
 	double coe;
-	double si=0.5,sj=0.5;
+	double si=0.5;
 	double mi,mj,mk;
 	getijk(qa.m1,qa.m2,qa.m3,&mi,&mj,&mk,c);
 	if(msak==msbk)
@@ -200,7 +222,7 @@ void vsorp(sumckdk_scdk *scdk,double coef,double coei,double msai,double msaj,do
         	{
 			for(mu=-1;mu<=1;mu++)
 			{
-				coe=clebschGordan(1,-M,1,M,0,0)*clebschGordan(1,mu,1,M,1,mu+M)*(sqrt(si*(si+1))*clebschGordan(si,msbi,1,-M,si,msai)+sqrt(sj*(sj+1))*clebschGordan(sj,msbj,1,-M,sj,msaj));
+				coe=clebschGordan(1,-M,1,M,0,0)*clebschGordan(1,mu,1,M,1,mu+M)*sqrt(si*(si+1))*clebschGordan(si,msbi,1,-M,si,msai);
 				if(0!=coe)
 				{
 					sumckdk_scdk_calc(scdk,pow(-1,mu)*coe*coef*coei,l1,l2,l3,l4,1,1,ml1,ml2,ml3,ml4,-mu,mu+M,mutex,lock);
@@ -210,11 +232,11 @@ void vsorp(sumckdk_scdk *scdk,double coef,double coei,double msai,double msaj,do
 	}
 }
 
-void vsorn(sumckdk_scdk *scdk,double coef,double coei,double msai,double msaj,double msak,double msbi,double msbj,double msbk,int l1,int l2,int l3,int l4,int ml1,int ml2,int ml3,int ml4,basis_qnum qa,basis_qnum qb,pthread_mutex_t *mutex,int lock,int c)
+void vsoji(sumckdk_scdk *scdk,double coef,double coei,double msai,double msaj,double msak,double msbi,double msbj,double msbk,int l1,int l2,int l3,int l4,int ml1,int ml2,int ml3,int ml4,basis_qnum qa,basis_qnum qb,pthread_mutex_t *mutex,int lock,int c)
 {
 	int M,mu;
 	double coe;
-	double si=0.5,sj=0.5;
+	double si=0.5;
 	double mi,mj,mk;
 	getijk(qa.m1,qa.m2,qa.m3,&mi,&mj,&mk,c);
 	if(msak==msbk)
@@ -223,7 +245,53 @@ void vsorn(sumckdk_scdk *scdk,double coef,double coei,double msai,double msaj,do
         	{
 			for(mu=-1;mu<=1;mu++)
 			{
-				coe=clebschGordan(1,-M,1,M,0,0)*clebschGordan(1,mu,1,M,1,mu+M)*(sqrt(si*(si+1))*clebschGordan(si,msbi,1,-M,si,msai)-sqrt(sj*(sj+1))*clebschGordan(sj,msbj,1,-M,sj,msaj));
+				coe=clebschGordan(1,-M,1,M,0,0)*clebschGordan(1,mu,1,M,1,mu+M)*sqrt(si*(si+1))*clebschGordan(si,msbi,1,-M,si,msai);
+				if(0!=coe)
+				{
+					sumckdk_scdk_calc(scdk,pow(-1,mu)*coe*coef*coei,l1,l2,l3,l4,1,1,ml1,ml2,ml3,ml4,-mu,mu+M,mutex,lock);
+				}
+			}
+		}
+	}
+}
+
+void vsojj(sumckdk_scdk *scdk,double coef,double coei,double msai,double msaj,double msak,double msbi,double msbj,double msbk,int l1,int l2,int l3,int l4,int ml1,int ml2,int ml3,int ml4,basis_qnum qa,basis_qnum qb,pthread_mutex_t *mutex,int lock,int c)
+{
+	int M,mu;
+	double coe;
+	double sj=0.5;
+	double mi,mj,mk;
+	getijk(qa.m1,qa.m2,qa.m3,&mi,&mj,&mk,c);
+	if(msak==msbk)
+	{
+		for(M=-1;M<=1;M++)
+        	{
+			for(mu=-1;mu<=1;mu++)
+			{
+				coe=clebschGordan(1,-M,1,M,0,0)*clebschGordan(1,mu,1,M,1,mu+M)*sqrt(sj*(sj+1))*clebschGordan(sj,msbj,1,-M,sj,msaj);
+				if(0!=coe)
+				{
+					sumckdk_scdk_calc(scdk,pow(-1,mu)*coe*coef*coei,l1,l2,l3,l4,1,1,ml1,ml2,ml3,ml4,-mu,mu+M,mutex,lock);
+				}
+			}
+		}
+	}
+}
+
+void vsoij(sumckdk_scdk *scdk,double coef,double coei,double msai,double msaj,double msak,double msbi,double msbj,double msbk,int l1,int l2,int l3,int l4,int ml1,int ml2,int ml3,int ml4,basis_qnum qa,basis_qnum qb,pthread_mutex_t *mutex,int lock,int c)
+{
+	int M,mu;
+	double coe;
+	double sj=0.5;
+	double mi,mj,mk;
+	getijk(qa.m1,qa.m2,qa.m3,&mi,&mj,&mk,c);
+	if(msak==msbk)
+	{
+		for(M=-1;M<=1;M++)
+        	{
+			for(mu=-1;mu<=1;mu++)
+			{
+				coe=clebschGordan(1,-M,1,M,0,0)*clebschGordan(1,mu,1,M,1,mu+M)*sqrt(sj*(sj+1))*clebschGordan(sj,msbj,1,-M,sj,msaj);
 				if(0!=coe)
 				{
 					sumckdk_scdk_calc(scdk,pow(-1,mu)*coe*coef*coei,l1,l2,l3,l4,1,1,ml1,ml2,ml3,ml4,-mu,mu+M,mutex,lock);

@@ -999,7 +999,7 @@ void trideigvMul(double **a,int n,double *d,double *e,double *dt,double *et,int 
 	pthread_mutex_unlock(&mutex_parent);
 
 	
-	eps=1E-17;
+	eps=1E-16;
 	e[0]=0;
 	for(i=n-1;i>=1;i--)
 	{
@@ -1163,7 +1163,6 @@ void trideigvMul(double **a,int n,double *d,double *e,double *dt,double *et,int 
 		}
 	}
 
-
 	dd=(double*)malloc(sizeof(double)*n);
 	ee=(double*)malloc(sizeof(double)*n);
 	ds=(double*)malloc(sizeof(double)*n);
@@ -1266,7 +1265,6 @@ void trideigvMul(double **a,int n,double *d,double *e,double *dt,double *et,int 
 			}
 		}
 	}	
-
 
 	if(lt>=n-1)
 	{

@@ -6,22 +6,27 @@ typedef struct{
 
 void initmatrix(matrix *mat,int n,int m)
 {
-	int i;
-	double **p;
-	p=(double**)malloc(n*sizeof(double*));
-	if(NULL==p)
+	int i,j;
+	mat->p=(double**)malloc(n*sizeof(double*));
+	if(NULL==mat->p)
 	{
 		printf("error_initmatrix\n");
 	}
 	for(i=0;i<n;i++)
 	{
-		p[i]=(double*)malloc(m*sizeof(double));
-		if(NULL==p[i])
+		mat->p[i]=(double*)malloc(m*sizeof(double));
+		if(NULL==mat->p[i])
 		{
 			printf("error_initmatrix\n");
 		}
+		else
+		{
+			for(j=0;j<m;j++)
+			{
+				mat->p[i][j]=0;
+			}
+		}
 	}
-	mat->p=p;
 	mat->n=n;
 	mat->m=m;
 }
@@ -58,14 +63,13 @@ void printmatrix(matrix mat)
 
 void freematrix(matrix *mat)
 {
-	double **p=mat->p;
 	int n=mat->n;
 	int i;
 	for(i=0;i<n;i++)
 	{
-		free(p[i]);
+		free(mat->p[i]);
 	}
-	free(p);
+	free(mat->p);
 	mat->n=0;
 	mat->m=0;
 }
@@ -80,6 +84,26 @@ void printarrayd1(double *p,int n)
 	printf("\n");
 }
 
+void printarrayd2(double **p,int n,int m)
+{
+	int i,j;
+	printf("     ");
+	for(j=0;j<m;j++)
+	{
+		printf("   %4d    ",j+1);
+	}
+	printf("\n");
+	for(i=0;i<n;i++)
+	{
+		printf("%3d: ",i+1);
+		for(j=0;j<m;j++)
+		{
+			printf("%10.6f ",p[i][j]);
+		}
+		printf("\n");
+	}
+	printf("\n");
+}
 void printarraye1(double *p,int n)
 {
 	int i;
