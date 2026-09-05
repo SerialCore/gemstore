@@ -70,7 +70,7 @@ void minuit2_bbbar_GIScreen(double *params_out)
 
     /* use of Migrad algorithm with strategy 2, high precision */
     Chi2Minimizer minuit_fit(DATA_BBBAR, MODEL_GISCREEN, N_PARAMS, 1.0);
-    ROOT::Minuit2::MnMigrad migrad(minuit_fit, upar, 2);
+    ROOT::Minuit2::MnMigrad migrad(minuit_fit, upar, ROOT::Minuit2::MnStrategy{2});
 
     /* perform the fit */
     ROOT::Minuit2::FunctionMinimum min_result = migrad();
