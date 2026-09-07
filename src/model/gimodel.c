@@ -12,8 +12,15 @@
 const double GI_ALPHA_K[3] = {0.25, 0.15, 0.20};
 const double GI_GAMMA_K[3] = {0.5, 1.5811388300841898, 15.811388300841896};
 
-double GIVt(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+#define GI_UNPACK(ctx) \
+    const argsGIModel_t *args_model = ((const gi_pot_ctx_t *)(ctx))->model; \
+    const argsGIModelDy_t *args_dynmc = ((const gi_pot_ctx_t *)(ctx))->dyn; \
+    (void)args_model; \
+    (void)args_dynmc
+
+double GIVt(double p, void *ctx)
 {
+    GI_UNPACK(ctx);
     double mi = args_dynmc->mi;
     double mj = args_dynmc->mj;
     double cent = args_dynmc->OCent;
@@ -21,8 +28,9 @@ double GIVt(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *ar
     return cent * sqrt(mi * mi + p * p) + cent * sqrt(mj * mj + p * p);
 }
 
-double GIVbetaijcoul(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVbetaijcoul(double p, void *ctx)
 {
+    GI_UNPACK(ctx);
     double mi = args_dynmc->mi;
     double mj = args_dynmc->mj;
     double cent = args_dynmc->OCent;
@@ -32,8 +40,9 @@ double GIVbetaijcoul(double p, const argsGIModel_t *args_model, const argsGIMode
     return pow(betaij, 0.5);
 }
 
-double GIVdeltaijcont(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVdeltaijcont(double p, void *ctx)
 {
+    GI_UNPACK(ctx);
     double epsilon_cont = args_model->epsilon_cont;
     double mi = args_dynmc->mi;
     double mj = args_dynmc->mj;
@@ -44,8 +53,9 @@ double GIVdeltaijcont(double p, const argsGIModel_t *args_model, const argsGIMod
     return pow(deltaij, 0.5 + epsilon_cont + epsilon_cont * epsilon_cont);
 }
 
-double GIVdeltaiisov(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVdeltaiisov(double p, void *ctx)
 {
+    GI_UNPACK(ctx);
     double epsilon_sov = args_model->epsilon_sov;
     double mi = args_dynmc->mi;
     double cent = args_dynmc->OCent;
@@ -55,8 +65,9 @@ double GIVdeltaiisov(double p, const argsGIModel_t *args_model, const argsGIMode
     return pow(deltaii, 0.5 + epsilon_sov + epsilon_sov * epsilon_sov);
 }
 
-double GIVdeltajjsov(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVdeltajjsov(double p, void *ctx)
 {
+    GI_UNPACK(ctx);
     double epsilon_sov = args_model->epsilon_sov;
     double mj = args_dynmc->mj;
     double cent = args_dynmc->OCent;
@@ -66,8 +77,9 @@ double GIVdeltajjsov(double p, const argsGIModel_t *args_model, const argsGIMode
     return pow(deltajj, 0.5 + epsilon_sov + epsilon_sov * epsilon_sov);
 }
 
-double GIVdeltaijsov(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVdeltaijsov(double p, void *ctx)
 {
+    GI_UNPACK(ctx);
     double epsilon_sov = args_model->epsilon_sov;
     double mi = args_dynmc->mi;
     double mj = args_dynmc->mj;
@@ -78,8 +90,9 @@ double GIVdeltaijsov(double p, const argsGIModel_t *args_model, const argsGIMode
     return pow(deltaij, 0.5 + epsilon_sov + epsilon_sov * epsilon_sov);
 }
 
-double GIVdeltaiisos(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVdeltaiisos(double p, void *ctx)
 {
+    GI_UNPACK(ctx);
     double epsilon_sos = args_model->epsilon_sos;
     double mi = args_dynmc->mi;
     double cent = args_dynmc->OCent;
@@ -89,8 +102,9 @@ double GIVdeltaiisos(double p, const argsGIModel_t *args_model, const argsGIMode
     return pow(deltaii, 0.5 + epsilon_sos + epsilon_sos * epsilon_sos);
 }
 
-double GIVdeltajjsos(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVdeltajjsos(double p, void *ctx)
 {
+    GI_UNPACK(ctx);
     double epsilon_sos = args_model->epsilon_sos;
     double mj = args_dynmc->mj;
     double cent = args_dynmc->OCent;
@@ -100,8 +114,9 @@ double GIVdeltajjsos(double p, const argsGIModel_t *args_model, const argsGIMode
     return pow(deltajj, 0.5 + epsilon_sos + epsilon_sos * epsilon_sos);
 }
 
-double GIVdeltaijtens(double p, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVdeltaijtens(double p, void *ctx)
 {
+    GI_UNPACK(ctx);
     double epsilon_tens = args_model->epsilon_tens;
     double mi = args_dynmc->mi;
     double mj = args_dynmc->mj;
@@ -112,8 +127,9 @@ double GIVdeltaijtens(double p, const argsGIModel_t *args_model, const argsGIMod
     return pow(deltaij, 0.5 + epsilon_tens + epsilon_tens * epsilon_tens);
 }
 
-double GIVcoul(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVcoul(double r, void *ctx)
 {
+    GI_UNPACK(ctx);
     if (r == 0.0) return 0.0;
 
     double Cij = args_dynmc->Cij;
@@ -128,8 +144,9 @@ double GIVcoul(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
     return Cij * cent * sum / r;
 }
 
-double GIVconf(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVconf(double r, void *ctx)
 {
+    GI_UNPACK(ctx);
     if (r == 0.0) return 0.0;
 
     model_type_t model = args_dynmc->model;
@@ -166,8 +183,9 @@ double GIVconf(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
     return 0.0;
 }
 
-double GIVcont(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVcont(double r, void *ctx)
 {
+    GI_UNPACK(ctx);
     double mi = args_dynmc->mi;
     double mj = args_dynmc->mj;
     double Cij = args_dynmc->Cij;
@@ -185,8 +203,9 @@ double GIVcont(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
     return pref * sum;
 }
 
-double GIVsovi(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVsovi(double r, void *ctx)
 {
+    GI_UNPACK(ctx);
     if (r == 0.0) return 0.0;
 
     double mi = args_dynmc->mi;
@@ -205,8 +224,9 @@ double GIVsovi(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
     return pref * dVcoul_dr;
 }
 
-double GIVsovj(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVsovj(double r, void *ctx)
 {
+    GI_UNPACK(ctx);
     if (r == 0.0) return 0.0;
 
     system_type_t system = args_dynmc->system;
@@ -229,8 +249,9 @@ double GIVsovj(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
     return pref * dVcoul_dr;
 }
 
-double GIVsovij(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVsovij(double r, void *ctx)
 {
+    GI_UNPACK(ctx);
     if (r == 0.0) return 0.0;
 
     system_type_t system = args_dynmc->system;
@@ -255,8 +276,9 @@ double GIVsovij(double r, const argsGIModel_t *args_model, const argsGIModelDy_t
     return pref * dVcoul_dr;
 }
 
-double GIVsosi(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVsosi(double r, void *ctx)
 {
+    GI_UNPACK(ctx);
     if (r == 0.0) return 0.0;
 
     double mi = args_dynmc->mi;
@@ -266,13 +288,14 @@ double GIVsosi(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
 
     /* numerical differential */
     double h = 1e-6 * (r > 1e-8 ? r : 1.0);
-    double dVconf_dr = (GIVconf(r + h, args_model, args_dynmc) - GIVconf(r - h, args_model, args_dynmc)) / (2.0 * h);
+    double dVconf_dr = (GIVconf(r + h, ctx) - GIVconf(r - h, ctx)) / (2.0 * h);
 
     return pref * dVconf_dr;
 }
 
-double GIVsosj(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVsosj(double r, void *ctx)
 {
+    GI_UNPACK(ctx);
     if (r == 0.0) return 0.0;
 
     system_type_t system = args_dynmc->system;
@@ -286,13 +309,14 @@ double GIVsosj(double r, const argsGIModel_t *args_model, const argsGIModelDy_t 
 
     /* numerical differential */
     double h = 1e-6 * (r > 1e-8 ? r : 1.0);
-    double dVconf_dr = (GIVconf(r + h, args_model, args_dynmc) - GIVconf(r - h, args_model, args_dynmc)) / (2.0 * h);
+    double dVconf_dr = (GIVconf(r + h, ctx) - GIVconf(r - h, ctx)) / (2.0 * h);
 
     return pref * dVconf_dr;
 }
 
-double GIVtens(double r, const argsGIModel_t *args_model, const argsGIModelDy_t *args_dynmc)
+double GIVtens(double r, void *ctx)
 {
+    GI_UNPACK(ctx);
     if (r == 0.0) return 0.0;
 
     double mi = args_dynmc->mi;

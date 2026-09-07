@@ -554,17 +554,18 @@ int write_meson_pot(const argsInput_t *input, const argsGIModel_t *args_model, a
     double rmin = 0.01;
     double rmax = 10.0;
     double dr = 0.01;
+    gi_pot_ctx_t ctx = { args_model, args_dynmc };
     for (double r = rmin; r <= rmax; r += dr) {
         double rGeV = r * fm; /* convert fm to GeV^-1 */
-        double potential = GIVconf(rGeV, args_model, args_dynmc)
-            + GIVcoul(rGeV, args_model, args_dynmc)
-            + GIVcont(rGeV, args_model, args_dynmc)
-            + GIVsovi(rGeV, args_model, args_dynmc)
-            + GIVsovj(rGeV, args_model, args_dynmc)
-            + GIVsovij(rGeV, args_model, args_dynmc)
-            + GIVsosi(rGeV, args_model, args_dynmc)
-            + GIVsosj(rGeV, args_model, args_dynmc)
-            + GIVtens(rGeV, args_model, args_dynmc);
+        double potential = GIVconf(rGeV, &ctx)
+            + GIVcoul(rGeV, &ctx)
+            + GIVcont(rGeV, &ctx)
+            + GIVsovi(rGeV, &ctx)
+            + GIVsovj(rGeV, &ctx)
+            + GIVsovij(rGeV, &ctx)
+            + GIVsosi(rGeV, &ctx)
+            + GIVsosj(rGeV, &ctx)
+            + GIVtens(rGeV, &ctx);
 
         fprintf(pf, "%.8f    %.8e\n", r, potential);
     }

@@ -65,10 +65,10 @@ clean:
 	rm -rf $(MINUIT2_BUILD_DIR)
 
 install: all
-	sudo cp $(EXCUTEABLE) /usr/local/bin/
+	cp $(EXCUTEABLE) ~/.local/bin/
 
 uninstall:
-	sudo rm -f /usr/local/bin/$(EXCUTEABLE)
+	rm -f ~/.local/bin/$(EXCUTEABLE)
 
 print-objects:
 	@echo "OBJECTS = $(OBJECTS)"

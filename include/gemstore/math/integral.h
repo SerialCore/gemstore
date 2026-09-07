@@ -9,7 +9,9 @@
 
 #include <gemstore/basis/orbit.h>
 #include <gemstore/param/argset.h>
-#include <gemstore/model/gimodel.h>
+
+/* Integrand for hamilton matrix elements. Model-specific parameters live in ctx. */
+typedef double (*potential_t)(double x, void *ctx);
 
 /* Integrate rms radius with NLR basis */
 double integral_nlr_radius(
@@ -53,8 +55,7 @@ double integral_nlr_hamilton(
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
-    const argsGIModel_t *args_model,
-    const argsGIModelDy_t *args_dynmc);
+    void *ctx);
 
 /* Integrate hamiltonian with given potential and NLP basis */
 double integral_nlp_hamilton(
@@ -63,8 +64,7 @@ double integral_nlp_hamilton(
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
-    const argsGIModel_t *args_model,
-    const argsGIModelDy_t *args_dynmc);
+    void *ctx);
 
 /* Integrate hamiltonian with given potential and CRG basis */
 double integral_crg_hamilton(
@@ -73,7 +73,6 @@ double integral_crg_hamilton(
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
-    const argsGIModel_t *args_model,
-    const argsGIModelDy_t *args_dynmc);
+    void *ctx);
 
 #endif

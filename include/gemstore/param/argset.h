@@ -16,14 +16,6 @@ typedef struct argsOrbit {
     double param;           /* additional parameter, omega for CRG */
 } argsOrbit_t;
 
-typedef struct argsModel {
-    model_type_t model;
-    double mn;              /* mass of n quark */
-    double ms;              /* mass of s quark */
-    double mc;              /* mass of c quark */
-    double mb;              /* mass of b quark */
-} argsModel_t;
-
 typedef struct argsGIModel {
     double mn;              /* mass of n quark */
     double ms;              /* mass of s quark */

@@ -30,13 +30,6 @@ void entry_compute(const char* arg)
             }
             compute_spectra_meson(&input);
         }
-        else if (input.system == SYSTEM_BARYON) {
-            if (input.orbit != ORBIT_GEM) {
-                fprintf(stderr, "SPECTRA baryon compute supports: GEM basis\n");
-                exit(1);
-            }
-            compute_spectra_baryon(&input);
-        }
         else {
             fprintf(stderr, "SPECTRA currently supports only MESON and BARYON systems\n");
             exit(1);

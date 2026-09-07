@@ -90,6 +90,8 @@ void spectra_meson_GEM(const argsInput_t *args_input, const argsGIModel_t *args_
     args_dynmc->Sigij = sigmaij;
     sigma_k_ij(sigmaij, args_dynmc->Sigkij);
 
+    gi_pot_ctx_t ctx = { args_model, args_dynmc };
+
     /* calculate matrix elements */
     for (int i = 0; i < nmax; i++) {
         for (int j = 0; j < nmax; j++) {
@@ -102,24 +104,24 @@ void spectra_meson_GEM(const argsInput_t *args_input, const argsGIModel_t *args_
             args_dynmc->OLSj = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
             args_dynmc->OTens = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
                 
-            mT.value[i][j] = integral_nlp_hamilton(GRnlp, GIVt, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mbetaijCoul.value[i][j] = integral_nlp_hamilton(GRnlp, GIVbetaijcoul, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaijCont.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltaijcont, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaiiSov.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltaiisov, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltajjSov.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltajjsov, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaijSov.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltaijsov, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaiiSos.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltaiisos, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltajjSos.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltajjsos, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaijTens.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltaijtens, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mVcoul.value[i][j] = integral_nlr_hamilton(GRnlr, GIVcoul, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVconf.value[i][j] = integral_nlr_hamilton(GRnlr, GIVconf, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVcont.value[i][j] = integral_nlr_hamilton(GRnlr, GIVcont, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsovi.value[i][j] = integral_nlr_hamilton(GRnlr, GIVsovi, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsovj.value[i][j] = integral_nlr_hamilton(GRnlr, GIVsovj, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsovij.value[i][j] = integral_nlr_hamilton(GRnlr, GIVsovij, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsosi.value[i][j] = integral_nlr_hamilton(GRnlr, GIVsosi, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsosj.value[i][j] = integral_nlr_hamilton(GRnlr, GIVsosj, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVtens.value[i][j] = integral_nlr_hamilton(GRnlr, GIVtens, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
+            mT.value[i][j] = integral_nlp_hamilton(GRnlp, GIVt, factor_p, &basis[i], &basis[j], &ctx);
+            mbetaijCoul.value[i][j] = integral_nlp_hamilton(GRnlp, GIVbetaijcoul, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaijCont.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltaijcont, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaiiSov.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltaiisov, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltajjSov.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltajjsov, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaijSov.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltaijsov, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaiiSos.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltaiisos, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltajjSos.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltajjsos, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaijTens.value[i][j] = integral_nlp_hamilton(GRnlp, GIVdeltaijtens, factor_p, &basis[i], &basis[j], &ctx);
+            mVcoul.value[i][j] = integral_nlr_hamilton(GRnlr, GIVcoul, factor_r, &basis[i], &basis[j], &ctx);
+            mVconf.value[i][j] = integral_nlr_hamilton(GRnlr, GIVconf, factor_r, &basis[i], &basis[j], &ctx);
+            mVcont.value[i][j] = integral_nlr_hamilton(GRnlr, GIVcont, factor_r, &basis[i], &basis[j], &ctx);
+            mVsovi.value[i][j] = integral_nlr_hamilton(GRnlr, GIVsovi, factor_r, &basis[i], &basis[j], &ctx);
+            mVsovj.value[i][j] = integral_nlr_hamilton(GRnlr, GIVsovj, factor_r, &basis[i], &basis[j], &ctx);
+            mVsovij.value[i][j] = integral_nlr_hamilton(GRnlr, GIVsovij, factor_r, &basis[i], &basis[j], &ctx);
+            mVsosi.value[i][j] = integral_nlr_hamilton(GRnlr, GIVsosi, factor_r, &basis[i], &basis[j], &ctx);
+            mVsosj.value[i][j] = integral_nlr_hamilton(GRnlr, GIVsosj, factor_r, &basis[i], &basis[j], &ctx);
+            mVtens.value[i][j] = integral_nlr_hamilton(GRnlr, GIVtens, factor_r, &basis[i], &basis[j], &ctx);
             Nfi.value[i][j] = integral_nlr_overlap(GRnlr, factor_r, &basis[i], &basis[j]);
         }
     }
@@ -337,6 +339,8 @@ void spectra_meson_CRG(const argsInput_t *args_input, const argsGIModel_t *args_
     args_dynmc->Sigij = sigmaij;
     sigma_k_ij(sigmaij, args_dynmc->Sigkij);
 
+    gi_pot_ctx_t ctx = { args_model, args_dynmc };
+
     /* calculate matrix elements */
     for (int i = 0; i < nmax; i++) {
         for (int j = 0; j < nmax; j++) {
@@ -349,24 +353,24 @@ void spectra_meson_CRG(const argsInput_t *args_input, const argsGIModel_t *args_
             args_dynmc->OLSj = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
             args_dynmc->OTens = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
                 
-            mT.value[i][j] = integral_crg_hamilton(CGRnlp, GIVt, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mbetaijCoul.value[i][j] = integral_crg_hamilton(CGRnlp, GIVbetaijcoul, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaijCont.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltaijcont, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaiiSov.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltaiisov, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltajjSov.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltajjsov, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaijSov.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltaijsov, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaiiSos.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltaiisos, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltajjSos.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltajjsos, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaijTens.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltaijtens, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mVcoul.value[i][j] = integral_crg_hamilton(CGRnlr, GIVcoul, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVconf.value[i][j] = integral_crg_hamilton(CGRnlr, GIVconf, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVcont.value[i][j] = integral_crg_hamilton(CGRnlr, GIVcont, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsovi.value[i][j] = integral_crg_hamilton(CGRnlr, GIVsovi, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsovj.value[i][j] = integral_crg_hamilton(CGRnlr, GIVsovj, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsovij.value[i][j] = integral_crg_hamilton(CGRnlr, GIVsovij, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsosi.value[i][j] = integral_crg_hamilton(CGRnlr, GIVsosi, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsosj.value[i][j] = integral_crg_hamilton(CGRnlr, GIVsosj, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVtens.value[i][j] = integral_crg_hamilton(CGRnlr, GIVtens, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
+            mT.value[i][j] = integral_crg_hamilton(CGRnlp, GIVt, factor_p, &basis[i], &basis[j], &ctx);
+            mbetaijCoul.value[i][j] = integral_crg_hamilton(CGRnlp, GIVbetaijcoul, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaijCont.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltaijcont, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaiiSov.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltaiisov, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltajjSov.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltajjsov, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaijSov.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltaijsov, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaiiSos.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltaiisos, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltajjSos.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltajjsos, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaijTens.value[i][j] = integral_crg_hamilton(CGRnlp, GIVdeltaijtens, factor_p, &basis[i], &basis[j], &ctx);
+            mVcoul.value[i][j] = integral_crg_hamilton(CGRnlr, GIVcoul, factor_r, &basis[i], &basis[j], &ctx);
+            mVconf.value[i][j] = integral_crg_hamilton(CGRnlr, GIVconf, factor_r, &basis[i], &basis[j], &ctx);
+            mVcont.value[i][j] = integral_crg_hamilton(CGRnlr, GIVcont, factor_r, &basis[i], &basis[j], &ctx);
+            mVsovi.value[i][j] = integral_crg_hamilton(CGRnlr, GIVsovi, factor_r, &basis[i], &basis[j], &ctx);
+            mVsovj.value[i][j] = integral_crg_hamilton(CGRnlr, GIVsovj, factor_r, &basis[i], &basis[j], &ctx);
+            mVsovij.value[i][j] = integral_crg_hamilton(CGRnlr, GIVsovij, factor_r, &basis[i], &basis[j], &ctx);
+            mVsosi.value[i][j] = integral_crg_hamilton(CGRnlr, GIVsosi, factor_r, &basis[i], &basis[j], &ctx);
+            mVsosj.value[i][j] = integral_crg_hamilton(CGRnlr, GIVsosj, factor_r, &basis[i], &basis[j], &ctx);
+            mVtens.value[i][j] = integral_crg_hamilton(CGRnlr, GIVtens, factor_r, &basis[i], &basis[j], &ctx);
             Nfi.value[i][j] = integral_crg_overlap(CGRnlr, factor_r, &basis[i], &basis[j]);
         }
     }
@@ -551,6 +555,8 @@ void spectra_meson_SHO(const argsInput_t *args_input, const argsGIModel_t *args_
     args_dynmc->Sigij = sigmaij;
     sigma_k_ij(sigmaij, args_dynmc->Sigkij);
 
+    gi_pot_ctx_t ctx = { args_model, args_dynmc };
+
     /* calculate matrix elements */
     for (int i = 0; i < nmax; i++) {
         for (int j = 0; j < nmax; j++) {
@@ -564,24 +570,24 @@ void spectra_meson_SHO(const argsInput_t *args_input, const argsGIModel_t *args_
             args_dynmc->OLSj = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
             args_dynmc->OTens = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
                 
-            mT.value[i][j] = integral_nlp_hamilton(SRnlp, GIVt, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mbetaijCoul.value[i][j] = integral_nlp_hamilton(SRnlp, GIVbetaijcoul, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaijCont.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaijcont, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaiiSov.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaiisov, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltajjSov.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltajjsov, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaijSov.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaijsov, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaiiSos.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaiisos, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltajjSos.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltajjsos, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mdeltaijTens.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaijtens, factor_p, &basis[i], &basis[j], args_model, args_dynmc);
-            mVcoul.value[i][j] = integral_nlr_hamilton(SRnlr, GIVcoul, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVconf.value[i][j] = integral_nlr_hamilton(SRnlr, GIVconf, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVcont.value[i][j] = integral_nlr_hamilton(SRnlr, GIVcont, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsovi.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsovi, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsovj.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsovj, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsovij.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsovij, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsosi.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsosi, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVsosj.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsosj, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
-            mVtens.value[i][j] = integral_nlr_hamilton(SRnlr, GIVtens, factor_r, &basis[i], &basis[j], args_model, args_dynmc);
+            mT.value[i][j] = integral_nlp_hamilton(SRnlp, GIVt, factor_p, &basis[i], &basis[j], &ctx);
+            mbetaijCoul.value[i][j] = integral_nlp_hamilton(SRnlp, GIVbetaijcoul, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaijCont.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaijcont, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaiiSov.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaiisov, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltajjSov.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltajjsov, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaijSov.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaijsov, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaiiSos.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaiisos, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltajjSos.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltajjsos, factor_p, &basis[i], &basis[j], &ctx);
+            mdeltaijTens.value[i][j] = integral_nlp_hamilton(SRnlp, GIVdeltaijtens, factor_p, &basis[i], &basis[j], &ctx);
+            mVcoul.value[i][j] = integral_nlr_hamilton(SRnlr, GIVcoul, factor_r, &basis[i], &basis[j], &ctx);
+            mVconf.value[i][j] = integral_nlr_hamilton(SRnlr, GIVconf, factor_r, &basis[i], &basis[j], &ctx);
+            mVcont.value[i][j] = integral_nlr_hamilton(SRnlr, GIVcont, factor_r, &basis[i], &basis[j], &ctx);
+            mVsovi.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsovi, factor_r, &basis[i], &basis[j], &ctx);
+            mVsovj.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsovj, factor_r, &basis[i], &basis[j], &ctx);
+            mVsovij.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsovij, factor_r, &basis[i], &basis[j], &ctx);
+            mVsosi.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsosi, factor_r, &basis[i], &basis[j], &ctx);
+            mVsosj.value[i][j] = integral_nlr_hamilton(SRnlr, GIVsosj, factor_r, &basis[i], &basis[j], &ctx);
+            mVtens.value[i][j] = integral_nlr_hamilton(SRnlr, GIVtens, factor_r, &basis[i], &basis[j], &ctx);
             Nfi.value[i][j] = integral_nlr_overlap(SRnlr, factor_r, &basis[i], &basis[j]);
         }
     }

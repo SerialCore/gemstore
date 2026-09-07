@@ -137,8 +137,7 @@ double integral_nlr_hamilton(
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
-    const argsGIModel_t *args_model,
-    const argsGIModelDy_t *args_dynmc)
+    void *ctx)
 {
     double sum = 0.0;
 
@@ -146,7 +145,7 @@ double integral_nlr_hamilton(
         sum += node_factor * weights[i]
              * wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale)
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
-             * pot(node_factor * nodes[i], args_model, args_dynmc)
+             * pot(node_factor * nodes[i], ctx)
              * node_factor * node_factor * nodes[i] * nodes[i];
     }
 
@@ -159,8 +158,7 @@ double integral_nlp_hamilton(
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
-    const argsGIModel_t *args_model,
-    const argsGIModelDy_t *args_dynmc)
+    void *ctx)
 {
     double sum = 0.0;
 
@@ -168,7 +166,7 @@ double integral_nlp_hamilton(
         sum += node_factor * weights[i]
              * conj(wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale))
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
-             * pot(node_factor * nodes[i], args_model, args_dynmc)
+             * pot(node_factor * nodes[i], ctx)
              * node_factor * node_factor * nodes[i] * nodes[i];
     }
 
@@ -181,8 +179,7 @@ double integral_crg_hamilton(
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket,
-    const argsGIModel_t *args_model,
-    const argsGIModelDy_t *args_dynmc)
+    void *ctx)
 {
     double sum = 0.0;
 
@@ -190,7 +187,7 @@ double integral_crg_hamilton(
         sum += node_factor * weights[i]
              * conj(wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale, args_bra->param))
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale, args_ket->param)
-             * pot(node_factor * nodes[i], args_model, args_dynmc)
+             * pot(node_factor * nodes[i], ctx)
              * node_factor * node_factor * nodes[i] * nodes[i];
     }
 
