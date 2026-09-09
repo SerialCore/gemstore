@@ -28,6 +28,16 @@ double GIVt(double p, void *ctx)
     return cent * sqrt(mi * mi + p * p) + cent * sqrt(mj * mj + p * p);
 }
 
+double GIVt_quark(double p, void *ctx)
+{
+    /* Single quark √(m²+p²). Baryon spectator kinetic energy on λ. */
+    GI_UNPACK(ctx);
+    double mi = args_dynmc->mi;
+    double cent = args_dynmc->OCent;
+
+    return cent * sqrt(mi * mi + p * p);
+}
+
 double GIVbetaijcoul(double p, void *ctx)
 {
     GI_UNPACK(ctx);

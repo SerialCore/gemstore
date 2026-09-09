@@ -1,0 +1,28 @@
+{
+  "project": "opal",
+  "task": "SPECTRA",
+  "model": {
+    "type": "GISTRING",
+    "param": "GISTRING_MESON"
+  },
+  "system": {
+    "type": "BARYON",
+    "f1": 1,
+    "f2": 2,
+    "f3": 3,
+    "J": 0.5,
+    "P": 1,
+    "sym12": -1,
+    "Lmax": 0
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 3,
+    "rmin": 0.1,
+    "rmax": 3.0
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
+  }
+}

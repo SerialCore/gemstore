@@ -75,4 +75,10 @@ double integral_crg_hamilton(
     const argsOrbit_t *args_ket,
     void *ctx);
 
+/* ∫_0^∞ r^2 exp(-b11 r^2) pot(r) dr; Gaussian is in the quadrature weight */
+double integral_exp_r2(potential_t pot, double b11, void *ctx);
+
+/* ∫_0^∞ r^n exp(−b11 r²) pot(r) dr. Not a GRnlr integral: no ν^{l/2+3/4}. */
+double integral_exp_rn(potential_t pot, double b11, int n, void *ctx);
+
 #endif

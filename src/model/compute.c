@@ -6,6 +6,7 @@
 
 #include <gemstore/model/compute.h>
 #include <gemstore/model/cmeson.h>
+#include <gemstore/model/cbaryon.h>
 #include <gemstore/model/wfntrans.h>
 
 #include <gemstore/math/matrix.h>
@@ -78,4 +79,35 @@ void compute_spectra_meson(const argsInput_t *input)
     array_free(&eigenvalue);
     array_free(&rmsradius);
     matrix_free(&eigenvector);
+}
+
+void compute_spectra_baryon(const argsInput_t *input)
+{
+    argsGIModel_t args_model = argsGIModel_from(input);
+    argsGIModelDy_t args_dynmc = {0};
+    array_t eigenvalue = {0};
+    matrix_t eigenvector = {0};
+    matrix_t overlap = {0};
+
+    if (input->model == MODEL_GISTRING) {
+        args_dynmc.model = MODEL_GISTRING;
+    }
+    else if (input->model == MODEL_GISCREEN) {
+        args_dynmc.model = MODEL_GISCREEN;
+    }
+
+    args_dynmc.system = SYSTEM_BARYON;
+    if (input->orbit != ORBIT_GEM) {
+        fprintf(stderr, "Error: Baryon SPECTRA currently supports GEM basis only.\n");
+        exit(1);
+    }
+
+    spectra_baryon_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap);
+
+    print_baryon_spectra(&eigenvalue, &eigenvector, &overlap, eigenvalue.len);
+    write_baryon_spectra(input, &eigenvalue, &eigenvector, eigenvalue.len);
+
+    array_free(&eigenvalue);
+    matrix_free(&eigenvector);
+    matrix_free(&overlap);
 }

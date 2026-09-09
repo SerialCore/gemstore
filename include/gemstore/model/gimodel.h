@@ -46,6 +46,9 @@ typedef struct gi_pot_ctx {
 /* Kinetic energy for GIScreen */
 double GIVt(double p, void *ctx);
 
+/* Spectator quark √(mi²+p²); baryon T_λ. GIVt is the two-body pair analogue. */
+double GIVt_quark(double p, void *ctx);
+
 /* GI smearing beta_ij for Vcoul */
 double GIVbetaijcoul(double p, void *ctx);
 

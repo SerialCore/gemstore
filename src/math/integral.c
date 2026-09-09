@@ -193,3 +193,27 @@ double integral_crg_hamilton(
 
     return sum;
 }
+
+double integral_exp_r2(potential_t pot, double b11, void *ctx)
+{
+    return integral_exp_rn(pot, b11, 2, ctx);
+}
+
+double integral_exp_rn(potential_t pot, double b11, int n, void *ctx)
+{
+    /* Half-range Hermite weight is already e^{−u²} du with r = u/√b11.
+     * Do not combine this with GRnlr, which still carries ν^{l/2+3/4}. */
+    if (b11 <= 0.0 || n < 0) {
+        return 0.0;
+    }
+
+    double nf = 1.0 / sqrt(b11);
+    double sum = 0.0;
+
+    for (int i = 0; i < OHP; i++) {
+        double r = nf * nodes[i];
+        sum += weights[i] * pot(r, ctx) * pow(nodes[i], n);
+    }
+
+    return sum * pow(nf, n + 1);
+}
