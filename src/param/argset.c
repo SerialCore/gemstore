@@ -61,15 +61,15 @@ const argsGIModel_t argsGIScreen_bcbar = {
     .ms = 0.6173440068792,
     .mc = 1.805387067165,
     .mb = 5.151269542382,
-    .b = 0.2550504442,
+    .b = 0.2549474924,
     .mu = 0.13561,
     .c = -0.6482214863381,
     .sigma_0 = 1.770545357386,
     .s = 1.146340880694,
-    .epsilon_cont = -0.4994430536,
-    .epsilon_sov = -0.3428445529,
-    .epsilon_sos = 0.9999601185,
-    .epsilon_tens = -0.5000358488,
+    .epsilon_cont = -0.4993633033,
+    .epsilon_sov = -0.3428460826,
+    .epsilon_sos = 0.7914990349,
+    .epsilon_tens = -0.500062988,
 };
 
 const argsGIModel_t argsGIScreen_bsbar = {
@@ -109,15 +109,15 @@ const argsGIModel_t argsGIScreen_csbar = {
     .ms = 0.6173440068792,
     .mc = 1.805387067165,
     .mb = 5.151269542382,
-    .b = 0.2578972631,
+    .b = 0.2578957668,
     .mu = 0.16255,
     .c = -0.6482214863381,
     .sigma_0 = 1.770545357386,
     .s = 1.146340880694,
-    .epsilon_cont = -0.2865485461,
-    .epsilon_sov = -0.5000060103,
-    .epsilon_sos = 0.9999999954,
-    .epsilon_tens = -0.5000004579,
+    .epsilon_cont = -0.2866185127,
+    .epsilon_sov = -0.5000061302,
+    .epsilon_sos = 0.9999999953,
+    .epsilon_tens = -0.5000004114,
 };
 
 argsGIModel_t argsGIModel_from(const argsInput_t *input)

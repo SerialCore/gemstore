@@ -23,10 +23,9 @@ static const std::vector<State> DATA_CSBAR = {
     {2, 3, 1, 1, 1, 1, 2459.5,   1},    // Ds1(2460), mixed 1^1P1/1^3P1, stored here as dominant ^3P1-like state
     {2, 3, 1, 0, 1, 1, 2535.1,   1},    // Ds1(2536), 1^1P1
     {2, 3, 1, 1, 1, 2, 2569.1,   1},    // Ds2*(2573), 1^3P2
-    {2, 3, 2, 1, 0, 1, 2714.0,   5},    // Ds1*(2700), mainly 2^3S1
-                                        // sensitive: Song et al. favor 2^3S1-1^3D1 mixing, but this basis stores the dominant component
-    {2, 3, 1, 1, 2, 1, 2859.0,  27},    // Ds1*(2860), 1^3D1
-                                        // candidate identified after LHCb amplitude analysis
+    {2, 3, 2, 0, 0, 0, 2591.0,  25},    // Ds0(2590), 2^1S0 (LHCb, JP=0-)
+    {2, 3, 2, 1, 0, 1, 2714.0,   5},    // Ds1*(2700), mainly 2^3S1, Song et al, favor 2^3S1-1^3D1 mixing
+    {2, 3, 1, 1, 2, 1, 2859.0,  27},    // Ds1*(2860), 1^3D1 (LHCb amplitude analysis)
     {2, 3, 1, 1, 2, 3, 2860.5,   7},    // Ds3*(2860), 1^3D3
 };
 
