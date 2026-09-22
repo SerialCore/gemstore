@@ -109,15 +109,15 @@ const argsGIModel_t argsGIScreen_csbar = {
     .ms = 0.6173440068792,
     .mc = 1.805387067165,
     .mb = 5.151269542382,
-    .b = 0.2575621195,
+    .b = 0.2575524695,
     .mu = 0.16255,
     .c = -0.6482214863381,
     .sigma_0 = 1.770545357386,
     .s = 1.146340880694,
-    .epsilon_cont = -0.2791506105,
-    .epsilon_sov = -0.4999916775,
-    .epsilon_sos = 0.999999942,
-    .epsilon_tens = -0.500001319,
+    .epsilon_cont = -0.2795867762,
+    .epsilon_sov = -0.4999906411,
+    .epsilon_sos = 0.9999999437,
+    .epsilon_tens = -0.5000014157,
 };
 
 argsGIModel_t argsGIModel_from(const argsInput_t *input)
