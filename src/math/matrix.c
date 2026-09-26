@@ -15,9 +15,9 @@ matrix_t matrix_init(int row, int col)
 {
 	matrix_t mat;
 
-	double **value = (double**)malloc(row*sizeof(double*));
+	double **value = (double**)malloc((size_t)row * sizeof(double*));
 	for (int i = 0; i < row; i++) {
-		value[i] = (double*)malloc(col*sizeof(double));
+		value[i] = (double*)calloc((size_t)col, sizeof(double));
 	}
 	mat.value = value;
 	mat.row = row;
@@ -269,6 +269,47 @@ void matrix_productT(const matrix_t *matA, const matrix_t *matB, matrix_t *matC)
 	}
 }
 
+void matrix_copy(matrix_t *dst, const matrix_t *src)
+{
+	if (dst->row != src->row || dst->col != src->col) {
+		printf("error_matrix_copy: dimension mismatch\n");
+		return;
+	}
+	for (int i = 0; i < dst->row; i++) {
+		for (int j = 0; j < dst->col; j++) {
+			dst->value[i][j] = src->value[i][j];
+		}
+	}
+}
+
+void matrix_symmetrize(matrix_t *mat)
+{
+	for (int i = 0; i < mat->row; i++) {
+		for (int j = i + 1; j < mat->col; j++) {
+			double s = 0.5 * (mat->value[i][j] + mat->value[j][i]);
+			mat->value[i][j] = s;
+			mat->value[j][i] = s;
+		}
+	}
+}
+
+double matrix_expect(const matrix_t *vec, int n, const matrix_t *op)
+{
+	double s = 0.0;
+	for (int i = 0; i < vec->col; i++) {
+		for (int j = 0; j < vec->col; j++) {
+			s += vec->value[n][i] * op->value[i][j] * vec->value[n][j];
+		}
+	}
+	return s;
+}
+
+void matrix_sandwich(matrix_t *v, const matrix_t *p, matrix_t *tmp)
+{
+	matrix_productT(p, v, tmp);
+	matrix_copy(v, tmp);
+}
+
 void matrix_print(const matrix_t *mat)
 {
 	/* Print a matrix with row/column indices and formatted elements
@@ -310,8 +351,7 @@ array_t array_init(int len)
 {
 	array_t arr;
 
-	double *value = (double*)malloc(len*sizeof(double));
-	arr.value = value;
+	arr.value = (double*)calloc((size_t)len, sizeof(double));
 	arr.len = len;
 
 	return arr;

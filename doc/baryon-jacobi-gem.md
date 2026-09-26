@@ -1,12 +1,12 @@
-# 重子 Jacobi GEM：当前实现与未完成项
+scdkme# 重子 Jacobi GEM（SCDK）
 
-日期：2026-09-09  
+日期：2026-09-26  
 范围：`SPECTRA` + `BARYON` + `GEM`  
-对照代码：`src/model/cbaryon.c` 及下文文件表
+对照代码：`src/model/cbaryon.c`、`src/math/sumckdk.c`、`src/math/scdkme.c`、`src/basis/basis.c`、`src/basis/threebody.c`
 
-本文记录第一版重子谱的交付边界、RR 路径怎么接到介子积分上、以及下次改三通道基 / 完整 GI 时不要踩的坑。不是用户手册。
+重子谱走 **SCDK**（`recycle/sumckdk.h` + `inteCenV.h` + `vtype.h`）。介子仍用 1D GEM，矩阵元路径不共用。
 
-公式、通道映射矩阵、配平方、固谐加法和矩阵元逐步推导见 **`doc/baryon-rr-gem-derivation.md`**（PDF：`doc/baryon-rr-gem-derivation.pdf`）。
+Jacobi 映射矩阵与配平方（SCDK 的 `getT*` 用同一套 \(\alpha\beta\gamma\delta\)、\(b_{11}\)）见 **`doc/baryon-rr-gem-derivation.md`**。该文后半的「固谐加法 / RR 路径 1」是已废弃的实现，生产代码不再调用 `solidharm_central_me`。
 
 ```bash
 pandoc doc/baryon-rr-gem-derivation.md -o doc/baryon-rr-gem-derivation.pdf \
@@ -20,210 +20,147 @@ pandoc doc/baryon-rr-gem-derivation.md -o doc/baryon-rr-gem-derivation.pdf \
 
 ## 1. 现在能算什么
 
-单 Jacobi 标架 \(c=1\) 上的中心势谱，含 P 波。
+三张 Jacobi 连接图 \(c=1,2,3\)（对 \(12/31/23\)，即 123 / 312 / 231）写在**同一套** \(Hc=ENc\) 里。求 \(V_{13}\) 时 SCDK 把 bra/ket 的高斯从各自标架映到 \(\rho_{31}\) 再积。过完备 \(N\) 丢掉近零模后再解 \(H\)。
 
-| 项目 | 状态 |
+| 项目 | 现状 |
 |---|---|
-| 入口 | `gemstore --compute` → `SYSTEM_BARYON` → `compute_spectra_baryon` → `spectra_baryon_GEM` |
-| 基 | 只建 \(c=1\)（\(\rho=r_1-r_2\)，\(\lambda\) 指向粒子 3） |
-| \(L_{\max}\) | 0：S 波；1：P 波 \((l_\rho,l_\lambda)=(1,0)\) 与 \((0,1)\) |
-| 动能 | \(T_\rho+T_\lambda\)：`GIVt`（对内两夸克）+ `GIVt_quark`（spectator），相对论 \(\sqrt{m^2+p^2}\) |
-| 中心势 | \(V_{12}+V_{13}+V_{23}\) 的库仑 / 禁闭 / 接触径向都积 |
-| 道内（`pair == c`） | 1D `GRnlr` / `GRnlp`，与介子相同；自旋–自旋、SO、张量走 `baryon_op_apply` |
-| 道外（`pair != c`） | 中心势走 complete-the-square + 球谐加法定理（RR 路径 1）；\(\mathbf{s}_i\cdot\mathbf{s}_j\) 有自旋 recouple |
-| 色因子 | \(C_{ij}=-2/3\)（介子是 \(-4/3\)） |
-| 正交化 | 与介子相同：随机对称矩阵对 \(N\) 做广义本征，再变到正交基上拼 \(H\) |
+| 入口 | `--compute` → `SYSTEM_BARYON` → `compute_spectra_baryon` → `spectra_baryon_GEM` |
+| 基 | `basis`。可分辨：三标架**独立**。全同对：该对 Pauli + 重排图 \(\lvert c_a\rangle+\eta\lvert c_b\rangle\) |
+| \(L_{\max}\) | \(l_\rho+l_\lambda\le L_{\max}\) 且宇称对；\(L_{\max}=0\) S 波，\(1\) 含 \((1,0)\) 与 \((0,1)\) |
+| 角向多项式 | `sumckdk_scdk_calc`，对 `qnlist_spfy` 缓存，径向点共用 |
+| 运动学 | `scdkme`：`getTir` / `getT1p` / `getTpi` 等，配平方后对 \(t_j\) 求值 |
+| 势 | recycle 径向核 `inteVogeG` / `inteVstring` / `inteVcont` / 张量 / SO；参数来自 JSON `model` |
+| GISCREEN | \(\mu>0\) 时禁闭与 Thomas 走 smeared+screened 的 `InteCenV` |
+| 夹心 | **每对**先 \(\beta V\beta\)，再三对相加（recycle `transP`）；介子是先对求和再夹 |
+| 正交化 | `threebody_overlap_basis`：对角 \(N\)，丢掉 \(\lambda\le 10^{-8}\lambda_{\max}\)，行按 \(1/\sqrt{\lambda}\) 归一 |
+| 输出 | 质量、三对 RMS（fm）、\(c^TNc\)；可选 `*.pot.dat`、`*.basis.dat`、`*.wfn.N.dat` |
 
-**不是**完整 Godfrey–Isgur 重子，也**不是**三通道展开。
+**没有** \(S_3\) Young 投影（recycle 也没有）。sss 的 S 波 \(3/2^+\) 在 \(S_2(1,2)\) 下已经全对称；其它 \(S_3\) 类下次再做。
 
 ### 1.1 怎么跑
 
 ```bash
-# 若 make 因时钟偏斜跳过链接：
-rm -f gemstore obj/src/model/cbaryon.o obj/src/math/solidharm.o
 make
-
-./gemstore --compute test/Spectra-Baryon/opal.json    # S 波 1/2+
-./gemstore --compute test/Spectra-Baryon/opal_P.json  # P 波 1/2-
+./gemstore --compute test/Spectra-Baryon/opal.json    # uds，1/2+，Lmax=0
+./gemstore --compute test/Spectra-Baryon/opal_P.json  # uds，1/2-，Lmax=1
 ```
 
-运行一开始会做恒等检验（失败即 `exit(1)`）：
+JSON：`system.f1,f2,f3`（1=n，2=s，3=c），`J`，`P`，`sym12`，`Lmax`；`basis.nmax,rmin,rmax`（fm）。
 
-1. 道内 Coulomb：1D `GRnlr` vs RR `solidharm_central_me`（`pair == c`）
-2. \(V=1\)：同一对高斯在 `pair=c` 与另一 pair 标架上的矩阵元（标架无关 = overlap）
+### 1.2 基：可分辨 vs 全同
 
-### 1.2 已核对的数字
+通道约定与 `jacobi.h` 一致：
 
-在 `GISTRING_MESON`、uds（`f1,f2,f3 = 1,2,3`）、\(J=1/2\)、`sym12=-1`、`nmax=4`、`rmin=0.2`、`rmax=2.0` 下：
+- \(c=1\)：\(\rho=r_1-r_2\)，spectator 3（123）
+- \(c=2\)：\(\rho=r_3-r_1\)，spectator 2（312；与 132 同一对，差 \(\rho\to-\rho\)）
+- \(c=3\)：\(\rho=r_2-r_3\)，spectator 1（231）
 
-| JSON | \(J^P\) | \(L_{\max}\) | 基态 | 状态数 |
-|---|---|---|---|---|
-| `opal.json` | \(1/2^+\) | 0 | **2.193 GeV** | 32，\(c^TNc=1\)，无零模、无负质量 |
-| `opal_P.json` | \(1/2^-\) | 1 | **2.526 GeV** | 96，同上 |
-
-P 波高于 S 波。若 JSON 里 `nmax/rmin/rmax` 已改，数字会变，以恒等检验 + 正质量为准。
-
-独立（不跑全谱）还核对过 RR 空间元：
-
-- \(V=1\)：pair 1/2/3 相对误差 \(\sim 10^{-16}\)，且与 \(M\) 无关
-- \(V=1/r\)、\(\ell=1\)：与笛卡尔闭式一致（\(\alpha'^2\) 的 \(r\) 矩 + \(\beta^2\) 的 \(R\) 矩）
-
----
-
-## 2. 两套 “\(c\)” 不要混
-
-| 名字 | 代码 | 现在做什么 |
-|---|---|---|
-| 波函数的 Jacobi 标架 | `basis_qnum.c`，`baryon_basis_build` | **只建 \(c=1\)** |
-| 势作用的夸克对 | 循环 `pair = 1,2,3` | **三对都积**。`pair==c` 走 1D；否则走 RR |
-
-因此「P 波能算」= 在 \(c=1\) 的基上积了 \(V_{12}+V_{13}+V_{23}\) 的中心项，**不是**只算了 \(V_{12}\)。
-
-通道约定（与 `jacobi.h` 一致）：
-
-- \(c=1\)：对 \((1,2)\)，spectator 3
-- \(c=2\)：对 \((3,1)\)，spectator 2
-- \(c=3\)：对 \((2,3)\)，spectator 1
-
-无质量权重坐标：
+无质量权重：
 
 \[
-\rho_c = r_i-r_j,\qquad
-\lambda_c=\frac{m_i r_i+m_j r_j}{m_i+m_j}-r_k
+\rho_c=r_i-r_j,\qquad
+\lambda_c=\frac{m_i r_i+m_j r_j}{m_i+m_j}-r_k.
 \]
 
-线性映射 \(\rho_{\mathrm{from}}=\alpha\rho_{\mathrm{to}}+\beta\lambda_{\mathrm{to}}\) 等，\(|\det(\alpha\beta\gamma\delta)|=1\)。
+线性映射 \(\rho_{\mathrm{from}}=\alpha\rho_{\mathrm{to}}+\beta\lambda_{\mathrm{to}}\)，\(|\alpha\delta-\beta\gamma|=1\)。SCDK 的 `getT*` 用这套矩阵把任意 \(c_a,c_b\) 映到势所在的 pair。
 
-一套 Jacobi 坐标覆盖整个三体位形。\(L_{\max}\) 足够时，**只建 \(c=1\) 在数学上完备**。\(c=2,3\) 的高斯是另一套展开，与 \(c=1\) 线性相关，不是新的物理空间。
+| JSON | 构造 |
+|---|---|
+| **csn**（三味都不同，如 `f1,f2,f3=1,2,3`） | 三标架各成一套独立基，**不用** `sym12` |
+| **ssn**（两个相同放在 1、2） | \(c=1\)：该对 Pauli；\(c=2\) 与 \(c=3\) 收成 \(\lvert 2\rangle+\eta\lvert 3\rangle\) |
+| **sss**（三个相同） | 与 ssn 相同：只显式做 \(S_2(1,2)\)，不是 \(S_3\) |
+
+Pauli / 叠加系数（recycle）：
+
+\[
+\eta=f_{12}\,(-1)^{1+s_{ij}+l_\rho},\qquad
+\text{留下 } \eta=+1.
+\]
+
+`sym12=-1` 且 \(l_\rho=0\) 时留下 \(s_{ij}=0\)；`sym12=+1` 留下 \(s_{ij}=1\)。色单态 \(\varepsilon_{abc}\) 要求空间–自旋对称时，全同对一般用 `sym12=-1`；sss 的 \(3/2^+\) S 波应对 `sym12=+1`（\(s_{ij}=1\)）。
+
+\(2\leftrightarrow 3\)、\(3\leftrightarrow 1\) 全同时，把对应的两张重排图按同样 \(\eta\) 组合。实现：`threebody_pair_identical`、`threebody_exchange_eta`，组装在 `baryon_basis_build`。
+
+不要把三个标架的谱直和相加。交叉块
+
+\[
+N_{12}=\langle\phi^{(c=1)}\lvert\phi^{(c=2)}\rangle\neq 0
+\]
+
+由 SCDK 的 `inteNfi`（\(V=1\)，映到某一对标架）给出。
+
+### 1.3 SCDK 矩阵元
+
+1. `qnlist_spfy`：角动量通道（无径向 \(n\)）。`mlsj` 把 \(\lvert(s_{ij}L)j_l,s_3;J,M=J\rangle\) 拆成投影。
+2. 21 组多项式（7 类算符 × 3 对）：`sumckdk_scdk_vtype` → `vcent/vcont/vtens/vsoii/jj/ji/ij`。与 \(\nu\) 无关。
+3. `qnlist_full`：每个 spfy 态 \(\times(n_\rho,n_\lambda=1..n_{\max})\)，\(\nu=\mathrm{getnu}\)（`GEMSTORE_FM`）。
+4. `getmfi`：用 `map1/map2` 取多项式，`getT*` 填 \(t_j\)（含 \(b_{11}\)、spectator 矩、四个 GEM 归一），`inteVcenPartA` 收缩 × 径向核。
+
+动能是三夸克相对论单粒子能量之和（`tpi_cent` + `inteTi`）。动量夹心 \(\beta,\delta\) 用 `t1p_cent`，**每对** `matrix_sandwich` 后再相加。
+
+### 1.4 已核对的数字
+
+`GISTRING_MESON`、uds（`1,2,3`）、\(J=1/2\)、三标架独立、`nmax=3`、`rmin=0.1`、`rmax=3.0` fm：
+
+| JSON | \(J^P\) | \(L_{\max}\) | 角动量通道 | 全基 | 基态 |
+|---|---|---|---|---|---|
+| `opal.json` | \(1/2^+\) | 0 | 6（每标架 2 个 \(s_{ij}\)） | 54 | **2.573 GeV**，\(r_{12}\approx 0.52\) fm，\(c^TNc=1\) |
+| `opal_P.json` | \(1/2^-\) | 1 | 18 | 162 | **2.918 GeV** |
+
+P 波高于 S 波。单通道 \(c=1\) 时 S 波基态约 2.59 GeV；三图独立后略降，是过完备展开，不是直和。`nmax/rmin/rmax` 改了数字会变。
+
+recycle 实际跑的是**只建 \(c=1\)**（\(c=2,3\) 写了又注释）。要对齐 recycle 的旧数字，需关三图；当前默认按 Hiyama 三连接图进同一套 \(H\)。
 
 ---
 
-## 3. RR 路径（中心力，路径 1）
-
-未采用 SCDK。道外中心力：
-
-1. 把 bra/ket 的高斯从各自 `from` 标架映到势的 `pair` 标架
-2. 配成平方：\(R'=R+\kappa r\)，\(\kappa=a_{rR}/(2a_{RR})\)，得到 \(e^{-b_{11}r^2-a_{RR}R'^2}\)
-3. 移位后 \(\rho=(\alpha-\beta\kappa)r+\beta R'\)（`jacobi_gaussian_shift` 的 `al,be,ga,de`）
-4. 固谐加法 \(\mathcal{Y}_{\ell m}(\alpha r+\beta R)\)，径向 \(\int r^{n}V(r)e^{-b_{11}r^2}dr\) 与 \(\int R^{n}e^{-a_{RR}R^2}dR\) 分离
-5. 乘四个 `gem_pref`（`GRnlr` 去掉 \(r^\ell\) 的那一段，幂次改由 \(\mathcal{Y}\) 提供）
-
-\(\ell=1\) 时 \(\mathcal{Y}_1(\alpha r+\beta R)=\alpha\mathcal{Y}_1(r)+\beta\mathcal{Y}_1(R)\) 精确成立。Bra 用 \(\mathcal{Y}_{\ell m}^*=(-1)^m\mathcal{Y}_{\ell,-m}\)，负磁量子数的相位用 `(m & 1)`，不要 `m % 2`（C 里负奇数 `% 2 == -1`）。
-
-标量 \(\langle LM|V|LM\rangle\) 与 \(M\) 无关；实现里用拉伸态 \(M=L\)，已用 \(M=0,1\) 对过。
-
-### 3.1 曾经的假态 / 零模（不要改回去）
-
-| 现象 | 原因 | 现状 |
-|---|---|---|
-| 质量 \(\sim -16\)、\(-180\) GeV | 道外把 \(b_{11}\) 当 GEM \(\nu\) 送进 `integral_nlr_hamilton`，Hermite 权重与 `GRnlr` 的 \(\nu^{3/4}\) 双重计数 | 道外改 `integral_exp_rn` × `gem_pref` × spectator 高斯矩 |
-| P 波 16 个精确零本征值，打开道外后变负质量 | `GIVt` 乘 `OCent`；同一通道若用介子 `operator_center_sl` recouple，1D 径向会把不同 \((l_\rho,l_\lambda,j_l)\) 搅在一起，正交化后出现 \(\dim=n_{\max}^2\) 的核；核上再叠道外吸引就塌缩 | 同一通道 `OCent = baryon_qn_match` |
-| 势矩阵垃圾 | `matrix_init` 是 `malloc` 不置零，三对 `+=` | 每个 \((i,j)\) 在 `+=` 前先写成 0 |
-| 道外 P 波曾被关掉 | \(\beta\neq 0\) 的 \(R\) 矩当时未验证 | 已验证，门已撤 |
-
-`baryon_qn_match`：同一通道中心力 / 动能在 \((c,l_\rho,l_\lambda,L,s_{ij},j_l,J)\) 上 Kronecker。道外中心仍允许固定 \(L,s_{ij},j_l\) 下 \((1,0)\leftrightarrow(0,1)\) 混合，空间部分由 solidharm 出。
-
----
-
-## 4. 改了哪些文件
+## 2. 文件
 
 | 文件 | 角色 |
 |---|---|
-| `include/gemstore/model/cbaryon.h`、`src/model/cbaryon.c` | 重子谱：基、\(N,T,V\)、RR 调用、恒等检验 |
-| `include/gemstore/basis/jacobi.h`、`src/basis/jacobi.c` | 通道质量、\(r\) 映射、移位、`raynal_revai`（预备，谱里未用） |
-| `include/gemstore/math/solidharm.h`、`src/math/solidharm.c` | 固谐加法、\(Y_{lm}\) 角积分、`solidharm_central_me` |
-| `include/gemstore/math/integral.h`、`src/math/integral.c` | `integral_exp_rn` / `integral_exp_r2` |
-| `src/model/gimodel.c`、`include/gemstore/model/gimodel.h` | `GIVt_quark`（单个 spectator） |
-| `src/model/compute.c`、`src/entry.c` | `BARYON` 分发 |
+| `include/gemstore/basis/basis.h`、`src/basis/basis.c` | 三体基（recycle `basis.h`） |
+| `include/gemstore/basis/threebody.h`、`src/basis/threebody.c` | 全同对、SCDK 表、\(N\) 截断（分子态可复用） |
+| `include/gemstore/basis/jacobi.h`、`src/basis/jacobi.c` | 通道质量、\(r\) 映射；`raynal_revai` 留给 \(S_3\) |
+| `include/gemstore/math/sumckdk.h`、`src/math/sumckdk.c` | \(Y_{\ell m}\to\sum c(\mathbf{d}\cdot\hat n)^\ell\) |
+| `include/gemstore/math/scdkme.h`、`src/math/scdkme.c` | `vtype` + `getT*` + 径向积分 |
+| `include/gemstore/model/cbaryon.h`、`src/model/cbaryon.c` | 夸克 GI 装配：基、21 算符、夹心、本征 |
+| `src/model/compute.c`、`src/print.c` | 分发、打印、`*.state.json`、势/波函数 |
+| `include/gemstore/math/matrix.h` | `matrix_init` **置零**；`copy` / `symmetrize` / `expect` / `sandwich` |
 | `test/Spectra-Baryon/opal.json`、`opal_P.json` | S / P 输入 |
 
-`Makefile` 对 `src/math/*.c` 通配，`solidharm.c` 进树即可编。不要提交仓库根目录跑出来的 `opal.state.json`、`opal_P.state.json`。
-
-`jacobi_angle`、`raynal_revai`、`jacobi_gaussian_overlap` 目前几乎无调用，是多通道 / RR 系数的预备，留着即可。
+`solidharm.c` 仍在树里，重子谱不再调用。不要提交根目录的 `*.state.json`。
 
 ---
 
-## 5. 关键代码位置
+## 3. 装配要点
 
-基只开 \(c=1\)：
-
-```c
-/* src/model/cbaryon.c  baryon_basis_build */
-for (int c = 1; c <= 1; c++) {
+```
+baryon_basis_build          三图；全同时 Pauli + η 组合
+basis_list_push_full        nρ,nλ × getnu
+baryon_mlsj_jl              M=J 投影
+threebody_scdk_table_alloc  21 × (spfy)⁴
+thread  calc_scdk_mt        角向多项式
+thread  getmfi              N,T,V,p,⟨r²⟩
+matrix_symmetrize
+threebody_overlap_basis     丢掉 N 的核
+每对 uMu 与 βVβ 再求和
+eigen_standard(H)
+RMS = sqrt(⟨r_ij²⟩) / GEMSTORE_FM
 ```
 
-全同对 Pauli 只作用在**当前通道的那一对**上（`pair_identical(f1,f2,f3,c)` + `sym12`）。uuc 把两个 u 放在粒子 1、2 时，\(c=1\) 的筛就是 uu 的 \((-1)^{s_{12}+l_\rho}\)。
-
-矩阵元路由：
-
-```c
-/* me_pair_spatial */
-if (qa->c == pair && qb->c == pair) { /* 1D GRnlr / GRnlp */ }
-if (momentum) return 0.0;             /* 道外 β,δ 未做 */
-return me_pair_reduced_r(...);        /* 道外中心 RR */
-```
-
-`baryon_set_operators`：道外 `OLSi=OLSj=OTens=0`，`OSdS` 仍算。
-
-重叠：
-
-```c
-Nfi = I_ρ I_λ * (baryon_qn_match ? 1 : 0);
-```
-
-因此 \(c_i\neq c_j\) 时 \(N_{ij}=0\)。**在改 `c <= 3` 之前必须先改这里**，否则就是错误的直和。
+`thread_load` 必须把**任务数组基址**传给每个 worker（recycle `mt_load`）；传 `&arg[i]` 会越界。
 
 ---
 
-## 6. 尚未完成
+## 4. 尚未做
 
-### 6.1 三通道基（过完备 GEM，不是直和）
-
-**不要**把三个标架的谱 \(H_1\oplus H_2\oplus H_3\) 加起来。正确的是同一套广义本征问题里的分块：
-
-\[
-N=\begin{pmatrix}N_{11}&N_{12}&N_{13}\\N_{21}&N_{22}&N_{23}\\N_{31}&N_{32}&N_{33}\end{pmatrix},\quad
-Hc=ENc,\quad N_{12}=\langle\phi^{(c=1)}|\phi^{(c=2)}\rangle\neq 0.
-\]
-
-只把 `for (c=1;c<=1)` 改成 `c<=3` **会算错**：
-
-- `baryon_qn_match` 把 \(N_{12}\) 强制为 0
-- \(T_{ij}\) 把不同标架的 \(\rho_i,\rho_j\) 当同一矢量做 1D 积分，再被 `OCent` 乘成 0
-- 势的 RR 路径倒是按 `from_a,from_b → pair` 映射的，会与 \(N,T\) 不一致
-
-若要做，至少：
-
-1. **基** `baryon_basis_build`：打开 \(c=1,2,3\)（或只加少量重排道高斯）。每个 \(c\) 的 Pauli 用该对是否全同。uuc 的 \(c=2,3\) 在 \(\rho\) 上不是 uu，两个 u 的反对称要写成 \(c=2\) 与 \(c=3\) 的组合，或干脆只用 \(c=1\)。
-2. **\(N\)**：同通道维持 \(I_\rho I_\lambda\)；异通道用已有 `jacobi_gaussian_shift` + `solidharm_central_me(V=1)`（或给 `jacobi_gaussian_overlap` 补 P 波）。
-3. **\(T\)**：交叉项必须把 \(p_\rho,p_\lambda\) 变到同一标架，或对动能做与中心势相同的 RR。禁止对不同 \(c\) 的 `rho[i],rho[j]` 直接 `integral_nlp_hamilton`。
-4. **势 / `OCent`**：道间不要再 `qn_match`。自旋 recouple 从「同一 \(c\)」推广到 \((c_a,c_b,\mathrm{pair})\)。
-5. **数值**：过完备后 \(N\) 近奇异。现有 random-\(N\) 会大量 `singular vector`。需要丢掉小本征值，或 \(c=1\) 用全套径向、\(c=2,3\) 只用少数宽高斯。
-6. **回归**：单通道 \(c=1\) 与「\(c=1\) + 少量 \(c=2\)」的低态质量在截断后应一致。差一截多半是 \(N_{12}\) 或 \(T_{12}\) 仍按直和写。
-
-什么时候才需要：uud/uuu 的交换对称，或重排 / 散射。uds、以及把全同对放在粒子 1、2 上的 uuc，**单通道 \(c=1\) 即可**，不是功能缺失。若只想「主通道选 uu 还是 uc」，换 JSON 里谁当 `f1,f2,f3` 更便宜，仍是单通道。
-
-### 6.2 完整 GI 重子
-
-当前相对完整 GI 缺的是算符，不是三体运动学。
-
-| 缺项 | 代码 | 后果 |
-|---|---|---|
-| 道外 \(\mathbf{L}_{ij}\cdot\mathbf{S}_{ij}\)、张量 | `baryon_set_operators` 里 `pair!=c` 时 `OLSi=OLSj=OTens=0` | P 波精细结构少两对；不能拿劈裂和实验 / recycle 逐态比 |
-| 道外动量夹心 \(\beta(p),\delta(p)\) | `me_pair_spatial(..., momentum=1)` 道外 `return 0` | \(V_{13},V_{23}\) 的库仑 / 接触是**不 smear** 的 \(V(r)\)；\(V_{12}\) 仍与介子相同 |
-| 同一通道 SO/张量的 recouple | `baryon_op_apply` + 介子 `operator_*_sl` | 中心项已不用这条；自旋力没有单独金标 |
-| 三对先求和再 \(\beta V\beta\) | 沿用介子 `matrix_productT` | 重子会混进「这对的 \(\beta\) 夹那对的 \(V\)」 |
-
-道外 SO/张量不能靠现在的**标量** solid-harmonic 直接推广，要在 \(\mathbf{r}_{ij}\) 上造向量 / 二阶张量。道外 \(\beta(p)\) 还要把动量搬到另一套 Jacobi，工作量与 SCDK 同级，但语言仍可留在 GEM+RR，**不必为此换 SCDK**。
-
-建议顺序：需要精细结构时先做道外 \(\mathbf{L}\cdot\mathbf{S}\)/张量（接触 \(\mathbf{s}_i\cdot\mathbf{s}_j\) 三对已有）；要严格 GI 短程再做道外 \(\beta,\delta\)；要全同夸克或散射再做 6.1。
+- **\(S_3\)**：sss 的全对称空间–自旋。系数要用 `raynal_revai` + 自旋 6j，不能把三图里同一套 \((l_\rho,l_\lambda,s_{ij})\) 直接相加。recycle 也没做。
+- **GISCREEN 的 \(\mu\)** 已进禁闭 / Thomas；其它短程核仍是 recycle GI-string 形状。
+- 分子三体：复用 `basis` / `sumckdk` / `getT*` / `threebody_*`；不要复用 21 个夸克 GI 算符和 `mlsj`。
 
 ---
 
-## 7. 下次动手前
+## 5. 下次动手前
 
-- 改矩阵元后：`rm gemstore` 再 `make`，然后跑 `opal.json` 与 `opal_P.json`。恒等失败会直接退出。
-- 不要在没做交叉 \(N,T\) 时把基循环改成 `c<=3`。
+- 改矩阵元：`make`，跑 `opal.json` 与 `opal_P.json`。低态质量应稳定；\(N\)-正交后 \(c^TNc\approx 1\)；矢量符号不必 bit-for-bit。
+- 改 `cbaryon.c` 或 `matrix_init` 时，用现有 meson JSON 做一次 GEM 回归。
 - 根目录 `*.state.json` 是运行产物，不要进版本库。
-- 正交化用随机矩阵：本征值应稳定，矢量符号 / 顺序不必 bit-for-bit。
-- 改 `cbaryon.c` 里与介子共用的拼 \(H\) 逻辑时，用现有 meson JSON 做一次 GEM 回归。

@@ -28,11 +28,13 @@ static inline double laguerrel(int k, double alpha, double x)
     return L_curr;
 }
 
+/* ħc in GeV·fm: r_GeV^{-1} = r_fm * GEMSTORE_FM */
+#define GEMSTORE_FM 5.06773093854369882649
+
 /* Scale ν[n, nmax, rmax, rmin] = 1/rmin^2 * (rmax/rmin)^((2 - 2n)/(nmax-1)) */
 static inline double getnu(int n, int nmax, double rmax, double rmin)
 {
-    double fm = 5.06773093854369882649;
-    double r1 = rmin * fm;
+    double r1 = rmin * GEMSTORE_FM;
 
     if (nmax <= 1) {
         return 1.0 / (r1 * r1);

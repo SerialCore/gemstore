@@ -25,14 +25,19 @@ void print_input_parameters(const argsInput_t *input);
 /* Print debug results for computed spectra with state analysis */
 void print_meson_spectra(const array_t *eigenvalue, const array_t *rmsradius, const matrix_t *eigenvector, int nmax);
 
-/* Print baryon spectra with overlap-metric normalization checks */
-void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, const matrix_t *overlap, int len);
+/* Print baryon spectra with overlap-metric normalization checks and pair RMS */
+void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, const matrix_t *overlap,
+    const array_t *rms12, const array_t *rms13, const array_t *rms23, int len);
 
 /* Write {len} of meson spectra to a file, including mass, RMS radius, and eigenvectors */
 int write_meson_spectra(const argsInput_t *input, const array_t *mass, const array_t *radius, const matrix_t *vector, int len);
 
-/* Write {len} of baryon spectra to a file, including mass and eigenvectors */
-int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const matrix_t *vector, int len);
+/* Write {len} of baryon spectra to a file, including mass, pair RMS, and eigenvectors */
+int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const matrix_t *vector,
+    const array_t *rms12, const array_t *rms13, const array_t *rms23, int len);
+
+/* Write baryon pair potentials V12, V13, V23 (central GI, colour −2/3) */
+int write_baryon_pot(const argsInput_t *input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc);
 
 /* Write meson wavefunctions to a file */
 int write_meson_wfn(const argsInput_t *input, const matrix_t *vector);

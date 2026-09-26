@@ -3,281 +3,202 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Baryon SPECTRA on a Jacobi GEM basis, structured like cmeson.c.
- *
- * Wave functions live in a single Jacobi frame (c=1: ρ = r1−r2). Pair
- * operators still loop over pair = 1,2,3. Same-channel spatial MEs use the
- * meson 1D GRnlr/GRnlp integrals; off-channel central MEs map both Gaussians
- * onto the pair frame (complete-the-square + solid-harmonic addition).
- *
- * GIVt multiplies OCent: same-channel OCent must be a full q-number Kronecker,
- * otherwise the 1D radial path mixes (lρ,lλ,jl) blocks and H acquires a kernel.
+ * Baryon SPECTRA with SCDK matrix elements (recycle/mfi.h, debug.h, res.h).
+ * Basis is the three Jacobi frames c=1,2,3 (pair 12 / 31 / 23). SCDK
+ * converts those Gaussians onto the pair a potential acts on.
+ * Overcomplete N is pruned by its eigenvalues before H is solved.
  */
 
 #include <gemstore/model/cbaryon.h>
-#include <gemstore/model/gimodel.h>
 
 #include <gemstore/basis/basis.h>
-#include <gemstore/basis/jacobi.h>
+#include <gemstore/basis/threebody.h>
 #include <gemstore/basis/orbit.h>
 
+#include <gemstore/math/scdkme.h>
+#include <gemstore/math/sumckdk.h>
 #include <gemstore/math/soc.h>
-#include <gemstore/math/solidharm.h>
 #include <gemstore/math/eigen.h>
 #include <gemstore/math/matrix.h>
-#include <gemstore/math/integral.h>
 
 #include <gemstore/param/argset.h>
+#include <gemstore/thread.h>
 
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-/* Angular Kronecker in one Jacobi frame. N and same-channel central/T use this;
- * do not replace it with recoupled meson operator_center_sl. */
-static int baryon_qn_match(const basis_qnum *a, const basis_qnum *b)
+typedef struct {
+    basis_list qnlist_spfy;
+    basis_list qnlist_full;
+    matrix_t **mlsj;
+    sumckdk_scdk ****scdk[21];
+    scdk_vargs_t varg;
+
+    matrix_t Nfi;
+    matrix_t VogeG[3];
+    matrix_t Vcont[3];
+    matrix_t Vtens[3];
+    matrix_t Vsovii[3];
+    matrix_t Vsovjj[3];
+    matrix_t Vsovji[3];
+    matrix_t Vsovij[3];
+    matrix_t Vstring[3];
+    matrix_t Vsosii[3];
+    matrix_t Vsosjj[3];
+    matrix_t pogeG[3];
+    matrix_t pcont[3];
+    matrix_t ptens[3];
+    matrix_t psovii[3];
+    matrix_t psovjj[3];
+    matrix_t psovji[3];
+    matrix_t psovij[3];
+    matrix_t psosii[3];
+    matrix_t psosjj[3];
+    matrix_t T[3];
+    matrix_t rmsr[3];
+    matrix_t rmsl[3];
+} baryon_job_t;
+
+static const vtype scdk_vfn[21] = {
+    vcent, vcent, vcent,
+    vcont, vcont, vcont,
+    vtens, vtens, vtens,
+    vsoii, vsoii, vsoii,
+    vsojj, vsojj, vsojj,
+    vsoji, vsoji, vsoji,
+    vsoij, vsoij, vsoij
+};
+
+static const int scdk_fg[21] = {
+    1, 1, 1,
+    1, 1, 1,
+    2, 2, 2,
+    3, 3, 3,
+    4, 4, 4,
+    5, 5, 5,
+    6, 6, 6
+};
+
+static const int scdk_pair[21] = {
+    1, 2, 3,
+    1, 2, 3,
+    1, 2, 3,
+    1, 2, 3,
+    1, 2, 3,
+    1, 2, 3,
+    1, 2, 3
+};
+
+static int baryon_collect_mats(baryon_job_t *job, matrix_t **list)
 {
-    return a->c == b->c
-        && a->lrho == b->lrho && a->llam == b->llam && a->L == b->L
-        && a->sij == b->sij && a->jl == b->jl && a->J == b->J;
+    int n = 0;
+    list[n++] = &job->Nfi;
+    for (int p = 0; p < 3; p++) {
+        list[n++] = &job->VogeG[p];
+        list[n++] = &job->Vcont[p];
+        list[n++] = &job->Vtens[p];
+        list[n++] = &job->Vsovii[p];
+        list[n++] = &job->Vsovjj[p];
+        list[n++] = &job->Vsovji[p];
+        list[n++] = &job->Vsovij[p];
+        list[n++] = &job->Vstring[p];
+        list[n++] = &job->Vsosii[p];
+        list[n++] = &job->Vsosjj[p];
+        list[n++] = &job->pogeG[p];
+        list[n++] = &job->pcont[p];
+        list[n++] = &job->ptens[p];
+        list[n++] = &job->psovii[p];
+        list[n++] = &job->psovjj[p];
+        list[n++] = &job->psovji[p];
+        list[n++] = &job->psovij[p];
+        list[n++] = &job->psosii[p];
+        list[n++] = &job->psosjj[p];
+        list[n++] = &job->T[p];
+        list[n++] = &job->rmsr[p];
+        list[n++] = &job->rmsl[p];
+    }
+    return n;
 }
 
-/* True if the pair that defines Jacobi channel c is flavour-identical. */
-static int pair_identical(int f1, int f2, int f3, int c)
+static void add_reduced(matrix_t *H, const matrix_t *vt, const matrix_t *M, matrix_t *tmp)
 {
-    switch (c) {
-        case 1: return f1 == f2;
-        case 2: return f3 == f1;
-        case 3: return f2 == f3;
-        default: return 0;
-    }
+    matrix_productT(vt, M, tmp);
+    matrix_sum(H, tmp, H);
 }
 
-/* |(lρ lλ)L, sij; jl⟩ → |(sij lρ)jρ, lλ; jl⟩ so meson pair operators apply. */
-static double recouple_L_to_lrho(double sij, int lrho, int llam, int L, double jl, double jrho)
+static void add_sandwiched(matrix_t *H, const matrix_t *vt, const matrix_t *V, const matrix_t *P,
+    matrix_t *tV, matrix_t *tP, matrix_t *tmp)
 {
-    double phase = pow(-1.0, sij + llam + jl + L);
-    double hat = sqrt((2.0 * L + 1.0) * (2.0 * jrho + 1.0));
-
-    return phase * hat * sixJ_symbol(lrho, llam, L, jl, sij, jrho);
+    matrix_productT(vt, V, tV);
+    matrix_productT(vt, P, tP);
+    matrix_sandwich(tV, tP, tmp);
+    matrix_sum(H, tV, H);
 }
 
-/* |(L sij)jl, s3; J⟩ → |(sij s3)S, L; J⟩. Used for off-channel s_i·s_j. */
-static double recouple_jl_to_S(double sij, int L, double jl, double s3, double J, double S)
+static void mlsj_push(matrix_t *m, double coe, double ms1, double ms2, double ms3, double mrho, double mlam)
 {
-    double phase = pow(-1.0, sij + L + s3 + J);
-    double hat = sqrt((2.0 * jl + 1.0) * (2.0 * S + 1.0));
-
-    return phase * hat * sixJ_symbol(sij, L, jl, s3, J, S);
+    int n = m->row;
+    m->value = (double **)realloc(m->value, sizeof(double *) * (size_t)(n + 1));
+    m->value[n] = (double *)malloc(sizeof(double) * 6);
+    m->value[n][0] = coe;
+    m->value[n][1] = ms1;
+    m->value[n][2] = ms2;
+    m->value[n][3] = ms3;
+    m->value[n][4] = mrho;
+    m->value[n][5] = mlam;
+    m->row = n + 1;
+    m->col = 6;
 }
 
-/* Spin overlap between pair-spin sija in channel ca and sijb in channel cb
- * at total spin S. Adjacent channels (1↔3, 2↔3) pick up (−1)^{3/2+S}. */
-static double recouple_spin_pair(int ca, double sija, int cb, double sijb, double S)
+static void baryon_mlsj_jl(baryon_job_t *job)
 {
-    if (ca == cb) {
-        return (sija == sijb) ? 1.0 : 0.0;
-    }
+    basis_list *qnlist = &job->qnlist_spfy;
 
-    double hat = sqrt((2.0 * sija + 1.0) * (2.0 * sijb + 1.0));
-    double sixj = sixJ_symbol(0.5, 0.5, sija, 0.5, S, sijb);
+    job->mlsj = (matrix_t **)malloc(sizeof(matrix_t *) * (size_t)qnlist->len_list);
+    for (int i = 0; i < qnlist->len_list; i++) {
+        job->mlsj[i] = (matrix_t *)malloc(sizeof(matrix_t) * (size_t)qnlist->len_part[i]);
+        for (int j = 0; j < qnlist->len_part[i]; j++) {
+            job->mlsj[i][j].value = (double **)malloc(sizeof(double *) * 0);
+            job->mlsj[i][j].row = 0;
+            job->mlsj[i][j].col = 6;
 
-    if ((ca == 1 && cb == 3) || (ca == 3 && cb == 1) ||
-        (ca == 2 && cb == 3) || (ca == 3 && cb == 2)) {
-        return pow(-1.0, 1.5 + S) * hat * sixj;
-    }
+            double coe = qnlist->qnum[i][j].coe;
+            double s1 = qnlist->qnum[i][j].s1;
+            double s2 = qnlist->qnum[i][j].s2;
+            double s3 = qnlist->qnum[i][j].s3;
+            int c = qnlist->qnum[i][j].c;
+            int lrho = qnlist->qnum[i][j].lrho;
+            int llam = qnlist->qnum[i][j].llam;
+            int L = qnlist->qnum[i][j].L;
+            double sij = qnlist->qnum[i][j].sij;
+            double jl = qnlist->qnum[i][j].jl;
+            double J = qnlist->qnum[i][j].J;
+            double MJ = J;
+            double si, sj, sk;
 
-    return pow(-1.0, sija + sijb) * hat * sixj;
-}
-
-/* Apply a meson (si sj s l) operator on the ρ pair, same Jacobi channel. */
-static double baryon_op_apply(operator_sl osl, const basis_qnum *a, const basis_qnum *b)
-{
-    if (a->c != b->c || a->llam != b->llam || a->J != b->J) {
-        return 0.0;
-    }
-
-    double sum = 0.0;
-    double jmin = fabs(a->sij - a->lrho);
-    double jmax = a->sij + a->lrho;
-    double jminp = fabs(b->sij - b->lrho);
-    double jmaxp = b->sij + b->lrho;
-
-    if (jminp > jmin) jmin = jminp;
-    if (jmaxp < jmax) jmax = jmaxp;
-
-    for (double jrho = jmin; jrho <= jmax + 1e-9; jrho += 1.0) {
-        double rec_a = recouple_L_to_lrho(a->sij, a->lrho, a->llam, a->L, a->jl, jrho);
-        double rec_b = recouple_L_to_lrho(b->sij, b->lrho, b->llam, b->L, b->jl, jrho);
-        sum += rec_a * rec_b * osl(0.5, 0.5, a->sij, a->lrho, 0.5, 0.5, b->sij, b->lrho, jrho);
-    }
-
-    return sum;
-}
-
-/* ⟨s_i·s_j⟩ on quark pair `pair`. Off-channel: recouple to total S then to
- * the pair spin of that pair. */
-static double baryon_op_sdots_pair(const basis_qnum *a, const basis_qnum *b, int pair)
-{
-    if (a->L != b->L || a->J != b->J) {
-        return 0.0;
-    }
-    if (pair == a->c) {
-        return baryon_op_apply(operator_sdots_sl, a, b);
-    }
-
-    double sum = 0.0;
-    for (double S = 0.5; S <= 1.5 + 1e-9; S += 1.0) {
-        double ra = recouple_jl_to_S(a->sij, a->L, a->jl, 0.5, a->J, S);
-        double rb = recouple_jl_to_S(b->sij, b->L, b->jl, 0.5, b->J, S);
-        for (double sijp = 0.0; sijp <= 1.0 + 1e-9; sijp += 1.0) {
-            double ca = recouple_spin_pair(a->c, a->sij, pair, sijp, S);
-            double cb = recouple_spin_pair(b->c, b->sij, pair, sijp, S);
-            double sdots = 0.5 * (sijp * (sijp + 1.0) - 1.5);
-            sum += ra * rb * ca * cb * sdots;
-        }
-    }
-    return sum;
-}
-
-static void baryon_set_operators(argsGIModelDy_t *dyn, const basis_qnum *a, const basis_qnum *b, int pair)
-{
-    /* Same-channel central/GIVt: Kronecker on the full baryon q-numbers so
-     * the 1D GRnlr path cannot mix different (lρ,lλ,L,sij,jl). Off-channel
-     * central may connect (1,0)↔(0,1) at fixed L; the spatial ME is RR. */
-    if (pair == a->c && pair == b->c) {
-        dyn->OCent = baryon_qn_match(a, b) ? 1.0 : 0.0;
-        dyn->OSdS  = baryon_op_apply(operator_sdots_sl, a, b);
-        dyn->OLSi  = baryon_op_apply(operator_ldotsi_sl, a, b);
-        dyn->OLSj  = baryon_op_apply(operator_ldotsj_sl, a, b);
-        dyn->OTens = baryon_op_apply(operator_tensor_sl, a, b);
-        return;
-    }
-
-    if (a->J == b->J && a->L == b->L && a->jl == b->jl && a->sij == b->sij) {
-        dyn->OCent = 1.0;
-    }
-    else {
-        dyn->OCent = 0.0;
-    }
-    dyn->OSdS  = baryon_op_sdots_pair(a, b, pair);
-    dyn->OLSi  = 0.0;   /* off-channel L·S / tensor not implemented */
-    dyn->OLSj  = 0.0;
-    dyn->OTens = 0.0;
-}
-
-/* GRnlr without the r^l factor; solid harmonics restore |x|^l Y_lm. */
-static double gem_pref(int l, double nu)
-{
-    return pow(2.0, l / 2.0 + 1.25) * pow(nu, l / 2.0 + 0.75) / sqrt(tgamma(l + 1.5));
-}
-
-static double pot_one(double r, void *ctx)
-{
-    (void)r;
-    (void)ctx;
-    return 1.0;
-}
-
-/* Central ME of pot(|r_pair|) after mapping both Gaussians onto the pair frame.
- * Do not feed b11 into integral_nlr_hamilton: that double-counts GRnlr ν^{3/4}. */
-static double me_pair_reduced_r(potential_t pot, gi_pot_ctx_t *ctx,
-    const basis_qnum *qa, const basis_qnum *qb, int pair)
-{
-    jacobi_shift_t sh;
-    double pref;
-    int M;
-
-    if (!jacobi_gaussian_shift(qa->m1, qa->m2, qa->m3,
-            qa->c, qa->nurho, qa->nulam,
-            qb->c, qb->nurho, qb->nulam,
-            pair, &sh)) {
-        return 0.0;
-    }
-
-    pref = gem_pref(qa->lrho, qa->nurho) * gem_pref(qa->llam, qa->nulam)
-        * gem_pref(qb->lrho, qb->nurho) * gem_pref(qb->llam, qb->nulam);
-    M = qa->L;  /* scalar ME is M-independent; stretched M=L is enough */
-
-    return pref * solidharm_central_me(
-        qa->lrho, qa->llam, qa->L, M,
-        qb->lrho, qb->llam, qb->L,
-        sh.al_a, sh.be_a, sh.ga_a, sh.de_a,
-        sh.al_b, sh.be_b, sh.ga_b, sh.de_b,
-        sh.b11, sh.aRR, pot, ctx);
-}
-
-/* Spatial ME of a pair operator. momentum=1 is GI β(p),δ(p): same-channel
- * 1D GRnlp only; off-channel smearing is not implemented. */
-static double me_pair_spatial(potential_t pot, gi_pot_ctx_t *ctx,
-    const basis_qnum *qa, const basis_qnum *qb,
-    const argsOrbit_t *rho_a, const argsOrbit_t *rho_b,
-    const argsOrbit_t *lam_a, const argsOrbit_t *lam_b,
-    int pair, int momentum)
-{
-    if (qa->c == pair && qb->c == pair) {
-        double overlap_lam = integral_nlr_overlap(GRnlr,
-            1.0 / sqrt(lam_a->scale + lam_b->scale), lam_a, lam_b);
-        if (momentum) {
-            double factor_p = sqrt(4.0 * rho_a->scale * rho_b->scale / (rho_a->scale + rho_b->scale));
-            return integral_nlp_hamilton(GRnlp, pot, factor_p, rho_a, rho_b, ctx) * overlap_lam;
-        }
-        double factor_r = 1.0 / sqrt(rho_a->scale + rho_b->scale);
-        return integral_nlr_hamilton(GRnlr, pot, factor_r, rho_a, rho_b, ctx) * overlap_lam;
-    }
-
-    if (momentum) {
-        return 0.0;
-    }
-    return me_pair_reduced_r(pot, ctx, qa, qb, pair);
-}
-
-/* Gold checks: same-channel Coulomb 1D vs RR, and V=1 frame independence. */
-static void baryon_check_reduce_identity(const basis_qnum *qn, const argsOrbit_t *rho, const argsOrbit_t *lam,
-    int nbas, gi_pot_ctx_t *ctx)
-{
-    int ncheck = 0;
-    double maxrel = 0.0;
-
-    for (int i = 0; i < nbas; i++) {
-        for (int j = 0; j < nbas; j++) {
-            if (qn[i].c != qn[j].c) {
-                continue;
-            }
-            int pair = qn[i].c;
-            double direct = me_pair_spatial(GIVcoul, ctx, &qn[i], &qn[j],
-                &rho[i], &rho[j], &lam[i], &lam[j], pair, 0);
-            double reduced = me_pair_reduced_r(GIVcoul, ctx, &qn[i], &qn[j], pair);
-            double denom = fabs(direct) + 1e-15;
-            double rel = fabs(direct - reduced) / denom;
-            if (rel > maxrel) {
-                maxrel = rel;
-            }
-
-            /* V=1 is the overlap: independent of which pair frame we reduce in. */
-            double u1 = me_pair_reduced_r(pot_one, ctx, &qn[i], &qn[j], pair);
-            double u2 = me_pair_reduced_r(pot_one, ctx, &qn[i], &qn[j], pair == 1 ? 2 : 1);
-            double urel = fabs(u1 - u2) / (fabs(u1) + 1e-15);
-            if (urel > maxrel) {
-                maxrel = urel;
-            }
-
-            ncheck++;
-            if (ncheck >= 16) {
-                break;
+            getijk(s1, s2, s3, &si, &sj, &sk, c);
+            for (double msi = -si; msi <= si + 1e-12; msi += 1.0) {
+                for (double msj = -sj; msj <= sj + 1e-12; msj += 1.0) {
+                    for (double msk = -sk; msk <= sk + 1e-12; msk += 1.0) {
+                        for (int mrho = -lrho; mrho <= lrho; mrho++) {
+                            for (int mlam = -llam; mlam <= llam; mlam++) {
+                                double cgf = coe
+                                    * clebsch_gordan(si, msi, sj, msj, sij, msi + msj)
+                                    * clebsch_gordan(lrho, mrho, llam, mlam, L, mrho + mlam)
+                                    * clebsch_gordan(sij, msi + msj, L, mrho + mlam, jl, msi + msj + mrho + mlam)
+                                    * clebsch_gordan(jl, msi + msj + mrho + mlam, sk, msk, J, MJ);
+                                if (cgf != 0.0) {
+                                    double ms1, ms2, ms3;
+                                    get123(&ms1, &ms2, &ms3, msi, msj, msk, c);
+                                    mlsj_push(&job->mlsj[i][j], cgf, ms1, ms2, ms3, (double)mrho, (double)mlam);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
-        if (ncheck >= 16) {
-            break;
-        }
-    }
-
-    if (ncheck == 0) {
-        return;
-    }
-    if (maxrel > 1e-8) {
-        fprintf(stderr, "Error: Jacobi reduce identity failed, maxrel=%.3e\n", maxrel);
-        exit(1);
     }
 }
 
@@ -296,36 +217,86 @@ static void baryon_basis_build(const argsInput_t *input, const argsGIModel_t *mo
     basis_list_init(spfy);
     basis_list_init(full);
 
-    /* One Jacobi frame is complete. Do not open c=2,3 until N and T have
-     * cross-channel blocks (otherwise H is a false direct sum). */
-    for (int c = 1; c <= 1; c++) {
-        for (int lrho = 0; lrho <= Lmax; lrho++) {
-            for (int llam = 0; llam <= Lmax - lrho; llam++) {
-                /* P = (−1)^{lρ+lλ} */
-                if (((lrho + llam) % 2 == 0) ? (P != 1) : (P != -1)) {
-                    continue;
-                }
+    /* Three pair frames. Identical quarks: recycle |c_a⟩ + η|c_b⟩
+     * (1↔2 maps c=2 onto c=3). Distinguishable nsc: three independent charts. */
+    int nchan[4] = {0};
+    int id12 = threebody_pair_identical(input->f1, input->f2, input->f3, 1);
+    int id31 = threebody_pair_identical(input->f1, input->f2, input->f3, 2);
+    int id23 = threebody_pair_identical(input->f1, input->f2, input->f3, 3);
 
-                for (int L = abs(lrho - llam); L <= lrho + llam; L++) {
-                    for (double sij = 0.0; sij <= 1.0 + 1e-9; sij += 1.0) {
-                        if (pair_identical(input->f1, input->f2, input->f3, c)) {
-                            /* (−1)^{sij+lρ} for the identical pair in this channel */
-                            int phase = ((1 + (int)sij + lrho) % 2 == 0) ? 1 : -1;
-                            if (f12 * phase != 1) {
-                                continue;
-                            }
+    for (int lrho = 0; lrho <= Lmax; lrho++) {
+        for (int llam = 0; llam <= Lmax - lrho; llam++) {
+            if (((lrho + llam) % 2 == 0) ? (P != 1) : (P != -1)) {
+                continue;
+            }
+            for (int L = abs(lrho - llam); L <= lrho + llam; L++) {
+                for (double sij = 0.0; sij <= 1.0 + 1e-9; sij += 1.0) {
+                    double eta = threebody_exchange_eta(f12, sij, lrho);
+                    int pauli_ok = (eta == 1.0);
+                    int keep1 = !id12 || pauli_ok;
+                    int keep2 = !id31 || pauli_ok;
+                    int keep3 = !id23 || pauli_ok;
+
+                    for (double jl = fabs(L - sij); jl <= L + sij + 1e-9; jl += 1.0) {
+                        if (fabs(jl - s3) - 1e-9 > J || jl + s3 + 1e-9 < J) {
+                            continue;
                         }
 
-                        for (double jl = fabs(L - sij); jl <= L + sij + 1e-9; jl += 1.0) {
-                            if (fabs(jl - s3) - 1e-9 > J || jl + s3 + 1e-9 < J) {
-                                continue;
+                        if (id12) {
+                            if (keep1) {
+                                basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                                nchan[1]++;
                             }
-
-                            basis_list_push(spfy, 1, -1, -1, 1.0,
-                                m1, m2, m3, s1, s2, s3,
-                                0.0, 0.0, 0.0, 0.0, 0.0,
-                                c, lrho, llam, L, sij, jl, J,
-                                0, 0, 0.0, 0.0);
+                            if (keep2) {
+                                basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 2, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                                nchan[2]++;
+                                basis_list_push(spfy, 0, -1, -1, eta, m1, m2, m3, s1, s2, s3,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 3, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                                nchan[3]++;
+                            }
+                        }
+                        else if (id23) {
+                            if (keep3) {
+                                basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 3, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                                nchan[3]++;
+                            }
+                            if (keep1) {
+                                basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                                nchan[1]++;
+                                basis_list_push(spfy, 0, -1, -1, eta, m1, m2, m3, s1, s2, s3,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 2, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                                nchan[2]++;
+                            }
+                        }
+                        else if (id31) {
+                            if (keep2) {
+                                basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 2, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                                nchan[2]++;
+                            }
+                            if (keep1) {
+                                basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                                nchan[1]++;
+                                basis_list_push(spfy, 0, -1, -1, eta, m1, m2, m3, s1, s2, s3,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 3, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                                nchan[3]++;
+                            }
+                        }
+                        else {
+                            basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                            nchan[1]++;
+                            basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 2, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                            nchan[2]++;
+                            basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 3, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                            nchan[3]++;
                         }
                     }
                 }
@@ -334,303 +305,255 @@ static void baryon_basis_build(const argsInput_t *input, const argsGIModel_t *mo
     }
 
     basis_list_push_full(spfy, full, input->rmin, input->rmax, input->nmax);
+    printf("Baryon Jacobi GEM: c=1(12) / c=2(31) / c=3(23)\n");
+    printf("  angular channels: c1=%d c2=%d c3=%d  (n_spfy=%d n_full=%d)\n",
+        nchan[1], nchan[2], nchan[3], spfy->len_list, full->len_list);
+    fflush(stdout);
+}
+
+static void calc_scdk_mt(void *args)
+{
+    argsThread_t *mtargs = (argsThread_t *)args;
+    baryon_job_t *job = (baryon_job_t *)mtargs->args;
+    int ith = mtargs->index;
+    int nf = ith / 21;
+    int op = ith % 21;
+    int *len_part = job->qnlist_spfy.len_part;
+    int len_list = job->qnlist_spfy.len_list;
+
+    for (int nfp = 0; nfp < len_part[nf]; nfp++) {
+        for (int ni = 0; ni < len_list; ni++) {
+            for (int nip = 0; nip < len_part[ni]; nip++) {
+                sumckdk_scdk_vtype(&job->scdk[op][nf][nfp][ni][nip],
+                    scdk_vfn[op], scdk_fg[op], job->qnlist_spfy, job->mlsj,
+                    nf, nfp, ni, nip, mtargs->mutex, mtargs->lock, scdk_pair[op]);
+            }
+        }
+    }
+}
+
+static double me_add(txrp_vtype kin, sumckdk_scdk scdk, basis_qnum qf, basis_qnum qi,
+    scdk_vargs_t varg, scdk_inte_fn iv, int c)
+{
+    return inteVcenPartA(kin, scdk, qf, qi, varg, iv, c);
+}
+
+static void getmfi(void *args)
+{
+    argsThread_t *mtarg = (argsThread_t *)args;
+    baryon_job_t *job = (baryon_job_t *)mtarg->args;
+    int nf = mtarg->index;
+
+    for (int ni = 0; ni < job->qnlist_full.len_list; ni++) {
+        double nfi = 0.0;
+        double VogeG[3] = {0}, Vcont[3] = {0}, Vtens[3] = {0};
+        double Vsovii[3] = {0}, Vsovjj[3] = {0}, Vsovji[3] = {0}, Vsovij[3] = {0};
+        double Vstring[3] = {0}, Vsosii[3] = {0}, Vsosjj[3] = {0};
+        double pogeG[3] = {0}, pcont[3] = {0}, ptens[3] = {0};
+        double psovii[3] = {0}, psovjj[3] = {0}, psovji[3] = {0}, psovij[3] = {0};
+        double psosii[3] = {0}, psosjj[3] = {0}, T[3] = {0}, rmsr[3] = {0}, rmsl[3] = {0};
+
+        for (int nfp = 0; nfp < job->qnlist_full.len_part[nf]; nfp++) {
+            for (int nip = 0; nip < job->qnlist_full.len_part[ni]; nip++) {
+                int mapf1 = job->qnlist_full.qnum[nf][nfp].map1;
+                int mapf2 = job->qnlist_full.qnum[nf][nfp].map2;
+                int mapi1 = job->qnlist_full.qnum[ni][nip].map1;
+                int mapi2 = job->qnlist_full.qnum[ni][nip].map2;
+                basis_qnum qf = job->qnlist_full.qnum[nf][nfp];
+                basis_qnum qi = job->qnlist_full.qnum[ni][nip];
+
+                nfi += me_add(tir_cent, job->scdk[0][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteNfi, 1);
+
+                for (int p = 0; p < 3; p++) {
+                    int c = p + 1;
+                    VogeG[p] += me_add(tir_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVogeG, c);
+                    Vcont[p] += me_add(tir_cent, job->scdk[3 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVcont, c);
+                    Vtens[p] += me_add(tir_tens, job->scdk[6 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVtens, c);
+                    Vsovii[p] += me_add(tir_soii, job->scdk[9 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVsovii, c);
+                    Vsovjj[p] += me_add(tjr_sojj, job->scdk[12 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVsovjj, c);
+                    Vsovji[p] += me_add(t1r_soji, job->scdk[15 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVsovji, c);
+                    Vsovij[p] += me_add(tir_soij, job->scdk[18 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVsovij, c);
+                    Vstring[p] += me_add(tir_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVstring, c);
+                    Vsosii[p] += me_add(tir_soii, job->scdk[9 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVsosii, c);
+                    Vsosjj[p] += me_add(tjr_sojj, job->scdk[12 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVsosjj, c);
+                    pogeG[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepogeG, c);
+                    pcont[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepcont, c);
+                    ptens[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteptens, c);
+                    psovii[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepsovii, c);
+                    psovjj[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepsovjj, c);
+                    psovji[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepsovji, c);
+                    psovij[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepsovij, c);
+                    psosii[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepsosii, c);
+                    psosjj[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepsosjj, c);
+                    T[p] += me_add(tpi_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteTi, c);
+                    rmsr[p] += me_add(tir_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteRMS, c);
+                    rmsl[p] += me_add(t2r_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteRMS, c);
+                }
+            }
+        }
+
+        job->Nfi.value[nf][ni] = nfi;
+        for (int p = 0; p < 3; p++) {
+            job->VogeG[p].value[nf][ni] = VogeG[p];
+            job->Vcont[p].value[nf][ni] = Vcont[p];
+            job->Vtens[p].value[nf][ni] = Vtens[p];
+            job->Vsovii[p].value[nf][ni] = Vsovii[p];
+            job->Vsovjj[p].value[nf][ni] = Vsovjj[p];
+            job->Vsovji[p].value[nf][ni] = Vsovji[p];
+            job->Vsovij[p].value[nf][ni] = Vsovij[p];
+            job->Vstring[p].value[nf][ni] = Vstring[p];
+            job->Vsosii[p].value[nf][ni] = Vsosii[p];
+            job->Vsosjj[p].value[nf][ni] = Vsosjj[p];
+            job->pogeG[p].value[nf][ni] = pogeG[p];
+            job->pcont[p].value[nf][ni] = pcont[p];
+            job->ptens[p].value[nf][ni] = ptens[p];
+            job->psovii[p].value[nf][ni] = psovii[p];
+            job->psovjj[p].value[nf][ni] = psovjj[p];
+            job->psovji[p].value[nf][ni] = psovji[p];
+            job->psovij[p].value[nf][ni] = psovij[p];
+            job->psosii[p].value[nf][ni] = psosii[p];
+            job->psosjj[p].value[nf][ni] = psosjj[p];
+            job->T[p].value[nf][ni] = T[p];
+            job->rmsr[p].value[nf][ni] = rmsr[p];
+            job->rmsl[p].value[nf][ni] = rmsl[p];
+        }
+    }
 }
 
 void spectra_baryon_GEM(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
-    array_t *e_out, matrix_t *v_out, matrix_t *n_out)
+    array_t *e_out, matrix_t *v_out, matrix_t *n_out,
+    array_t *rms12, array_t *rms13, array_t *rms23)
 {
-    basis_list qnlist_spfy;
-    basis_list qnlist_full;
+    baryon_job_t job = {0};
 
-    baryon_basis_build(args_input, args_model, &qnlist_spfy, &qnlist_full);
+    scdk_vargs_from_model(&job.varg, args_model, args_dynmc->model);
+    baryon_basis_build(args_input, args_model, &job.qnlist_spfy, &job.qnlist_full);
 
-    int nbas = qnlist_full.len_list;
+    int nbas = job.qnlist_full.len_list;
     if (nbas <= 0) {
         fprintf(stderr, "Error: empty baryon basis. Check J, P, sym12, and Lmax.\n");
         exit(1);
     }
 
-    basis_qnum *qn = (basis_qnum *)malloc((size_t)nbas * sizeof(basis_qnum));
-    argsOrbit_t *rho = (argsOrbit_t *)malloc((size_t)nbas * sizeof(argsOrbit_t));
-    argsOrbit_t *lam = (argsOrbit_t *)malloc((size_t)nbas * sizeof(argsOrbit_t));
-    for (int i = 0; i < nbas; i++) {
-        qn[i] = qnlist_full.qnum[i][0];
-        rho[i].n = qn[i].nrho;
-        rho[i].l = qn[i].lrho;
-        rho[i].scale = qn[i].nurho;
-        rho[i].param = 0.0;
-        lam[i].n = qn[i].nlam;
-        lam[i].l = qn[i].llam;
-        lam[i].scale = qn[i].nulam;
-        lam[i].param = 0.0;
+    baryon_mlsj_jl(&job);
+
+    int nsp = job.qnlist_spfy.len_list;
+    for (int op = 0; op < 21; op++) {
+        threebody_scdk_table_alloc(job.qnlist_spfy.len_part, nsp, &job.scdk[op]);
     }
 
-    /* construct matrices */
-    matrix_t mT = matrix_init(nbas, nbas);
-    matrix_t mbetaijCoul = matrix_init(nbas, nbas);
-    matrix_t mdeltaijCont = matrix_init(nbas, nbas);
-    matrix_t mdeltaiiSov = matrix_init(nbas, nbas);
-    matrix_t mdeltajjSov = matrix_init(nbas, nbas);
-    matrix_t mdeltaijSov = matrix_init(nbas, nbas);
-    matrix_t mdeltaiiSos = matrix_init(nbas, nbas);
-    matrix_t mdeltajjSos = matrix_init(nbas, nbas);
-    matrix_t mdeltaijTens = matrix_init(nbas, nbas);
-    matrix_t mVcoul = matrix_init(nbas, nbas);
-    matrix_t mVconf = matrix_init(nbas, nbas);
-    matrix_t mVcont = matrix_init(nbas, nbas);
-    matrix_t mVsovi = matrix_init(nbas, nbas);
-    matrix_t mVsovj = matrix_init(nbas, nbas);
-    matrix_t mVsovij = matrix_init(nbas, nbas);
-    matrix_t mVsosi = matrix_init(nbas, nbas);
-    matrix_t mVsosj = matrix_init(nbas, nbas);
-    matrix_t mVtens = matrix_init(nbas, nbas);
-    matrix_t tmT = matrix_init(nbas, nbas);
-    matrix_t tmbetaijCoul = matrix_init(nbas, nbas);
-    matrix_t tmdeltaijCont = matrix_init(nbas, nbas);
-    matrix_t tmdeltaiiSov = matrix_init(nbas, nbas);
-    matrix_t tmdeltajjSov = matrix_init(nbas, nbas);
-    matrix_t tmdeltaijSov = matrix_init(nbas, nbas);
-    matrix_t tmdeltaiiSos = matrix_init(nbas, nbas);
-    matrix_t tmdeltajjSos = matrix_init(nbas, nbas);
-    matrix_t tmdeltaijTens = matrix_init(nbas, nbas);
-    matrix_t tmVcoul = matrix_init(nbas, nbas);
-    matrix_t tmVconf = matrix_init(nbas, nbas);
-    matrix_t tmVcont = matrix_init(nbas, nbas);
-    matrix_t tmVsovi = matrix_init(nbas, nbas);
-    matrix_t tmVsovj = matrix_init(nbas, nbas);
-    matrix_t tmVsovij = matrix_init(nbas, nbas);
-    matrix_t tmVsosi = matrix_init(nbas, nbas);
-    matrix_t tmVsosj = matrix_init(nbas, nbas);
-    matrix_t tmVtens = matrix_init(nbas, nbas);
-    matrix_t Hfi = matrix_init(nbas, nbas);
-    matrix_t Nfi = matrix_init(nbas, nbas);
+    thread_load(calc_scdk_mt, &job, 21 * nsp, getNumCores());
 
-    double Cij = -2.0 / 3.0;  /* baryon pair colour; meson is −4/3 */
-    gi_pot_ctx_t ctx = { args_model, args_dynmc };
-
-    {
-        double mi, mj, mk;
-        jacobi_pair_mass(qn[0].m1, qn[0].m2, qn[0].m3, qn[0].c, &mi, &mj, &mk);
-        args_dynmc->Cij = Cij;
-        args_dynmc->OCent = 1.0;
-        args_dynmc->mi = mi;
-        args_dynmc->mj = mj;
-        args_dynmc->Sigij = sigma_ij(mi, mj, args_model->sigma_0, args_model->s);
-        sigma_k_ij(args_dynmc->Sigij, args_dynmc->Sigkij);
-        baryon_check_reduce_identity(qn, rho, lam, nbas, &ctx);
+    matrix_t *mats[80];
+    int nmats = baryon_collect_mats(&job, mats);
+    for (int i = 0; i < nmats; i++) {
+        *mats[i] = matrix_init(nbas, nbas);
     }
 
-    /* calculate matrix elements */
-    for (int i = 0; i < nbas; i++) {
-        for (int j = 0; j < nbas; j++) {
-            /* matrix_init uses malloc; pair loop accumulates with += */
-            mbetaijCoul.value[i][j] = 0.0;
-            mdeltaijCont.value[i][j] = 0.0;
-            mdeltaiiSov.value[i][j] = 0.0;
-            mdeltajjSov.value[i][j] = 0.0;
-            mdeltaijSov.value[i][j] = 0.0;
-            mdeltaiiSos.value[i][j] = 0.0;
-            mdeltajjSos.value[i][j] = 0.0;
-            mdeltaijTens.value[i][j] = 0.0;
-            mVcoul.value[i][j] = 0.0;
-            mVconf.value[i][j] = 0.0;
-            mVcont.value[i][j] = 0.0;
-            mVsovi.value[i][j] = 0.0;
-            mVsovj.value[i][j] = 0.0;
-            mVsovij.value[i][j] = 0.0;
-            mVsosi.value[i][j] = 0.0;
-            mVsosj.value[i][j] = 0.0;
-            mVtens.value[i][j] = 0.0;
+    thread_load(getmfi, &job, nbas, getNumCores());
 
-            double factor_r = 1.0 / sqrt(rho[i].scale + rho[j].scale);
-            double factor_p = sqrt(4.0 * rho[i].scale * rho[j].scale / (rho[i].scale + rho[j].scale));
-            double factor_rl = 1.0 / sqrt(lam[i].scale + lam[j].scale);
-            double factor_pl = sqrt(4.0 * lam[i].scale * lam[j].scale / (lam[i].scale + lam[j].scale));
-            double overlap_lam = integral_nlr_overlap(GRnlr, factor_rl, &lam[i], &lam[j]);
-            double overlap_rho = integral_nlr_overlap(GRnlr, factor_r, &rho[i], &rho[j]);
-            int c = qn[i].c;
-            double mi, mj, mk;
-
-            /* 1D Iρ Iλ is valid only in the same Jacobi frame. */
-            Nfi.value[i][j] = overlap_rho * overlap_lam * (baryon_qn_match(&qn[i], &qn[j]) ? 1.0 : 0.0);
-
-            jacobi_pair_mass(qn[i].m1, qn[i].m2, qn[i].m3, c, &mi, &mj, &mk);
-            args_dynmc->Cij = Cij;
-            args_dynmc->mi = mi;
-            args_dynmc->mj = mj;
-            args_dynmc->Sigij = sigma_ij(mi, mj, args_model->sigma_0, args_model->s);
-            sigma_k_ij(args_dynmc->Sigij, args_dynmc->Sigkij);
-            baryon_set_operators(args_dynmc, &qn[i], &qn[j], c);
-
-            /* T = Σ_k √(m_k²+p_k²): pair quarks on ρ, spectator on λ. */
-            mT.value[i][j] = integral_nlp_hamilton(GRnlp, GIVt, factor_p, &rho[i], &rho[j], &ctx) * overlap_lam;
-            args_dynmc->mi = mk;
-            args_dynmc->mj = mk;
-            mT.value[i][j] += integral_nlp_hamilton(GRnlp, GIVt_quark, factor_pl, &lam[i], &lam[j], &ctx) * overlap_rho;
-
-            for (int pair = 1; pair <= 3; pair++) {
-                jacobi_pair_mass(qn[i].m1, qn[i].m2, qn[i].m3, pair, &mi, &mj, &mk);
-                args_dynmc->mi = mi;
-                args_dynmc->mj = mj;
-                args_dynmc->Sigij = sigma_ij(mi, mj, args_model->sigma_0, args_model->s);
-                sigma_k_ij(args_dynmc->Sigij, args_dynmc->Sigkij);
-                baryon_set_operators(args_dynmc, &qn[i], &qn[j], pair);
-
-                mbetaijCoul.value[i][j] += me_pair_spatial(GIVbetaijcoul, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 1);
-                mdeltaijCont.value[i][j] += me_pair_spatial(GIVdeltaijcont, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 1);
-                mdeltaiiSov.value[i][j] += me_pair_spatial(GIVdeltaiisov, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 1);
-                mdeltajjSov.value[i][j] += me_pair_spatial(GIVdeltajjsov, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 1);
-                mdeltaijSov.value[i][j] += me_pair_spatial(GIVdeltaijsov, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 1);
-                mdeltaiiSos.value[i][j] += me_pair_spatial(GIVdeltaiisos, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 1);
-                mdeltajjSos.value[i][j] += me_pair_spatial(GIVdeltajjsos, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 1);
-                mdeltaijTens.value[i][j] += me_pair_spatial(GIVdeltaijtens, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 1);
-                mVcoul.value[i][j] += me_pair_spatial(GIVcoul, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 0);
-                mVconf.value[i][j] += me_pair_spatial(GIVconf, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 0);
-                mVcont.value[i][j] += me_pair_spatial(GIVcont, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 0);
-                mVsovi.value[i][j] += me_pair_spatial(GIVsovi, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 0);
-                mVsovj.value[i][j] += me_pair_spatial(GIVsovj, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 0);
-                mVsovij.value[i][j] += me_pair_spatial(GIVsovij, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 0);
-                mVsosi.value[i][j] += me_pair_spatial(GIVsosi, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 0);
-                mVsosj.value[i][j] += me_pair_spatial(GIVsosj, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 0);
-                mVtens.value[i][j] += me_pair_spatial(GIVtens, &ctx, &qn[i], &qn[j], &rho[i], &rho[j], &lam[i], &lam[j], pair, 0);
-            }
-        }
+    for (int i = 0; i < nmats; i++) {
+        matrix_symmetrize(mats[i]);
     }
 
-    /* prepare a random symmetric matrix */
-    matrix_t rand = matrix_random(nbas, nbas);
-    matrix_t temp = matrix_init(nbas, nbas);
-    matrix_transpose(&rand, &temp);
-    matrix_sum(&rand, &temp, &rand);
+    matrix_t vt;
+    int nkeep = threebody_overlap_basis(&job.Nfi, 1e-8, &vt);
+    if (nkeep <= 0) {
+        fprintf(stderr, "Error: baryon overlap N has no positive eigenvalues.\n");
+        exit(1);
+    }
 
-    matrix_t vt = matrix_init(nbas, nbas);
+    matrix_t temp = matrix_init(nkeep, nkeep);
+    matrix_t tV = matrix_init(nkeep, nkeep);
+    matrix_t tP = matrix_init(nkeep, nkeep);
 
-    *e_out = array_init(nbas);
+    /* Recycle eigsys: each pair is mapped with SCDK, then βVβ per pair. */
+    matrix_t Hfi = matrix_init(nkeep, nkeep);
+    for (int p = 0; p < 3; p++) {
+        add_reduced(&Hfi, &vt, &job.T[p], &temp);
+        add_reduced(&Hfi, &vt, &job.Vstring[p], &temp);
+        add_sandwiched(&Hfi, &vt, &job.VogeG[p], &job.pogeG[p], &tV, &tP, &temp);
+        add_sandwiched(&Hfi, &vt, &job.Vcont[p], &job.pcont[p], &tV, &tP, &temp);
+        add_sandwiched(&Hfi, &vt, &job.Vtens[p], &job.ptens[p], &tV, &tP, &temp);
+        add_sandwiched(&Hfi, &vt, &job.Vsovii[p], &job.psovii[p], &tV, &tP, &temp);
+        add_sandwiched(&Hfi, &vt, &job.Vsovjj[p], &job.psovjj[p], &tV, &tP, &temp);
+        add_sandwiched(&Hfi, &vt, &job.Vsovji[p], &job.psovji[p], &tV, &tP, &temp);
+        add_sandwiched(&Hfi, &vt, &job.Vsovij[p], &job.psovij[p], &tV, &tP, &temp);
+        add_sandwiched(&Hfi, &vt, &job.Vsosii[p], &job.psosii[p], &tV, &tP, &temp);
+        add_sandwiched(&Hfi, &vt, &job.Vsosjj[p], &job.psosjj[p], &tV, &tP, &temp);
+    }
+
+    *e_out = array_init(nkeep);
+    matrix_t ut = matrix_init(nkeep, nkeep);
 
 #ifdef LAPACKE
-    lapack_general(rand.value, Nfi.value, nbas, e_out->value, vt.value, nbas);
+    lapack_standard(Hfi.value, nkeep, e_out->value, ut.value, nkeep);
 #else
-    eigen_general(rand.value, Nfi.value, nbas, e_out->value, vt.value, nbas);
+    eigen_standard(Hfi.value, nkeep, e_out->value, ut.value, nkeep);
 #endif
 
-    /* construct new orthogonal basis */
-    matrix_productT(&vt, &Nfi, &temp);
-    for (int k = 0; k < nbas; k++) {
-        double norm = sqrt(fabs(temp.value[k][k]));
-        if (norm > 1e-10) {
-            for (int i = 0; i < nbas; i++) {
-                vt.value[k][i] /= norm;
-            }
-        }
-        else {
-            printf("Warning: singular vector %d, norm=%.2e\n", k, norm);
-        }
-    }
-
-    /* transform Hamiltonian matrices in orthogonal basis */
-    matrix_productT(&vt, &mT, &tmT);
-    matrix_productT(&vt, &mbetaijCoul, &tmbetaijCoul);
-    matrix_productT(&vt, &mdeltaijCont, &tmdeltaijCont);
-    matrix_productT(&vt, &mdeltaiiSov, &tmdeltaiiSov);
-    matrix_productT(&vt, &mdeltajjSov, &tmdeltajjSov);
-    matrix_productT(&vt, &mdeltaijSov, &tmdeltaijSov);
-    matrix_productT(&vt, &mdeltaiiSos, &tmdeltaiiSos);
-    matrix_productT(&vt, &mdeltajjSos, &tmdeltajjSos);
-    matrix_productT(&vt, &mdeltaijTens, &tmdeltaijTens);
-    matrix_productT(&vt, &mVcoul, &tmVcoul);
-    matrix_productT(&vt, &mVconf, &tmVconf);
-    matrix_productT(&vt, &mVcont, &tmVcont);
-    matrix_productT(&vt, &mVsovi, &tmVsovi);
-    matrix_productT(&vt, &mVsovj, &tmVsovj);
-    matrix_productT(&vt, &mVsovij, &tmVsovij);
-    matrix_productT(&vt, &mVsosi, &tmVsosi);
-    matrix_productT(&vt, &mVsosj, &tmVsosj);
-    matrix_productT(&vt, &mVtens, &tmVtens);
-
-    /* Meson-style PVP: H = T + Vconf + β V β + δ V δ + … .
-     * Pair sums are taken first, so β of one pair can sandwich V of another. */
-    matrix_sum(&tmT, &tmVconf, &Hfi);
-    matrix_productT(&tmbetaijCoul, &tmVcoul, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltaijCont, &tmVcont, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltaiiSov, &tmVsovi, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltajjSov, &tmVsovj, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltaijSov, &tmVsovij, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltaiiSos, &tmVsosi, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltajjSos, &tmVsosj, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltaijTens, &tmVtens, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-
-    /* final eigen system */
-    matrix_t ut = matrix_init(nbas, nbas);
-
-#ifdef LAPACKE
-    lapack_standard(Hfi.value, nbas, e_out->value, ut.value, nbas);
-#else
-    eigen_standard(Hfi.value, nbas, e_out->value, ut.value, nbas);
-#endif
-
-    *v_out = matrix_init(nbas, nbas);
+    *v_out = matrix_init(nkeep, nbas);
     matrix_product(&ut, &vt, v_out);
 
     *n_out = matrix_init(nbas, nbas);
-    for (int i = 0; i < nbas; i++) {
-        for (int j = 0; j < nbas; j++) {
-            n_out->value[i][j] = Nfi.value[i][j];
+    matrix_copy(n_out, &job.Nfi);
+
+    *rms12 = array_init(nkeep);
+    *rms13 = array_init(nkeep);
+    *rms23 = array_init(nkeep);
+    for (int n = 0; n < nkeep; n++) {
+        rms12->value[n] = sqrt(fabs(matrix_expect(v_out, n, &job.rmsr[0]))) / GEMSTORE_FM;
+        rms13->value[n] = sqrt(fabs(matrix_expect(v_out, n, &job.rmsr[1]))) / GEMSTORE_FM;
+        rms23->value[n] = sqrt(fabs(matrix_expect(v_out, n, &job.rmsr[2]))) / GEMSTORE_FM;
+    }
+
+    if (args_input->print_wfn) {
+        char path[280];
+        sprintf(path, "%s.basis.dat", args_input->project);
+        FILE *bf = fopen(path, "w");
+        if (bf) {
+            fprintf(bf, "# i  c  nrho nlam lrho llam L  sij  jl  coe\n");
+            for (int i = 0; i < nbas; i++) {
+                basis_qnum q = job.qnlist_full.qnum[i][0];
+                fprintf(bf, "%d  %d  %d %d  %d %d %d  %.1f  %.1f  %.6f\n",
+                    i, q.c, q.nrho, q.nlam, q.lrho, q.llam, q.L, q.sij, q.jl, q.coe);
+            }
+            fclose(bf);
+        }
+        for (int n = 0; n < nkeep; n++) {
+            sprintf(path, "%s.wfn.%d.dat", args_input->project, n + 1);
+            FILE *wf = fopen(path, "w");
+            if (!wf) {
+                continue;
+            }
+            fprintf(wf, "# i  coefficient   (see %s.basis.dat)\n", args_input->project);
+            for (int i = 0; i < nbas; i++) {
+                fprintf(wf, "%d  %.16e\n", i, v_out->value[n][i]);
+            }
+            fclose(wf);
         }
     }
 
-    free(qn);
-    free(rho);
-    free(lam);
-    basis_list_free(&qnlist_spfy);
-    basis_list_free(&qnlist_full);
+    for (int op = 0; op < 21; op++) {
+        threebody_scdk_table_free(job.qnlist_spfy.len_part, nsp, &job.scdk[op]);
+    }
+    for (int i = 0; i < nsp; i++) {
+        for (int j = 0; j < job.qnlist_spfy.len_part[i]; j++) {
+            matrix_free(&job.mlsj[i][j]);
+        }
+        free(job.mlsj[i]);
+    }
+    free(job.mlsj);
+    basis_list_free(&job.qnlist_spfy);
+    basis_list_free(&job.qnlist_full);
+
     matrix_free(&temp);
-    matrix_free(&rand);
+    matrix_free(&tV);
+    matrix_free(&tP);
     matrix_free(&vt);
     matrix_free(&ut);
-    matrix_free(&mT);
-    matrix_free(&mbetaijCoul);
-    matrix_free(&mdeltaijCont);
-    matrix_free(&mdeltaiiSov);
-    matrix_free(&mdeltajjSov);
-    matrix_free(&mdeltaijSov);
-    matrix_free(&mdeltaiiSos);
-    matrix_free(&mdeltajjSos);
-    matrix_free(&mdeltaijTens);
-    matrix_free(&mVcoul);
-    matrix_free(&mVconf);
-    matrix_free(&mVcont);
-    matrix_free(&mVsovi);
-    matrix_free(&mVsovj);
-    matrix_free(&mVsovij);
-    matrix_free(&mVsosi);
-    matrix_free(&mVsosj);
-    matrix_free(&mVtens);
-    matrix_free(&tmT);
-    matrix_free(&tmbetaijCoul);
-    matrix_free(&tmdeltaijCont);
-    matrix_free(&tmdeltaiiSov);
-    matrix_free(&tmdeltajjSov);
-    matrix_free(&tmdeltaijSov);
-    matrix_free(&tmdeltaiiSos);
-    matrix_free(&tmdeltajjSos);
-    matrix_free(&tmdeltaijTens);
-    matrix_free(&tmVcoul);
-    matrix_free(&tmVconf);
-    matrix_free(&tmVcont);
-    matrix_free(&tmVsovi);
-    matrix_free(&tmVsovj);
-    matrix_free(&tmVsovij);
-    matrix_free(&tmVsosi);
-    matrix_free(&tmVsosj);
-    matrix_free(&tmVtens);
     matrix_free(&Hfi);
-    matrix_free(&Nfi);
+    for (int i = 0; i < nmats; i++) {
+        matrix_free(mats[i]);
+    }
 }

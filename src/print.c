@@ -245,7 +245,8 @@ void print_meson_spectra(const array_t *eigenvalue, const array_t *rmsradius, co
     printf("\n");
 }
 
-void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, const matrix_t *overlap, int len)
+void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, const matrix_t *overlap,
+    const array_t *rms12, const array_t *rms13, const array_t *rms23, int len)
 {
     if (eigenvalue == NULL || eigenvector == NULL || overlap == NULL) {
         return;
@@ -261,9 +262,9 @@ void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector
     double max_mass = eigenvalue->value[0];
     double total_norm = 0.0;
 
-    printf("%-6s%-12s%-12s%-15s%-15s\n",
-        "State", "Mass(GeV)", "max|c|", "c^T N c", "norm_check");
-    printf("------+-----------+-----------+--------------+--------------\n");
+    printf("%-6s%-12s%-10s%-10s%-10s%-12s%-15s%-12s\n",
+        "State", "Mass(GeV)", "r12(fm)", "r13(fm)", "r23(fm)", "max|c|", "c^T N c", "norm_check");
+    printf("------+-----------+---------+---------+---------+-----------+--------------+-----------\n");
 
     for (int n = 0; n < len; n++) {
         double norm = 0.0;
@@ -285,8 +286,12 @@ void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector
 
         total_norm += norm;
 
-        printf("%-6d%-12.6f%-12.6f%-15.10f%-15s\n",
-            n + 1, eigenvalue->value[n], maxc, norm,
+        double r12 = (rms12 && n < rms12->len) ? rms12->value[n] : 0.0;
+        double r13 = (rms13 && n < rms13->len) ? rms13->value[n] : 0.0;
+        double r23 = (rms23 && n < rms23->len) ? rms23->value[n] : 0.0;
+
+        printf(" %-5d%-12.6f%-10.4f%-10.4f%-10.4f%-12.6f%-15.10f%-12s\n",
+            n + 1, eigenvalue->value[n], r12, r13, r23, maxc, norm,
             (fabs(norm - 1.0) < 1e-6) ? "OK" : "CHECK");
     }
 
@@ -387,7 +392,8 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
     return state;
 }
 
-int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const matrix_t *vector, int len)
+int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const matrix_t *vector,
+    const array_t *rms12, const array_t *rms13, const array_t *rms23, int len)
 {
     if (input == NULL || mass == NULL || vector == NULL || len <= 0) {
         fprintf(stderr, "Error: Invalid input parameters to write_baryon_spectra()\n");
@@ -439,6 +445,15 @@ int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const ma
 
         cJSON_AddNumberToObject(state_obj, "index", n + 1);
         cJSON_AddNumberToObject(state_obj, "mass", mass->value[n]);
+        if (rms12 && n < rms12->len) {
+            cJSON_AddNumberToObject(state_obj, "rms_r12", rms12->value[n]);
+        }
+        if (rms13 && n < rms13->len) {
+            cJSON_AddNumberToObject(state_obj, "rms_r13", rms13->value[n]);
+        }
+        if (rms23 && n < rms23->len) {
+            cJSON_AddNumberToObject(state_obj, "rms_r23", rms23->value[n]);
+        }
 
         for (int d = 0; d < vector->col; d++) {
             cJSON_AddItemToArray(eigenvector, cJSON_CreateNumber(vector->value[n][d]));
@@ -568,6 +583,61 @@ int write_meson_pot(const argsInput_t *input, const argsGIModel_t *args_model, a
             + GIVtens(rGeV, &ctx);
 
         fprintf(pf, "%.8f    %.8e\n", r, potential);
+    }
+
+    if (fclose(pf) != 0) {
+        fprintf(stderr, "Error: Failed to close file %s\n", path);
+        return 0;
+    }
+
+    return 1;
+}
+
+int write_baryon_pot(const argsInput_t *input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc)
+{
+    if (input == NULL || args_model == NULL || args_dynmc == NULL) {
+        fprintf(stderr, "Error: Invalid input parameters to write_baryon_pot()\n");
+        return 0;
+    }
+
+    FILE *pf;
+    char path[264];
+    sprintf(path, "%s%s", input->project, ".pot.dat");
+    pf = fopen(path, "w");
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+
+    double fm = 5.06773093854369882649;
+    double rmin = 0.01;
+    double rmax = 10.0;
+    double dr = 0.01;
+    gi_pot_ctx_t ctx = { args_model, args_dynmc };
+    args_dynmc->Cij = -2.0 / 3.0;
+    args_dynmc->OCent = 1.0;
+    args_dynmc->OSdS = 0.0;
+    args_dynmc->OLSi = 0.0;
+    args_dynmc->OLSj = 0.0;
+    args_dynmc->OTens = 0.0;
+    args_dynmc->system = SYSTEM_BARYON;
+
+    fprintf(pf, "# r[fm]    V12[GeV]    V13[GeV]    V23[GeV]    Vsum[GeV]  (central GI, colour -2/3)\n");
+    for (double r = rmin; r <= rmax; r += dr) {
+        double rGeV = r * fm;
+        double Vpair[3];
+        int flav[3][2] = {{input->f1, input->f2}, {input->f3, input->f1}, {input->f2, input->f3}};
+        for (int p = 0; p < 3; p++) {
+            double mi = getmq(flav[p][0], args_model);
+            double mj = getmq(flav[p][1], args_model);
+            args_dynmc->mi = mi;
+            args_dynmc->mj = mj;
+            args_dynmc->Sigij = sigma_ij(mi, mj, args_model->sigma_0, args_model->s);
+            sigma_k_ij(args_dynmc->Sigij, args_dynmc->Sigkij);
+            Vpair[p] = GIVconf(rGeV, &ctx) + GIVcoul(rGeV, &ctx);
+        }
+        fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n",
+            r, Vpair[0], Vpair[1], Vpair[2], Vpair[0] + Vpair[1] + Vpair[2]);
     }
 
     if (fclose(pf) != 0) {

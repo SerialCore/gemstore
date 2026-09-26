@@ -7,6 +7,8 @@
 #ifndef GEMSTORE_BASIS_BASIS
 #define GEMSTORE_BASIS_BASIS
 
+/* Three-body Jacobi GEM basis (recycle/basis.h). Meson uses argsOrbit_t. */
+
 typedef struct basis_base {
     int map1;           /* index map of Jacobi coordinate */
     int map2;           /* index map of Jacobi coordinate */

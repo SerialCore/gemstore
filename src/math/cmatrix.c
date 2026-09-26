@@ -16,9 +16,9 @@ cmatrix_t cmatrix_init(int row, int col)
 {
 	cmatrix_t mat;
 
-	complex **value = (complex**)malloc(row*sizeof(complex*));
+	complex **value = (complex**)malloc((size_t)row * sizeof(complex*));
 	for (int i = 0; i < row; i++) {
-		value[i] = (complex*)malloc(col*sizeof(complex));
+		value[i] = (complex*)calloc((size_t)col, sizeof(complex));
 	}
 	mat.value = value;
 	mat.row = row;

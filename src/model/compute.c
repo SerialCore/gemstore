@@ -88,6 +88,9 @@ void compute_spectra_baryon(const argsInput_t *input)
     array_t eigenvalue = {0};
     matrix_t eigenvector = {0};
     matrix_t overlap = {0};
+    array_t rms12 = {0};
+    array_t rms13 = {0};
+    array_t rms23 = {0};
 
     if (input->model == MODEL_GISTRING) {
         args_dynmc.model = MODEL_GISTRING;
@@ -102,12 +105,19 @@ void compute_spectra_baryon(const argsInput_t *input)
         exit(1);
     }
 
-    spectra_baryon_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap);
+    spectra_baryon_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23);
 
-    print_baryon_spectra(&eigenvalue, &eigenvector, &overlap, eigenvalue.len);
-    write_baryon_spectra(input, &eigenvalue, &eigenvector, eigenvalue.len);
+    print_baryon_spectra(&eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23, eigenvalue.len);
+    write_baryon_spectra(input, &eigenvalue, &eigenvector, &rms12, &rms13, &rms23, eigenvalue.len);
+
+    if (input->print_pot) {
+        write_baryon_pot(input, &args_model, &args_dynmc);
+    }
 
     array_free(&eigenvalue);
+    array_free(&rms12);
+    array_free(&rms13);
+    array_free(&rms23);
     matrix_free(&eigenvector);
     matrix_free(&overlap);
 }

@@ -1,24 +1,28 @@
 ---
-title: 重子三体：Jacobi 坐标、GEM 与 RR 路径推导
+title: 重子三体：Jacobi 坐标、GEM 与通道映射
 author: GEMSTORE
-date: 2026-09-09
+date: 2026-09-26
 documentclass: ctexart
 classoption:
   - a4paper
   - UTF8
+  - fontset=ubuntu
 geometry: margin=2.4cm
 colorlinks: true
 toc: true
 numbersections: true
 header-includes:
   - \usepackage{amsmath,amssymb,bm}
+  - \setmonofont{DejaVu Sans Mono}
   - \allowdisplaybreaks
 ---
 
-对照实现：`src/basis/jacobi.c`、`src/math/solidharm.c`、`src/model/cbaryon.c`、`src/basis/orbit.c`。  
-工程边界与未完成项见 `doc/baryon-jacobi-gem.md`。
+对照实现：`src/basis/jacobi.c`、`src/math/scdkme.c`（`getT*`）、`src/model/cbaryon.c`。  
+工程边界与 SCDK 装配见 `doc/baryon-jacobi-gem.md`。
 
-本文写的是**代码里实际用的约定**，不是通用教科书的质量加权 Jacobi。核对时以函数名为准。
+**生产路径是 SCDK，不是固谐加法。** 本文第 1–2 节的无质量权重 Jacobi 与 $\alpha\beta\gamma\delta$、第 7 节的配平方（$b_{11}$、$R'=R+\kappa r$）仍是 `getT*` 的运动学。第 7 节后半的 $\mathcal{Y}_{\ell m}$ 加法、第 9–10 节的 1D `GRnlr` 装配是 2026-09-09 的 RR 实现，**已经废弃**。
+
+本文写的是**代码里实际用的坐标约定**，不是教科书的质量加权 Jacobi。核对映射时以 `jacobi_r_map` / recycle `coordinatesTransformation_r_1` 为准。
 
 ---
 
@@ -51,7 +55,7 @@ $$
 
 体积元：$\lvert\det\rvert=1$ 的线性映射下 $\mathrm{d}^3\rho\,\mathrm{d}^3\lambda$ 在通道之间不变。
 
-当前基只在 $c=1$ 上展开。一套坐标已经覆盖整个相对位形；$c=2,3$ 的高斯是另一套过完备展开，不是直和空间。
+生产基在 $c=1,2,3$ 三张连接图上展开（可分辨：独立；全同对：Pauli + $\eta$ 组合），写进同一套 $Hc=ENc$。一套坐标已经覆盖整个相对位形；$c=2,3$ 的高斯是另一套过完备展开，交叉块由 SCDK 给出，不是三个谱的直和。
 
 ---
 
@@ -150,7 +154,7 @@ $$
 \right),
 $$
 
-供 `raynal_revai` 用。当前中心力不走 RR 系数，而走第 7 节的固谐加法。
+供 `raynal_revai` 用。生产中心力走 SCDK 生成函数，不走 RR 系数展开，也不走第 7 节后半的固谐加法。`raynal_revai` 留给以后的 $S_3$ 投影。
 
 ---
 
@@ -214,7 +218,7 @@ $$
 
 ## 4. 角动量耦合与基
 
-单通道基（`baryon_basis_build`）
+三图基（`baryon_basis_build`）
 
 $$
 \bigl\lvert
@@ -237,30 +241,15 @@ $$
 
 - 宇称 $P=(-1)^{l_\rho+l_\lambda}$，故 $L_{\max}=0$ 只有 S 波，$L_{\max}=1$ 且 $P=-1$ 只有 $(l_\rho,l_\lambda)=(1,0)$ 或 $(0,1)$。
 - $L\in[\lvert l_\rho-l_\lambda\rvert,\,l_\rho+l_\lambda]$，$j_l\in[\lvert L-s_{ij}\rvert,\,L+s_{ij}]$，再与 $s_3$ 耦到 $J$。
-- 若该通道的一对全同：$\mathrm{sym}_{12}\cdot(-1)^{s_{ij}+l_\rho}=+1$ 才保留（`pair_identical` + `f12`）。
+- 可分辨：三标架独立，不用 `sym12`。全同对：该通道 Pauli $\eta=f_{12}(-1)^{1+s_{ij}+l_\rho}=+1$，重排两图收成 $\lvert c_a\rangle+\eta\lvert c_b\rangle$（`threebody_pair_identical`）。
 
-`baryon_qn_match` 是同一标架上的 Kronecker：
-
-$$
-\delta_{c,c'}\delta_{l_\rho l_\rho'}\delta_{l_\lambda l_\lambda'}
-\delta_{LL'}\delta_{s_{ij}s_{ij}'}\delta_{j_l j_l'}\delta_{JJ'}.
-$$
+SCDK 不在空间上做 `baryon_qn_match`；不同 $(l_\rho,l_\lambda)$、不同 $c$ 的交叉由多项式与 `getT*` 给出。
 
 ---
 
 ## 5. 重叠 $N$ 与动能 $T$
 
-同一 Jacobi 标架（当前所有基）：
-
-$$
-N_{ab}
-= \langle R_{n_\rho^a l_\rho} R_{n_\rho^b l_\rho}\rangle_\rho
-\,\langle R_{n_\lambda^a l_\lambda} R_{n_\lambda^b l_\lambda}\rangle_\lambda
-\times
-[\texttt{baryon\_qn\_match}].
-$$
-
-1D 重叠**没有**角向 $\delta_{ll'}$（`GRnlr` 对 $l\neq l'$ 径向积分一般非零），角向正交全靠 `baryon_qn_match`。异通道若将来打开，不能再用这条 1D 公式。
+异通道重叠不能再用 1D $I_\rho I_\lambda$。生产路径把两套高斯都映到某一对标架（`inteNfi`，$V=1$），SCDK 多项式收缩后即 $N_{ab}$，含 $c_a\neq c_b$ 的交叉块。
 
 动能是 GI 相对论单夸克能量之和。在通道 $c$ 的坐标里：
 
@@ -278,7 +267,7 @@ $$
 
 ## 6. 道内中心势（`pair == c`）
 
-势只依赖 $\rho=r_{ij}$，$\lambda$ 上是重叠。与介子相同：
+**道内**（`pair==c`）时势只依赖 $\rho=r_{ij}$，$\lambda$ 上是重叠。旧 RR 与介子相同：
 
 $$
 \langle a\lvert V(\rho)\rvert b\rangle
@@ -289,7 +278,7 @@ R_a(r)V(r)R_b(r)\Bigr)
 \langle\lambda_a\lvert\lambda_b\rangle.
 $$
 
-动量空间夹心 $\beta(p),\delta(p)$ 同样只在 $\rho$ 上走 `GRnlp`。自旋–轨道、张量、自旋–自旋在 $\rho$ 上用介子算符，经
+生产路径里所有 pair（含道外）都走 SCDK；夹心用 `t1p_cent`，每对单独 $\beta V\beta$。下面 recouple 公式属于已废弃的 RR 道内自旋力：
 
 $$
 \bigl\lvert(l_\rho l_\lambda)L,s_{ij};j_l\bigr\rangle
@@ -313,9 +302,9 @@ $$
 
 ---
 
-## 7. 道外中心势：配平方 + 固谐加法（RR 路径 1）
+## 7. 配平方（SCDK `getT*` 与旧 RR 共用）
 
-算符 $V(\lvert\mathbf{r}\rvert)$，$\mathbf{r}=\vec{\rho}_{\mathrm{pair}}$。bra/ket 的高斯写在 `from_a`、`from_b`（当前都是 $c=1$）。
+算符 $V(\lvert\mathbf{r}\rvert)$，$\mathbf{r}=\vec{\rho}_{\mathrm{pair}}$。bra/ket 的高斯写在 `from_a`、`from_b`（现为各自的 $c=1,2,3$）。配平方之后，**SCDK 用生成函数多项式 × $t_j$ 求值**；下面固谐加法只保留作运动学对照。
 
 ### 7.1 二次型
 
@@ -485,7 +474,7 @@ $(0,1)$ 把 $\alpha',\beta$ 换成 $\gamma',\delta$。
 
 ### 7.7 $V=1$ 标架无关
 
-$V=1$ 就是 overlap，与把哪一对当 $\mathbf{r}$ 无关。同一对高斯、`pair=1,2,3` 的 RR 元必须相等（相对误差 $\sim 10^{-16}$）。道内 Coulomb 的 1D `GRnlr` 必须等于 `pair==c` 的 RR。这两条在 `baryon_check_reduce_identity` 里，失败即 `exit(1)`。
+$V=1$ 就是 overlap，与把哪一对当 $\mathbf{r}$ 无关。SCDK 的 `inteNfi` 用 pair$=1$ 积所有 $(c_a,c_b)$；标架无关性是运动学恒等式，生产代码不再做 `baryon_check_reduce_identity`。
 
 ---
 
@@ -517,47 +506,38 @@ $$
 
 ---
 
-## 9. 哈密顿装配（与介子同构）
+## 9. 哈密顿装配（生产：SCDK）
 
-在原始 GEM 基上构造 $N,T,V_{\mathrm{conf}},V_{\mathrm{coul}},\beta_{\mathrm{coul}},\ldots$。三对势对 `pair=1,2,3` **先求和**。
+`matrix_init` 置零。在原始三图 GEM 基上填 $N,T,V,p,\langle r_{ij}^2\rangle$（`getmfi`）。三对 **各自** 先变到 $N$-正交基再做 $\beta V\beta$，然后相加（recycle `transP`），**不是**介子那种先对求和再夹。
 
-`matrix_init` 不置零，凡 `+=` 的矩阵必须在每个 $(i,j)$ 先写成 0。
-
-然后：随机对称矩阵对 $N$ 做广义本征，把矢量按 $\sqrt{(v N v^T)_{kk}}$ 归一，得到 $N$-正交行 $v$。各矩阵变到该基：$tM = v\,M\,v^{T}$（`matrix_productT`）。
+过完备 $N$：`threebody_overlap_basis` 丢掉 $\lambda\le 10^{-8}\lambda_{\max}$，行 $v_k=u_k/\sqrt{\lambda_k}$。然后
 
 $$
-H = T + V_{\mathrm{conf}}
-+ \beta_{\mathrm{coul}} V_{\mathrm{coul}} \beta_{\mathrm{coul}}^{T}
+H = \sum_{\mathrm{pair}=1}^{3}
+\Bigl(T_i + V_{\mathrm{string}}
++ \beta_{\mathrm{oge}} V_{\mathrm{oge}} \beta_{\mathrm{oge}}^{T}
 + \delta_{\mathrm{cont}} V_{\mathrm{cont}} \delta_{\mathrm{cont}}^{T}
-+ \cdots
++ \cdots\Bigr).
 $$
 
-再对 $H$ 做标准本征。三对先求和再夹心，会混进「这对的 $\beta$ 夹那对的 $V$」，是沿用介子写法的近似。
-
-本征值应稳定；随机正交化不保证矢量符号 bit-for-bit。
+再对 $H$ 做标准本征。本征值应稳定；矢量符号不必 bit-for-bit。
 
 ---
 
 ## 10. 算法流程（对照代码）
 
 ```
-baryon_basis_build          c=1 only; parity, Pauli, J
+baryon_basis_build          c=1,2,3；可分辨独立，全同 Pauli+η
 basis_list_push_full        n_rho, n_lam = 1..nmax, nu=getnu
-baryon_check_reduce_identity
-  same-channel Coulomb: 1D GRnlr vs solidharm (pair==c)
-  V=1: pair=c vs another pair
-for i,j:
-  zero += matrices
-  N = I_rho I_lam * qn_match
-  set OCent = qn_match for pair==c; T_rho(GIVt)+T_lam(GIVt_quark)
-  for pair=1..3:
-    baryon_set_operators
-    me_pair_spatial: pair==c -> 1D; else if r-space -> RR; else 0
-random-N orthogonalize
-PVP sandwich -> eigen_standard(H)
+baryon_mlsj_jl
+threebody_scdk_table_alloc / calc_scdk_mt
+getmfi                      N,T,V,p,⟨r²⟩ via getT* × scdk
+threebody_overlap_basis     丢掉 N 的核
+每对 uMu 与 βVβ，再求和
+eigen_standard(H)
 ```
 
-入口：`entry_compute` → `compute_spectra_baryon` → `spectra_baryon_GEM`。
+入口：`entry_compute` → `compute_spectra_baryon` → `spectra_baryon_GEM`。细节见 `doc/baryon-jacobi-gem.md`。
 
 ---
 
@@ -568,18 +548,17 @@ PVP sandwich -> eigen_standard(H)
 3. $\ell=0$ 加法：四条 $\mathcal{Y}_{00}$ 与两个 $\int\mathrm{d}\Omega=1/(4\pi)$ 相乘得 1，径向只剩 $I_r[V]\,I_R$。
 4. $\ell=1$ 加法：$\alpha\mathcal{Y}(r)+\beta\mathcal{Y}(R)$，无交叉项时笛卡尔 7.6 成立。
 5. `gem_pref` 与 `GRnlr/r^l` 逐因子相同。
-6. 道内 Coulomb：1D 与 RR 相对误差 $<10^{-8}$。
-7. $V=1$：三个 pair 标架的 RR 元相同。
-8. 对角 `OCent=1`、`T_{ii}>0`；P 波不应出现恰好 $n_{\max}^2$ 个零本征值。
-9. S 波基态应低于 P 波（同模型、同径向格点）。
+6. `getT*` 的 $b_{11}$、$\kappa$ 与本节配平方一致（与是否再用固谐无关）。
+7. $V=1$：同一对高斯映到 pair$=1,2,3$ 的 overlap 应相同（运动学）。
+8. $c^T N c\approx 1$；P 波基态应高于 S 波（同模型、同径向格点）。
+9. 可分辨体系三图独立；全同对才 $\eta$ 组合。
 
 ---
 
 ## 12. 明确不在本推导内的
 
-- 三通道过完备基的交叉 $N_{12},T_{12}$（需要把 $p_\rho,p_\lambda$ 变到同一标架，或对 $V=1$ 与动能再用本节 RR）。
-- 道外向量 / 张量算符（SCDK 或固谐的梯度形式）。
-- 质量加权 Jacobi 与标准 RR 系数展开（`raynal_revai` 已实现但中心势未用）。
+- SCDK 生成函数与 `vtype` 组合学（见 `sumckdk.c` / `scdkme.c`，装配见 `baryon-jacobi-gem.md`）。
+- $S_3$ Young 投影（`raynal_revai` 已实现，谱里未用）。
 - CRG / SHO 重子。
 
 ## 13. 编译 PDF

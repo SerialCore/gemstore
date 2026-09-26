@@ -163,7 +163,11 @@ void eigen_tridiagonal(double **a, int n, double *d, double *e, double *et, int 
      * - Accumulate transformations for eigenvector computation
      */
     for (i = 0; i < n - 1; i++) {
+        int it_qr = 0;
         while (fabs(e[i + 1]) > eps * (fabs(d[i]) + fabs(d[i + 1]))) {
+            if (++it_qr > 2000) {
+                break;
+            }
             /* Compute shift using Rayleigh quotient acceleration */
             g = (d[i + 1] - d[i]) / (2 * e[i + 1]);
             if (g >= 0) {
@@ -273,7 +277,11 @@ void eigen_tridiagonal(double **a, int n, double *d, double *e, double *et, int 
             }
             
             /* Iterate until we find the eigenvalue closest to zero */
+            int it_inv = 0;
             while (1) {
+                if (++it_inv > 2000) {
+                    break;
+                }
                 int bk = 0;
                 
                 /* Check if any diagonal element is nearly zero */
