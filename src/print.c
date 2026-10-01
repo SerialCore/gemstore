@@ -129,13 +129,10 @@ void print_input_parameters(const argsInput_t *input)
 
     /* Basis Parameters */
     printf("Basis Parameters:\n");
-    if (input->orbit == ORBIT_GEM || input->orbit == ORBIT_CRG) {
+    if (input->orbit == ORBIT_GEM) {
         printf("  Number of Gaussians (nmax): %-46d\n", input->nmax);
         printf("  Minimum Range (rmin):       %-46.6f fm\n", input->rmin);
         printf("  Maximum Range (rmax):       %-46.6f fm\n", input->rmax);
-    }
-    if (input->orbit == ORBIT_CRG) {
-        printf("  Oscillation Scale (omega):  %-46.6f\n", input->omega);
     }
     if (input->orbit == ORBIT_SHO) {
         printf("  Number of Oscillators (nmax): %-44d\n", input->nmax);

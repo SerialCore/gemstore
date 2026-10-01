@@ -13,7 +13,7 @@ typedef struct argsOrbit {
     int n;                  /* radial number & gaussian parameter */
     int l;                  /* orbital momentum */
     double scale;           /* scale factor, nu for GEM and beta for SHO */
-    double param;           /* additional parameter, omega for CRG */
+    double param;           /* additional parameter */
 } argsOrbit_t;
 
 typedef struct argsGIModel {

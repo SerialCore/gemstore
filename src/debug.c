@@ -271,26 +271,6 @@ void debug_orbit_wfn()
     overlap = integral_nlp_overlap(GRnlp, factor, &args_bra, &args_ket);
     printf("Orthogonal overlap for Gp: %f\n", overlap);
 
-    double omega = 0.5;
-    args_bra.param = omega;
-    args_ket.param = omega;
-
-    factor = 1 / sqrt(2 * nu1);
-    overlap = integral_crg_overlap(CGRnlr, factor, &args_bra, &args_bra);
-    printf("Normalized overlap for CGr: %f\n", overlap);
-
-    factor = 1 / sqrt(nu1 + nu2);
-    overlap = integral_crg_overlap(CGRnlr, factor, &args_bra, &args_ket);
-    printf("Orthogonal overlap for CGr: %f\n", overlap);
-
-    factor = sqrt(2 * nu1 * (1 + omega * omega));
-    overlap = integral_crg_overlap(CGRnlp, factor, &args_bra, &args_bra);
-    printf("Normalized overlap for CGp: %f\n", overlap);
-
-    factor = sqrt(4 * nu1 * nu2 * (1 + omega * omega) / (nu1 + nu2));
-    overlap = integral_crg_overlap(CGRnlp, factor, &args_bra, &args_ket);
-    printf("Orthogonal overlap for CGp: %f\n", overlap);
-
     double beta1 = 0.8;
     args_bra.scale = beta1;
     double beta2 = 1.0;

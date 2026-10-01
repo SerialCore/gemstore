@@ -68,7 +68,6 @@
 ### Basis Set Options
 
 - **GEM** (Generalized Exponential Morse): Efficient Gaussian basis with exponential envelope
-- **CRG** (Complex-Range Gaussian): Hiyama's complex scaling method
 
 ---
 
@@ -131,9 +130,6 @@ make uninstall
 ```bash
 # Run a meson spectroscopy calculation with JSON input
 ./gemstore --compute amethyst.json
-
-# Run calculation with CRG basis (complex scaling)
-./gemstore --compute ruby.json
 
 # Run with predefined parameters
 ./gemstore --compute diamond.json
@@ -246,17 +242,6 @@ Run it:
 }
 ```
 
-**CRG (Complex-Range Gaussian):**
-```json
-"basis": {
-  "type": "CRG",
-  "nmax": 16,
-  "rmax": 30.0,
-  "rmin": 0.1,
-  "omega": 0.1
-}
-```
-
 **SHO (Spherical Harmonic Oscillator):**
 ```json
 "basis": {
@@ -268,11 +253,10 @@ Run it:
 
 | Field | Type | Description | Range |
 |-------|------|-------------|-------|
-| `type` | string | Basis set type | `"GEM"`, `"CRG"`, `"SHO"` |
+| `type` | string | Basis set type | `"GEM"`, `"SHO"` |
 | `nmax` | int | Number of basis functions | 8-32 (typical: 16) |
-| `rmax` | float | Maximum radius (fm; GEM/CRG) | 20.0-50.0 |
-| `rmin` | float | Minimum radius (fm; GEM/CRG) | 0.01-0.5 |
-| `omega` | float | Complex scaling angle (CRG only) | 0.05-0.5 |
+| `rmax` | float | Maximum radius (fm; GEM) | 20.0-50.0 |
+| `rmin` | float | Minimum radius (fm; GEM) | 0.01-0.5 |
 | `beta` | float | HO scale parameter (GeV; SHO only) | 0.2-2.0 |
 
 #### Print Configuration
@@ -570,9 +554,7 @@ For details: see `app/gemstore-assistant/SKILL.md`
 | Function | Algorithm | Output |
 |----------|-----------|--------|
 | `spectra_meson_GEM()` | Solve Schrödinger equation (GEM basis) | Eigenvalues (masses) + eigenvectors |
-| `spectra_meson_CRG()` | Solve Schrödinger equation (CRG basis) | Eigenvalues (masses) + eigenvectors |
 | `radius_meson_GEM()` | Compute ⟨r²⟩^(1/2) with GEM basis | RMS radii |
-| `radius_meson_CRG()` | Compute ⟨r²⟩^(1/2) with CRG basis | RMS radii |
 | `interpolate_quadratic()` | Fix anomalies in spectra | Corrected data |
 | `write_meson_spectra()` | Serialize results to JSON | `.out.json` file |
 
@@ -604,7 +586,7 @@ Gaussian smearing regularization for all potential components.
 
 | Module | Purpose |
 |--------|---------|
-| `orbit.c` | GEM and CRG orbital basis functions |
+| `orbit.c` | GEM and SHO orbital basis functions |
 | `spin.c` | Spin SU(2) Clebsch-Gordan coefficients |
 | `color.c` | SU(3) color factors |
 | `isospin.c` | Isospin basis states |
@@ -739,46 +721,7 @@ Gaussian smearing regularization for all potential components.
 ./gemstore --compute cc_custom.json
 ```
 
-### Example 3: CRG Basis (Complex-Range Gaussian)
-
-For resonance calculations, use complex scaling:
-
-```json
-{
-  "project": "charmonium_crg",
-  "task": "SPECTRA",
-  "model": {
-    "type": "GISCREEN",
-    "param": "GISCREEN_CCBAR"
-  },
-  "system": {
-    "type": "MESON",
-    "f1": 3,
-    "f2": 3,
-    "S": 1,
-    "L": 0,
-    "J": 1
-  },
-  "basis": {
-    "type": "CRG",
-    "nmax": 16,
-    "rmax": 30.0,
-    "rmin": 0.1,
-    "omega": 0.1
-  },
-  "print": {
-    "pot": "false",
-    "wfn": "false"
-  }
-}
-```
-
-**Run**:
-```bash
-./gemstore --compute charmonium_crg.json
-```
-
-### Example 4: Parameter Fitting
+### Example 3: Parameter Fitting
 
 Fit GI-Screen parameters to experimental data using Minuit2:
 
@@ -788,7 +731,7 @@ Fit GI-Screen parameters to experimental data using Minuit2:
 
 This runs Minuit2 optimization to find parameters that best match experimental meson masses.
 
-### Example 5: Light Mesons with GI-String Model
+### Example 4: Light Mesons with GI-String Model
 
 For light mesons (pions, kaons), GI-String model works better:
 
@@ -899,7 +842,6 @@ GEMSTORE automatically generates `myfile.out.json` with complete results in JSON
 **Example Files in test/:**
 
 - `test/amethyst.out.json` - Sample output with 16 states (GEM basis)
-- `test/ruby.out.json` - Sample output with CRG basis
 - `test/diamond.out.json` - Sample output with predefined parameters
 
 **Output Generation Details:**
@@ -952,7 +894,6 @@ gemstore/
 │
 ├── test/                          # Test cases & examples
 │   ├── amethyst.json              # Example: GEM basis
-│   ├── ruby.json                  # Example: CRG basis
 │   ├── diamond.json               # Example: predefined params
 │   ├── amethyst.out.json          # Sample output
 │   ├── param_GISCREEN.json        # GI-Screen parameters

@@ -59,24 +59,6 @@ double integral_nlr_radius(
     return sum;
 }
 
-double integral_crg_radius(
-    orbit_crg_t wfn,
-    double node_factor,
-    const argsOrbit_t *args_bra,
-    const argsOrbit_t *args_ket)
-{
-    double sum = 0.0;
-
-    for (int i = 0; i < OHP; i++) {
-        sum += node_factor * weights[i]
-             * conj(wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale, args_bra->param))
-             * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale, args_ket->param)
-             * node_factor * node_factor * node_factor * node_factor * nodes[i] * nodes[i] * nodes[i] * nodes[i];
-    }
-
-    return sum;
-}
-
 double integral_nlr_overlap(
     orbit_nlr_t wfn,
     double node_factor,
@@ -107,24 +89,6 @@ double integral_nlp_overlap(
         sum += node_factor * weights[i]
              * conj(wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale))
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
-             * node_factor * node_factor * nodes[i] * nodes[i];
-    }
-
-    return sum;
-}
-
-double integral_crg_overlap(
-    orbit_crg_t wfn,
-    double node_factor,
-    const argsOrbit_t *args_bra,
-    const argsOrbit_t *args_ket)
-{
-    double sum = 0.0;
-
-    for (int i = 0; i < OHP; i++) {
-        sum += node_factor * weights[i]
-             * conj(wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale, args_bra->param))
-             * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale, args_ket->param)
              * node_factor * node_factor * nodes[i] * nodes[i];
     }
 
@@ -166,27 +130,6 @@ double integral_nlp_hamilton(
         sum += node_factor * weights[i]
              * conj(wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale))
              * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale)
-             * pot(node_factor * nodes[i], ctx)
-             * node_factor * node_factor * nodes[i] * nodes[i];
-    }
-
-    return sum;
-}
-
-double integral_crg_hamilton(
-    orbit_crg_t wfn,
-    potential_t pot,
-    double node_factor,
-    const argsOrbit_t *args_bra,
-    const argsOrbit_t *args_ket,
-    void *ctx)
-{
-    double sum = 0.0;
-
-    for (int i = 0; i < OHP; i++) {
-        sum += node_factor * weights[i]
-             * conj(wfn(node_factor * nodes[i], args_bra->n, args_bra->l, args_bra->scale, args_bra->param))
-             * wfn(node_factor * nodes[i], args_ket->n, args_ket->l, args_ket->scale, args_ket->param)
              * pot(node_factor * nodes[i], ctx)
              * node_factor * node_factor * nodes[i] * nodes[i];
     }

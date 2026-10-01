@@ -20,13 +20,6 @@ double integral_nlr_radius(
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket);
 
-/* Integrate rms radius with CRG basis */
-double integral_crg_radius(
-    orbit_crg_t wfn,
-    double node_factor,
-    const argsOrbit_t *args_bra,
-    const argsOrbit_t *args_ket);
-
 /* Integrate wavefunction overlaps with NLR basis */
 double integral_nlr_overlap(
     orbit_nlr_t wfn,
@@ -37,13 +30,6 @@ double integral_nlr_overlap(
 /* Integrate wavefunction overlaps with NLP basis */
 double integral_nlp_overlap(
     orbit_nlp_t wfn,
-    double node_factor,
-    const argsOrbit_t *args_bra,
-    const argsOrbit_t *args_ket);
-
-/* Integrate wavefunction overlaps with CRG basis */
-double integral_crg_overlap(
-    orbit_crg_t wfn,
     double node_factor,
     const argsOrbit_t *args_bra,
     const argsOrbit_t *args_ket);
@@ -60,15 +46,6 @@ double integral_nlr_hamilton(
 /* Integrate hamiltonian with given potential and NLP basis */
 double integral_nlp_hamilton(
     orbit_nlp_t wfn,
-    potential_t pot,
-    double node_factor,
-    const argsOrbit_t *args_bra,
-    const argsOrbit_t *args_ket,
-    void *ctx);
-
-/* Integrate hamiltonian with given potential and CRG basis */
-double integral_crg_hamilton(
-    orbit_crg_t wfn,
     potential_t pot,
     double node_factor,
     const argsOrbit_t *args_bra,

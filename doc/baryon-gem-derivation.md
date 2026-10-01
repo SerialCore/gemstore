@@ -559,7 +559,7 @@ eigen_standard(H)
 
 - SCDK 生成函数与 `vtype` 组合学（见 `sumckdk.c` / `scdkme.c`，装配见 `baryon-jacobi-gem.md`）。
 - $S_3$ Young 投影（`raynal_revai` 已实现，谱里未用）。
-- CRG / SHO 重子。
+- SHO 重子。
 
 ## 13. 编译 PDF
 

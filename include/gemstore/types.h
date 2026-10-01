@@ -20,8 +20,7 @@ extern const char *task_type_str[];
 /* used for determining orbit type */
 typedef enum orbit_type {
     ORBIT_SHO,
-    ORBIT_GEM,
-    ORBIT_CRG
+    ORBIT_GEM
 } orbit_type_t;
 
 extern const char *orbit_type_str[];

@@ -27,7 +27,7 @@
  *
  * Internally, the orbital basis parameters are defined in natural units. The
  * basis scale nu returned by getnu() is in GeV^2, the radial argument used in
- * the Gaussian/CRG/SHO basis functions is in GeV^-1, and beta is combined with
+ * the Gaussian/SHO basis functions is in GeV^-1, and beta is combined with
  * the radius in the same natural-unit convention. For that reason,
  * get_state_wfn_value() converts the plotting radius from fm to GeV^-1 before
  * evaluating the basis.
@@ -68,14 +68,6 @@ double get_normalized_factor(const argsInput_t *input, const double *vector)
             basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
         }
     }
-    else if (input->orbit == ORBIT_CRG) {
-        for (int i = 0; i < nmax; i++) {
-            basis[i].n = i + 1;
-            basis[i].l = L;
-            basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
-            basis[i].param = input->omega;
-        }
-    }
     else if (input->orbit == ORBIT_SHO) {
         for (int i = 0; i < nmax; i++) {
             basis[i].n = i;
@@ -93,9 +85,6 @@ double get_normalized_factor(const argsInput_t *input, const double *vector)
 
             if (input->orbit == ORBIT_GEM) {
                 overlap_ij = integral_nlr_overlap(GRnlr, node_factor, &basis[i], &basis[j]);
-            }
-            else if (input->orbit == ORBIT_CRG) {
-                overlap_ij = integral_crg_overlap(CGRnlr, node_factor, &basis[i], &basis[j]);
             }
             else if (input->orbit == ORBIT_SHO) {
                 overlap_ij = (i == j) ? 1.0 : 0.0;
@@ -133,11 +122,6 @@ double get_state_wfn_value(const argsInput_t *input, const double *vector, doubl
             double nu = getnu(N, nmax, input->rmax, input->rmin);
             basis_func = GRnlr(rGeV, N, L, nu) * exp(-nu * rGeV * rGeV);
         }
-        else if (input->orbit == ORBIT_CRG) {
-            double nu = getnu(N, nmax, input->rmax, input->rmin);
-            complex basis_func_complex = CGRnlr(rGeV, N, L, nu, input->omega) * exp(-nu * rGeV * rGeV);
-            basis_func = creal(basis_func_complex);
-        }
         else if (input->orbit == ORBIT_SHO) {
             basis_func = SRnlr(rGeV, n, L, input->beta) * exp(-0.5 * input->beta * input->beta * rGeV * rGeV);
         }
@@ -164,14 +148,6 @@ void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t 
             basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
         }
     }
-    else if (input->orbit == ORBIT_CRG) {
-        for (int i = 0; i < nmax; i++) {
-            basis[i].n = i + 1;
-            basis[i].l = L;
-            basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
-            basis[i].param = input->omega;
-        }
-    }
     else if (input->orbit == ORBIT_SHO) {
         for (int i = 0; i < nmax; i++) {
             basis[i].n = i;
@@ -186,10 +162,6 @@ void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t 
             if (input->orbit == ORBIT_GEM) {
                 double factor = 1.0 / sqrt(basis[i].scale + basis[j].scale);
                 mR2.value[i][j] = integral_nlr_radius(GRnlr, factor, &basis[i], &basis[j]);
-            }
-            else if (input->orbit == ORBIT_CRG) {
-                double factor = 1.0 / sqrt(basis[i].scale + basis[j].scale);
-                mR2.value[i][j] = integral_crg_radius(CGRnlr, factor, &basis[i], &basis[j]);
             }
             else if (input->orbit == ORBIT_SHO) {
                 double factor = sqrt(2 / (basis[i].scale * basis[i].scale + basis[j].scale * basis[j].scale));

@@ -46,7 +46,7 @@ This template matches the current parser in `src/parse.c`.
   - `GISCREEN_CCBAR`
   - `GISCREEN_CSBAR`
   - `GISCREEN_CUSTOM`
-- `basis.type`: `GEM`, `CRG`, `SHO`
+- `basis.type`: `GEM`, `SHO`
 - `print.pot`, `print.wfn`: `"true"` or `"false"` (controls output of `.pot.dat` and `.wfn.N.dat` files)
 
 ## Custom Parameter Files
@@ -98,7 +98,6 @@ Example:
 ## Basis Parameters
 
 - `GEM`: `nmax`, `rmax`, `rmin`
-- `CRG`: `nmax`, `rmax`, `rmin`, `omega`
 - `SHO`: `nmax`, `beta`
 
 ## SHO Example

@@ -48,22 +48,3 @@ complex GRnlp(double p, int n, int l, double nu)
 
     return pre_factor * pow(p, l) * gamma_term * phase; /* * exp(-p * p / (4.0 * nu)); */
 }
-
-complex CGRnlr(double r, int n, int l, double nu, double omega)
-{
-    double pre_factor = pow(2.0, l/2.0 + 1.25) * pow(nu, l/2.0 + 0.75);
-    double gamma_term = sqrt(1 / tgamma(l + 1.5));
-    complex oscillation = cexp(-I * r * r * omega * nu);
-
-    return pre_factor * pow(r, l) * gamma_term * oscillation; /* * exp(-r * r * nu); */
-}
-
-complex CGRnlp(double p, int n, int l, double nu, double omega)
-{
-    double pre_factor = pow(2.0, -l/2.0 - 0.25) * pow(nu * (1.0 + omega*omega), -l/2.0 - 0.75);
-    double gamma_term = sqrt(1 / tgamma(l + 1.5));
-    complex phase = cpow(-I, l);
-    complex oscillation = cexp(-I * p * p * omega / (4.0 * nu * (1 + omega * omega)));
-
-    return pre_factor * pow(p, l) * gamma_term * phase * oscillation; /* * exp(-p * p / (4.0 * nu * (1 + omega * omega))); */
-}

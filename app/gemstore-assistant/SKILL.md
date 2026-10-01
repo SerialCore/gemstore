@@ -7,7 +7,7 @@ metadata:
   audience: researchers, hadron physicists, computational particle physics
   domain: hadron spectroscopy, quark models, Gaussian expansion method
   tools: bash, file operations, subprocess execution
-  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, meson spectra, charmonium, bottomonium, GEM, CRG, SHO, custom parameter file, print section, potential output, wavefunction output
+  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, meson spectra, charmonium, bottomonium, GEM, SHO, custom parameter file, print section, potential output, wavefunction output
 ---
 
 # Gemstore Hadron Spectra Skill
@@ -87,13 +87,11 @@ Examples:
 ### Basis Types
 
 - `GEM`
-- `CRG`
 - `SHO`
 
 Basis-specific required parameters:
 
 - `GEM`: `nmax`, `rmax`, `rmin`
-- `CRG`: `nmax`, `rmax`, `rmin`, `omega`
 - `SHO`: `nmax`, `beta`
 
 ### Print Control
@@ -211,7 +209,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 
 - Confirm parameters before large systematic runs.
 - Use the `"print"` section to control output of potential (`.pot.dat`) and wavefunction (`.wfn.N.dat`) files.
-- Prefer `GEM` unless the user explicitly asks for `CRG` or `SHO`.
+- Prefer `GEM` unless the user explicitly asks for `SHO`.
 - Use exact parser spellings: `MESON`, `GISCREEN`, `GISTRING`, `GISCREEN_CCBAR`, etc.
 - Remember that `model.param` is the parameter-set key.
 - For `*_CUSTOM`, always include `model.file`.
@@ -220,7 +218,6 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 
 - "Calculate charmonium 1P state with J=1 using GISCREEN and print both potential and wavefunction"
 - "Run bottomonium S and P waves with GEM basis, enable potential output only"
-- "Prepare a CRG input with omega = 0.2 and print wavefunctions"
 - "Compute charmonium with SHO basis, nmax = 16, beta = 0.8, and do not print potential"
 
 When this skill is triggered, generate the exact JSON input, run `gemstore --compute <file>`, and report the resulting physics output cleanly, mentioning any generated `.pot.dat` or `.wfn.N.dat` files.

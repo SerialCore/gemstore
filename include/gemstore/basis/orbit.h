@@ -62,13 +62,4 @@ double GRnlr(double r, int n, int l, double nu);
 /* Gaussian basis in momentum space without exponential */
 complex GRnlp(double p, int n, int l, double nu);
 
-/* define orbit wave function in complex-range Gaussian basis */
-typedef complex (*orbit_crg_t)(double x, int n, int l, double scale, double param);
-
-/* Complex-range Gaussian basis in coordinate space without exponential */
-complex CGRnlr(double r, int n, int l, double nu, double omega);
-
-/* Complex-range Gaussian basis in momentum space without exponential */
-complex CGRnlp(double p, int n, int l, double nu, double omega);
-
 #endif
