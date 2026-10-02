@@ -7,7 +7,7 @@ metadata:
   audience: researchers, hadron physicists, computational particle physics
   domain: hadron spectroscopy, quark models, Gaussian expansion method
   tools: bash, file operations, subprocess execution
-  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, meson spectra, charmonium, bottomonium, GEM, SHO, custom parameter file, print section, potential output, wavefunction output
+  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, NRSTRING, NRSCREEN, meson spectra, charmonium, bottomonium, GEM, SHO, custom parameter file, print section, potential output, wavefunction output
 ---
 
 # Gemstore Hadron Spectra Skill
@@ -49,6 +49,8 @@ Only meson is supported by the current parser.
 
 - `GISTRING`
 - `GISCREEN`
+- `NRSTRING` — non-relativistic Cornell model, linear confinement
+- `NRSCREEN` — non-relativistic Cornell model, screened confinement
 
 Use `model.param` for presets:
 
@@ -61,10 +63,21 @@ Use `model.param` for presets:
 - `GISCREEN_CCBAR`
 - `GISCREEN_CSBAR`
 - `GISCREEN_CUSTOM`
+- `NRSTRING_MESON`
+- `NRSTRING_CUSTOM`
+- `NRSCREEN_MESON`
+- `NRSCREEN_CUSTOM`
 
 For custom parameter sets, the model object must also include:
 
 - `file`: path to the JSON parameter file
+
+- `mn`, `ms`, `mc`, `mb` — quark masses (GeV)
+- `b` — string tension (GeV²)
+- `c` — constant potential (GeV)
+- `alpha_s` — constant strong coupling
+- `sigma` — contact smearing (GeV)
+- `mu` — screening mass (GeV). Required for `NRSCREEN`. `NRSTRING` does not read `mu`; confinement stays linear.
 
 Examples:
 
@@ -188,7 +201,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 
 - Build a JSON input file.
 - For heavy quarkonia prefer `GISCREEN_CCBAR` or `GISCREEN_BBBAR` when appropriate.
-- Use `GISTRING_CUSTOM` or `GISCREEN_CUSTOM` only when the user explicitly has external parameter files.
+- Use `GISTRING_CUSTOM`, `GISCREEN_CUSTOM`, `NRSTRING_CUSTOM`, or `NRSCREEN_CUSTOM` only when the user explicitly has external parameter files.
 - For spectra runs, use a dedicated run directory and keep user files untouched unless they explicitly ask you to edit them.
 
 ### Execute safely
@@ -210,7 +223,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - Confirm parameters before large systematic runs.
 - Use the `"print"` section to control output of potential (`.pot.dat`) and wavefunction (`.wfn.N.dat`) files.
 - Prefer `GEM` unless the user explicitly asks for `SHO`.
-- Use exact parser spellings: `MESON`, `GISCREEN`, `GISTRING`, `GISCREEN_CCBAR`, etc.
+- Use exact parser spellings: `MESON`, `GISCREEN`, `GISTRING`, `NRSTRING`, `NRSCREEN`, `NRSTRING_MESON`, `NRSCREEN_MESON`, `GISCREEN_CCBAR`, etc.
 - Remember that `model.param` is the parameter-set key.
 - For `*_CUSTOM`, always include `model.file`.
 

@@ -45,4 +45,7 @@ int write_meson_wfn(const argsInput_t *input, const matrix_t *vector);
 /* Write GI potential to a file */
 int write_meson_pot(const argsInput_t *input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc);
 
+/* Write non-relativistic potential to a file */
+int write_meson_nr_pot(const argsInput_t *input, const argsNRModel_t *args_model, argsNRModelDy_t *args_dynmc);
+
 #endif

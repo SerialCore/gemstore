@@ -1,0 +1,26 @@
+{
+  "project": "bc_string_gem",
+  "task": "SPECTRA",
+  "model": {
+    "type": "NRSTRING",
+    "param": "NRSTRING_MESON"
+  },
+  "system": {
+    "type": "MESON",
+    "f1": 4,
+    "f2": 3,
+    "S": 1,
+    "L": 0,
+    "J": 1
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 12,
+    "rmax": 5.0,
+    "rmin": 0.1
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
+  }
+}

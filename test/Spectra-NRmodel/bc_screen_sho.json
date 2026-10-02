@@ -1,0 +1,26 @@
+{
+  "project": "bc_screen_sho",
+  "task": "SPECTRA",
+  "model": {
+    "type": "NRSCREEN",
+    "param": "NRSCREEN_CUSTOM",
+    "file": "param_NRSCREEN.json"
+  },
+  "system": {
+    "type": "MESON",
+    "f1": 4,
+    "f2": 3,
+    "S": 0,
+    "L": 0,
+    "J": 0
+  },
+  "basis": {
+    "type": "SHO",
+    "nmax": 12,
+    "beta": 0.6
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
+  }
+}

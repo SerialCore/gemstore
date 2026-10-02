@@ -19,6 +19,12 @@ void parse_param_GISTRING(const char *filename, argsGIModel_t *args_model);
 /* parse GISCREEN parameters */
 void parse_param_GISCREEN(const char *filename, argsGIModel_t *args_model);
 
+/* parse NRSTRING parameters */
+void parse_param_NRSTRING(const char *filename, argsNRModel_t *args_model);
+
+/* parse NRSCREEN parameters */
+void parse_param_NRSCREEN(const char *filename, argsNRModel_t *args_model);
+
 /* parse meson state file (mass, rms_radius, eigenvector) */
 void parse_meson_state(const char *filename, array_t *mass, array_t *radius, matrix_t *eigenvector);
 

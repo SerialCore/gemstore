@@ -25,28 +25,21 @@ void compute_spectra_meson(const argsInput_t *input)
 {
     int nmax = input->nmax;
 
-    /* compute mass eigenvalues and eigenvectors */
     array_t eigenvalue = array_init(nmax);
     array_t rmsradius = array_init(nmax);
     matrix_t eigenvector = matrix_init(nmax, nmax);
-    argsGIModel_t args_model = argsGIModel_from(input);
-    argsGIModelDy_t args_dynmc = {0};
 
-    if (input->model == MODEL_GISTRING) {
-        args_dynmc.model = MODEL_GISTRING;
-    }
-    else if (input->model == MODEL_GISCREEN) {
-        args_dynmc.model = MODEL_GISCREEN;
-    }
+    if (input->model == MODEL_NRSTRING || input->model == MODEL_NRSCREEN) {
+        argsNRModel_t args_model = argsNRModel_from(input);
+        argsNRModelDy_t args_dynmc = {0};
+        args_dynmc.model = input->model;
+        args_dynmc.system = input->system;
 
-    /* Route to appropriate basis and system dispatcher */
-    if (input->system == SYSTEM_MESON) {
-        args_dynmc.system = SYSTEM_MESON;
         if (input->orbit == ORBIT_GEM) {
-            spectra_meson_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+            meson_nrmodel_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
         }
         else if (input->orbit == ORBIT_SHO) {
-            spectra_meson_SHO(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+            meson_nrmodel_SHO(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
         }
         else {
             fprintf(stderr, "Error: Unsupported orbit type for meson system.\n");
@@ -54,28 +47,58 @@ void compute_spectra_meson(const argsInput_t *input)
         }
 
         radius_meson_rms(input, &eigenvector, &rmsradius, nmax);
+        interpolate_divergence(rmsradius.value, rmsradius.len);
+        print_meson_spectra(&eigenvalue, &rmsradius, &eigenvector, nmax);
+        write_meson_spectra(input, &eigenvalue, &rmsradius, &eigenvector, nmax);
+
+        if (input->print_pot) {
+            write_meson_nr_pot(input, &args_model, &args_dynmc);
+        }
+        if (input->print_wfn) {
+            write_meson_wfn(input, &eigenvector);
+        }
+
+        array_free(&eigenvalue);
+        array_free(&rmsradius);
+        matrix_free(&eigenvector);
     }
+    else if (input->model == MODEL_GISTRING || input->model == MODEL_GISCREEN) {
+        argsGIModel_t args_model = argsGIModel_from(input);
+        argsGIModelDy_t args_dynmc = {0};
+        args_dynmc.model = input->model;
+        args_dynmc.system = input->system;
 
-    /* fix anomalies in mass and RMS radius */
-    //print_meson_spectra(&eigenvalue, &rmsradius, &eigenvector, nmax);
-    interpolate_divergence(rmsradius.value, rmsradius.len);
-    //extrapolate_divergence(rmsradius.value, rmsradius.len);
-    print_meson_spectra(&eigenvalue, &rmsradius, &eigenvector, nmax);
+        if (input->orbit == ORBIT_GEM) {
+            meson_gimodel_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+        }
+        else if (input->orbit == ORBIT_SHO) {
+            meson_gimodel_SHO(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, nmax);
+        }
+        else {
+            fprintf(stderr, "Error: Unsupported orbit type for meson system.\n");
+            exit(1);
+        }
 
-    /* write output into file */
-    write_meson_spectra(input, &eigenvalue, &rmsradius, &eigenvector, nmax);
+        radius_meson_rms(input, &eigenvector, &rmsradius, nmax);
+        interpolate_divergence(rmsradius.value, rmsradius.len);
+        print_meson_spectra(&eigenvalue, &rmsradius, &eigenvector, nmax);
+        write_meson_spectra(input, &eigenvalue, &rmsradius, &eigenvector, nmax);
 
-    /* choose to write potential or wavefunction */
-    if (input->print_pot) {
-        write_meson_pot(input, &args_model, &args_dynmc);
+        if (input->print_pot) {
+            write_meson_pot(input, &args_model, &args_dynmc);
+        }
+        if (input->print_wfn) {
+            write_meson_wfn(input, &eigenvector);
+        }
+
+        array_free(&eigenvalue);
+        array_free(&rmsradius);
+        matrix_free(&eigenvector);
     }
-    if (input->print_wfn) {
-        write_meson_wfn(input, &eigenvector);
+    else {
+        fprintf(stderr, "Error: Unsupported model for meson spectra.\n");
+        exit(1);
     }
-
-    array_free(&eigenvalue);
-    array_free(&rmsradius);
-    matrix_free(&eigenvector);
 }
 
 void compute_spectra_baryon(const argsInput_t *input)
@@ -89,32 +112,36 @@ void compute_spectra_baryon(const argsInput_t *input)
     array_t rms13 = {0};
     array_t rms23 = {0};
 
-    if (input->model == MODEL_GISTRING) {
-        args_dynmc.model = MODEL_GISTRING;
-    }
-    else if (input->model == MODEL_GISCREEN) {
-        args_dynmc.model = MODEL_GISCREEN;
-    }
-
-    args_dynmc.system = SYSTEM_BARYON;
-    if (input->orbit != ORBIT_GEM) {
-        fprintf(stderr, "Error: Baryon SPECTRA currently supports GEM basis only.\n");
+    if (input->model == MODEL_NRSTRING || input->model == MODEL_NRSCREEN) {
+        fprintf(stderr, "Error: Non-relativistic baryon SPECTRA is not implemented.\n");
         exit(1);
     }
+    else if (input->model == MODEL_GISTRING || input->model == MODEL_GISCREEN) {
+        args_dynmc.model = input->model;
+        args_dynmc.system = input->system;
 
-    spectra_baryon_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23);
+        if (input->orbit != ORBIT_GEM) {
+            fprintf(stderr, "Error: Baryon SPECTRA currently supports GEM basis only.\n");
+            exit(1);
+        }
+        spectra_baryon_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23);
 
-    print_baryon_spectra(&eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23, eigenvalue.len);
-    write_baryon_spectra(input, &eigenvalue, &eigenvector, &rms12, &rms13, &rms23, eigenvalue.len);
+        print_baryon_spectra(&eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23, eigenvalue.len);
+        write_baryon_spectra(input, &eigenvalue, &eigenvector, &rms12, &rms13, &rms23, eigenvalue.len);
 
-    if (input->print_pot) {
-        write_baryon_pot(input, &args_model, &args_dynmc);
+        if (input->print_pot) {
+            write_baryon_pot(input, &args_model, &args_dynmc);
+        }
+
+        array_free(&eigenvalue);
+        array_free(&rms12);
+        array_free(&rms13);
+        array_free(&rms23);
+        matrix_free(&eigenvector);
+        matrix_free(&overlap);
     }
-
-    array_free(&eigenvalue);
-    array_free(&rms12);
-    array_free(&rms13);
-    array_free(&rms23);
-    matrix_free(&eigenvector);
-    matrix_free(&overlap);
+    else {
+        fprintf(stderr, "Error: Unsupported model for baryon spectra.\n");
+        exit(1);
+    }
 }

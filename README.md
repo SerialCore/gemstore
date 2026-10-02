@@ -55,6 +55,8 @@
 |-------|-------------|----------|
 | **GI-Screen** | Screen-modified Godfrey-Isgur potential with Coulomb screening | Heavy quarkonium (charmonium, bottomonium) |
 | **GI-String** | String-like linear confinement | Light mesons and general meson spectra |
+| **NR-String** | Non-relativistic Cornell potential with linear confinement | Meson spectra |
+| **NR-Screen** | Non-relativistic Cornell potential with screened confinement | Meson spectra |
 
 ### Calculation Types
 
@@ -191,11 +193,17 @@ Run it:
 
 ```json
 "model": {
-  "type": "GISCREEN" or "GISTRING",
-  "param": "GISCREEN_CCBAR" or "GISTRING_CUSTOM",
+  "type": "GISCREEN", "GISTRING", "NRSTRING", or "NRSCREEN",
+  "param": "GISCREEN_CCBAR", "GISTRING_CUSTOM", "NRSTRING_MESON", or "NRSCREEN_CUSTOM",
   "file": "param_file.json"  // Only for CUSTOM params
 }
 ```
+
+**`model.type`:**
+- `GISTRING` — relativistic GI model, linear confinement
+- `GISCREEN` — relativistic GI model, screened confinement
+- `NRSTRING` — non-relativistic Cornell model, linear confinement
+- `NRSCREEN` — non-relativistic Cornell model, screened confinement
 
 **Predefined Parameter Sets:**
 - `GISCREEN_CCBAR` - Charm-anticharm with GI-Screen model
@@ -203,6 +211,10 @@ Run it:
 - `GISTRING_MESON` - General mesons with GI-String model
 - `GISCREEN_CUSTOM` - Custom parameters from file (requires `"file"` field)
 - `GISTRING_CUSTOM` - Custom GI-String parameters from file
+- `NRSTRING_MESON` - Built-in meson parameters for NR-String
+- `NRSCREEN_MESON` - Built-in meson parameters for NR-Screen
+- `NRSTRING_CUSTOM` - Custom NR-String parameters from file (requires `"file"`)
+- `NRSCREEN_CUSTOM` - Custom NR-Screen parameters from file (requires `"file"`)
 
 #### System Configuration
 
@@ -395,6 +407,22 @@ Custom parameters can be supplied via external JSON file:
 | `epsilon_sov` | Spin-orbit coupling strength | -0.4 to 0.0 |
 | `epsilon_sos` | Thomas precession strength | 0.0-1.0 |
 | `epsilon_tens` | Tensor force strength | -0.5 to 0.1 |
+
+The GI fields above apply to `GISTRING` and `GISCREEN`. `NRSTRING` and `NRSCREEN` use a different `param` object. `NRSTRING` does not read `mu`.
+
+**NRSTRING / NRSCREEN parameter fields:**
+
+| Field | Models | Description |
+|-------|--------|-------------|
+| `mn` | both | n-quark mass (GeV) |
+| `ms` | both | s-quark mass (GeV) |
+| `mc` | both | c-quark mass (GeV) |
+| `mb` | both | b-quark mass (GeV) |
+| `b` | both | String tension (GeV²) |
+| `c` | both | Constant potential (GeV) |
+| `alpha_s` | both | Constant strong coupling |
+| `sigma` | both | Contact smearing (GeV) |
+| `mu` | `NRSCREEN` | Screening mass (GeV). `NRSTRING` ignores this field and keeps linear confinement |
 
 ---
 

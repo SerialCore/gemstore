@@ -9,6 +9,7 @@
 #include <gemstore/math/soc.h>
 #include <gemstore/math/matrix.h>
 #include <gemstore/model/gimodel.h>
+#include <gemstore/model/nrmodel.h>
 #include <gemstore/model/wfntrans.h>
 #include <gemstore/param/argset.h>
 
@@ -95,7 +96,8 @@ void print_input_parameters(const argsInput_t *input)
     printf("  Parameter Set:        %-50s\n", param_type_str[input->param]);
     printf("  System Type:          %-50s\n", system_type_str[input->system]);
     printf("  Basis Type:           %-50s\n", orbit_type_str[input->orbit]);
-    if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM) {
+    if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
+        || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM) {
         printf("  Parameter File:       %-50s\n", input->param_file);
     }
     printf("\n");
@@ -578,6 +580,59 @@ int write_meson_pot(const argsInput_t *input, const argsGIModel_t *args_model, a
             + GIVsosi(rGeV, &ctx)
             + GIVsosj(rGeV, &ctx)
             + GIVtens(rGeV, &ctx);
+
+        fprintf(pf, "%.8f    %.8e\n", r, potential);
+    }
+
+    if (fclose(pf) != 0) {
+        fprintf(stderr, "Error: Failed to close file %s\n", path);
+        return 0;
+    }
+
+    return 1;
+}
+
+int write_meson_nr_pot(const argsInput_t *input, const argsNRModel_t *args_model, argsNRModelDy_t *args_dynmc)
+{
+    if (input == NULL || args_model == NULL || args_dynmc == NULL) {
+        fprintf(stderr, "Error: Invalid input parameters to write_meson_nr_pot()\n");
+        return 0;
+    }
+
+    int f1 = input->f1, f2 = input->f2;
+    double s1 = 0.5, s2 = 0.5;
+    double S = input->S, L = input->L, J = input->J;
+    args_dynmc->mi = getmq_nr(f1, args_model);
+    args_dynmc->mj = getmq_nr(f2, args_model);
+    args_dynmc->Cij = -4.0 / 3.0;
+    args_dynmc->OCent = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
+    args_dynmc->OSdS = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
+    args_dynmc->OLSi = operator_ldotsi_sl(s1, s2, S, L, s1, s2, S, L, J);
+    args_dynmc->OLSj = operator_ldotsj_sl(s1, s2, S, L, s1, s2, S, L, J);
+    args_dynmc->OTens = operator_tensor_sl(s1, s2, S, L, s1, s2, S, L, J);
+
+    FILE *pf;
+    char path[264];
+    sprintf(path, "%s%s", input->project, ".pot.dat");
+    pf = fopen(path, "w");
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+
+    double fm = 5.06773093854369882649;
+    double rmin = 0.01;
+    double rmax = 10.0;
+    double dr = 0.01;
+    nr_pot_ctx_t ctx = { args_model, args_dynmc };
+    for (double r = rmin; r <= rmax; r += dr) {
+        double rGeV = r * fm;
+        double potential = NRVconf(rGeV, &ctx)
+            + NRVcoul(rGeV, &ctx)
+            + NRVcont(rGeV, &ctx)
+            + NRVsov(rGeV, &ctx)
+            + NRVsos(rGeV, &ctx)
+            + NRVtens(rGeV, &ctx);
 
         fprintf(pf, "%.8f    %.8e\n", r, potential);
     }

@@ -35,7 +35,7 @@ This template matches the current parser in `src/parse.c`.
 
 - `task`: `SPECTRA`, `DECAY3P0`, `COUPLCHN`, `SCATTER`
 - `system.type`: `MESON`, `BAYRON`
-- `model.type`: `GISTRING`, `GISCREEN`
+- `model.type`: `GISTRING`, `GISCREEN`, `NRSTRING`, `NRSCREEN`
 - `model.param`:
   - `GISTRING_MESON`
   - `GISTRING_CUSTOM`
@@ -46,12 +46,23 @@ This template matches the current parser in `src/parse.c`.
   - `GISCREEN_CCBAR`
   - `GISCREEN_CSBAR`
   - `GISCREEN_CUSTOM`
+  - `NRSTRING_MESON`
+  - `NRSTRING_CUSTOM`
+  - `NRSCREEN_MESON`
+  - `NRSCREEN_CUSTOM`
 - `basis.type`: `GEM`, `SHO`
 - `print.pot`, `print.wfn`: `"true"` or `"false"` (controls output of `.pot.dat` and `.wfn.N.dat` files)
 
 ## Custom Parameter Files
 
-If `model.param` is `GISTRING_CUSTOM` or `GISCREEN_CUSTOM`, also provide:
+If `model.param` is `GISTRING_CUSTOM`, `GISCREEN_CUSTOM`, `NRSTRING_CUSTOM`, or `NRSCREEN_CUSTOM`, also provide parameter file.
+
+- `mn`, `ms`, `mc`, `mb` — quark masses (GeV)
+- `b` — string tension (GeV²)
+- `c` — constant potential (GeV)
+- `alpha_s` — constant strong coupling
+- `sigma` — contact smearing (GeV)
+- `mu` — screening mass (GeV), read only for `NRSCREEN`. `NRSTRING` leaves confinement linear and does not read `mu`.
 
 ```json
 "file": "param_GISTRING.json"

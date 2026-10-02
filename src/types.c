@@ -20,7 +20,9 @@ const char *orbit_type_str[] = {
 
 const char *model_type_str[] = {
     "GISTRING",
-    "GISCREEN"
+    "GISCREEN",
+    "NRSTRING",
+    "NRSCREEN"
 };
 
 const char *param_type_str[] = {
@@ -32,7 +34,11 @@ const char *param_type_str[] = {
     "GISCREEN_CCBAR",
     "GISCREEN_CSBAR",
     "GISTRING_CUSTOM",
-    "GISCREEN_CUSTOM"
+    "GISCREEN_CUSTOM",
+    "NRSTRING_MESON",
+    "NRSCREEN_MESON",
+    "NRSTRING_CUSTOM",
+    "NRSCREEN_CUSTOM"
 };
 
 const char *system_type_str[] = {

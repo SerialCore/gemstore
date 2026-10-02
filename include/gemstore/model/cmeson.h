@@ -10,12 +10,20 @@
 #include <gemstore/param/argset.h>
 #include <gemstore/math/matrix.h>
 
-/* Calculate meson spectra in GIScreen model and return the eigenvalues and {v_len} of eigenvectors */
-void spectra_meson_GEM(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
+/* GI meson spectra on the GEM basis. Returns eigenvalues and v_len eigenvectors. */
+void meson_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
     array_t *e_out, matrix_t *v_out, int v_len);
 
-/* Calculate meson spectra using SHO (Spherical harmonic oscillator) */
-void spectra_meson_SHO(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
+/* GI meson spectra on the SHO basis. */
+void meson_gimodel_SHO(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
+    array_t *e_out, matrix_t *v_out, int v_len);
+
+/* Non-relativistic meson spectra on the GEM basis. */
+void meson_nrmodel_GEM(const argsInput_t *args_input, const argsNRModel_t *args_model, argsNRModelDy_t *args_dynmc,
+    array_t *e_out, matrix_t *v_out, int v_len);
+
+/* Non-relativistic meson spectra on the SHO basis. */
+void meson_nrmodel_SHO(const argsInput_t *args_input, const argsNRModel_t *args_model, argsNRModelDy_t *args_dynmc,
     array_t *e_out, matrix_t *v_out, int v_len);
 
 #endif

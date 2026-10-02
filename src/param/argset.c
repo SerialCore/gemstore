@@ -120,6 +120,29 @@ const argsGIModel_t argsGIScreen_csbar = {
     .epsilon_tens = -0.5000014157,
 };
 
+const argsNRModel_t argsNRString_meson = {
+    .mn = 0.606,
+    .ms = 0.780,
+    .mc = 1.984,
+    .mb = 5.368,
+    .b = 0.2312,
+    .c = -1.1711,
+    .alpha_s = 0.3930,
+    .sigma = 1.842
+};
+
+const argsNRModel_t argsNRScreen_meson = {
+    .mn = 0.606,
+    .ms = 0.780,
+    .mc = 1.984,
+    .mb = 5.368,
+    .b = 0.2312,
+    .mu = 0.0690,
+    .c = -1.1711,
+    .alpha_s = 0.3930,
+    .sigma = 1.842
+};
+
 argsGIModel_t argsGIModel_from(const argsInput_t *input)
 {
     argsGIModel_t args_model = {0};
@@ -136,6 +159,22 @@ argsGIModel_t argsGIModel_from(const argsInput_t *input)
     }
     else if (input->param == PARAM_GISCREEN_CUSTOM) {
         parse_param_GISCREEN(input->param_file, &args_model);
+    }
+
+    return args_model;
+}
+
+argsNRModel_t argsNRModel_from(const argsInput_t *input)
+{
+    argsNRModel_t args_model = {0};
+
+    if (input->param == PARAM_NRSTRING_MESON) args_model = argsNRString_meson;
+    else if (input->param == PARAM_NRSCREEN_MESON) args_model = argsNRScreen_meson;
+    else if (input->param == PARAM_NRSTRING_CUSTOM) {
+        parse_param_NRSTRING(input->param_file, &args_model);
+    }
+    else if (input->param == PARAM_NRSCREEN_CUSTOM) {
+        parse_param_NRSCREEN(input->param_file, &args_model);
     }
 
     return args_model;

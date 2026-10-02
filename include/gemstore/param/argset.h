@@ -47,6 +47,31 @@ typedef struct argsGIModelDy {
     double Sigkij[3];       /* GI smearing parameters sigma_k_ij */
 } argsGIModelDy_t;
 
+typedef struct argsNRModel {
+    double mn;              /* mass of n quark */
+    double ms;              /* mass of s quark */
+    double mc;              /* mass of c quark */
+    double mb;              /* mass of b quark */
+    double b;               /* string tension */
+    double mu;              /* screen length */
+    double c;               /* constant potential */
+    double alpha_s;         /* strong coupling */
+    double sigma;           /* contact smearing, GeV */
+} argsNRModel_t;
+
+typedef struct argsNRModelDy {
+    model_type_t model;
+    system_type_t system;
+    double mi;              /* mass of particle i */
+    double mj;              /* mass of particle j */
+    double Cij;             /* color factor of pair ij */
+    double OCent;           /* operator value of center potential */
+    double OSdS;            /* operator value of spin-spin coupling */
+    double OLSi;            /* operator value of orbit-spini coupling */
+    double OLSj;            /* operator value of orbit-spinj coupling */
+    double OTens;           /* operator value of tensor potential */
+} argsNRModelDy_t;
+
 typedef struct argsInput {
     task_type_t task;
     orbit_type_t orbit;
@@ -75,7 +100,7 @@ typedef struct argsInput {
     char param_file[256];   /* parameter file name */
 } argsInput_t;
 
-/* Default meson parameters for model GISstring */
+/* Default meson parameters for model GIString */
 extern const argsGIModel_t argsGIString_meson;
 
 /* Default heavy meson parameters for model GIScreen */
@@ -96,11 +121,32 @@ extern const argsGIModel_t argsGIScreen_ccbar;
 /* Default csbar meson parameters for model GIScreen */
 extern const argsGIModel_t argsGIScreen_csbar;
 
+/* Default heavy meson parameters for model NRString */
+extern const argsNRModel_t argsNRString_meson;
+
+/* Default heavy meson parameters for model NRScreen */
+extern const argsNRModel_t argsNRScreen_meson;
+
 /* Get GI model parameters from input */
 argsGIModel_t argsGIModel_from(const argsInput_t *input);
 
+/* Get NR model parameters from input */
+argsNRModel_t argsNRModel_from(const argsInput_t *input);
+
 /* Get quark mass from GI model */
 static inline double getmq(int index, const argsGIModel_t *args_model)
+{
+    switch (index) {
+        case 1: return args_model->mn;
+        case 2: return args_model->ms;
+        case 3: return args_model->mc;
+        case 4: return args_model->mb;
+        default: return args_model->mn;
+    }
+}
+
+/* Get quark mass from NR model */
+static inline double getmq_nr(int index, const argsNRModel_t *args_model)
 {
     switch (index) {
         case 1: return args_model->mn;

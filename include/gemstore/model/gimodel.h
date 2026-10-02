@@ -43,7 +43,7 @@ typedef struct gi_pot_ctx {
     const argsGIModelDy_t *dyn;
 } gi_pot_ctx_t;
 
-/* Kinetic energy for GIScreen */
+/* Kinetic energy Σ √(mi²+p²) */
 double GIVt(double p, void *ctx);
 
 /* Spectator quark √(mi²+p²); baryon T_λ. GIVt is the two-body pair analogue. */
@@ -73,31 +73,31 @@ double GIVdeltajjsos(double p, void *ctx);
 /* GI smearing delta_ij for Vtens */
 double GIVdeltaijtens(double p, void *ctx);
 
-/* Coulomb potential for GIScreen */
+/* Coulomb potential */
 double GIVcoul(double r, void *ctx);
 
-/* Confining potential for GIScreen */
+/* Confining potential, linear or screened */
 double GIVconf(double r, void *ctx);
 
-/* Contact potential for GIScreen */
+/* Colour contact interaction */
 double GIVcont(double r, void *ctx);
 
-/* Spin-orbit coulping for GIScreen */
+/* Color-magnetic spin-orbit */
 double GIVsovi(double r, void *ctx);
 
-/* Spin-orbit coulping for GIScreen */
+/* Color-magnetic spin-orbit */
 double GIVsovj(double r, void *ctx);
 
-/* Spin-orbit coulping for GIScreen */
+/* Color-magnetic spin-orbit */
 double GIVsovij(double r, void *ctx);
 
-/* Thomas precession for GIScreen */
+/* Thomas precession interaction */
 double GIVsosi(double r, void *ctx);
 
-/* Thomas precession for GIScreen */
+/* Thomas precession interaction */
 double GIVsosj(double r, void *ctx);
 
-/* Tenser potential for GIScreen */
+/* Colour tensor interaction */
 double GIVtens(double r, void *ctx);
 
 #endif

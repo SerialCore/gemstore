@@ -28,7 +28,9 @@ extern const char *orbit_type_str[];
 /* used for determining potential and dispatching fitting task */
 typedef enum model_type {
     MODEL_GISTRING,
-    MODEL_GISCREEN
+    MODEL_GISCREEN,
+    MODEL_NRSTRING,
+    MODEL_NRSCREEN
 } model_type_t;
 
 extern const char *model_type_str[];
@@ -43,7 +45,11 @@ typedef enum param_type {
     PARAM_GISCREEN_CCBAR,
     PARAM_GISCREEN_CSBAR,
     PARAM_GISTRING_CUSTOM,
-    PARAM_GISCREEN_CUSTOM
+    PARAM_GISCREEN_CUSTOM,
+    PARAM_NRSTRING_MESON,
+    PARAM_NRSCREEN_MESON,
+    PARAM_NRSTRING_CUSTOM,
+    PARAM_NRSCREEN_CUSTOM
 } param_type_t;
 
 extern const char *param_type_str[];

@@ -124,6 +124,8 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
 
     if (strcmp(type, "GISTRING") == 0) input->model = MODEL_GISTRING;
     else if (strcmp(type, "GISCREEN") == 0) input->model = MODEL_GISCREEN;
+    else if (strcmp(type, "NRSTRING") == 0) input->model = MODEL_NRSTRING;
+    else if (strcmp(type, "NRSCREEN") == 0) input->model = MODEL_NRSCREEN;
     else {
         fprintf(stderr, "Unknown model type: %s\n", type);
         exit(1);
@@ -152,7 +154,26 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
         }
     }
 
-    if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM) {
+    if (input->model == MODEL_NRSTRING) {
+        if (strcmp(param, "NRSTRING_MESON") == 0) input->param = PARAM_NRSTRING_MESON;
+        else if (strcmp(param, "NRSTRING_CUSTOM") == 0) input->param = PARAM_NRSTRING_CUSTOM;
+        else {
+            fprintf(stderr, "Unknown NRSTRING parameter set: %s\n", param);
+            exit(1);
+        }
+    }
+
+    if (input->model == MODEL_NRSCREEN) {
+        if (strcmp(param, "NRSCREEN_MESON") == 0) input->param = PARAM_NRSCREEN_MESON;
+        else if (strcmp(param, "NRSCREEN_CUSTOM") == 0) input->param = PARAM_NRSCREEN_CUSTOM;
+        else {
+            fprintf(stderr, "Unknown NRSCREEN parameter set: %s\n", param);
+            exit(1);
+        }
+    }
+
+    if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
+        || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM) {
         const char *file = read_string_item(model_json, "file")->valuestring;
         if (strlen(file) > 0) {
             strncpy(input->param_file, file, 256);
@@ -322,6 +343,68 @@ void parse_param_GISCREEN(const char *filename, argsGIModel_t *args_model)
     args_model->epsilon_sov = read_number_item(param_json, "epsilon_sov")->valuedouble;
     args_model->epsilon_sos = read_number_item(param_json, "epsilon_sos")->valuedouble;
     args_model->epsilon_tens = read_number_item(param_json, "epsilon_tens")->valuedouble;
+
+    cJSON_Delete(root);
+    free(json_text);
+}
+
+void parse_param_NRSTRING(const char *filename, argsNRModel_t *args_model)
+{
+    char *json_text = read_input_file(filename);
+    const char *parse_error = NULL;
+    cJSON *root = cJSON_Parse(json_text);
+    cJSON *param_json;
+
+    if (!root) {
+        parse_error = cJSON_GetErrorPtr();
+        fprintf(stderr, "Invalid NRSTRING parameter JSON in %s", filename);
+        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
+        fprintf(stderr, "\n");
+        free(json_text);
+        exit(1);
+    }
+
+    param_json = read_object_item(root, "param");
+    args_model->mn = read_number_item(param_json, "mn")->valuedouble;
+    args_model->ms = read_number_item(param_json, "ms")->valuedouble;
+    args_model->mc = read_number_item(param_json, "mc")->valuedouble;
+    args_model->mb = read_number_item(param_json, "mb")->valuedouble;
+    args_model->b = read_number_item(param_json, "b")->valuedouble;
+    args_model->c = read_number_item(param_json, "c")->valuedouble;
+    args_model->alpha_s = read_number_item(param_json, "alpha_s")->valuedouble;
+    args_model->sigma = read_number_item(param_json, "sigma")->valuedouble;
+    args_model->mu = 0.0;
+
+    cJSON_Delete(root);
+    free(json_text);
+}
+
+void parse_param_NRSCREEN(const char *filename, argsNRModel_t *args_model)
+{
+    char *json_text = read_input_file(filename);
+    const char *parse_error = NULL;
+    cJSON *root = cJSON_Parse(json_text);
+    cJSON *param_json;
+
+    if (!root) {
+        parse_error = cJSON_GetErrorPtr();
+        fprintf(stderr, "Invalid NRSCREEN parameter JSON in %s", filename);
+        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
+        fprintf(stderr, "\n");
+        free(json_text);
+        exit(1);
+    }
+
+    param_json = read_object_item(root, "param");
+    args_model->mn = read_number_item(param_json, "mn")->valuedouble;
+    args_model->ms = read_number_item(param_json, "ms")->valuedouble;
+    args_model->mc = read_number_item(param_json, "mc")->valuedouble;
+    args_model->mb = read_number_item(param_json, "mb")->valuedouble;
+    args_model->b = read_number_item(param_json, "b")->valuedouble;
+    args_model->mu = read_number_item(param_json, "mu")->valuedouble;
+    args_model->c = read_number_item(param_json, "c")->valuedouble;
+    args_model->alpha_s = read_number_item(param_json, "alpha_s")->valuedouble;
+    args_model->sigma = read_number_item(param_json, "sigma")->valuedouble;
 
     cJSON_Delete(root);
     free(json_text);
