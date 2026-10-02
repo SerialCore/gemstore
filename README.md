@@ -66,6 +66,7 @@
 ### System Types
 
 - **MESON**: Quark-antiquark bound states (qq̄)
+- **BARYON**: Three-quark states (qqq)
 
 ### Basis Set Options
 
@@ -209,6 +210,7 @@ Run it:
 - `GISCREEN_CCBAR` - Charm-anticharm with GI-Screen model
 - `GISCREEN_BBBAR` - Bottom-antibottom with GI-Screen model
 - `GISTRING_MESON` - General mesons with GI-String model
+- `GISTRING_BARYON` - Smeared linear GI parameters
 - `GISCREEN_CUSTOM` - Custom parameters from file (requires `"file"` field)
 - `GISTRING_CUSTOM` - Custom GI-String parameters from file
 - `NRSTRING_MESON` - Built-in meson parameters for NR-String
@@ -241,6 +243,18 @@ Run it:
 - `S`: Spin (0 = singlet, 1 = triplet)
 - `L`: Orbital angular momentum (0, 1, 2, ...)
 - `J`: Total angular momentum J = L + S or |L - S|
+
+**Baryon** (`"type": "BARYON"`).
+
+```json
+"system": {
+  "type": "BARYON",
+  "f1": 1, "f2": 1, "f3": 3,
+  "J": 0.5, "P": 1, "sym12": -1, "Lmax": 0
+}
+```
+
+`P` is parity. `sym12` is the sign under \(1\leftrightarrow 2\). `Lmax` keeps \(l_\rho+l_\lambda\le L_{\max}\) on three Jacobi charts. Optional `jl` switches to the chart: \(c=1\), \(l_\rho=0\), \(l_\lambda=L_{\max}\). Pair with `GISTRING_BARYON`. `<project>.state.json` stores `mass`, `rms_r12`, `rms_r13`, `rms_r23`. Inputs: `test/Spectra-Baryon/`.
 
 #### Basis Configuration
 
@@ -550,7 +564,8 @@ Parse results, format output
 app/gemstore-assistant/
 ├── SKILL.md                          # Main skill definition
 ├── scripts/generate_meson_inputs.py  # Auto-generate input files
-└── templates/meson_spectra_template.md
+├── templates/meson_spectra_template.md
+└── templates/baryon_spectra_template.md
 ```
 
 #### Usage with OpenCode
@@ -582,6 +597,7 @@ For details: see `app/gemstore-assistant/SKILL.md`
 | Function | Algorithm | Output |
 |----------|-----------|--------|
 | `spectra_meson_GEM()` | Solve Schrödinger equation (GEM basis) | Eigenvalues (masses) + eigenvectors |
+| `spectra_baryon_GEM()` | Three-quark GI spectrum (GEM, SCDK) | Masses, pair RMS, eigenvectors |
 | `radius_meson_GEM()` | Compute ⟨r²⟩^(1/2) with GEM basis | RMS radii |
 | `interpolate_quadratic()` | Fix anomalies in spectra | Corrected data |
 | `write_meson_spectra()` | Serialize results to JSON | `.out.json` file |
@@ -926,7 +942,8 @@ gemstore/
 │   ├── amethyst.out.json          # Sample output
 │   ├── param_GISCREEN.json        # GI-Screen parameters
 │   ├── param_GISTRING.json        # GI-String parameters
-│   └── ScreenFitting-*/           # Fitting datasets
+│   ├── ScreenFitting-*/           # Fitting datasets
+│   └── Spectra-Baryon/            # Baryon GI-String examples
 
 Total LOC: ~7,800 (C + C++ + Headers)
 ```

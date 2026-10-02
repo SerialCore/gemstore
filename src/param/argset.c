@@ -24,6 +24,21 @@ const argsGIModel_t argsGIString_meson = {
     .epsilon_tens = 0.025
 };
 
+const argsGIModel_t argsGIString_baryon = {
+    .mn = 0.220,
+    .ms = 0.419,
+    .mc = 1.628,
+    .mb = 4.977,
+    .b = 0.141,
+    .c = -0.204,
+    .sigma_0 = 1.889,
+    .s = 1.422,
+    .epsilon_cont = -0.156,
+    .epsilon_tens = 0.379,
+    .epsilon_sov = 0.006,
+    .epsilon_sos = 0.449
+};
+
 const argsGIModel_t argsGIScreen_meson = {
     .mn = 0.4560806209112,
     .ms = 0.6173440068792,
@@ -148,6 +163,7 @@ argsGIModel_t argsGIModel_from(const argsInput_t *input)
     argsGIModel_t args_model = {0};
 
     if (input->param == PARAM_GISTRING_MESON) args_model = argsGIString_meson;
+    else if (input->param == PARAM_GISTRING_BARYON) args_model = argsGIString_baryon;
     else if (input->param == PARAM_GISCREEN_MESON) args_model = argsGIScreen_meson;
     else if (input->param == PARAM_GISCREEN_BBBAR) args_model = argsGIScreen_bbbar;
     else if (input->param == PARAM_GISCREEN_BCBAR) args_model = argsGIScreen_bcbar;

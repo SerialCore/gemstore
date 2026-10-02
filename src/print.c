@@ -122,7 +122,7 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Orbital Momentum (L): %-50.6f\n", input->L);
     }
     else if (input->system == SYSTEM_BARYON) {
-        printf("  1<->2 symmetry:       %-50d\n", input->f12);
+        printf("  1<->2 symmetry:       %-50d\n", input->sym12);
         printf("  Parity (P):           %-50d\n", input->P);
         printf("  Jacobi Lmax:          %-50d\n", input->Lmax);
     }

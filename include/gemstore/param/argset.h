@@ -89,7 +89,7 @@ typedef struct argsInput {
     double jl;              /* orbit momentum jl */
     double J;               /* total momentum J */
     int P;                  /* parity */
-    int f12;                /* symmetry under 1<->2 exchange */
+    int sym12;                /* symmetry under 1<->2 exchange */
     int Lmax;               /* baryon orbital truncation */
     int nmax;               /* Gaussian parameter */
     double rmax;            /* Gaussian parameter */
@@ -102,6 +102,9 @@ typedef struct argsInput {
 
 /* Default meson parameters for model GIString */
 extern const argsGIModel_t argsGIString_meson;
+
+/* Defualt baryon parameters for model GIString */
+extern const argsGIModel_t argsGIString_baryon;
 
 /* Default heavy meson parameters for model GIScreen */
 extern const argsGIModel_t argsGIScreen_meson;

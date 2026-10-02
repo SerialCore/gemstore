@@ -27,6 +27,7 @@ const char *model_type_str[] = {
 
 const char *param_type_str[] = {
     "GISTRING_MESON",
+    "GISTRING_BARYON",
     "GISCREEN_MESON",
     "GISCREEN_BBBAR",
     "GISCREEN_BCBAR",

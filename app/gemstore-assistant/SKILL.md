@@ -1,13 +1,13 @@
 ---
 name: gemstore-assistant
-description: Expert agent for running hadron spectroscopy simulations using the gemstore program. Handles JSON input generation for the current parser, meson spectra runs, basis selection, preset or custom parameter-file GI models, potential/wavefunction output control, and structured JSON + text outputs.
+description: Expert agent for running hadron spectroscopy simulations using the gemstore program. Handles JSON input generation for the current parser, meson and baryon spectra runs, basis selection, preset or custom parameter-file GI models, potential/wavefunction output control, and structured JSON + text outputs.
 license: MIT
 compatibility: opencode
 metadata:
   audience: researchers, hadron physicists, computational particle physics
   domain: hadron spectroscopy, quark models, Gaussian expansion method
   tools: bash, file operations, subprocess execution
-  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, NRSTRING, NRSCREEN, meson spectra, charmonium, bottomonium, GEM, SHO, custom parameter file, print section, potential output, wavefunction output
+  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, GISTRING_BARYON, NRSTRING, NRSCREEN, meson spectra, baryon spectra, charmonium, bottomonium, GEM, SHO, custom parameter file, print section, potential output, wavefunction output
 ---
 
 # Gemstore Hadron Spectra Skill
@@ -41,9 +41,9 @@ Use exact uppercase strings where shown below.
 ### Systems
 
 - `MESON`
-- `BAYRON`
+- `BARYON`
 
-Only meson is supported by the current parser.
+Baryon `SPECTRA` accepts `GISTRING` and `GISCREEN` with basis `GEM`. `NRSTRING` and `NRSCREEN` baryon spectra are not implemented. `SHO` is meson-only.
 
 ### Models
 
@@ -55,6 +55,7 @@ Only meson is supported by the current parser.
 Use `model.param` for presets:
 
 - `GISTRING_MESON`
+- `GISTRING_BARYON`
 - `GISTRING_CUSTOM`
 - `GISCREEN_MESON`
 - `GISCREEN_BBBAR`
@@ -137,6 +138,19 @@ Flavor mapping:
 - `3` = `c`
 - `4` = `b`
 
+### Baryon Quantum Numbers
+
+Inside `system` provide `f1`, `f2`, `f3`, `J`, `P`, `sym12`, `Lmax`. Basis must be `GEM`. Use `templates/baryon_spectra_template.md`. Examples live in `test/Spectra-Baryon/`.
+
+- `P`: parity, `+1` or `-1`
+- `sym12`: sign under exchange of quarks 1 and 2
+- `Lmax`: keep channels with \(l_\rho+l_\lambda\le L_{\max}\) on three Jacobi charts
+- `jl`: optional. If set, build the `recycle` chart only (`c=1`, \(l_\rho=0\), \(l_\lambda=L_{\max}\), that \(j_l\))
+
+Prefer `GISTRING_BARYON` for the smeared linear GI set in `recycle/debug.h`. `GISTRING_MESON` is a different fit.
+
+`<project>.state.json` states have `mass`, `rms_r12`, `rms_r13`, `rms_r23`, and `eigenvector`. With `"print":{"wfn":"true"}` the program writes `<project>.basis.dat` and coefficient files `<project>.wfn.N.dat`. `"print":{"pot":"true"}` writes `<project>.pot.dat`.
+
 ## Available gemstore CLI
 
 ```bash
@@ -148,7 +162,7 @@ Use `--compute <file.json>` for spectroscopy runs with the new parser.
 ## Input Generation Rules
 
 - Always generate `.json` input files for normal runs.
-- Use the template in `templates/meson_spectra_template.md`.
+- Use `templates/meson_spectra_template.md` for mesons and `templates/baryon_spectra_template.md` for baryons.
 - Use `scripts/generate_meson_inputs.py` only as a helper for meson JSON inputs.
 - Use `scripts/parse_meson_output.py` to parse and summarize gemstore JSON output files when helpful.
 - Do not generate the old `.inp` section-based format unless the user explicitly asks for historical compatibility.
@@ -191,8 +205,8 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 
 ### Understand the request
 
-- Identify the meson family or flavor content.
-- Extract `S`, `L`, `J`.
+- Identify meson or baryon, and the flavor content.
+- For a meson extract `S`, `L`, `J`. For a baryon extract `J`, `P`, `sym12`, `Lmax`, and `jl` if the user fixes it.
 - Detect task type.
 - Detect requested model.
 - Detect requested basis and any basis-specific parameters.
@@ -223,7 +237,8 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - Confirm parameters before large systematic runs.
 - Use the `"print"` section to control output of potential (`.pot.dat`) and wavefunction (`.wfn.N.dat`) files.
 - Prefer `GEM` unless the user explicitly asks for `SHO`.
-- Use exact parser spellings: `MESON`, `GISCREEN`, `GISTRING`, `NRSTRING`, `NRSCREEN`, `NRSTRING_MESON`, `NRSCREEN_MESON`, `GISCREEN_CCBAR`, etc.
+- Use exact parser spellings: `MESON`, `BARYON`, `GISCREEN`, `GISTRING`, `GISTRING_BARYON`, `NRSTRING`, `NRSCREEN`, `NRSTRING_MESON`, `NRSCREEN_MESON`, `GISCREEN_CCBAR`, etc.
+- Baryon spectra stay on `GEM`. Do not emit `SHO` or an NR model for a baryon.
 - Remember that `model.param` is the parameter-set key.
 - For `*_CUSTOM`, always include `model.file`.
 
@@ -232,5 +247,6 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - "Calculate charmonium 1P state with J=1 using GISCREEN and print both potential and wavefunction"
 - "Run bottomonium S and P waves with GEM basis, enable potential output only"
 - "Compute charmonium with SHO basis, nmax = 16, beta = 0.8, and do not print potential"
+- "Calculate the nnc 1/2+ baryon with GISTRING_BARYON, GEM, nmax = 6"
 
 When this skill is triggered, generate the exact JSON input, run `gemstore --compute <file>`, and report the resulting physics output cleanly, mentioning any generated `.pot.dat` or `.wfn.N.dat` files.

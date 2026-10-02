@@ -1,0 +1,29 @@
+{
+  "project": "nbb_sp_3h2_Pp_L0_jl1",
+  "task": "SPECTRA",
+  "model": {
+    "type": "GISTRING",
+    "param": "GISTRING_BARYON"
+  },
+  "system": {
+    "type": "BARYON",
+    "f1": 1,
+    "f2": 4,
+    "f3": 4,
+    "J": 1.5,
+    "P": 1,
+    "sym12": 1,
+    "Lmax": 0,
+    "jl": 1
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 6,
+    "rmin": 0.19999836855807063,
+    "rmax": 1.9999836855807065
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
+  }
+}

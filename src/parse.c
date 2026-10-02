@@ -133,6 +133,7 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
 
     if (input->model == MODEL_GISTRING) {
         if (strcmp(param, "GISTRING_MESON") == 0) input->param = PARAM_GISTRING_MESON;
+        else if (strcmp(param, "GISTRING_BARYON") == 0) input->param = PARAM_GISTRING_BARYON;
         else if (strcmp(param, "GISTRING_CUSTOM") == 0) input->param = PARAM_GISTRING_CUSTOM;
         else {
             fprintf(stderr, "Unknown GISTRING parameter set: %s\n", param);
@@ -211,8 +212,9 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
         input->f3 = read_number_item(system_json, "f3")->valueint;
         input->J = read_number_item(system_json, "J")->valuedouble;
         input->P = read_number_item(system_json, "P")->valueint;
-        input->f12 = read_number_item(system_json, "sym12")->valueint;
+        input->sym12 = read_number_item(system_json, "sym12")->valueint;
         input->Lmax = read_number_item(system_json, "Lmax")->valueint;
+        input->jl = read_number_item(system_json, "jl")->valueint;
     }
 }
 

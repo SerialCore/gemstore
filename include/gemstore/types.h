@@ -38,6 +38,7 @@ extern const char *model_type_str[];
 /* used for determining parameter type */
 typedef enum param_type {
     PARAM_GISTRING_MESON,
+    PARAM_GISTRING_BARYON,
     PARAM_GISCREEN_MESON,
     PARAM_GISCREEN_BBBAR,
     PARAM_GISCREEN_BCBAR,

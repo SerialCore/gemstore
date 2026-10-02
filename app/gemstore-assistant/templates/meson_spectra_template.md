@@ -34,10 +34,11 @@ This template matches the current parser in `src/parse.c`.
 ## Allowed Values
 
 - `task`: `SPECTRA`, `DECAY3P0`, `COUPLCHN`, `SCATTER`
-- `system.type`: `MESON`, `BAYRON`
+- `system.type`: `MESON`, `BARYON`
 - `model.type`: `GISTRING`, `GISCREEN`, `NRSTRING`, `NRSCREEN`
 - `model.param`:
   - `GISTRING_MESON`
+  - `GISTRING_BARYON`
   - `GISTRING_CUSTOM`
   - `GISCREEN_MESON`
   - `GISCREEN_BBBAR`
