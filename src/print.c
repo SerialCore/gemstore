@@ -35,11 +35,9 @@ void print_logo()
 void print_help()
 {
     printf("gemstore: hadron spectroscopy tools using Gaussian Expanding Method, Godfrey-Isgur models and more.\n\n");
-    printf("Usage: gemstore [--compute FILE] [--fitting TARGET] [--debug UNIT]\n\n");
+    printf("Usage: gemstore [--compute FILE] [--debug UNIT]\n\n");
     printf("Arguments:\n");
-    printf("  -c, --compute         perform computation with input FILE that contains full instructions\n");
-    printf("  -f, --fitting         fit TARGET such as GIScreen_meson, GIScreen_ccbar, GIScreen_bbbar, \n");
-    printf("                        GIScreen_bcbar, GIScreen_bsbar, GIScreen_csbar\n");
+    printf("  -c, --compute         run FILE. task is SPECTRA or FITTING\n");
     printf("  -d, --debug           debug UNIT such as su3_product, soc_operator, casimir_operator, \n");
     printf("                        color_wfn, spin_wfn, isospin_wfn, orbit_wfn, eigen_system\n");
     printf("  -h,--help             show this help\n");
@@ -93,7 +91,12 @@ void print_input_parameters(const argsInput_t *input)
     printf("  Project Name:         %-50s\n", input->project);
     printf("  Task Type:            %-50s\n", task_type_str[input->task]);
     printf("  Model Type:           %-50s\n", model_type_str[input->model]);
-    printf("  Parameter Set:        %-50s\n", param_type_str[input->param]);
+    if (input->task == TASK_FITTING) {
+        printf("  Fit Target:           %-50s\n", fitting_type_str[input->target]);
+    }
+    else {
+        printf("  Parameter Set:        %-50s\n", param_type_str[input->param]);
+    }
     printf("  System Type:          %-50s\n", system_type_str[input->system]);
     printf("  Basis Type:           %-50s\n", orbit_type_str[input->orbit]);
     if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
@@ -101,6 +104,24 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Parameter File:       %-50s\n", input->param_file);
     }
     printf("\n");
+
+    /* Basis Parameters */
+    printf("Basis Parameters:\n");
+    if (input->orbit == ORBIT_GEM) {
+        printf("  Number of Gaussians (nmax): %-46d\n", input->nmax);
+        printf("  Minimum Range (rmin):       %-46.6f fm\n", input->rmin);
+        printf("  Maximum Range (rmax):       %-46.6f fm\n", input->rmax);
+    }
+    if (input->orbit == ORBIT_SHO) {
+        printf("  Number of Oscillators (nmax): %-44d\n", input->nmax);
+        printf("  Harmonic Scale (beta):        %-44.6f GeV\n", input->beta);
+    }
+    printf("\n");
+
+    if (input->task == TASK_FITTING) {
+        printf("Fitting task running ...\n");
+        return;
+    }
 
     /* Quark Flavor Configuration */
     printf("Quark Flavor Configuration:\n");
@@ -127,19 +148,6 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Jacobi Lmax:          %-50d\n", input->Lmax);
     }
     printf("  Total Momentum (J):   %-50.6f\n", input->J);
-    printf("\n");
-
-    /* Basis Parameters */
-    printf("Basis Parameters:\n");
-    if (input->orbit == ORBIT_GEM) {
-        printf("  Number of Gaussians (nmax): %-46d\n", input->nmax);
-        printf("  Minimum Range (rmin):       %-46.6f fm\n", input->rmin);
-        printf("  Maximum Range (rmax):       %-46.6f fm\n", input->rmax);
-    }
-    if (input->orbit == ORBIT_SHO) {
-        printf("  Number of Oscillators (nmax): %-44d\n", input->nmax);
-        printf("  Harmonic Scale (beta):        %-44.6f GeV\n", input->beta);
-    }
     printf("\n");
 
     /* Model Parameters */

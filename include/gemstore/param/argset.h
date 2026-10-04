@@ -78,6 +78,7 @@ typedef struct argsInput {
     model_type_t model;
     param_type_t param;
     system_type_t system;
+    fitting_type_t target;
     int print_pot;          /* if print potential */
     int print_wfn;          /* if print wavefunction */
     int f1;                 /* flavor 1 */
@@ -89,7 +90,7 @@ typedef struct argsInput {
     double jl;              /* orbit momentum jl */
     double J;               /* total momentum J */
     int P;                  /* parity */
-    int sym12;                /* symmetry under 1<->2 exchange */
+    int sym12;              /* symmetry under 1<->2 exchange */
     int Lmax;               /* baryon orbital truncation */
     int nmax;               /* Gaussian parameter */
     double rmax;            /* Gaussian parameter */

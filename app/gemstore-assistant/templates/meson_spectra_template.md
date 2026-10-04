@@ -33,7 +33,7 @@ This template matches the current parser in `src/parse.c`.
 
 ## Allowed Values
 
-- `task`: `SPECTRA`, `DECAY3P0`, `COUPLCHN`, `SCATTER`
+- `task`: `SPECTRA`, `DECAY3P0`, `COUPLCHN`, `SCATTER`. A parameter fit uses `FITTING` and `templates/meson_fitting_template.md`.
 - `system.type`: `MESON`, `BARYON`
 - `model.type`: `GISTRING`, `GISCREEN`, `NRSTRING`, `NRSCREEN`
 - `model.param`:

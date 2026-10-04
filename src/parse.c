@@ -110,6 +110,7 @@ static void parse_task_string(const char *value, argsInput_t *input)
     else if (strcmp(value, "DECAY3P0") == 0) input->task = TASK_DECAY3P0;
     else if (strcmp(value, "COUPLCHN") == 0) input->task = TASK_COUPLCHN;
     else if (strcmp(value, "SCATTER") == 0) input->task = TASK_SCATTER;
+    else if (strcmp(value, "FITTING") == 0) input->task = TASK_FITTING;
     else {
         fprintf(stderr, "Unknown task: %s\n", value);
         exit(1);
@@ -120,7 +121,7 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
 {
     cJSON *model_json = read_object_item(root, "model");
     const char *type = read_string_item(model_json, "type")->valuestring;
-    const char *param = read_string_item(model_json, "param")->valuestring;
+    const char *param;
 
     if (strcmp(type, "GISTRING") == 0) input->model = MODEL_GISTRING;
     else if (strcmp(type, "GISCREEN") == 0) input->model = MODEL_GISCREEN;
@@ -130,6 +131,12 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
         fprintf(stderr, "Unknown model type: %s\n", type);
         exit(1);
     }
+
+    if (input->task == TASK_FITTING) {
+        return;
+    }
+
+    param = read_string_item(model_json, "param")->valuestring;
 
     if (input->model == MODEL_GISTRING) {
         if (strcmp(param, "GISTRING_MESON") == 0) input->param = PARAM_GISTRING_MESON;
@@ -199,6 +206,10 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
         exit(1);
     }
 
+    if (input->task == TASK_FITTING) {
+        return;
+    }
+
     if (input->system == SYSTEM_MESON) {
         input->f1 = read_number_item(system_json, "f1")->valueint;
         input->f2 = read_number_item(system_json, "f2")->valueint;
@@ -252,6 +263,23 @@ static void parse_print_section(const cJSON *root, argsInput_t *input)
     input->print_wfn = (strcmp(wfn_str, "true") == 0) ? 1 : 0;
 }
 
+static void parse_fit_section(const cJSON *root, argsInput_t *input)
+{
+    cJSON *fit_json = read_object_item(root, "fit");
+    const char *target = read_string_item(fit_json, "target")->valuestring;
+
+    if (strcmp(target, "GISCREEN_MESON") == 0) input->target = FITTING_GISCREEN_MESON;
+    else if (strcmp(target, "GISCREEN_BBBAR") == 0) input->target = FITTING_GISCREEN_BBBAR;
+    else if (strcmp(target, "GISCREEN_BCBAR") == 0) input->target = FITTING_GISCREEN_BCBAR;
+    else if (strcmp(target, "GISCREEN_BSBAR") == 0) input->target = FITTING_GISCREEN_BSBAR;
+    else if (strcmp(target, "GISCREEN_CCBAR") == 0) input->target = FITTING_GISCREEN_CCBAR;
+    else if (strcmp(target, "GISCREEN_CSBAR") == 0) input->target = FITTING_GISCREEN_CSBAR;
+    else {
+        fprintf(stderr, "Unknown fit target: %s\n", target);
+        exit(1);
+    }
+}
+
 void parse_input_file(const char *filename, argsInput_t *input)
 {
     char *json_text = read_input_file(filename);
@@ -275,6 +303,9 @@ void parse_input_file(const char *filename, argsInput_t *input)
     parse_system_section(root, input);
     parse_basis_section(root, input);
     parse_print_section(root, input);
+    if (input->task == TASK_FITTING) {
+        parse_fit_section(root, input);
+    }
 
     cJSON_Delete(root);
     free(json_text);

@@ -1,0 +1,9 @@
+{
+  "project": "fit_csbar",
+  "task": "FITTING",
+  "model": { "type": "GISCREEN" },
+  "system": { "type": "MESON" },
+  "basis": { "type": "GEM", "nmax": 20, "rmax": 30.0, "rmin": 0.1 },
+  "print": { "pot": "false", "wfn": "false" },
+  "fit": { "target": "GISCREEN_CSBAR" }
+}

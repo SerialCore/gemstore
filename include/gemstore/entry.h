@@ -10,11 +10,8 @@
 #include <gemstore/types.h>
 #include <gemstore/param/argset.h>
 
-/* dispatch the compute tasks */
+/* dispatch --compute, including task FITTING */
 void entry_compute(const char* arg);
-
-/* dispatch the fittiing tasks */
-void entry_fitting(const char* arg);
 
 /* dispatch the debug tasks */
 void entry_debug(const char* arg);

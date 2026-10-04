@@ -1,0 +1,35 @@
+{
+  "target": "GISCREEN_CSBAR",
+  "model": "GISCREEN",
+  "system": "MESON",
+  "basis": "GEM",
+  "mass_unit": "MeV",
+  "chi2": 1700.397201367044,
+  "edm": 3.502345253030379e-05,
+  "valid": true,
+  "parameters": [
+    {"name": "mn", "value": 0.4560806209112, "error": 0, "fixed": true},
+    {"name": "ms", "value": 0.6173440068792, "error": 0, "fixed": true},
+    {"name": "mc", "value": 1.805387067165, "error": 0, "fixed": true},
+    {"name": "mb", "value": 5.151269542382, "error": 0, "fixed": true},
+    {"name": "b", "value": 0.257552470970886, "error": 0.0002000511402937, "fixed": false},
+    {"name": "mu", "value": 0.16255, "error": 0, "fixed": true},
+    {"name": "c", "value": -0.6482214863381, "error": 0, "fixed": true},
+    {"name": "sigma_0", "value": 1.770545357386, "error": 0, "fixed": true},
+    {"name": "s", "value": 1.146340880694, "error": 0, "fixed": true},
+    {"name": "epsilon_cont", "value": -0.2795867041509743, "error": 0.01058452857034894, "fixed": false},
+    {"name": "epsilon_sov", "value": -0.4999906521434823, "error": 0.006397283265018233, "fixed": false},
+    {"name": "epsilon_sos", "value": 0.9999999436614556, "error": 0.001789860262320309, "fixed": false},
+    {"name": "epsilon_tens", "value": -0.5000013478781937, "error": 0.01870595454005855, "fixed": false}
+  ],
+  "states": [
+    {"name": "Ds(1^1S0)", "mass_calc": 1971.842449033669, "mass_exp": 1968.4, "residual": 3.442449033669391},
+    {"name": "Ds*(1^3S1)", "mass_calc": 2103.143077188138, "mass_exp": 2112.2, "residual": -9.056922811861568},
+    {"name": "Ds0*(2317)", "mass_calc": 2340.762241533139, "mass_exp": 2317.8, "residual": 22.96224153313869},
+    {"name": "Ds1(2460)", "mass_calc": 2474.604975586437, "mass_exp": 2459.5, "residual": 15.10497558643738},
+    {"name": "Ds1(2536)", "mass_calc": 2506.107539680429, "mass_exp": 2535.1, "residual": -28.99246031957091},
+    {"name": "Ds2*(2573)", "mass_calc": 2568.356764442575, "mass_exp": 2569.1, "residual": -0.7432355574251233},
+    {"name": "Ds0(2590)", "mass_calc": 2600.854384464914, "mass_exp": 2591, "residual": 9.854384464914347},
+    {"name": "Ds3*(2860)", "mass_calc": 2839.758205275013, "mass_exp": 2860.5, "residual": -20.74179472498736}
+  ]
+}

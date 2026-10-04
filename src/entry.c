@@ -42,21 +42,9 @@ void entry_compute(const char* arg)
             exit(1);
         }
     }
-}
-
-void entry_fitting(const char* arg)
-{
-    /* copy the content after ‘_’ */
-    size_t prefix_len = strcspn(arg, "_");
-    const char *suffix = arg + prefix_len;
-    suffix++;
-
-    /* copy the content before ‘_’ */
-    char prefix[10];
-    strncpy(prefix, arg, prefix_len);
-
-    if (strcmp(prefix, "GIScreen") == 0) call_minuit2_GIScreen(suffix);
-    else {fprintf(stderr, "Unknown fitting model: %s\n", arg); exit(1);}
+    else if (input.task == TASK_FITTING) {
+        fitting_run(&input);
+    }
 }
 
 void entry_debug(const char* arg)

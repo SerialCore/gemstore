@@ -137,8 +137,8 @@ make uninstall
 # Run with predefined parameters
 ./gemstore --compute diamond.json
 
-# Fit parameters using Minuit2
-./gemstore --fitting GIScreen_ccbar
+# Fit a built-in GISCREEN dataset
+./gemstore --compute test/FittingTask/giscreen_csbar.json
 ```
 
 ### JSON Input Format
@@ -188,7 +188,7 @@ Run it:
 | Field | Type | Description | Examples |
 |-------|------|-------------|----------|
 | `project` | string | Project name (used for output files) | `"amethyst"`, `"myproject"` |
-| `task` | string | Calculation type | `"SPECTRA"` |
+| `task` | string | Calculation type | `"SPECTRA"`, `"FITTING"` |
 
 #### Model Configuration
 
@@ -512,19 +512,18 @@ The RMS radius spectrum is analyzed for anomalies using quadratic interpolation:
 
 **Implementation**: `src/math/interplt.c` (enhanced with debugging)
 
-### 5. Parameter Fitting Engine
+### 5. Parameter Fitting
 
-Uses **Minuit2** numerical optimization library:
-- MIGRAD: Gradient-based minimization
-- SIMPLEX: Gradient-free optimization
-- Parameter covariance matrix estimation
+A fit is a `--compute` run with `"task": "FITTING"`. `fit.target` names both the model and the built-in dataset, for example `GISCREEN_CCBAR`. The state list and the parameter starts, steps, bounds, and fixed flags are in `src/param/f*.c`.
 
 **Fit function**:
 ```
 χ² = Σᵢ (M_calc^i - M_exp^i)² / σᵢ²
 ```
 
-**Implementation**: `src/param/fitting.c`, `src/param/meson.cc`
+Masses in the tables are in MeV. Minuit2 MIGRAD minimizes χ². Each evaluation prints `call N  chi2 = ...`. The minimum is written to `<project>.fit.json`.
+
+**Implementation**: `src/param/fitting.c`, `src/param/minuit.cc`, `src/param/f*.c`
 
 ---
 
@@ -556,7 +555,7 @@ Parse results, format output
 - **Automated Workflow**: Generate inputs, execute, parse outputs
 - **Systematic Calculations**: Run multiple L, S, J combinations
 - **Result Interpretation**: Physics-meaningful explanations
-- **Parameter Fitting**: Intelligent model selection
+- **Parameter Fitting**: Build a `FITTING` input for a named target such as `GISCREEN_CCBAR` and run it with `--compute`
 
 #### Skill Location
 
@@ -574,8 +573,8 @@ app/gemstore-assistant/
 # Enable AI-assisted calculations
 opencode "Calculate charmonium spectrum up to L=2"
 
-# Interactive model selection
-opencode "Fit GIScreen parameters to experimental data"
+# Fit a built-in dataset
+opencode "Fit GISCREEN_CCBAR on a GEM basis with nmax 20"
 ```
 
 For details: see `app/gemstore-assistant/SKILL.md`
@@ -588,8 +587,7 @@ For details: see `app/gemstore-assistant/SKILL.md`
 
 | Function | Purpose | Call |
 |----------|---------|------|
-| `entry_compute()` | Run spectroscopy calculation | `--compute <file>` |
-| `entry_fitting()` | Parameter optimization | `--fitting <target>` |
+| `entry_compute()` | Spectroscopy or parameter fit | `--compute <file>` |
 | `entry_debug()` | Debug calculation steps | `--debug <unit>` |
 
 ### Core Spectroscopy (src/model/)
@@ -767,13 +765,29 @@ Gaussian smearing regularization for all potential components.
 
 ### Example 3: Parameter Fitting
 
-Fit GI-Screen parameters to experimental data using Minuit2:
+`model` gives the type only. `system` gives the type only. `fit.target` selects the dataset. These targets are meson fits, so `system.type` is `MESON` and `model.type` matches the model in the target name. Basis is `GEM` or `SHO`. The basis below is the one used with these datasets.
 
-```bash
-./gemstore --fitting GIScreen_ccbar
+**Input file** (`fit_ccbar.json`):
+```json
+{
+  "project": "fit_ccbar",
+  "task": "FITTING",
+  "model": { "type": "GISCREEN" },
+  "system": { "type": "MESON" },
+  "basis": { "type": "GEM", "nmax": 20, "rmax": 30.0, "rmin": 0.1 },
+  "print": { "pot": "false", "wfn": "false" },
+  "fit": { "target": "GISCREEN_CCBAR" }
+}
 ```
 
-This runs Minuit2 optimization to find parameters that best match experimental meson masses.
+**Targets**: `GISCREEN_MESON`, `GISCREEN_BBBAR`, `GISCREEN_BCBAR`, `GISCREEN_BSBAR`, `GISCREEN_CCBAR`, `GISCREEN_CSBAR`.
+
+**Run**:
+```bash
+./gemstore --compute fit_ccbar.json
+```
+
+The terminal prints one `call N  chi2 = ...` line per evaluation, then the parameter table, `chi2`, `valid`, and `edm`. Results go to `fit_ccbar.fit.json`. A worked input is `test/FittingTask/giscreen_csbar.json`.
 
 ### Example 4: Light Mesons with GI-String Model
 
@@ -934,7 +948,7 @@ gemstore/
 │   └── gemstore-assistant/        # OpenCode integration
 │       ├── SKILL.md               # Skill definition
 │       ├── scripts/               # Helper scripts
-│       └── templates/             # Templates
+│       └── templates/             # Spectra and fitting templates
 │
 ├── test/                          # Test cases & examples
 │   ├── amethyst.json              # Example: GEM basis
@@ -942,7 +956,8 @@ gemstore/
 │   ├── amethyst.out.json          # Sample output
 │   ├── param_GISCREEN.json        # GI-Screen parameters
 │   ├── param_GISTRING.json        # GI-String parameters
-│   ├── ScreenFitting-*/           # Fitting datasets
+│   ├── FittingTask/               # FITTING input example
+│   ├── ScreenFitting-*/           # Stored fit logs
 │   └── Spectra-Baryon/            # Baryon GI-String examples
 
 Total LOC: ~7,800 (C + C++ + Headers)

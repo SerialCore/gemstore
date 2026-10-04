@@ -22,19 +22,15 @@ int main(int argc, char **argv)
     int option;
     static struct option long_options[] = {
         {"compute", required_argument, 0, 'c'},
-        {"fitting", required_argument, 0, 'f'},
         {"debug",   required_argument, 0, 'd'},
         {"help",    no_argument, 0, 'h'},
         {"version", no_argument, 0, 'v'},
         {0, 0, 0, 0}
     };
-    while ((option = getopt_long(argc, argv, ":c:f:d:hv", long_options, NULL)) != -1) {
+    while ((option = getopt_long(argc, argv, ":c:d:hv", long_options, NULL)) != -1) {
         switch (option) {
             case 'c':
                 entry_compute(optarg);
-                break;
-            case 'f':
-                entry_fitting(optarg);
                 break;
             case 'd':
                 entry_debug(optarg);
