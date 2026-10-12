@@ -1,6 +1,5 @@
 /*
  * Copyright (C) 2026, Wen-Xuan Zhang <serialcore@outlook.com>
- * Copyright (C) 2026, Si-Qiang Luo <luosq15@lzu.edu.cn>
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
