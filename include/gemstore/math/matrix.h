@@ -33,6 +33,11 @@ double matrix_expect(const matrix_t *vec, int n, const matrix_t *op);
 /* v ← p v p^T; tmp is workspace of the same shape as v */
 void matrix_sandwich(matrix_t *v, const matrix_t *p, matrix_t *tmp);
 
+/* N-orthonormal rows of an overcomplete overlap.
+ * Allocates *vt as (rank × n). Returns rank, or 0 if N has no kept modes.
+ * Eigenvalues below rel_thresh * λ_max (and below 1e-12) are dropped. */
+int matrix_overlap_basis(const matrix_t *N, double rel_thresh, matrix_t *vt);
+
 /* Initialize a matrix with random values between -1 and 1 */
 matrix_t matrix_random(int row, int col);
 

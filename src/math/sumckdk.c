@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Faithful port of recycle/sumckdk.h.
+ * The index map and the bra/ket convention are documented in sumckdk.h.
  */
 
 #include <gemstore/math/sumckdk.h>
@@ -12,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Y_lm power-series weight for summation index j. The table is n!. */
 double almj(int l,int m,int j)
 {
 	double factorial[171]={
@@ -56,6 +58,7 @@ double almj(int l,int m,int j)
 	return sqrt((2*l+1)*factorial[l-m]/factorial[l+m])*factorial[l+m]*pow(-1,j+m)*pow(2,-1-2*j-m)/(sqrt(pi)*factorial[j]*factorial[l-2*j-m]*factorial[j+m]);
 }
 
+/* C(n, m) from the same n! table. */
 double binomial(int n,int m)
 {
 	double factorial[171]={
@@ -98,9 +101,6 @@ double binomial(int n,int m)
 	return factorial[n]/(factorial[n-m]*factorial[m]);
 }
 
-
-
-
 void sumckdk_cdlm_init(sumckdk_cdlm *cdlm)
 {
 	cdlm->len=0;
@@ -108,13 +108,16 @@ void sumckdk_cdlm_init(sumckdk_cdlm *cdlm)
 	cdlm->d=(double**)malloc(sizeof(double*)*0);
 }
 
-void sumckdk_cdlm_logs(sumckdk_cdlm cdlm)
+void sumckdk_cdlm_free(sumckdk_cdlm *cdlm)
 {
 	int i;
-	for(i=0;i<cdlm.len;i++)
+	for(i=0;i<cdlm->len;i++)
 	{
-		printf("%4d: %15.10f | %15.10f %15.10f %15.10f\n",i,cdlm.c[i],cdlm.d[i][0],cdlm.d[i][1],cdlm.d[i][2]);
+		free(cdlm->d[i]);
 	}
+	free(cdlm->d);
+	free(cdlm->c);
+	cdlm->len=0;
 }
 
 void sumckdk_cdlm_push(sumckdk_cdlm *cdlm,double c,double dx,double dy,double dz)
@@ -129,6 +132,7 @@ void sumckdk_cdlm_push(sumckdk_cdlm *cdlm,double c,double dx,double dy,double dz
 	cdlm->len++;
 }
 
+/* Replace *cdlm by the ket expansion of Y_lm. d = (d_x, d_y, d_z). */
 void sumckdk_cdlm_cali(sumckdk_cdlm *cdlm,int l,int m)
 {
 	double pi=3.1415926535897932385;
@@ -158,7 +162,7 @@ void sumckdk_cdlm_cali(sumckdk_cdlm *cdlm,int l,int m)
 	}
 }
 
-
+/* Bra expansion. The sum matches cali; only the stored d_y changes sign. */
 void sumckdk_cdlm_calf(sumckdk_cdlm *cdlm,int l,int m)
 {
 	double pi=3.1415926535897932385;
@@ -188,18 +192,6 @@ void sumckdk_cdlm_calf(sumckdk_cdlm *cdlm,int l,int m)
 	}
 }
 
-void sumckdk_cdlm_free(sumckdk_cdlm *cdlm)
-{
-	int i;
-	for(i=0;i<cdlm->len;i++)
-	{
-		free(cdlm->d[i]);
-	}
-	free(cdlm->d);
-	free(cdlm->c);
-	cdlm->len=0;
-}
-
 void sumckdk_scdk_init(sumckdk_scdk *scdk)
 {
 	scdk->len=0;
@@ -219,16 +211,8 @@ void sumckdk_scdk_free(sumckdk_scdk *scdk)
 	scdk->len=0;
 }
 
-
-void sumckdk_scdk_logs(sumckdk_scdk scdk)
-{
-	int i;
-	for(i=0;i<scdk.len;i++)
-	{
-		printf("%4d: %18.10E |nf:%2d f:%2d %2d %2d %2d |ng:%2d g:%2d %2d %2d %2d|h1= %2d %2d %2d %2d |h2= %2d %2d %2d %2d|int=%2d\n",i,scdk.coe[i],scdk.nfgh[i][0],scdk.nfgh[i][1],scdk.nfgh[i][2],scdk.nfgh[i][3],scdk.nfgh[i][4],scdk.nfgh[i][5],scdk.nfgh[i][6],scdk.nfgh[i][7],scdk.nfgh[i][8],scdk.nfgh[i][9],scdk.nfgh[i][10],scdk.nfgh[i][11],scdk.nfgh[i][12],scdk.nfgh[i][13],scdk.nfgh[i][14],scdk.nfgh[i][15],scdk.nfgh[i][16],scdk.nfgh[i][17],scdk.nfgh[i][18]);
-	}
-}
-
+/* Merge coe into a term with the same 18 exponents, or append one.
+ * Slot 18 stays -1 until spinang writes the radial power. */
 void sumckdk_scdk_push(sumckdk_scdk *scdk,double coe,int nf,int nf1,int nf2,int nf3,int nf4,int ng,int ng1,int ng2,int ng3,int ng4,int nh11,int nh12,int nh13,int nh14,int nh21,int nh22,int nh23,int nh24)
 {
 	int i,push;
@@ -291,6 +275,8 @@ void sumckdk_scdk_push(sumckdk_scdk *scdk,double coe,int nf,int nf1,int nf2,int 
 	}
 }
 
+/* Compact to terms above machine epsilon. Exponents 0..17 move with coe;
+ * slot 18 is left untouched, so call this before spinang fills that slot. */
 void sumckdk_scdk_spfy(sumckdk_scdk *scdk)
 {
 	int i,j,k;
@@ -321,6 +307,10 @@ void sumckdk_scdk_spfy(sumckdk_scdk *scdk)
 	scdk->nfgh=(int**)realloc(scdk->nfgh,sizeof(int*)*(scdk->len));
 }
 
+/* Add cit times the angular polynomial of one bra/ket/operator product.
+ * l1,l2 and m1,m2 are the bra l_ρ, l_λ. l3,l4 are the ket.
+ * lh1,mh1 and lh2,mh2 are the operator harmonics.
+ * See sumckdk.h for the exponent layout and the mutex rule. */
 void sumckdk_scdk_calc(sumckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4,int lh1,int lh2,int m1,int m2,int m3,int m4,int mh1,int mh2,pthread_mutex_t *mutex,int lock)
 {
 	int n;
@@ -348,6 +338,7 @@ void sumckdk_scdk_calc(sumckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4
 	{
 		pthread_mutex_lock(mutex);
 	}
+	/* 1,2: bra ρ and λ. 3,4: ket ρ and λ. */
 	sumckdk_cdlm_calf(&cdlm1,l1,m1);
 	sumckdk_cdlm_calf(&cdlm2,l2,m2);
 	sumckdk_cdlm_cali(&cdlm3,l3,m3);
@@ -357,12 +348,17 @@ void sumckdk_scdk_calc(sumckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4
 		pthread_mutex_unlock(mutex);
 	}
 	
+	/* The leftover degree must be even. n is that degree over 2, the number
+	 * of pairwise contractions. Each one is assigned to the pair (nf) or the
+	 * spectator (ng), with nf + ng = n. This return does not free cdlm1..4. */
 	if((l1+l2+l3+l4-lh1-lh2)%2!=0)
 	{
 		printf("error_sumckdk_scdk_calc\n");
 		return;
 	}
 	n=(l1+l2+l3+l4-lh1-lh2)/2;
+	/* f_ab, g_ab: how many pair and spectator contractions join harmonics a and b.
+	 * ha, hb, hc: powers of d_z, d_x-d_y and d_x+d_y inside one operator harmonic. */
 	for(nf=0;nf<=n;nf++)
 	{
 		ng=n-nf;
@@ -419,6 +415,7 @@ void sumckdk_scdk_calc(sumckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4
 					      	nf2=f12+f23+f24;ng2=g12+g23+g24;nh12=ha12+hb12+hc12;nh22=ha22+hb22+hc22;
 				     		nf3=f13+f23+f34;ng3=g13+g23+g34;nh13=ha13+hb13+hc13;nh23=ha23+hb23+hc23;
 			     			nf4=f14+f24+f34;ng4=g14+g24+g34;nh14=ha14+hb14+hc14;nh24=ha24+hb24+hc24;
+		     				/* Harmonic k is saturated when its pair, spectator and operator powers sum to l_k. */
 		     				if(nf1+ng1+nh11+nh21==l1 && nf2+ng2+nh12+nh22==l2 && nf3+ng3+nh13+nh23==l3 && nf4+ng4+nh14+nh24==l4)
 						{
 							coe=binomial(nf,f12)*binomial(nf-f12,f13)*binomial(nf-f12-f13,f14)*binomial(nf-f12-f13-f14,f23)*binomial(nf-f12-f13-f14-f23,f24)*
@@ -441,6 +438,7 @@ void sumckdk_scdk_calc(sumckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4
 								d23=0;
 								d24=0;
 								d34=0;
+								/* Quadratic form on the stored d: +x x - y y + z z. */
 								for(k=0;k<3;k++)
 								{
 									if(1==k)
@@ -521,6 +519,7 @@ void sumckdk_scdk_calc(sumckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4
 		}}}}}
 	}
 
+	/* Always locked, including when lock is 0. */
 	pthread_mutex_lock(mutex);
 	sumckdk_cdlm_free(&cdlm1);
 	sumckdk_cdlm_free(&cdlm2);
@@ -530,6 +529,8 @@ void sumckdk_scdk_calc(sumckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4
 	pthread_mutex_unlock(mutex);
 }
 
+/* Recycle evaluator. sin(nf) and cos(ng) are extra factors of the integer
+ * exponents. inteVcenPartA does not call this function. */
 double sumckdk_scdk_vals(sumckdk_scdk scdk,double coef,double f1,double f2,double f3,double f4,double coeg,double g1,double g2,double g3,double g4,double h11,double h12,double h13,double h14,double h21,double h22,double h23,double h24)
 {
 	int i;

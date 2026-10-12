@@ -5,6 +5,7 @@
  */
 
 #include <gemstore/math/matrix.h>
+#include <gemstore/math/eigen.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -308,6 +309,75 @@ void matrix_sandwich(matrix_t *v, const matrix_t *p, matrix_t *tmp)
 {
 	matrix_productT(p, v, tmp);
 	matrix_copy(v, tmp);
+}
+
+int matrix_overlap_basis(const matrix_t *N, double rel_thresh, matrix_t *vt)
+{
+	int n = N->row;
+	matrix_t ncopy = matrix_init(n, n);
+	matrix_copy(&ncopy, N);
+
+	double ntrace = 0.0;
+	for (int i = 0; i < n; i++) {
+		ntrace += N->value[i][i];
+	}
+	double ridge = 1e-12 * (fabs(ntrace) / (n > 0 ? n : 1) + 1.0);
+	for (int i = 0; i < n; i++) {
+		ncopy.value[i][i] += ridge;
+	}
+
+	array_t n_e = array_init(n);
+	matrix_t n_vec = matrix_init(n, n);
+	eigen_standard(ncopy.value, n, n_e.value, n_vec.value, n);
+
+	double n_emax = 0.0;
+	for (int i = 0; i < n; i++) {
+		if (n_e.value[i] > n_emax) {
+			n_emax = n_e.value[i];
+		}
+	}
+	double n_thresh = rel_thresh * (n_emax > 0.0 ? n_emax : 1.0);
+	if (n_thresh < 1e-12) {
+		n_thresh = 1e-12;
+	}
+
+	int nkeep = 0;
+	for (int i = 0; i < n; i++) {
+		if (n_e.value[i] > n_thresh) {
+			nkeep++;
+		}
+	}
+	if (nkeep <= 0) {
+		matrix_free(&ncopy);
+		matrix_free(&n_vec);
+		array_free(&n_e);
+		vt->value = NULL;
+		vt->row = 0;
+		vt->col = 0;
+		return 0;
+	}
+
+	printf("  overlap N: rank %d / %d  (drop λ ≤ %.2e, λ_max=%.3e)\n",
+		nkeep, n, n_thresh, n_emax);
+	fflush(stdout);
+
+	*vt = matrix_init(nkeep, n);
+	int row = 0;
+	for (int i = 0; i < n; i++) {
+		if (n_e.value[i] <= n_thresh) {
+			continue;
+		}
+		double scale = 1.0 / sqrt(n_e.value[i]);
+		for (int j = 0; j < n; j++) {
+			vt->value[row][j] = n_vec.value[i][j] * scale;
+		}
+		row++;
+	}
+
+	matrix_free(&ncopy);
+	matrix_free(&n_vec);
+	array_free(&n_e);
+	return nkeep;
 }
 
 void matrix_print(const matrix_t *mat)

@@ -124,7 +124,7 @@ void compute_spectra_baryon(const argsInput_t *input)
             fprintf(stderr, "Error: Baryon SPECTRA currently supports GEM basis only.\n");
             exit(1);
         }
-        spectra_baryon_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23);
+        baryon_gimodel_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23);
 
         print_baryon_spectra(&eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23, eigenvalue.len);
         write_baryon_spectra(input, &eigenvalue, &eigenvector, &rms12, &rms13, &rms23, eigenvalue.len);

@@ -12,10 +12,12 @@
 #include <gemstore/model/cbaryon.h>
 
 #include <gemstore/basis/basis.h>
-#include <gemstore/basis/threebody.h>
+#include <gemstore/basis/channel.h>
 #include <gemstore/basis/orbit.h>
 
-#include <gemstore/math/scdkme.h>
+#include <gemstore/math/kinemtc.h>
+#include <gemstore/model/giradial.h>
+#include <gemstore/model/spinang.h>
 #include <gemstore/math/sumckdk.h>
 #include <gemstore/math/soc.h>
 #include <gemstore/math/eigen.h>
@@ -29,8 +31,8 @@
 #include <stdlib.h>
 
 typedef struct {
-    basis_list qnlist_spfy;
-    basis_list qnlist_full;
+    bases_3b qnlist_spfy;
+    bases_3b qnlist_full;
     matrix_t **mlsj;
     sumckdk_scdk ****scdk[21];
     scdk_vargs_t varg;
@@ -153,7 +155,7 @@ static void mlsj_push(matrix_t *m, double coe, double ms1, double ms2, double ms
 
 static void baryon_mlsj_jl(baryon_job_t *job)
 {
-    basis_list *qnlist = &job->qnlist_spfy;
+    bases_3b *qnlist = &job->qnlist_spfy;
 
     job->mlsj = (matrix_t **)malloc(sizeof(matrix_t *) * (size_t)qnlist->len_list);
     for (int i = 0; i < qnlist->len_list; i++) {
@@ -177,7 +179,7 @@ static void baryon_mlsj_jl(baryon_job_t *job)
             double MJ = J;
             double si, sj, sk;
 
-            getijk(s1, s2, s3, &si, &sj, &sk, c);
+            channel_3b_ijk(s1, s2, s3, &si, &sj, &sk, c);
             for (double msi = -si; msi <= si + 1e-12; msi += 1.0) {
                 for (double msj = -sj; msj <= sj + 1e-12; msj += 1.0) {
                     for (double msk = -sk; msk <= sk + 1e-12; msk += 1.0) {
@@ -190,7 +192,7 @@ static void baryon_mlsj_jl(baryon_job_t *job)
                                     * clebsch_gordan(jl, msi + msj + mrho + mlam, sk, msk, J, MJ);
                                 if (cgf != 0.0) {
                                     double ms1, ms2, ms3;
-                                    get123(&ms1, &ms2, &ms3, msi, msj, msk, c);
+                                    channel_3b_123(&ms1, &ms2, &ms3, msi, msj, msk, c);
                                     mlsj_push(&job->mlsj[i][j], cgf, ms1, ms2, ms3, (double)mrho, (double)mlam);
                                 }
                             }
@@ -204,7 +206,7 @@ static void baryon_mlsj_jl(baryon_job_t *job)
 
 /* recycle/mfi.h getlsj_jl as it stands: c=1 only, l_rho=0, l_lambda=Lmax, one jl. */
 static void baryon_basis_recycle(const argsInput_t *input, const argsGIModel_t *model,
-    basis_list *spfy, basis_list *full)
+    bases_3b *spfy, bases_3b *full)
 {
     double m1 = getmq(input->f1, model);
     double m2 = getmq(input->f2, model);
@@ -218,8 +220,8 @@ static void baryon_basis_recycle(const argsInput_t *input, const argsGIModel_t *
     int llam = Lmax;
     double s1 = 0.5, s2 = 0.5, s3 = 0.5;
 
-    basis_list_init(spfy);
-    basis_list_init(full);
+    bases_3b_init(spfy);
+    bases_3b_init(full);
 
     for (int L = abs(lrho - llam); L <= lrho + llam; L++) {
         for (double sij = 0.0; sij <= 1.0 + 1e-9; sij += 1.0) {
@@ -233,22 +235,22 @@ static void baryon_basis_recycle(const argsInput_t *input, const argsGIModel_t *
             if (fabs(jl - s3) - 1e-9 > J || J - 1e-9 > jl + s3) {
                 continue;
             }
-            if (threebody_exchange_eta(sym12, sij, lrho) != 1.0) {
+            if (channel_3b_exchange_eta(sym12, sij, lrho) != 1.0) {
                 continue;
             }
-            basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
                 0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
         }
     }
 
-    basis_list_push_full(spfy, full, input->rmin, input->rmax, input->nmax);
+    bases_3b_push_full(spfy, full, input->rmin, input->rmax, input->nmax);
     printf("Baryon Jacobi GEM: recycle getlsj_jl (c=1, lrho=0, llam=%d, jl=%.1f)\n", llam, jl);
     printf("  angular channels: %d  (n_full=%d)\n", spfy->len_list, full->len_list);
     fflush(stdout);
 }
 
 static void baryon_basis_build(const argsInput_t *input, const argsGIModel_t *model,
-    basis_list *spfy, basis_list *full)
+    bases_3b *spfy, bases_3b *full)
 {
     double m1 = getmq(input->f1, model);
     double m2 = getmq(input->f2, model);
@@ -259,15 +261,15 @@ static void baryon_basis_build(const argsInput_t *input, const argsGIModel_t *mo
     int Lmax = input->Lmax;
     double s1 = 0.5, s2 = 0.5, s3 = 0.5;
 
-    basis_list_init(spfy);
-    basis_list_init(full);
+    bases_3b_init(spfy);
+    bases_3b_init(full);
 
     /* Three pair frames. Identical quarks: recycle |c_a⟩ + η|c_b⟩
      * (1↔2 maps c=2 onto c=3). Distinguishable nsc: three independent charts. */
     int nchan[4] = {0};
-    int id12 = threebody_pair_identical(input->f1, input->f2, input->f3, 1);
-    int id31 = threebody_pair_identical(input->f1, input->f2, input->f3, 2);
-    int id23 = threebody_pair_identical(input->f1, input->f2, input->f3, 3);
+    int id12 = channel_3b_pair_identical(input->f1, input->f2, input->f3, 1);
+    int id31 = channel_3b_pair_identical(input->f1, input->f2, input->f3, 2);
+    int id23 = channel_3b_pair_identical(input->f1, input->f2, input->f3, 3);
 
     for (int lrho = 0; lrho <= Lmax; lrho++) {
         for (int llam = 0; llam <= Lmax - lrho; llam++) {
@@ -276,7 +278,7 @@ static void baryon_basis_build(const argsInput_t *input, const argsGIModel_t *mo
             }
             for (int L = abs(lrho - llam); L <= lrho + llam; L++) {
                 for (double sij = 0.0; sij <= 1.0 + 1e-9; sij += 1.0) {
-                    double eta = threebody_exchange_eta(sym12, sij, lrho);
+                    double eta = channel_3b_exchange_eta(sym12, sij, lrho);
                     int pauli_ok = (eta == 1.0);
                     int keep1 = !id12 || pauli_ok;
                     int keep2 = !id31 || pauli_ok;
@@ -289,57 +291,57 @@ static void baryon_basis_build(const argsInput_t *input, const argsGIModel_t *mo
 
                         if (id12) {
                             if (keep1) {
-                                basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
                                     0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
                                 nchan[1]++;
                             }
                             if (keep2) {
-                                basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
                                     0.0, 0.0, 0.0, 0.0, 0.0, 2, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
                                 nchan[2]++;
-                                basis_list_push(spfy, 0, -1, -1, eta, m1, m2, m3, s1, s2, s3,
+                                bases_3b_push(spfy, 0, -1, -1, eta, m1, m2, m3, s1, s2, s3,
                                     0.0, 0.0, 0.0, 0.0, 0.0, 3, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
                                 nchan[3]++;
                             }
                         }
                         else if (id23) {
                             if (keep3) {
-                                basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
                                     0.0, 0.0, 0.0, 0.0, 0.0, 3, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
                                 nchan[3]++;
                             }
                             if (keep1) {
-                                basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
                                     0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
                                 nchan[1]++;
-                                basis_list_push(spfy, 0, -1, -1, eta, m1, m2, m3, s1, s2, s3,
+                                bases_3b_push(spfy, 0, -1, -1, eta, m1, m2, m3, s1, s2, s3,
                                     0.0, 0.0, 0.0, 0.0, 0.0, 2, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
                                 nchan[2]++;
                             }
                         }
                         else if (id31) {
                             if (keep2) {
-                                basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
                                     0.0, 0.0, 0.0, 0.0, 0.0, 2, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
                                 nchan[2]++;
                             }
                             if (keep1) {
-                                basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
                                     0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
                                 nchan[1]++;
-                                basis_list_push(spfy, 0, -1, -1, eta, m1, m2, m3, s1, s2, s3,
+                                bases_3b_push(spfy, 0, -1, -1, eta, m1, m2, m3, s1, s2, s3,
                                     0.0, 0.0, 0.0, 0.0, 0.0, 3, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
                                 nchan[3]++;
                             }
                         }
                         else {
-                            basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
                                 0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
                             nchan[1]++;
-                            basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
                                 0.0, 0.0, 0.0, 0.0, 0.0, 2, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
                             nchan[2]++;
-                            basis_list_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
                                 0.0, 0.0, 0.0, 0.0, 0.0, 3, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
                             nchan[3]++;
                         }
@@ -349,7 +351,7 @@ static void baryon_basis_build(const argsInput_t *input, const argsGIModel_t *mo
         }
     }
 
-    basis_list_push_full(spfy, full, input->rmin, input->rmax, input->nmax);
+    bases_3b_push_full(spfy, full, input->rmin, input->rmax, input->nmax);
     printf("Baryon Jacobi GEM: c=1(12) / c=2(31) / c=3(23)\n");
     printf("  angular channels: c1=%d c2=%d c3=%d  (n_spfy=%d n_full=%d)\n",
         nchan[1], nchan[2], nchan[3], spfy->len_list, full->len_list);
@@ -377,10 +379,10 @@ static void calc_scdk_mt(void *args)
     }
 }
 
-static double me_add(txrp_vtype kin, sumckdk_scdk scdk, basis_qnum qf, basis_qnum qi,
-    scdk_vargs_t varg, scdk_inte_fn iv, int c)
+static double me_add(txrp_vtype kin, sumckdk_scdk scdk, basis_3b qf, basis_3b qi,
+    void *ctx, kin_radial_fn iv, int c)
 {
-    return inteVcenPartA(kin, scdk, qf, qi, varg, iv, c);
+    return inteVcenPartA(kin, scdk, qf, qi, iv, ctx, c);
 }
 
 static void getmfi(void *args)
@@ -404,35 +406,35 @@ static void getmfi(void *args)
                 int mapf2 = job->qnlist_full.qnum[nf][nfp].map2;
                 int mapi1 = job->qnlist_full.qnum[ni][nip].map1;
                 int mapi2 = job->qnlist_full.qnum[ni][nip].map2;
-                basis_qnum qf = job->qnlist_full.qnum[nf][nfp];
-                basis_qnum qi = job->qnlist_full.qnum[ni][nip];
+                basis_3b qf = job->qnlist_full.qnum[nf][nfp];
+                basis_3b qi = job->qnlist_full.qnum[ni][nip];
 
-                nfi += me_add(tir_cent, job->scdk[0][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteNfi, 1);
+                nfi += me_add(tir_cent, job->scdk[0][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteNfi, 1);
 
                 for (int p = 0; p < 3; p++) {
                     int c = p + 1;
-                    VogeG[p] += me_add(tir_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVogeG, c);
-                    Vcont[p] += me_add(tir_cent, job->scdk[3 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVcont, c);
-                    Vtens[p] += me_add(tir_tens, job->scdk[6 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVtens, c);
-                    Vsovii[p] += me_add(tir_soii, job->scdk[9 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVsovii, c);
-                    Vsovjj[p] += me_add(tjr_sojj, job->scdk[12 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVsovjj, c);
-                    Vsovji[p] += me_add(t1r_soji, job->scdk[15 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVsovji, c);
-                    Vsovij[p] += me_add(tir_soij, job->scdk[18 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVsovij, c);
-                    Vstring[p] += me_add(tir_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVstring, c);
-                    Vsosii[p] += me_add(tir_soii, job->scdk[9 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVsosii, c);
-                    Vsosjj[p] += me_add(tjr_sojj, job->scdk[12 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteVsosjj, c);
-                    pogeG[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepogeG, c);
-                    pcont[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepcont, c);
-                    ptens[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteptens, c);
-                    psovii[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepsovii, c);
-                    psovjj[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepsovjj, c);
-                    psovji[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepsovji, c);
-                    psovij[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepsovij, c);
-                    psosii[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepsosii, c);
-                    psosjj[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, intepsosjj, c);
-                    T[p] += me_add(tpi_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteTi, c);
-                    rmsr[p] += me_add(tir_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteRMS, c);
-                    rmsl[p] += me_add(t2r_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, job->varg, inteRMS, c);
+                    VogeG[p] += me_add(tir_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteVogeG, c);
+                    Vcont[p] += me_add(tir_cent, job->scdk[3 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteVcont, c);
+                    Vtens[p] += me_add(tir_tens, job->scdk[6 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteVtens, c);
+                    Vsovii[p] += me_add(tir_soii, job->scdk[9 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteVsovii, c);
+                    Vsovjj[p] += me_add(tjr_sojj, job->scdk[12 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteVsovjj, c);
+                    Vsovji[p] += me_add(t1r_soji, job->scdk[15 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteVsovji, c);
+                    Vsovij[p] += me_add(tir_soij, job->scdk[18 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteVsovij, c);
+                    Vstring[p] += me_add(tir_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteVstring, c);
+                    Vsosii[p] += me_add(tir_soii, job->scdk[9 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteVsosii, c);
+                    Vsosjj[p] += me_add(tjr_sojj, job->scdk[12 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteVsosjj, c);
+                    pogeG[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, intepogeG, c);
+                    pcont[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, intepcont, c);
+                    ptens[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteptens, c);
+                    psovii[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, intepsovii, c);
+                    psovjj[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, intepsovjj, c);
+                    psovji[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, intepsovji, c);
+                    psovij[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, intepsovij, c);
+                    psosii[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, intepsosii, c);
+                    psosjj[p] += me_add(t1p_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, intepsosjj, c);
+                    T[p] += me_add(tpi_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteTi, c);
+                    rmsr[p] += me_add(tir_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteRMS, c);
+                    rmsl[p] += me_add(t2r_cent, job->scdk[0 + p][mapf1][mapf2][mapi1][mapi2], qf, qi, &job->varg, inteRMS, c);
                 }
             }
         }
@@ -465,7 +467,39 @@ static void getmfi(void *args)
     }
 }
 
-void spectra_baryon_GEM(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
+static void baryon_scdk_table_alloc(int *len_part, int len_list, sumckdk_scdk *****tab)
+{
+    *tab = (sumckdk_scdk ****)malloc(sizeof(sumckdk_scdk ***) * (size_t)len_list);
+    for (int i = 0; i < len_list; i++) {
+        (*tab)[i] = (sumckdk_scdk ***)malloc(sizeof(sumckdk_scdk **) * (size_t)len_part[i]);
+        for (int j = 0; j < len_part[i]; j++) {
+            (*tab)[i][j] = (sumckdk_scdk **)malloc(sizeof(sumckdk_scdk *) * (size_t)len_list);
+            for (int k = 0; k < len_list; k++) {
+                (*tab)[i][j][k] = (sumckdk_scdk *)malloc(sizeof(sumckdk_scdk) * (size_t)len_part[k]);
+            }
+        }
+    }
+}
+
+static void baryon_scdk_table_free(int *len_part, int len_list, sumckdk_scdk *****tab)
+{
+    for (int i = 0; i < len_list; i++) {
+        for (int j = 0; j < len_part[i]; j++) {
+            for (int k = 0; k < len_list; k++) {
+                for (int l = 0; l < len_part[k]; l++) {
+                    sumckdk_scdk_free(&((*tab)[i][j][k][l]));
+                }
+                free((*tab)[i][j][k]);
+            }
+            free((*tab)[i][j]);
+        }
+        free((*tab)[i]);
+    }
+    free(*tab);
+    *tab = NULL;
+}
+
+void baryon_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
     array_t *e_out, matrix_t *v_out, matrix_t *n_out,
     array_t *rms12, array_t *rms13, array_t *rms23)
 {
@@ -485,7 +519,7 @@ void spectra_baryon_GEM(const argsInput_t *args_input, const argsGIModel_t *args
 
     int nsp = job.qnlist_spfy.len_list;
     for (int op = 0; op < 21; op++) {
-        threebody_scdk_table_alloc(job.qnlist_spfy.len_part, nsp, &job.scdk[op]);
+        baryon_scdk_table_alloc(job.qnlist_spfy.len_part, nsp, &job.scdk[op]);
     }
 
     thread_load(calc_scdk_mt, &job, 21 * nsp, getNumCores());
@@ -503,7 +537,7 @@ void spectra_baryon_GEM(const argsInput_t *args_input, const argsGIModel_t *args
     }
 
     matrix_t vt;
-    int nkeep = threebody_overlap_basis(&job.Nfi, 1e-8, &vt);
+    int nkeep = matrix_overlap_basis(&job.Nfi, 1e-8, &vt);
     if (nkeep <= 0) {
         fprintf(stderr, "Error: baryon overlap N has no positive eigenvalues.\n");
         exit(1);
@@ -560,7 +594,7 @@ void spectra_baryon_GEM(const argsInput_t *args_input, const argsGIModel_t *args
         if (bf) {
             fprintf(bf, "# i  c  nrho nlam lrho llam L  sij  jl  coe\n");
             for (int i = 0; i < nbas; i++) {
-                basis_qnum q = job.qnlist_full.qnum[i][0];
+                basis_3b q = job.qnlist_full.qnum[i][0];
                 fprintf(bf, "%d  %d  %d %d  %d %d %d  %.1f  %.1f  %.6f\n",
                     i, q.c, q.nrho, q.nlam, q.lrho, q.llam, q.L, q.sij, q.jl, q.coe);
             }
@@ -581,7 +615,7 @@ void spectra_baryon_GEM(const argsInput_t *args_input, const argsGIModel_t *args
     }
 
     for (int op = 0; op < 21; op++) {
-        threebody_scdk_table_free(job.qnlist_spfy.len_part, nsp, &job.scdk[op]);
+        baryon_scdk_table_free(job.qnlist_spfy.len_part, nsp, &job.scdk[op]);
     }
     for (int i = 0; i < nsp; i++) {
         for (int j = 0; j < job.qnlist_spfy.len_part[i]; j++) {
@@ -590,8 +624,8 @@ void spectra_baryon_GEM(const argsInput_t *args_input, const argsGIModel_t *args
         free(job.mlsj[i]);
     }
     free(job.mlsj);
-    basis_list_free(&job.qnlist_spfy);
-    basis_list_free(&job.qnlist_full);
+    bases_3b_free(&job.qnlist_spfy);
+    bases_3b_free(&job.qnlist_full);
 
     matrix_free(&temp);
     matrix_free(&tV);

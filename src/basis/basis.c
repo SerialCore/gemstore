@@ -11,34 +11,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void basis_list_init(basis_list *qnlist)
+void bases_3b_init(bases_3b *qnlist)
 {
-    qnlist->qnum = (basis_qnum **)malloc(sizeof(basis_qnum *) * 0);
+    qnlist->qnum = (basis_3b **)malloc(sizeof(basis_3b *) * 0);
     qnlist->len_part = (int *)malloc(sizeof(int) * 0);
     qnlist->len_list = 0;
 }
 
-void basis_list_logs(basis_list qnlist)
-{
-    printf("-------------------basis_list start--------------------\n");
-    for (int i = 0; i < qnlist.len_list; i++) {
-        printf("%3d: |", i);
-        for (int j = 0; j < qnlist.len_part[i]; j++) {
-            printf("j=%d map1=%3d map2=%3d coe=%10.6f c=%d nrho=%2d nlam=%2d |",
-                j,
-                qnlist.qnum[i][j].map1,
-                qnlist.qnum[i][j].map2,
-                qnlist.qnum[i][j].coe,
-                qnlist.qnum[i][j].c,
-                qnlist.qnum[i][j].nrho,
-                qnlist.qnum[i][j].nlam);
-        }
-        printf("\n");
-    }
-    printf("-------------------basis_list end---------------------\n\n");
-}
-
-void basis_list_push(basis_list *qnlist, int newqnQ, int map1, int map2,
+void bases_3b_push(bases_3b *qnlist, int newqnQ, int map1, int map2,
     double coe, double m1, double m2, double m3,
     double s1, double s2, double s3,
     double t1, double t2, double t3, double tij, double T,
@@ -51,8 +31,8 @@ void basis_list_push(basis_list *qnlist, int newqnQ, int map1, int map2,
     if (newqnQ == 1) {
         i = qnlist->len_list;
         j = 0;
-        qnlist->qnum = (basis_qnum **)realloc(qnlist->qnum, sizeof(basis_qnum *) * (i + 1));
-        qnlist->qnum[i] = (basis_qnum *)malloc(sizeof(basis_qnum) * 1);
+        qnlist->qnum = (basis_3b **)realloc(qnlist->qnum, sizeof(basis_3b *) * (i + 1));
+        qnlist->qnum[i] = (basis_3b *)malloc(sizeof(basis_3b) * 1);
         qnlist->len_part = (int *)realloc(qnlist->len_part, sizeof(int) * (i + 1));
         qnlist->len_part[i] = 1;
         qnlist->len_list++;
@@ -60,7 +40,7 @@ void basis_list_push(basis_list *qnlist, int newqnQ, int map1, int map2,
     else {
         i = qnlist->len_list - 1;
         j = qnlist->len_part[i];
-        qnlist->qnum[i] = (basis_qnum *)realloc(qnlist->qnum[i], sizeof(basis_qnum) * (j + 1));
+        qnlist->qnum[i] = (basis_3b *)realloc(qnlist->qnum[i], sizeof(basis_3b) * (j + 1));
         qnlist->len_part[i]++;
     }
 
@@ -98,7 +78,7 @@ void basis_list_push(basis_list *qnlist, int newqnQ, int map1, int map2,
     qnlist->qnum[i][j].nulam = nulam;
 }
 
-void basis_list_push_full(basis_list *qnlist_spfy, basis_list *qnlist_full,
+void bases_3b_push_full(bases_3b *qnlist_spfy, bases_3b *qnlist_full,
     double rmin, double rmax, int nmax)
 {
     int newqnQ;
@@ -108,7 +88,7 @@ void basis_list_push_full(basis_list *qnlist_spfy, basis_list *qnlist_full,
             for (int nlam = 1; nlam <= nmax; nlam++) {
                 for (int j = 0; j < qnlist_spfy->len_part[i]; j++) {
                     newqnQ = (j == 0) ? 1 : 0;
-                    basis_list_push(qnlist_full, newqnQ,
+                    bases_3b_push(qnlist_full, newqnQ,
                         qnlist_spfy->qnum[i][j].map1,
                         qnlist_spfy->qnum[i][j].map2,
                         qnlist_spfy->qnum[i][j].coe,
@@ -140,7 +120,7 @@ void basis_list_push_full(basis_list *qnlist_spfy, basis_list *qnlist_full,
     }
 }
 
-void basis_list_free(basis_list *qnlist)
+void bases_3b_free(bases_3b *qnlist)
 {
     for (int i = 0; i < qnlist->len_list; i++) {
         free(qnlist->qnum[i]);

@@ -7,9 +7,10 @@
 #ifndef GEMSTORE_BASIS_BASIS
 #define GEMSTORE_BASIS_BASIS
 
-/* Three-body Jacobi GEM basis (recycle/basis.h). Meson uses argsOrbit_t. */
+/* Three-body Jacobi GEM basis (recycle/basis.h). Meson uses argsOrbit_t.
+ * Four-body quantum numbers would be basis_4b and bases_4b. */
 
-typedef struct basis_base {
+typedef struct basis_3b {
     int map1;           /* index map of Jacobi coordinate */
     int map2;           /* index map of Jacobi coordinate */
     double coe;         /* coefficient of basis */
@@ -35,28 +36,28 @@ typedef struct basis_base {
     int nlam;           /* Gaussian quantum number of lambda */
     double nurho;       /* Gaussian parameter of rho */
     double nulam;       /* Gaussian parameter of lambda */
-} basis_qnum;
+} basis_3b;
 
 typedef struct {
-    basis_qnum **qnum;
+    basis_3b **qnum;
     int len_list;
     int *len_part;
-} basis_list;
+} bases_3b;
 
-void basis_list_init(basis_list *qnlist);
+void bases_3b_init(bases_3b *qnlist);
 
-void basis_list_logs(basis_list qnlist);
+void bases_3b_logs(bases_3b qnlist);
 
-void basis_list_push(basis_list *qnlist, int newqnQ, int map1, int map2,
+void bases_3b_push(bases_3b *qnlist, int newqnQ, int map1, int map2,
     double coe, double m1, double m2, double m3,
     double s1, double s2, double s3,
     double t1, double t2, double t3, double tij, double T,
     int c, int lrho, int llam, int L, double sij, double jl, double J,
     int nrho, int nlam, double nurho, double nulam);
 
-void basis_list_push_full(basis_list *qnlist_spfy, basis_list *qnlist_full,
+void bases_3b_push_full(bases_3b *qnlist_spfy, bases_3b *qnlist_full,
     double rmin, double rmax, int nmax);
 
-void basis_list_free(basis_list *qnlist);
+void bases_3b_free(bases_3b *qnlist);
 
 #endif
