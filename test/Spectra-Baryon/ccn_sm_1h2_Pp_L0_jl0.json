@@ -1,5 +1,5 @@
 {
-  "project": "nbb_sm_1h2_Pp_L0_jl0",
+  "project": "ccn_sm_1h2_Pp_L0_jl0",
   "task": "SPECTRA",
   "model": {
     "type": "GISTRING",
@@ -7,9 +7,9 @@
   },
   "system": {
     "type": "BARYON",
-    "f1": 1,
-    "f2": 4,
-    "f3": 4,
+    "f1": 3,
+    "f2": 3,
+    "f3": 1,
     "J": 0.5,
     "P": 1,
     "sym12": -1,

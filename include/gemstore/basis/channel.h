@@ -19,7 +19,8 @@
 
 int channel_3b_pair_identical(int id1, int id2, int id3, int c);
 
-/* 1↔2 phase: f12 * (-1)^{1+sij+lρ}. */
+/* Exchange of the labeled quarks 1 and 2: f12 * (-1)^{1+sij+lρ}.
+ * sij and lρ are those of channel 1. f12 is the input sym12. */
 double channel_3b_exchange_eta(int f12, double sij, int lrho);
 
 /* Permute a triple onto the pair of channel c, and back.

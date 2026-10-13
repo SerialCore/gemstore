@@ -4,8 +4,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Baryon SPECTRA with SCDK matrix elements (recycle/mfi.h, debug.h, res.h).
- * Basis is the three Jacobi frames c=1,2,3 (pair 12 / 31 / 23). SCDK
- * converts those Gaussians onto the pair a potential acts on.
+ * The GEM basis spans lρ+lλ ≤ Lmax and every jl that couples to J^P.
+ * f1,f2 are the pair named by sym12. An identical pair that is not 12
+ * (cbb, ncc, …) is rejected; relabel so the identical quarks are f1,f2.
+ * Distinguishable quarks: three independent charts, still filtered by η12.
+ * One identical pair (f1=f2≠f3): chart c=1 plus |c=2⟩+η|c=3⟩.
+ * Three identical quarks: one chart c=1. η = channel_3b_exchange_eta(sym12, sij, lρ).
+ * SCDK maps those Gaussians onto the pair a potential acts on.
  * Overcomplete N is pruned by its eigenvalues before H is solved.
  */
 
@@ -204,51 +209,6 @@ static void baryon_mlsj_jl(baryon_job_t *job)
     }
 }
 
-/* recycle/mfi.h getlsj_jl as it stands: c=1 only, l_rho=0, l_lambda=Lmax, one jl. */
-static void baryon_basis_recycle(const argsInput_t *input, const argsGIModel_t *model,
-    bases_3b *spfy, bases_3b *full)
-{
-    double m1 = getmq(input->f1, model);
-    double m2 = getmq(input->f2, model);
-    double m3 = getmq(input->f3, model);
-    double J = input->J;
-    double jl = input->jl;
-    int P = input->P;
-    int sym12 = input->sym12;
-    int Lmax = input->Lmax;
-    int lrho = 0;
-    int llam = Lmax;
-    double s1 = 0.5, s2 = 0.5, s3 = 0.5;
-
-    bases_3b_init(spfy);
-    bases_3b_init(full);
-
-    for (int L = abs(lrho - llam); L <= lrho + llam; L++) {
-        for (double sij = 0.0; sij <= 1.0 + 1e-9; sij += 1.0) {
-            int parity = ((lrho + llam) % 2 == 0) ? 1 : -1;
-            if (lrho + llam > Lmax || P != parity) {
-                continue;
-            }
-            if (fabs(L - sij) - 1e-9 > jl || jl - 1e-9 > L + sij) {
-                continue;
-            }
-            if (fabs(jl - s3) - 1e-9 > J || J - 1e-9 > jl + s3) {
-                continue;
-            }
-            if (channel_3b_exchange_eta(sym12, sij, lrho) != 1.0) {
-                continue;
-            }
-            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
-                0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
-        }
-    }
-
-    bases_3b_push_full(spfy, full, input->rmin, input->rmax, input->nmax);
-    printf("Baryon Jacobi GEM: recycle getlsj_jl (c=1, lrho=0, llam=%d, jl=%.1f)\n", llam, jl);
-    printf("  angular channels: %d  (n_full=%d)\n", spfy->len_list, full->len_list);
-    fflush(stdout);
-}
-
 static void baryon_basis_build(const argsInput_t *input, const argsGIModel_t *model,
     bases_3b *spfy, bases_3b *full)
 {
@@ -257,93 +217,57 @@ static void baryon_basis_build(const argsInput_t *input, const argsGIModel_t *mo
     double m3 = getmq(input->f3, model);
     double J = input->J;
     int P = input->P;
-    int sym12 = input->sym12;
     int Lmax = input->Lmax;
-    double s1 = 0.5, s2 = 0.5, s3 = 0.5;
+    int sym12 = input->sym12;
+    const double s3 = 0.5;
 
-    bases_3b_init(spfy);
-    bases_3b_init(full);
-
-    /* Three pair frames. Identical quarks: recycle |c_a⟩ + η|c_b⟩
-     * (1↔2 maps c=2 onto c=3). Distinguishable nsc: three independent charts. */
-    int nchan[4] = {0};
     int id12 = channel_3b_pair_identical(input->f1, input->f2, input->f3, 1);
     int id31 = channel_3b_pair_identical(input->f1, input->f2, input->f3, 2);
     int id23 = channel_3b_pair_identical(input->f1, input->f2, input->f3, 3);
 
+    if ((id23 || id31) && !id12) {
+        fprintf(stderr,
+            "Error: sym12 is the exchange of quarks 1 and 2. "
+            "Put the identical pair as f1,f2 (bbc, not cbb).\n");
+        exit(1);
+    }
+
+    bases_3b_init(spfy);
+    bases_3b_init(full);
+
     for (int lrho = 0; lrho <= Lmax; lrho++) {
         for (int llam = 0; llam <= Lmax - lrho; llam++) {
-            if (((lrho + llam) % 2 == 0) ? (P != 1) : (P != -1)) {
+            int parity = ((lrho + llam) % 2 == 0) ? 1 : -1;
+            if (P != parity) {
                 continue;
             }
             for (int L = abs(lrho - llam); L <= lrho + llam; L++) {
                 for (double sij = 0.0; sij <= 1.0 + 1e-9; sij += 1.0) {
                     double eta = channel_3b_exchange_eta(sym12, sij, lrho);
-                    int pauli_ok = (eta == 1.0);
-                    int keep1 = !id12 || pauli_ok;
-                    int keep2 = !id31 || pauli_ok;
-                    int keep3 = !id23 || pauli_ok;
-
+                    if (eta != 1.0) {
+                        continue;
+                    }
                     for (double jl = fabs(L - sij); jl <= L + sij + 1e-9; jl += 1.0) {
-                        if (fabs(jl - s3) - 1e-9 > J || jl + s3 + 1e-9 < J) {
+                        if (fabs(jl - s3) - 1e-9 > J || J - 1e-9 > jl + s3) {
                             continue;
                         }
-
-                        if (id12) {
-                            if (keep1) {
-                                bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
-                                    0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
-                                nchan[1]++;
-                            }
-                            if (keep2) {
-                                bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
-                                    0.0, 0.0, 0.0, 0.0, 0.0, 2, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
-                                nchan[2]++;
-                                bases_3b_push(spfy, 0, -1, -1, eta, m1, m2, m3, s1, s2, s3,
-                                    0.0, 0.0, 0.0, 0.0, 0.0, 3, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
-                                nchan[3]++;
-                            }
-                        }
-                        else if (id23) {
-                            if (keep3) {
-                                bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
-                                    0.0, 0.0, 0.0, 0.0, 0.0, 3, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
-                                nchan[3]++;
-                            }
-                            if (keep1) {
-                                bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
-                                    0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
-                                nchan[1]++;
-                                bases_3b_push(spfy, 0, -1, -1, eta, m1, m2, m3, s1, s2, s3,
-                                    0.0, 0.0, 0.0, 0.0, 0.0, 2, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
-                                nchan[2]++;
-                            }
-                        }
-                        else if (id31) {
-                            if (keep2) {
-                                bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
-                                    0.0, 0.0, 0.0, 0.0, 0.0, 2, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
-                                nchan[2]++;
-                            }
-                            if (keep1) {
-                                bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
-                                    0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
-                                nchan[1]++;
-                                bases_3b_push(spfy, 0, -1, -1, eta, m1, m2, m3, s1, s2, s3,
-                                    0.0, 0.0, 0.0, 0.0, 0.0, 3, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
-                                nchan[3]++;
-                            }
-                        }
-                        else {
-                            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                        if (id12 && id23) {
+                            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, 0.5, 0.5, 0.5,
                                 0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
-                            nchan[1]++;
-                            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                        } else if (id12) {
+                            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, 0.5, 0.5, 0.5,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, 0.5, 0.5, 0.5,
                                 0.0, 0.0, 0.0, 0.0, 0.0, 2, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
-                            nchan[2]++;
-                            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                            bases_3b_push(spfy, 0, -1, -1, eta, m1, m2, m3, 0.5, 0.5, 0.5,
                                 0.0, 0.0, 0.0, 0.0, 0.0, 3, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
-                            nchan[3]++;
+                        } else {
+                            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, 0.5, 0.5, 0.5,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 1, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, 0.5, 0.5, 0.5,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 2, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
+                            bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, 0.5, 0.5, 0.5,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 3, lrho, llam, L, sij, jl, J, 0, 0, 0.0, 0.0);
                         }
                     }
                 }
@@ -352,9 +276,16 @@ static void baryon_basis_build(const argsInput_t *input, const argsGIModel_t *mo
     }
 
     bases_3b_push_full(spfy, full, input->rmin, input->rmax, input->nmax);
-    printf("Baryon Jacobi GEM: c=1(12) / c=2(31) / c=3(23)\n");
-    printf("  angular channels: c1=%d c2=%d c3=%d  (n_spfy=%d n_full=%d)\n",
-        nchan[1], nchan[2], nchan[3], spfy->len_list, full->len_list);
+    if (id12 && id23) {
+        printf("Baryon GEM basis: S3  one chart (c=1), η12=%d, lρ+lλ≤%d\n", sym12, Lmax);
+    } else if (id12) {
+        printf("Baryon GEM basis: S2  c=1 plus |c=2⟩+η|c=3⟩, η12=%d, lρ+lλ≤%d\n",
+            sym12, Lmax);
+    } else {
+        printf("Baryon GEM basis: distinguishable  independent c=1,2,3, η12=%d, lρ+lλ≤%d\n",
+            sym12, Lmax);
+    }
+    printf("  angular channels: %d  (n_full=%d)\n", spfy->len_list, full->len_list);
     fflush(stdout);
 }
 
@@ -506,8 +437,7 @@ void baryon_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args
     baryon_job_t job = {0};
 
     scdk_vargs_from_model(&job.varg, args_model, args_dynmc->model);
-    baryon_basis_recycle(args_input, args_model, &job.qnlist_spfy, &job.qnlist_full);
-    //baryon_basis_build(args_input, args_model, &job.qnlist_spfy, &job.qnlist_full);
+    baryon_basis_build(args_input, args_model, &job.qnlist_spfy, &job.qnlist_full);
 
     int nbas = job.qnlist_full.len_list;
     if (nbas <= 0) {
