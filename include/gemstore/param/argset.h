@@ -138,7 +138,7 @@ argsGIModel_t argsGIModel_from(const argsInput_t *input);
 argsNRModel_t argsNRModel_from(const argsInput_t *input);
 
 /* Get quark mass from GI model */
-static inline double getmq(int index, const argsGIModel_t *args_model)
+static inline double getmq_gi(int index, const argsGIModel_t *args_model)
 {
     switch (index) {
         case 1: return args_model->mn;

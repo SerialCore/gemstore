@@ -14,14 +14,60 @@
 #include <gemstore/math/eigen.h>
 #include <gemstore/math/matrix.h>
 #include <gemstore/math/integral.h>
+#include <gemstore/model/wfntrans.h>
 
 #include <gemstore/param/argset.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
+static void add_reduced(matrix_t *H, const matrix_t *vt, const matrix_t *M, matrix_t *tmp)
+{
+    matrix_productT(vt, M, tmp);
+    matrix_sum(H, tmp, H);
+}
+
+static void add_sandwiched(matrix_t *H, const matrix_t *vt, const matrix_t *V, const matrix_t *P,
+    matrix_t *tV, matrix_t *tP, matrix_t *tmp)
+{
+    matrix_productT(vt, V, tV);
+    matrix_productT(vt, P, tP);
+	matrix_productT(tP, tV, tmp);
+    matrix_sum(H, tmp, H);
+}
+
+/* RMS from c^T r^2 c in the original basis. Allocates *rms_out when both pointers are set. */
+static void meson_write_radius(const argsInput_t *input, const argsOrbit_t *basis, int nmax,
+    matrix_t *v_out, array_t *rms_out)
+{
+    if (rms_out == NULL || v_out == NULL) {
+        return;
+    }
+
+    matrix_t mR2 = matrix_init(nmax, nmax);
+    for (int i = 0; i < nmax; i++) {
+        for (int j = 0; j < nmax; j++) {
+            if (input->orbit == ORBIT_GEM) {
+                double factor = 1.0 / sqrt(basis[i].scale + basis[j].scale);
+                mR2.value[i][j] = integral_nlr_radius(GRnlr, factor, &basis[i], &basis[j]);
+            }
+            else {
+                double factor = sqrt(2.0 / (basis[i].scale * basis[i].scale + basis[j].scale * basis[j].scale));
+                mR2.value[i][j] = integral_nlr_radius(SRnlr, factor, &basis[i], &basis[j]);
+            }
+        }
+    }
+
+    *rms_out = array_init(v_out->row);
+    for (int n = 0; n < v_out->row; n++) {
+        double normalized = get_normalized_factor(input, v_out->value[n]);
+        rms_out->value[n] = sqrt(matrix_expect(v_out, n, &mR2)) * normalized / GEMSTORE_FM;
+    }
+    matrix_free(&mR2);
+}
+
 void meson_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
-    array_t *e_out, matrix_t *v_out, int v_len)
+    array_t *e_out, matrix_t *v_out, matrix_t *n_out, array_t *rms_out)
 {
     int nmax = args_input->nmax;
     double rmax = args_input->rmax;
@@ -56,33 +102,15 @@ void meson_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args_
     matrix_t mVsosi = matrix_init(nmax, nmax);
     matrix_t mVsosj = matrix_init(nmax, nmax);
     matrix_t mVtens = matrix_init(nmax, nmax);
-    matrix_t tmT = matrix_init(nmax, nmax);
-    matrix_t tmbetaijCoul = matrix_init(nmax, nmax);
-    matrix_t tmdeltaijCont = matrix_init(nmax, nmax);
-    matrix_t tmdeltaiiSov = matrix_init(nmax, nmax);
-    matrix_t tmdeltajjSov = matrix_init(nmax, nmax);
-    matrix_t tmdeltaijSov = matrix_init(nmax, nmax);
-    matrix_t tmdeltaiiSos = matrix_init(nmax, nmax);
-    matrix_t tmdeltajjSos = matrix_init(nmax, nmax);
-    matrix_t tmdeltaijTens = matrix_init(nmax, nmax);
-    matrix_t tmVcoul = matrix_init(nmax, nmax);
-    matrix_t tmVconf = matrix_init(nmax, nmax);
-    matrix_t tmVcont = matrix_init(nmax, nmax);
-    matrix_t tmVsovi = matrix_init(nmax, nmax);
-    matrix_t tmVsovj = matrix_init(nmax, nmax);
-    matrix_t tmVsovij = matrix_init(nmax, nmax);
-    matrix_t tmVsosi = matrix_init(nmax, nmax);
-    matrix_t tmVsosj = matrix_init(nmax, nmax);
-    matrix_t tmVtens = matrix_init(nmax, nmax);
-    matrix_t Hfi = matrix_init(nmax, nmax);
     matrix_t Nfi = matrix_init(nmax, nmax);
+    matrix_t Hfi = matrix_init(nmax, nmax);
 
     /* prepare variables */
     double factor_r;
     double factor_p;
     double s1 = 0.5, s2 = 0.5;
-    double m1 = getmq(f1, args_model);
-    double m2 = getmq(f2, args_model);
+    double m1 = getmq_gi(f1, args_model);
+    double m2 = getmq_gi(f2, args_model);
     double C12 = -4.0 / 3.0;
     double sigmaij = sigma_ij(m1, m2, args_model->sigma_0, args_model->s);
     args_dynmc->mi = m1;
@@ -127,106 +155,87 @@ void meson_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args_
         }
     }
 
-/* The implemention of Cholesky decomposition will generate precise eigen vectors with norm 1,
- * but smaller RMS radius and wrong wave functions with all positive and vanishing nodes for radial excitations.
- * I prefer the random matrix approach to guarantee better wave functions, while the bugs in Cholesky
- * will be fixed in some day. I am sorry for that this is really strange. */
-#if 0
-    /* Cholesky decomposition */
-    matrix_t mL = matrix_init(nmax, nmax);
-    matrix_t mLinv = matrix_init(nmax, nmax);
-    matrix_cholesky_decomp(&Nfi, &mL);          /* S = L * L^T */
-    matrix_inverse_lowertri(&mL, &mLinv);       /* Linv = L^{-1} */
-#endif
+    matrix_symmetrize(&mT);
+    matrix_symmetrize(&mbetaijCoul);
+    matrix_symmetrize(&mdeltaijCont);
+    matrix_symmetrize(&mdeltaiiSov);
+    matrix_symmetrize(&mdeltajjSov);
+    matrix_symmetrize(&mdeltaijSov);
+    matrix_symmetrize(&mdeltaiiSos);
+    matrix_symmetrize(&mdeltajjSos);
+    matrix_symmetrize(&mdeltaijTens);
+    matrix_symmetrize(&mVcoul);
+    matrix_symmetrize(&mVconf);
+    matrix_symmetrize(&mVcont);
+    matrix_symmetrize(&mVsovi);
+    matrix_symmetrize(&mVsovj);
+    matrix_symmetrize(&mVsovij);
+    matrix_symmetrize(&mVsosi);
+    matrix_symmetrize(&mVsosj);
+    matrix_symmetrize(&mVtens);
+    matrix_symmetrize(&Nfi);
 
-    /* prepare a random symmetric matrix */
-    matrix_t rand = matrix_random(nmax, nmax);
-    matrix_t temp = matrix_init(nmax, nmax);
-    matrix_transpose(&rand, &temp);
-    matrix_sum(&rand, &temp, &rand);
-    
-    matrix_t vt = matrix_init(nmax, nmax);
-
-#ifdef LAPACKE
-    lapack_general(rand.value, Nfi.value, nmax, e_out->value, vt.value, nmax);
-#else
-    eigen_general(rand.value, Nfi.value, nmax, e_out->value, vt.value, nmax);
-#endif
-
-    /* construct new orthogonal basis */
-    matrix_productT(&vt, &Nfi, &temp);
-    for (int k = 0; k < nmax; k++) {
-        double norm = sqrt(fabs(temp.value[k][k]));  /* sqrt(Diagonal[k]) */
-        if (norm > 1e-10) {
-            for (int i = 0; i < nmax; i++) {
-                vt.value[k][i] /= norm;             /* vt[i][k] /= norm for col major, vt[k][i] /= norm for row major */
-            }
-        }
-        else {
-            printf("Warning: singular vector %d, norm=%.2e\n", k, norm);
-        }
+    /* construct orthogonal basis */
+    matrix_t vt;
+    int nkeep = matrix_orthogonal(&Nfi, 1e-8, &vt);
+    if (nkeep <= 0) {
+        fprintf(stderr, "Error: meson overlap N has no positive eigenvalues.\n");
+        exit(1);
     }
-
-    /* transform Hamiltonian matrices in orthogonal basis */
-    matrix_productT(&vt, &mT, &tmT);
-    matrix_productT(&vt, &mbetaijCoul, &tmbetaijCoul);
-    matrix_productT(&vt, &mdeltaijCont, &tmdeltaijCont);
-    matrix_productT(&vt, &mdeltaiiSov, &tmdeltaiiSov);
-    matrix_productT(&vt, &mdeltajjSov, &tmdeltajjSov);
-    matrix_productT(&vt, &mdeltaijSov, &tmdeltaijSov);
-    matrix_productT(&vt, &mdeltaiiSos, &tmdeltaiiSos);
-    matrix_productT(&vt, &mdeltajjSos, &tmdeltajjSos);
-    matrix_productT(&vt, &mdeltaijTens, &tmdeltaijTens);
-    matrix_productT(&vt, &mVcoul, &tmVcoul);
-    matrix_productT(&vt, &mVconf, &tmVconf);
-    matrix_productT(&vt, &mVcont, &tmVcont);
-    matrix_productT(&vt, &mVsovi, &tmVsovi);
-    matrix_productT(&vt, &mVsovj, &tmVsovj);
-    matrix_productT(&vt, &mVsovij, &tmVsovij);
-    matrix_productT(&vt, &mVsosi, &tmVsosi);
-    matrix_productT(&vt, &mVsosj, &tmVsosj);
-    matrix_productT(&vt, &mVtens, &tmVtens);
 
     /* construct Hamiltonian matrix */
-    matrix_sum(&tmT, &tmVconf, &Hfi);
-    matrix_productT(&tmbetaijCoul, &tmVcoul, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltaijCont, &tmVcont, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltaiiSov, &tmVsovi, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltajjSov, &tmVsovj, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltaijSov, &tmVsovij, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltaiiSos, &tmVsosi, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltajjSos, &tmVsosj, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&tmdeltaijTens, &tmVtens, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
+    matrix_t temp = matrix_init(nkeep, nkeep);
+    matrix_t tV = matrix_init(nkeep, nkeep);
+    matrix_t tP = matrix_init(nkeep, nkeep);
+    
+    add_reduced(&Hfi, &vt, &mT, &temp);
+    add_reduced(&Hfi, &vt, &mVconf, &temp);
+    add_sandwiched(&Hfi, &vt, &mVcoul, &mbetaijCoul, &tV, &tP, &temp);
+    add_sandwiched(&Hfi, &vt, &mVcont, &mdeltaijCont, &tV, &tP, &temp);
+    add_sandwiched(&Hfi, &vt, &mVsovi, &mdeltaiiSov, &tV, &tP, &temp);
+    add_sandwiched(&Hfi, &vt, &mVsovj, &mdeltajjSov, &tV, &tP, &temp);
+    add_sandwiched(&Hfi, &vt, &mVsovij, &mdeltaijSov, &tV, &tP, &temp);
+    add_sandwiched(&Hfi, &vt, &mVsosi, &mdeltaiiSos, &tV, &tP, &temp);
+    add_sandwiched(&Hfi, &vt, &mVsosj, &mdeltajjSos, &tV, &tP, &temp);
+    add_sandwiched(&Hfi, &vt, &mVtens, &mdeltaijTens, &tV, &tP, &temp);
+    
+    if (e_out == NULL || e_out->value == NULL || e_out->len < nkeep) {
+        fprintf(stderr, "Error: meson eigenvalue buffer cannot hold rank %d.\n", nkeep);
+        exit(1);
+    }
 
-    /* final eigen system */
-    matrix_t ut = matrix_init(nmax, nmax);
+    matrix_t ut = {0};
+    if (v_out != NULL) {
+        ut = matrix_init(nkeep, nkeep);
+    }
 
-/* In GI model, the final basis should be orthogonal.
- * Therefore this could be general eigen system with orthogonal basis and diagonal Nfi,
- * or just standard eigen system directly. */
 #ifdef LAPACKE
-    lapack_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : ut.value, v_len);
+    lapack_standard(Hfi.value, nkeep, e_out->value, (v_out != NULL) ? ut.value : NULL, (v_out != NULL) ? nkeep : 0);
 #else
-    eigen_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : ut.value, v_len);
+    eigen_standard(Hfi.value, nkeep, e_out->value, (v_out != NULL) ? ut.value : NULL, (v_out != NULL) ? nkeep : 0);
 #endif
 
+    e_out->len = nkeep;
+
     if (v_out != NULL) {
+        for (int i = nkeep; i < v_out->row; i++) {
+            free(v_out->value[i]);
+        }
+        v_out->row = nkeep;
         matrix_product(&ut, &vt, v_out);
+        matrix_free(&ut);
     }
+    if (n_out != NULL) {
+        *n_out = matrix_init(Nfi.row, Nfi.col);
+        matrix_copy(&Nfi, n_out);
+    }
+    meson_write_radius(args_input, basis, nmax, v_out, rms_out);
 
     free(basis);
     matrix_free(&temp);
-    matrix_free(&rand);
+    matrix_free(&tV);
+    matrix_free(&tP);
     matrix_free(&vt);
-    matrix_free(&ut);
     matrix_free(&mT);
     matrix_free(&mbetaijCoul);
     matrix_free(&mdeltaijCont);
@@ -245,30 +254,12 @@ void meson_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args_
     matrix_free(&mVsosi);
     matrix_free(&mVsosj);
     matrix_free(&mVtens);
-    matrix_free(&tmT);
-    matrix_free(&tmbetaijCoul);
-    matrix_free(&tmdeltaijCont);
-    matrix_free(&tmdeltaiiSov);
-    matrix_free(&tmdeltajjSov);
-    matrix_free(&tmdeltaijSov);
-    matrix_free(&tmdeltaiiSos);
-    matrix_free(&tmdeltajjSos);
-    matrix_free(&tmdeltaijTens);
-    matrix_free(&tmVcoul);
-    matrix_free(&tmVconf);
-    matrix_free(&tmVcont);
-    matrix_free(&tmVsovi);
-    matrix_free(&tmVsovj);
-    matrix_free(&tmVsovij);
-    matrix_free(&tmVsosi);
-    matrix_free(&tmVsosj);
-    matrix_free(&tmVtens);
     matrix_free(&Hfi);
     matrix_free(&Nfi);
 }
 
 void meson_gimodel_SHO(const argsInput_t *args_input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc,
-    array_t *e_out, matrix_t *v_out, int v_len)
+    array_t *e_out, matrix_t *v_out, matrix_t *n_out, array_t *rms_out)
 {
     int nmax = args_input->nmax;
     double beta = args_input->beta;
@@ -309,8 +300,8 @@ void meson_gimodel_SHO(const argsInput_t *args_input, const argsGIModel_t *args_
     double factor_r;
     double factor_p;
     double s1 = 0.5, s2 = 0.5;
-    double m1 = getmq(f1, args_model);
-    double m2 = getmq(f2, args_model);
+    double m1 = getmq_gi(f1, args_model);
+    double m2 = getmq_gi(f2, args_model);
     double C12 = -4.0 / 3.0;
     double sigmaij = sigma_ij(m1, m2, args_model->sigma_0, args_model->s);
     args_dynmc->mi = m1;
@@ -356,34 +347,49 @@ void meson_gimodel_SHO(const argsInput_t *args_input, const argsGIModel_t *args_
         }
     }
 
+    matrix_symmetrize(&mT);
+    matrix_symmetrize(&mbetaijCoul);
+    matrix_symmetrize(&mdeltaijCont);
+    matrix_symmetrize(&mdeltaiiSov);
+    matrix_symmetrize(&mdeltajjSov);
+    matrix_symmetrize(&mdeltaijSov);
+    matrix_symmetrize(&mdeltaiiSos);
+    matrix_symmetrize(&mdeltajjSos);
+    matrix_symmetrize(&mdeltaijTens);
+    matrix_symmetrize(&mVcoul);
+    matrix_symmetrize(&mVconf);
+    matrix_symmetrize(&mVcont);
+    matrix_symmetrize(&mVsovi);
+    matrix_symmetrize(&mVsovj);
+    matrix_symmetrize(&mVsovij);
+    matrix_symmetrize(&mVsosi);
+    matrix_symmetrize(&mVsosj);
+    matrix_symmetrize(&mVtens);
+    matrix_symmetrize(&Nfi);
+
     /* construct Hamiltonian matrix */
     matrix_t temp = matrix_init(nmax, nmax);
     matrix_sum(&mT, &mVconf, &Hfi);
-    matrix_productT(&mbetaijCoul, &mVcoul, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&mdeltaijCont, &mVcont, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&mdeltaiiSov, &mVsovi, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&mdeltajjSov, &mVsovj, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&mdeltaijSov, &mVsovij, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&mdeltaiiSos, &mVsosi, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&mdeltajjSos, &mVsosj, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
-    matrix_productT(&mdeltaijTens, &mVtens, &temp);
-    matrix_sum(&Hfi, &temp, &Hfi);
+    add_reduced(&Hfi, &mbetaijCoul, &mVcoul, &temp);
+    add_reduced(&Hfi, &mdeltaijCont, &mVcont, &temp);
+    add_reduced(&Hfi, &mdeltaiiSov, &mVsovi, &temp);
+    add_reduced(&Hfi, &mdeltajjSov, &mVsovj, &temp);
+    add_reduced(&Hfi, &mdeltaijSov, &mVsovij, &temp);
+    add_reduced(&Hfi, &mdeltaiiSos, &mVsosi, &temp);
+    add_reduced(&Hfi, &mdeltajjSos, &mVsosj, &temp);
+    add_reduced(&Hfi, &mdeltaijTens, &mVtens, &temp);
 
-/* In GI model, the final basis should be orthogonal.
- * Therefore this could be general eigen system with orthogonal basis and diagonal Nfi,
- * or just standard eigen system directly. */
 #ifdef LAPACKE
-    lapack_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, v_len);
+    lapack_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, nmax);
 #else
-    eigen_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, v_len);
+    eigen_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, nmax);
 #endif
+
+    if (n_out != NULL) {
+        *n_out = matrix_init(Nfi.row, Nfi.col);
+        matrix_copy(&Nfi, n_out);
+    }
+    meson_write_radius(args_input, basis, nmax, v_out, rms_out);
 
     free(basis);
     matrix_free(&temp);
@@ -410,7 +416,7 @@ void meson_gimodel_SHO(const argsInput_t *args_input, const argsGIModel_t *args_
 }
 
 void meson_nrmodel_GEM(const argsInput_t *args_input, const argsNRModel_t *args_model, argsNRModelDy_t *args_dynmc,
-    array_t *e_out, matrix_t *v_out, int v_len)
+    array_t *e_out, matrix_t *v_out, matrix_t *n_out, array_t *rms_out)
 {
     int nmax = args_input->nmax;
     double rmax = args_input->rmax;
@@ -432,13 +438,6 @@ void meson_nrmodel_GEM(const argsInput_t *args_input, const argsNRModel_t *args_
     matrix_t mVsov = matrix_init(nmax, nmax);
     matrix_t mVsos = matrix_init(nmax, nmax);
     matrix_t mVtens = matrix_init(nmax, nmax);
-    matrix_t tmT = matrix_init(nmax, nmax);
-    matrix_t tmVcoul = matrix_init(nmax, nmax);
-    matrix_t tmVconf = matrix_init(nmax, nmax);
-    matrix_t tmVcont = matrix_init(nmax, nmax);
-    matrix_t tmVsov = matrix_init(nmax, nmax);
-    matrix_t tmVsos = matrix_init(nmax, nmax);
-    matrix_t tmVtens = matrix_init(nmax, nmax);
     matrix_t Hfi = matrix_init(nmax, nmax);
     matrix_t Nfi = matrix_init(nmax, nmax);
 
@@ -471,64 +470,35 @@ void meson_nrmodel_GEM(const argsInput_t *args_input, const argsNRModel_t *args_
         }
     }
 
-    matrix_t rand = matrix_random(nmax, nmax);
-    matrix_t temp = matrix_init(nmax, nmax);
-    matrix_transpose(&rand, &temp);
-    matrix_sum(&rand, &temp, &rand);
+    matrix_symmetrize(&mT);
+    matrix_symmetrize(&mVcoul);
+    matrix_symmetrize(&mVconf);
+    matrix_symmetrize(&mVcont);
+    matrix_symmetrize(&mVsov);
+    matrix_symmetrize(&mVsos);
+    matrix_symmetrize(&mVtens);
+    matrix_symmetrize(&Nfi);
 
-    matrix_t vt = matrix_init(nmax, nmax);
-
-#ifdef LAPACKE
-    lapack_general(rand.value, Nfi.value, nmax, e_out->value, vt.value, nmax);
-#else
-    eigen_general(rand.value, Nfi.value, nmax, e_out->value, vt.value, nmax);
-#endif
-
-    matrix_productT(&vt, &Nfi, &temp);
-    for (int k = 0; k < nmax; k++) {
-        double norm = sqrt(fabs(temp.value[k][k]));
-        if (norm > 1e-10) {
-            for (int i = 0; i < nmax; i++) {
-                vt.value[k][i] /= norm;
-            }
-        }
-        else {
-            printf("Warning: singular vector %d, norm=%.2e\n", k, norm);
-        }
-    }
-
-    matrix_productT(&vt, &mT, &tmT);
-    matrix_productT(&vt, &mVcoul, &tmVcoul);
-    matrix_productT(&vt, &mVconf, &tmVconf);
-    matrix_productT(&vt, &mVcont, &tmVcont);
-    matrix_productT(&vt, &mVsov, &tmVsov);
-    matrix_productT(&vt, &mVsos, &tmVsos);
-    matrix_productT(&vt, &mVtens, &tmVtens);
-
-    matrix_sum(&tmT, &tmVcoul, &Hfi);
-    matrix_sum(&Hfi, &tmVconf, &Hfi);
-    matrix_sum(&Hfi, &tmVcont, &Hfi);
-    matrix_sum(&Hfi, &tmVsov, &Hfi);
-    matrix_sum(&Hfi, &tmVsos, &Hfi);
-    matrix_sum(&Hfi, &tmVtens, &Hfi);
-
-    matrix_t ut = matrix_init(nmax, nmax);
+    matrix_sum(&mT, &mVcoul, &Hfi);
+    matrix_sum(&Hfi, &mVconf, &Hfi);
+    matrix_sum(&Hfi, &mVcont, &Hfi);
+    matrix_sum(&Hfi, &mVsov, &Hfi);
+    matrix_sum(&Hfi, &mVsos, &Hfi);
+    matrix_sum(&Hfi, &mVtens, &Hfi);
 
 #ifdef LAPACKE
-    lapack_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : ut.value, v_len);
+    lapack_general(Hfi.value, Nfi.value, nmax, e_out->value, (v_out == NULL) ? NULL : v_out->value, nmax);
 #else
-    eigen_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : ut.value, v_len);
+    eigen_general(Hfi.value, Nfi.value, nmax, e_out->value, (v_out == NULL) ? NULL : v_out->value, nmax);
 #endif
 
-    if (v_out != NULL) {
-        matrix_product(&ut, &vt, v_out);
+    if (n_out != NULL) {
+        *n_out = matrix_init(Nfi.row, Nfi.col);
+        matrix_copy(&Nfi, n_out);
     }
+    meson_write_radius(args_input, basis, nmax, v_out, rms_out);
 
     free(basis);
-    matrix_free(&temp);
-    matrix_free(&rand);
-    matrix_free(&vt);
-    matrix_free(&ut);
     matrix_free(&mT);
     matrix_free(&mVcoul);
     matrix_free(&mVconf);
@@ -536,19 +506,12 @@ void meson_nrmodel_GEM(const argsInput_t *args_input, const argsNRModel_t *args_
     matrix_free(&mVsov);
     matrix_free(&mVsos);
     matrix_free(&mVtens);
-    matrix_free(&tmT);
-    matrix_free(&tmVcoul);
-    matrix_free(&tmVconf);
-    matrix_free(&tmVcont);
-    matrix_free(&tmVsov);
-    matrix_free(&tmVsos);
-    matrix_free(&tmVtens);
     matrix_free(&Hfi);
     matrix_free(&Nfi);
 }
 
 void meson_nrmodel_SHO(const argsInput_t *args_input, const argsNRModel_t *args_model, argsNRModelDy_t *args_dynmc,
-    array_t *e_out, matrix_t *v_out, int v_len)
+    array_t *e_out, matrix_t *v_out, matrix_t *n_out, array_t *rms_out)
 {
     int nmax = args_input->nmax;
     double beta = args_input->beta;
@@ -570,6 +533,7 @@ void meson_nrmodel_SHO(const argsInput_t *args_input, const argsNRModel_t *args_
     matrix_t mVsos = matrix_init(nmax, nmax);
     matrix_t mVtens = matrix_init(nmax, nmax);
     matrix_t Hfi = matrix_init(nmax, nmax);
+    matrix_t Nfi = matrix_init(nmax, nmax);
 
     double s1 = 0.5, s2 = 0.5;
     double S = args_input->S, J = args_input->J;
@@ -597,8 +561,18 @@ void meson_nrmodel_SHO(const argsInput_t *args_input, const argsNRModel_t *args_
             mVsov.value[i][j] = integral_nlr_hamilton(SRnlr, NRVsov, factor_r, &basis[i], &basis[j], &ctx);
             mVsos.value[i][j] = integral_nlr_hamilton(SRnlr, NRVsos, factor_r, &basis[i], &basis[j], &ctx);
             mVtens.value[i][j] = integral_nlr_hamilton(SRnlr, NRVtens, factor_r, &basis[i], &basis[j], &ctx);
+            Nfi.value[i][j] = integral_nlr_overlap(SRnlr, factor_r, &basis[i], &basis[j]);
         }
     }
+
+    matrix_symmetrize(&mT);
+    matrix_symmetrize(&mVcoul);
+    matrix_symmetrize(&mVconf);
+    matrix_symmetrize(&mVcont);
+    matrix_symmetrize(&mVsov);
+    matrix_symmetrize(&mVsos);
+    matrix_symmetrize(&mVtens);
+    matrix_symmetrize(&Nfi);
 
     matrix_sum(&mT, &mVcoul, &Hfi);
     matrix_sum(&Hfi, &mVconf, &Hfi);
@@ -608,10 +582,16 @@ void meson_nrmodel_SHO(const argsInput_t *args_input, const argsNRModel_t *args_
     matrix_sum(&Hfi, &mVtens, &Hfi);
 
 #ifdef LAPACKE
-    lapack_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, v_len);
+    lapack_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, nmax);
 #else
-    eigen_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, v_len);
+    eigen_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, nmax);
 #endif
+
+    if (n_out != NULL) {
+        *n_out = matrix_init(Nfi.row, Nfi.col);
+        matrix_copy(&Nfi, n_out);
+    }
+    meson_write_radius(args_input, basis, nmax, v_out, rms_out);
 
     free(basis);
     matrix_free(&mT);
@@ -622,4 +602,5 @@ void meson_nrmodel_SHO(const argsInput_t *args_input, const argsNRModel_t *args_
     matrix_free(&mVsos);
     matrix_free(&mVtens);
     matrix_free(&Hfi);
+    matrix_free(&Nfi);
 }

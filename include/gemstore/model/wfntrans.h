@@ -16,10 +16,7 @@ double get_normalized_factor(const argsInput_t *input, const double *vector);
 /* Evaluate the overlap-normalized radial wave function at radius r in fm. */
 double get_state_wfn_value(const argsInput_t *input, const double *vector, double normalized, double r);
 
-/* Compute RMS radii for meson eigenvectors in the configured orbital basis. */
-void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t *radius, int len);
-
 /* Compute effective SHO beta values that reproduce the target RMS radii. */
-void effective_beta_sho(const argsInput_t *input, const array_t *radius, array_t *ebeta, int len);
+void get_effective_beta_sho(const argsInput_t *input, const array_t *radius, array_t *ebeta, int len);
 
 #endif

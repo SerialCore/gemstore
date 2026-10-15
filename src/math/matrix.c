@@ -41,6 +41,30 @@ matrix_t matrix_random(int row, int col)
 	return mat;
 }
 
+void matrix_symmetrize(matrix_t *mat)
+{
+	for (int i = 0; i < mat->row; i++) {
+		for (int j = i + 1; j < mat->col; j++) {
+			double s = 0.5 * (mat->value[i][j] + mat->value[j][i]);
+			mat->value[i][j] = s;
+			mat->value[j][i] = s;
+		}
+	}
+}
+
+void matrix_copy(const matrix_t *src, matrix_t *dst)
+{
+	if (dst->row != src->row || dst->col != src->col) {
+		printf("error_matrix_copy: dimension mismatch\n");
+		return;
+	}
+	for (int i = 0; i < dst->row; i++) {
+		for (int j = 0; j < dst->col; j++) {
+			dst->value[i][j] = src->value[i][j];
+		}
+	}
+}
+
 void matrix_inverse(const matrix_t *mat, matrix_t *imat)
 {
 	if (mat->row != mat->col || imat->row != imat->col || mat->row != imat->row) {
@@ -121,89 +145,6 @@ void matrix_inverse(const matrix_t *mat, matrix_t *imat)
     free(aug);
 }
 
-void matrix_inverse_lowertri(const matrix_t *mat, matrix_t *imat)
-{
-	if (mat->row != mat->col || imat->row != imat->col || mat->row != imat->row) {
-		printf("error_matrix_inverse_lowertri: dimension mismatch\n");
-		return;
-	}
-
-    int n = mat->row;
-    double **Linv = (double**)malloc(n * sizeof(double*));
-    for (int i = 0; i < n; i++) Linv[i] = (double*)malloc(n * sizeof(double));
-
-    for (int i = 0; i < n; i++) {
-        /* initialize */
-        for (int j = 0; j < n; j++) Linv[i][j] = 0.0;
-
-		/* diagonal */
-        Linv[i][i] = 1.0 / mat->value[i][i];
-
-		/* lower triangle */
-        for (int j = i - 1; j >= 0; j--) {
-            double sum = 0.0;
-            for (int k = j; k < i; k++)
-                sum += mat->value[i][k] * Linv[k][j];
-            Linv[i][j] = -sum / mat->value[i][i];
-        }
-
-		/* set upper triangle to zero */
-        for (int j = i + 1; j < n; j++)
-            Linv[i][j] = 0.0;
-    }
-
-	/* write back to imat */
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-            imat->value[i][j] = Linv[i][j];
-
-    for (int i = 0; i < n; i++) free(Linv[i]);
-    free(Linv);
-}
-
-void matrix_cholesky_decomp(const matrix_t *matS, matrix_t *matL)
-{
-	if (matS->row != matS->col || matL->row != matL->col || matS->row != matL->row) {
-		printf("error_matrix_cholesky_decomp: dimension mismatch\n");
-		return;
-	}
-
-    int n = matS->row;
-    double **L = (double**)malloc(n * sizeof(double*));
-    for (int i = 0; i < n; i++) L[i] = (double*)malloc(n * sizeof(double));
-
-    for (int i = 0; i < n; i++) {
-		/* lower triangle */
-        for (int j = 0; j < i; j++) {
-            double sum = 0.0;
-            for (int k = 0; k < j; k++)
-                sum += L[i][k] * L[j][k];
-            L[i][j] = (matS->value[i][j] - sum) / L[j][j];
-        }
-		/* diagonal */
-        double sum = 0.0;
-        for (int k = 0; k < i; k++)
-            sum += L[i][k] * L[i][k];
-        if (matS->value[i][i] - sum <= 0.0) {
-            fprintf(stderr, "Cholesky failed at i=%d\n", i);
-            exit(1);
-        }
-        L[i][i] = sqrt(matS->value[i][i] - sum);
-
-		/* set upper triangle to zero */
-        for (int j = i + 1; j < n; j++)
-            L[i][j] = 0.0;
-    }
-
-	/* write back to matL */
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-            matL->value[i][j] = L[i][j];
-
-    for (int i = 0; i < n; i++) free(L[i]);
-    free(L);
-}
-
 void matrix_transpose(const matrix_t *mat, matrix_t *tmat)
 {
 	if (mat->row != tmat->row || mat->col != tmat->col) {
@@ -216,6 +157,86 @@ void matrix_transpose(const matrix_t *mat, matrix_t *tmat)
 			tmat->value[j][i] = mat->value[i][j];
 		}
 	}
+}
+
+double matrix_expect(const matrix_t *vec, int n, const matrix_t *op)
+{
+	double s = 0.0;
+	for (int i = 0; i < vec->col; i++) {
+		for (int j = 0; j < vec->col; j++) {
+			s += vec->value[n][i] * op->value[i][j] * vec->value[n][j];
+		}
+	}
+	return s;
+}
+
+int matrix_orthogonal(const matrix_t *N, double rel_thresh, matrix_t *vt)
+{
+	int n = N->row;
+	matrix_t ncopy = matrix_init(n, n);
+	matrix_copy(N, &ncopy);
+
+	double ntrace = 0.0;
+	for (int i = 0; i < n; i++) {
+		ntrace += N->value[i][i];
+	}
+	double ridge = 1e-12 * (fabs(ntrace) / (n > 0 ? n : 1) + 1.0);
+	for (int i = 0; i < n; i++) {
+		ncopy.value[i][i] += ridge;
+	}
+
+	array_t n_e = array_init(n);
+	matrix_t n_vec = matrix_init(n, n);
+	eigen_standard(ncopy.value, n, n_e.value, n_vec.value, n);
+
+	double n_emax = 0.0;
+	for (int i = 0; i < n; i++) {
+		if (n_e.value[i] > n_emax) {
+			n_emax = n_e.value[i];
+		}
+	}
+	double n_thresh = rel_thresh * (n_emax > 0.0 ? n_emax : 1.0);
+	if (n_thresh < 1e-12) {
+		n_thresh = 1e-12;
+	}
+
+	int nkeep = 0;
+	for (int i = 0; i < n; i++) {
+		if (n_e.value[i] > n_thresh) {
+			nkeep++;
+		}
+	}
+	if (nkeep <= 0) {
+		matrix_free(&ncopy);
+		matrix_free(&n_vec);
+		array_free(&n_e);
+		vt->value = NULL;
+		vt->row = 0;
+		vt->col = 0;
+		return 0;
+	}
+
+	printf("overlap N: rank %d / %d  (drop λ ≤ %.2e, λ_max=%.3e)\n",
+		nkeep, n, n_thresh, n_emax);
+	fflush(stdout);
+
+	*vt = matrix_init(nkeep, n);
+	int row = 0;
+	for (int i = 0; i < n; i++) {
+		if (n_e.value[i] <= n_thresh) {
+			continue;
+		}
+		double scale = 1.0 / sqrt(n_e.value[i]);
+		for (int j = 0; j < n; j++) {
+			vt->value[row][j] = n_vec.value[i][j] * scale;
+		}
+		row++;
+	}
+
+	matrix_free(&ncopy);
+	matrix_free(&n_vec);
+	array_free(&n_e);
+	return nkeep;
 }
 
 void matrix_sum(const matrix_t *matA, const matrix_t *matB, matrix_t *matC)
@@ -268,116 +289,6 @@ void matrix_productT(const matrix_t *matA, const matrix_t *matB, matrix_t *matC)
 			}
 		}
 	}
-}
-
-void matrix_copy(matrix_t *dst, const matrix_t *src)
-{
-	if (dst->row != src->row || dst->col != src->col) {
-		printf("error_matrix_copy: dimension mismatch\n");
-		return;
-	}
-	for (int i = 0; i < dst->row; i++) {
-		for (int j = 0; j < dst->col; j++) {
-			dst->value[i][j] = src->value[i][j];
-		}
-	}
-}
-
-void matrix_symmetrize(matrix_t *mat)
-{
-	for (int i = 0; i < mat->row; i++) {
-		for (int j = i + 1; j < mat->col; j++) {
-			double s = 0.5 * (mat->value[i][j] + mat->value[j][i]);
-			mat->value[i][j] = s;
-			mat->value[j][i] = s;
-		}
-	}
-}
-
-double matrix_expect(const matrix_t *vec, int n, const matrix_t *op)
-{
-	double s = 0.0;
-	for (int i = 0; i < vec->col; i++) {
-		for (int j = 0; j < vec->col; j++) {
-			s += vec->value[n][i] * op->value[i][j] * vec->value[n][j];
-		}
-	}
-	return s;
-}
-
-void matrix_sandwich(matrix_t *v, const matrix_t *p, matrix_t *tmp)
-{
-	matrix_productT(p, v, tmp);
-	matrix_copy(v, tmp);
-}
-
-int matrix_overlap_basis(const matrix_t *N, double rel_thresh, matrix_t *vt)
-{
-	int n = N->row;
-	matrix_t ncopy = matrix_init(n, n);
-	matrix_copy(&ncopy, N);
-
-	double ntrace = 0.0;
-	for (int i = 0; i < n; i++) {
-		ntrace += N->value[i][i];
-	}
-	double ridge = 1e-12 * (fabs(ntrace) / (n > 0 ? n : 1) + 1.0);
-	for (int i = 0; i < n; i++) {
-		ncopy.value[i][i] += ridge;
-	}
-
-	array_t n_e = array_init(n);
-	matrix_t n_vec = matrix_init(n, n);
-	eigen_standard(ncopy.value, n, n_e.value, n_vec.value, n);
-
-	double n_emax = 0.0;
-	for (int i = 0; i < n; i++) {
-		if (n_e.value[i] > n_emax) {
-			n_emax = n_e.value[i];
-		}
-	}
-	double n_thresh = rel_thresh * (n_emax > 0.0 ? n_emax : 1.0);
-	if (n_thresh < 1e-12) {
-		n_thresh = 1e-12;
-	}
-
-	int nkeep = 0;
-	for (int i = 0; i < n; i++) {
-		if (n_e.value[i] > n_thresh) {
-			nkeep++;
-		}
-	}
-	if (nkeep <= 0) {
-		matrix_free(&ncopy);
-		matrix_free(&n_vec);
-		array_free(&n_e);
-		vt->value = NULL;
-		vt->row = 0;
-		vt->col = 0;
-		return 0;
-	}
-
-	printf("  overlap N: rank %d / %d  (drop λ ≤ %.2e, λ_max=%.3e)\n",
-		nkeep, n, n_thresh, n_emax);
-	fflush(stdout);
-
-	*vt = matrix_init(nkeep, n);
-	int row = 0;
-	for (int i = 0; i < n; i++) {
-		if (n_e.value[i] <= n_thresh) {
-			continue;
-		}
-		double scale = 1.0 / sqrt(n_e.value[i]);
-		for (int j = 0; j < n; j++) {
-			vt->value[row][j] = n_vec.value[i][j] * scale;
-		}
-		row++;
-	}
-
-	matrix_free(&ncopy);
-	matrix_free(&n_vec);
-	array_free(&n_e);
-	return nkeep;
 }
 
 void matrix_print(const matrix_t *mat)

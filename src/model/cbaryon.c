@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct {
+typedef struct baryon_gi {
     bases_3b qnlist_spfy;
     bases_3b qnlist_full;
     matrix_t **mlsj;
@@ -65,7 +65,7 @@ typedef struct {
     matrix_t T[3];
     matrix_t rmsr[3];
     matrix_t rmsl[3];
-} baryon_job_t;
+} baryon_gi_t;
 
 static const vtype scdk_vfn[21] = {
     vcent, vcent, vcent,
@@ -97,7 +97,7 @@ static const int scdk_pair[21] = {
     1, 2, 3
 };
 
-static int baryon_collect_mats(baryon_job_t *job, matrix_t **list)
+static int baryon_collect_mats(baryon_gi_t *job, matrix_t **list)
 {
     int n = 0;
     list[n++] = &job->Nfi;
@@ -139,8 +139,8 @@ static void add_sandwiched(matrix_t *H, const matrix_t *vt, const matrix_t *V, c
 {
     matrix_productT(vt, V, tV);
     matrix_productT(vt, P, tP);
-    matrix_sandwich(tV, tP, tmp);
-    matrix_sum(H, tV, H);
+	matrix_productT(tP, tV, tmp);
+    matrix_sum(H, tmp, H);
 }
 
 static void mlsj_push(matrix_t *m, double coe, double ms1, double ms2, double ms3, double mrho, double mlam)
@@ -158,7 +158,7 @@ static void mlsj_push(matrix_t *m, double coe, double ms1, double ms2, double ms
     m->col = 6;
 }
 
-static void baryon_mlsj_jl(baryon_job_t *job)
+static void baryon_mlsj_jl(baryon_gi_t *job)
 {
     bases_3b *qnlist = &job->qnlist_spfy;
 
@@ -212,9 +212,9 @@ static void baryon_mlsj_jl(baryon_job_t *job)
 static void baryon_basis_build(const argsInput_t *input, const argsGIModel_t *model,
     bases_3b *spfy, bases_3b *full)
 {
-    double m1 = getmq(input->f1, model);
-    double m2 = getmq(input->f2, model);
-    double m3 = getmq(input->f3, model);
+    double m1 = getmq_gi(input->f1, model);
+    double m2 = getmq_gi(input->f2, model);
+    double m3 = getmq_gi(input->f3, model);
     double J = input->J;
     int P = input->P;
     int Lmax = input->Lmax;
@@ -292,7 +292,7 @@ static void baryon_basis_build(const argsInput_t *input, const argsGIModel_t *mo
 static void calc_scdk_mt(void *args)
 {
     argsThread_t *mtargs = (argsThread_t *)args;
-    baryon_job_t *job = (baryon_job_t *)mtargs->args;
+    baryon_gi_t *job = (baryon_gi_t *)mtargs->args;
     int ith = mtargs->index;
     int nf = ith / 21;
     int op = ith % 21;
@@ -319,7 +319,7 @@ static double me_add(txrp_vtype kin, sumckdk_scdk scdk, basis_3b qf, basis_3b qi
 static void getmfi(void *args)
 {
     argsThread_t *mtarg = (argsThread_t *)args;
-    baryon_job_t *job = (baryon_job_t *)mtarg->args;
+    baryon_gi_t *job = (baryon_gi_t *)mtarg->args;
     int nf = mtarg->index;
 
     for (int ni = 0; ni < job->qnlist_full.len_list; ni++) {
@@ -434,7 +434,7 @@ void baryon_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args
     array_t *e_out, matrix_t *v_out, matrix_t *n_out,
     array_t *rms12, array_t *rms13, array_t *rms23)
 {
-    baryon_job_t job = {0};
+    baryon_gi_t job = {0};
 
     scdk_vargs_from_model(&job.varg, args_model, args_dynmc->model);
     baryon_basis_build(args_input, args_model, &job.qnlist_spfy, &job.qnlist_full);
@@ -467,7 +467,7 @@ void baryon_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args
     }
 
     matrix_t vt;
-    int nkeep = matrix_overlap_basis(&job.Nfi, 1e-8, &vt);
+    int nkeep = matrix_orthogonal(&job.Nfi, 1e-8, &vt);
     if (nkeep <= 0) {
         fprintf(stderr, "Error: baryon overlap N has no positive eigenvalues.\n");
         exit(1);
@@ -494,30 +494,50 @@ void baryon_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args
     }
 
     *e_out = array_init(nkeep);
-    matrix_t ut = matrix_init(nkeep, nkeep);
-
-#ifdef LAPACKE
-    lapack_standard(Hfi.value, nkeep, e_out->value, ut.value, nkeep);
-#else
-    eigen_standard(Hfi.value, nkeep, e_out->value, ut.value, nkeep);
-#endif
-
-    *v_out = matrix_init(nkeep, nbas);
-    matrix_product(&ut, &vt, v_out);
-
-    *n_out = matrix_init(nbas, nbas);
-    matrix_copy(n_out, &job.Nfi);
-
-    *rms12 = array_init(nkeep);
-    *rms13 = array_init(nkeep);
-    *rms23 = array_init(nkeep);
-    for (int n = 0; n < nkeep; n++) {
-        rms12->value[n] = sqrt(fabs(matrix_expect(v_out, n, &job.rmsr[0]))) / GEMSTORE_FM;
-        rms13->value[n] = sqrt(fabs(matrix_expect(v_out, n, &job.rmsr[1]))) / GEMSTORE_FM;
-        rms23->value[n] = sqrt(fabs(matrix_expect(v_out, n, &job.rmsr[2]))) / GEMSTORE_FM;
+    matrix_t ut = {0};
+    if (v_out != NULL) {
+        ut = matrix_init(nkeep, nkeep);
     }
 
-    if (args_input->print_wfn) {
+#ifdef LAPACKE
+    lapack_standard(Hfi.value, nkeep, e_out->value, (v_out != NULL) ? ut.value : NULL, (v_out != NULL) ? nkeep : 0);
+#else
+    eigen_standard(Hfi.value, nkeep, e_out->value, (v_out != NULL) ? ut.value : NULL, (v_out != NULL) ? nkeep : 0);
+#endif
+
+    if (v_out != NULL) {
+        *v_out = matrix_init(nkeep, nbas);
+        matrix_product(&ut, &vt, v_out);
+        matrix_free(&ut);
+
+        if (rms12 != NULL) {
+            *rms12 = array_init(nkeep);
+        }
+        if (rms13 != NULL) {
+            *rms13 = array_init(nkeep);
+        }
+        if (rms23 != NULL) {
+            *rms23 = array_init(nkeep);
+        }
+        for (int n = 0; n < nkeep; n++) {
+            if (rms12 != NULL) {
+                rms12->value[n] = sqrt(fabs(matrix_expect(v_out, n, &job.rmsr[0]))) / GEMSTORE_FM;
+            }
+            if (rms13 != NULL) {
+                rms13->value[n] = sqrt(fabs(matrix_expect(v_out, n, &job.rmsr[1]))) / GEMSTORE_FM;
+            }
+            if (rms23 != NULL) {
+                rms23->value[n] = sqrt(fabs(matrix_expect(v_out, n, &job.rmsr[2]))) / GEMSTORE_FM;
+            }
+        }
+    }
+
+    if (n_out != NULL) {
+        *n_out = matrix_init(nbas, nbas);
+        matrix_copy(&job.Nfi, n_out);
+    }
+
+    if (v_out != NULL && args_input->print_wfn) {
         char path[280];
         sprintf(path, "%s.basis.dat", args_input->project);
         FILE *bf = fopen(path, "w");
@@ -561,7 +581,6 @@ void baryon_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args
     matrix_free(&tV);
     matrix_free(&tP);
     matrix_free(&vt);
-    matrix_free(&ut);
     matrix_free(&Hfi);
     for (int i = 0; i < nmats; i++) {
         matrix_free(mats[i]);

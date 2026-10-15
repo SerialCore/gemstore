@@ -12,7 +12,7 @@
  *     integral dr r^2 |R(r)|^2 = 1,
  *     <r^2> = integral dr r^4 |R(r)|^2.
  *
- * This means get_normalized_factor() and radius_meson_rms() work with R(r)
+ * This means get_normalized_factor() and the meson RMS output work with R(r)
  * together with the radial measure. The overlap integrals in
  * src/math/integral.c therefore include the extra r^2 factor, and the radius
  * integrals include r^4. This is mathematically equivalent to the reduced
@@ -132,64 +132,7 @@ double get_state_wfn_value(const argsInput_t *input, const double *vector, doubl
     return psi_r * normalized * pow(fm, 1.5);
 }
 
-void radius_meson_rms(const argsInput_t *input, const matrix_t *vector, array_t *radius, int len)
-{
-    if (input == NULL || vector == NULL || radius == NULL) {
-        return;
-    }
-
-    int nmax = input->nmax;
-    int L = (int)input->L;
-    argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
-    if (input->orbit == ORBIT_GEM) {
-        for (int i = 0; i < nmax; i++) {
-            basis[i].n = i + 1;
-            basis[i].l = L;
-            basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
-        }
-    }
-    else if (input->orbit == ORBIT_SHO) {
-        for (int i = 0; i < nmax; i++) {
-            basis[i].n = i;
-            basis[i].l = L;
-            basis[i].scale = input->beta;
-        }
-    }
-
-    matrix_t mR2 = matrix_init(nmax, nmax);
-    for (int i = 0; i < nmax; i++) {
-        for (int j = 0; j < nmax; j++) {
-            if (input->orbit == ORBIT_GEM) {
-                double factor = 1.0 / sqrt(basis[i].scale + basis[j].scale);
-                mR2.value[i][j] = integral_nlr_radius(GRnlr, factor, &basis[i], &basis[j]);
-            }
-            else if (input->orbit == ORBIT_SHO) {
-                double factor = sqrt(2 / (basis[i].scale * basis[i].scale + basis[j].scale * basis[j].scale));
-                mR2.value[i][j] = integral_nlr_radius(SRnlr, factor, &basis[i], &basis[j]);
-            }
-        }
-    }
-
-    double fm = 5.06773093854369882649;
-    for (int n = 0; n < len; n++) {
-        double r2sum = 0.0;
-        double normalized = get_normalized_factor(input, vector->value[n]);
-
-        for (int i = 0; i < nmax; i++) {
-            for (int j = 0; j < nmax; j++) {
-                double coef = vector->value[n][i] * vector->value[n][j];
-                r2sum += coef * mR2.value[i][j];
-            }
-        }
-
-        radius->value[n] = sqrt(r2sum) * normalized / fm;
-    }
-
-    free(basis);
-    matrix_free(&mR2);
-}
-
-void effective_beta_sho(const argsInput_t *input, const array_t *radius, array_t *ebeta, int len)
+void get_effective_beta_sho(const argsInput_t *input, const array_t *radius, array_t *ebeta, int len)
 {
     if (input == NULL || radius == NULL || ebeta == NULL) {
         return;

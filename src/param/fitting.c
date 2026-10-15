@@ -185,10 +185,10 @@ double fit_predict_mass(const argsInput_t *input, const fit_target_t *target,
         dyn.model = one.model;
         dyn.system = one.system;
         if (one.orbit == ORBIT_GEM) {
-            meson_gimodel_GEM(&one, &model, &dyn, &eigenvalue, NULL, 0);
+            meson_gimodel_GEM(&one, &model, &dyn, &eigenvalue, NULL, NULL, NULL);
         }
         else if (one.orbit == ORBIT_SHO) {
-            meson_gimodel_SHO(&one, &model, &dyn, &eigenvalue, NULL, 0);
+            meson_gimodel_SHO(&one, &model, &dyn, &eigenvalue, NULL, NULL, NULL);
         }
         else {
             fprintf(stderr, "FITTING meson supports GEM and SHO\n");
@@ -209,10 +209,10 @@ double fit_predict_mass(const argsInput_t *input, const fit_target_t *target,
         dyn.model = one.model;
         dyn.system = one.system;
         if (one.orbit == ORBIT_GEM) {
-            meson_nrmodel_GEM(&one, &model, &dyn, &eigenvalue, NULL, 0);
+            meson_nrmodel_GEM(&one, &model, &dyn, &eigenvalue, NULL, NULL, NULL);
         }
         else if (one.orbit == ORBIT_SHO) {
-            meson_nrmodel_SHO(&one, &model, &dyn, &eigenvalue, NULL, 0);
+            meson_nrmodel_SHO(&one, &model, &dyn, &eigenvalue, NULL, NULL, NULL);
         }
         else {
             fprintf(stderr, "FITTING meson supports GEM and SHO\n");
@@ -224,6 +224,11 @@ double fit_predict_mass(const argsInput_t *input, const fit_target_t *target,
         exit(1);
     }
 
+    if (state->n > eigenvalue.len) {
+        fprintf(stderr, "State %s radial index N=%d exceeds overlap rank %d\n",
+            state->name != NULL ? state->name : "", state->n, eigenvalue.len);
+        exit(1);
+    }
     mass = eigenvalue.value[state->n - 1];
     array_free(&eigenvalue);
     return mass;
