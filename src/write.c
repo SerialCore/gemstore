@@ -253,8 +253,8 @@ int write_meson_gi_pot(const argsInput_t *input, const argsGIModel_t *args_model
     int f1 = input->f1, f2 = input->f2;
     double s1 = 0.5, s2 = 0.5;
     double S = input->S, L = input->L, J = input->J;
-    double m1 = getmq_gi(f1, args_model);
-    double m2 = getmq_gi(f2, args_model);
+    double m1 = getmq(f1, args_model);
+    double m2 = getmq(f2, args_model);
     double sigmaij = sigma_ij(m1, m2, args_model->sigma_0, args_model->s);
     args_dynmc->mi = m1;
     args_dynmc->mj = m2;
@@ -314,8 +314,8 @@ int write_meson_nr_pot(const argsInput_t *input, const argsNRModel_t *args_model
     int f1 = input->f1, f2 = input->f2;
     double s1 = 0.5, s2 = 0.5;
     double S = input->S, L = input->L, J = input->J;
-    args_dynmc->mi = getmq_nr(f1, args_model);
-    args_dynmc->mj = getmq_nr(f2, args_model);
+    args_dynmc->mi = getmq(f1, args_model);
+    args_dynmc->mj = getmq(f2, args_model);
     args_dynmc->Cij = -4.0 / 3.0;
     args_dynmc->OCent = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
     args_dynmc->OSdS = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
@@ -392,8 +392,8 @@ int write_baryon_gi_pot(const argsInput_t *input, const argsGIModel_t *args_mode
         double Vpair[3];
         int flav[3][2] = {{input->f1, input->f2}, {input->f3, input->f1}, {input->f2, input->f3}};
         for (int p = 0; p < 3; p++) {
-            double mi = getmq_gi(flav[p][0], args_model);
-            double mj = getmq_gi(flav[p][1], args_model);
+            double mi = getmq(flav[p][0], args_model);
+            double mj = getmq(flav[p][1], args_model);
             args_dynmc->mi = mi;
             args_dynmc->mj = mj;
             args_dynmc->Sigij = sigma_ij(mi, mj, args_model->sigma_0, args_model->s);

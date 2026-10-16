@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#ifndef GEMSTORE_MODEL_MITBAG
-#define GEMSTORE_MODEL_MITBAG
+#ifndef GEMSTORE_MODEL_BAGMODEL
+#define GEMSTORE_MODEL_BAGMODEL
 
 
 

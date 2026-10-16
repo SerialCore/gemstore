@@ -16,6 +16,13 @@ typedef struct argsOrbit {
     double param;           /* additional parameter */
 } argsOrbit_t;
 
+typedef struct argsModel {
+    double mn;              /* mass of n quark */
+    double ms;              /* mass of s quark */
+    double mc;              /* mass of c quark */
+    double mb;              /* mass of b quark */
+} argsModel_t;
+
 typedef struct argsGIModel {
     double mn;              /* mass of n quark */
     double ms;              /* mass of s quark */
@@ -71,6 +78,20 @@ typedef struct argsNRModelDy {
     double OLSj;            /* operator value of orbit-spinj coupling */
     double OTens;           /* operator value of tensor potential */
 } argsNRModelDy_t;
+
+typedef struct argsBAGModel {
+    double mn;              /* mass of n quark */
+    double ms;              /* mass of s quark */
+    double mc;              /* mass of c quark */
+    double mb;              /* mass of b quark */
+    double Bcs;             /* binding energy c-s */
+    double Bbs;             /* binding energy b-s */
+    double Bcc;             /* binding energy c-c */
+    double Bbc;             /* binding energy b-c */
+    double Bbb;             /* binding energy b-b */
+    double B;               /* bag constant */
+    double Z;               /* ZPE constant */
+} argsBAGModel_t;
 
 typedef struct argsInput {
     task_type_t task;
@@ -131,33 +152,29 @@ extern const argsNRModel_t argsNRString_meson;
 /* Default heavy meson parameters for model NRScreen */
 extern const argsNRModel_t argsNRScreen_meson;
 
+/* Default MIT bag model parameters */
+extern const argsBAGModel_t argsBAGMIT_default;
+
 /* Get GI model parameters from input */
 argsGIModel_t argsGIModel_from(const argsInput_t *input);
 
 /* Get NR model parameters from input */
 argsNRModel_t argsNRModel_from(const argsInput_t *input);
 
-/* Get quark mass from GI model */
-static inline double getmq_gi(int index, const argsGIModel_t *args_model)
-{
-    switch (index) {
-        case 1: return args_model->mn;
-        case 2: return args_model->ms;
-        case 3: return args_model->mc;
-        case 4: return args_model->mb;
-        default: return args_model->mn;
-    }
-}
+/* Get MIT bag model parameters from input */
+argsBAGModel_t argsBAGModel_from(const argsInput_t *input);
 
-/* Get quark mass from NR model */
-static inline double getmq_nr(int index, const argsNRModel_t *args_model)
+/* Get quark mass from any model */
+static inline double getmq(int index, const void *args_model)
 {
+    argsModel_t *args = (argsModel_t *)args_model;
     switch (index) {
-        case 1: return args_model->mn;
-        case 2: return args_model->ms;
-        case 3: return args_model->mc;
-        case 4: return args_model->mb;
-        default: return args_model->mn;
+        case 0: return 0.0;
+        case 1: return args->mn;
+        case 2: return args->ms;
+        case 3: return args->mc;
+        case 4: return args->mb;
+        default: return 0.0;
     }
 }
 

@@ -4,5 +4,5 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <gemstore/model/mitbag.h>
+#include <gemstore/model/bagmodel.h>
 

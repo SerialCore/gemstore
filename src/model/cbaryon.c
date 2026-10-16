@@ -212,9 +212,9 @@ static void baryon_mlsj_jl(baryon_gi_t *job)
 static void baryon_basis_build(const argsInput_t *input, const argsGIModel_t *model,
     bases_3b *spfy, bases_3b *full)
 {
-    double m1 = getmq_gi(input->f1, model);
-    double m2 = getmq_gi(input->f2, model);
-    double m3 = getmq_gi(input->f3, model);
+    double m1 = getmq(input->f1, model);
+    double m2 = getmq(input->f2, model);
+    double m3 = getmq(input->f3, model);
     double J = input->J;
     int P = input->P;
     int Lmax = input->Lmax;

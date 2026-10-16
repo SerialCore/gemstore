@@ -18,10 +18,12 @@ const char *model_type_str[] = {
     "GISTRING",
     "GISCREEN",
     "NRSTRING",
-    "NRSCREEN"
+    "NRSCREEN",
+    "BAGMIT"
 };
 
 const char *system_type_str[] = {
+    "BAG",
     "MESON",
     "BARYON",
     "MOLECULE"
@@ -56,5 +58,7 @@ const char *param_type_str[] = {
     "NRSTRING_MESON",
     "NRSCREEN_MESON",
     "NRSTRING_CUSTOM",
-    "NRSCREEN_CUSTOM"
+    "NRSCREEN_CUSTOM",
+    "BAGMIT_DEFAULT",
+    "BAGMIT_CUSTOM",
 };

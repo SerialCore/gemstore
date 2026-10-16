@@ -127,6 +127,7 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
     else if (strcmp(type, "GISCREEN") == 0) input->model = MODEL_GISCREEN;
     else if (strcmp(type, "NRSTRING") == 0) input->model = MODEL_NRSTRING;
     else if (strcmp(type, "NRSCREEN") == 0) input->model = MODEL_NRSCREEN;
+    else if (strcmp(type, "BAGMIT") == 0) input->model = MODEL_BAGMIT;
     else {
         fprintf(stderr, "Unknown model type: %s\n", type);
         exit(1);
@@ -147,8 +148,7 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
             exit(1);
         }
     }
-
-    if (input->model == MODEL_GISCREEN) {
+    else if (input->model == MODEL_GISCREEN) {
         if (strcmp(param, "GISCREEN_MESON") == 0) input->param = PARAM_GISCREEN_MESON;
         else if (strcmp(param, "GISCREEN_BBBAR") == 0) input->param = PARAM_GISCREEN_BBBAR;
         else if (strcmp(param, "GISCREEN_BCBAR") == 0) input->param = PARAM_GISCREEN_BCBAR;
@@ -161,8 +161,7 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
             exit(1);
         }
     }
-
-    if (input->model == MODEL_NRSTRING) {
+    else if (input->model == MODEL_NRSTRING) {
         if (strcmp(param, "NRSTRING_MESON") == 0) input->param = PARAM_NRSTRING_MESON;
         else if (strcmp(param, "NRSTRING_CUSTOM") == 0) input->param = PARAM_NRSTRING_CUSTOM;
         else {
@@ -170,8 +169,7 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
             exit(1);
         }
     }
-
-    if (input->model == MODEL_NRSCREEN) {
+    else if (input->model == MODEL_NRSCREEN) {
         if (strcmp(param, "NRSCREEN_MESON") == 0) input->param = PARAM_NRSCREEN_MESON;
         else if (strcmp(param, "NRSCREEN_CUSTOM") == 0) input->param = PARAM_NRSCREEN_CUSTOM;
         else {
@@ -179,9 +177,18 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
             exit(1);
         }
     }
+    else if (input->model == MODEL_BAGMIT) {
+        if (strcmp(param, "BAGMIT_DEFAULT") == 0) input->param = PARAM_BAGMIT_DEFAULT;
+        else if (strcmp(param, "BAGMIT_CUSTOM") == 0) input->param = PARAM_BAGMIT_CUSTOM;
+        else {
+            fprintf(stderr, "Unknown BAGMIT parameter set: %s\n", param);
+            exit(1);
+        }
+    }
 
     if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
-        || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM) {
+        || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
+        || input->param == PARAM_BAGMIT_CUSTOM) {
         const char *file = read_string_item(model_json, "file")->valuestring;
         if (strlen(file) > 0) {
             strncpy(input->param_file, file, 256);
@@ -199,7 +206,8 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
     cJSON *system_json = read_object_item(root, "system");
     const char *type = read_string_item(system_json, "type")->valuestring;
 
-    if (strcmp(type, "MESON") == 0) input->system = SYSTEM_MESON;
+    if (strcmp(type, "BAG") == 0) input->system = SYSTEM_BAG;
+    else if (strcmp(type, "MESON") == 0) input->system = SYSTEM_MESON;
     else if (strcmp(type, "BARYON") == 0) input->system = SYSTEM_BARYON;
     else {
         fprintf(stderr, "Unsupported system type: %s\n", type);
@@ -210,7 +218,10 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
         return;
     }
 
-    if (input->system == SYSTEM_MESON) {
+    if (input->system == SYSTEM_BAG) {
+        ;
+    }
+    else if (input->system == SYSTEM_MESON) {
         input->f1 = read_number_item(system_json, "f1")->valueint;
         input->f2 = read_number_item(system_json, "f2")->valueint;
         input->S = read_number_item(system_json, "S")->valuedouble;
@@ -236,6 +247,7 @@ static void parse_basis_section(const cJSON *root, argsInput_t *input)
 
     if (strcmp(type, "GEM") == 0) input->orbit = ORBIT_GEM;
     else if (strcmp(type, "SHO") == 0) input->orbit = ORBIT_SHO;
+    else if (strcmp(type, "NONE") == 0) input->orbit = ORBIT_NONE;
     else {
         fprintf(stderr, "Unknown basis type: %s\n", type);
         exit(1);
@@ -246,8 +258,7 @@ static void parse_basis_section(const cJSON *root, argsInput_t *input)
         input->rmax = read_number_item(basis_json, "rmax")->valuedouble;
         input->rmin = read_number_item(basis_json, "rmin")->valuedouble;
     }
-
-    if (input->orbit == ORBIT_SHO) {
+    else if (input->orbit == ORBIT_SHO) {
         input->nmax = read_number_item(basis_json, "nmax")->valueint;
         input->beta = read_number_item(basis_json, "beta")->valuedouble;
     }
@@ -438,6 +449,39 @@ void parse_param_NRSCREEN(const char *filename, argsNRModel_t *args_model)
     args_model->c = read_number_item(param_json, "c")->valuedouble;
     args_model->alpha_s = read_number_item(param_json, "alpha_s")->valuedouble;
     args_model->sigma = read_number_item(param_json, "sigma")->valuedouble;
+
+    cJSON_Delete(root);
+    free(json_text);
+}
+
+void parse_param_BAGMIT(const char *filename, argsBAGModel_t *args_model)
+{
+    char *json_text = read_input_file(filename);
+    const char *parse_error = NULL;
+    cJSON *root = cJSON_Parse(json_text);
+    cJSON *param_json;
+
+    if (!root) {
+        parse_error = cJSON_GetErrorPtr();
+        fprintf(stderr, "Invalid MITBAG parameter JSON in %s", filename);
+        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
+        fprintf(stderr, "\n");
+        free(json_text);
+        exit(1);
+    }
+
+    param_json = read_object_item(root, "param");
+    args_model->mn = read_number_item(param_json, "mn")->valuedouble;
+    args_model->ms = read_number_item(param_json, "ms")->valuedouble;
+    args_model->mc = read_number_item(param_json, "mc")->valuedouble;
+    args_model->mb = read_number_item(param_json, "mb")->valuedouble;
+    args_model->Bcs = read_number_item(param_json, "Bcs")->valuedouble;
+    args_model->Bbs = read_number_item(param_json, "Bbs")->valuedouble;
+    args_model->Bcc = read_number_item(param_json, "Bcc")->valuedouble;
+    args_model->Bbc = read_number_item(param_json, "Bbc")->valuedouble;
+    args_model->Bbb = read_number_item(param_json, "Bbb")->valuedouble;
+    args_model->B = read_number_item(param_json, "B")->valuedouble;
+    args_model->Z = read_number_item(param_json, "Z")->valuedouble;
 
     cJSON_Delete(root);
     free(json_text);

@@ -158,6 +158,20 @@ const argsNRModel_t argsNRScreen_meson = {
     .sigma = 1.842
 };
 
+const argsBAGModel_t argsBAGMIT_default = {
+    .mn = 0.000,
+    .ms = 0.279,
+    .mc = 1.641,
+    .mb = 5.093,
+    .Bcs = -0.0246,
+    .Bbs = -0.0319,
+    .Bcc = -0.0772,
+    .Bbc = -0.1013,
+    .Bbb = -0.1279,
+    .B = 0.000442051,
+    .Z = 1.83
+};
+
 argsGIModel_t argsGIModel_from(const argsInput_t *input)
 {
     argsGIModel_t args_model = {0};
@@ -195,3 +209,16 @@ argsNRModel_t argsNRModel_from(const argsInput_t *input)
 
     return args_model;
 }
+
+argsBAGModel_t argsBAGModel_from(const argsInput_t *input)
+{
+    argsBAGModel_t args_model = {0};
+
+    if (input->param == PARAM_BAGMIT_DEFAULT) args_model = argsBAGMIT_default;
+    else if (input->param == PARAM_BAGMIT_CUSTOM) {
+        parse_param_BAGMIT(input->param_file, &args_model);
+    }
+
+    return args_model;
+}
+

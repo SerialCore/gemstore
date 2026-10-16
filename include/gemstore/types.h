@@ -23,13 +23,15 @@ typedef enum model_type {
     MODEL_GISTRING,
     MODEL_GISCREEN,
     MODEL_NRSTRING,
-    MODEL_NRSCREEN
+    MODEL_NRSCREEN,
+    MODEL_BAGMIT
 } model_type_t;
 
 extern const char *model_type_str[];
 
 /* used for determining potential and dispatching computing task */
 typedef enum system_type {
+    SYSTEM_BAG,
     SYSTEM_MESON,
     SYSTEM_BARYON,
     SYSTEM_MOLECULE
@@ -73,7 +75,9 @@ typedef enum param_type {
     PARAM_NRSTRING_MESON,
     PARAM_NRSCREEN_MESON,
     PARAM_NRSTRING_CUSTOM,
-    PARAM_NRSCREEN_CUSTOM
+    PARAM_NRSCREEN_CUSTOM,
+    PARAM_BAGMIT_DEFAULT,
+    PARAM_BAGMIT_CUSTOM,
 } param_type_t;
 
 extern const char *param_type_str[];

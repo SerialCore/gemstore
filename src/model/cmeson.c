@@ -109,8 +109,8 @@ void meson_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args_
     double factor_r;
     double factor_p;
     double s1 = 0.5, s2 = 0.5;
-    double m1 = getmq_gi(f1, args_model);
-    double m2 = getmq_gi(f2, args_model);
+    double m1 = getmq(f1, args_model);
+    double m2 = getmq(f2, args_model);
     double C12 = -4.0 / 3.0;
     double sigmaij = sigma_ij(m1, m2, args_model->sigma_0, args_model->s);
     args_dynmc->mi = m1;
@@ -300,8 +300,8 @@ void meson_gimodel_SHO(const argsInput_t *args_input, const argsGIModel_t *args_
     double factor_r;
     double factor_p;
     double s1 = 0.5, s2 = 0.5;
-    double m1 = getmq_gi(f1, args_model);
-    double m2 = getmq_gi(f2, args_model);
+    double m1 = getmq(f1, args_model);
+    double m2 = getmq(f2, args_model);
     double C12 = -4.0 / 3.0;
     double sigmaij = sigma_ij(m1, m2, args_model->sigma_0, args_model->s);
     args_dynmc->mi = m1;
@@ -443,8 +443,8 @@ void meson_nrmodel_GEM(const argsInput_t *args_input, const argsNRModel_t *args_
 
     double s1 = 0.5, s2 = 0.5;
     double S = args_input->S, J = args_input->J;
-    args_dynmc->mi = getmq_nr(f1, args_model);
-    args_dynmc->mj = getmq_nr(f2, args_model);
+    args_dynmc->mi = getmq(f1, args_model);
+    args_dynmc->mj = getmq(f2, args_model);
     args_dynmc->Cij = -4.0 / 3.0;
     args_dynmc->OCent = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
     args_dynmc->OSdS = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
@@ -537,8 +537,8 @@ void meson_nrmodel_SHO(const argsInput_t *args_input, const argsNRModel_t *args_
 
     double s1 = 0.5, s2 = 0.5;
     double S = args_input->S, J = args_input->J;
-    args_dynmc->mi = getmq_nr(f1, args_model);
-    args_dynmc->mj = getmq_nr(f2, args_model);
+    args_dynmc->mi = getmq(f1, args_model);
+    args_dynmc->mj = getmq(f2, args_model);
     args_dynmc->Cij = -4.0 / 3.0;
     args_dynmc->OCent = operator_center_sl(s1, s2, S, L, s1, s2, S, L, J);
     args_dynmc->OSdS = operator_sdots_sl(s1, s2, S, L, s1, s2, S, L, J);
