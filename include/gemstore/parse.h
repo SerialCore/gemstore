@@ -7,7 +7,7 @@
 #ifndef GEMSTORE_PARSE
 #define GEMSTORE_PARSE
 
-#include <gemstore/math/matrix.h>
+#include <gemstore/input.h>
 #include <gemstore/param/argset.h>
 
 /* parse input file */
@@ -27,8 +27,5 @@ void parse_param_NRSCREEN(const char *filename, argsNRModel_t *args_model);
 
 /* parse MITBAG parameters */
 void parse_param_BAGMIT(const char *filename, argsBAGModel_t *args_model);
-
-/* parse meson state file (mass, rms_radius, eigenvector) */
-void parse_meson_state(const char *filename, array_t *mass, array_t *radius, matrix_t *eigenvector);
 
 #endif

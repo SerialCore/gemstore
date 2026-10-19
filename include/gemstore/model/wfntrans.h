@@ -7,8 +7,8 @@
 #ifndef GEMSTORE_MODEL_WFNTRANS
 #define GEMSTORE_MODEL_WFNTRANS
 
+#include <gemstore/input.h>
 #include <gemstore/math/matrix.h>
-#include <gemstore/param/argset.h>
 
 /* Get the normalization factor for a given state vector. */
 double get_normalized_factor(const argsInput_t *input, const double *vector);

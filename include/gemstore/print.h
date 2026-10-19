@@ -7,8 +7,9 @@
 #ifndef GEMSTORE_PRINT
 #define GEMSTORE_PRINT
 
+#include <gemstore/input.h>
 #include <gemstore/math/matrix.h>
-#include <gemstore/param/argset.h>
+#include <gemstore/model/bagmodel.h>
 
 /* Print the GEMSTORE logo */
 void print_logo();
@@ -29,5 +30,8 @@ void print_meson_spectra(const array_t *eigenvalue, const matrix_t *eigenvector,
 /* Print baryon spectra with overlap-metric normalization checks and pair RMS */
 void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, const matrix_t *overlap,
     const array_t *rms12, const array_t *rms13, const array_t *rms23, int len);
+
+/* Print one variational bag result per color-spin state. order is NULL without CMI. */
+void print_bag_spectra(const bag_mit_t *state, int nstate, const char *order);
 
 #endif

@@ -1,13 +1,13 @@
 ---
 name: gemstore-assistant
-description: Expert agent for running hadron spectroscopy simulations using the gemstore program. Handles JSON input generation for the current parser, meson and baryon spectra runs, built-in meson parameter fits, basis selection, preset or custom parameter-file GI models, potential/wavefunction output control, and structured JSON + text outputs.
+description: Expert agent for running hadron spectroscopy simulations using the gemstore program. Handles JSON input generation for the current parser, meson and baryon GEM/SHO spectra, MIT bag spectra (BAG + BAGMIT with NONE or CMI), built-in meson parameter fits, basis selection, preset or custom parameter-file models, potential/wavefunction output control, and structured JSON + text outputs.
 license: MIT
 compatibility: opencode
 metadata:
   audience: researchers, hadron physicists, computational particle physics
   domain: hadron spectroscopy, quark models, Gaussian expansion method
   tools: bash, file operations, subprocess execution
-  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, GISTRING_BARYON, NRSTRING, NRSCREEN, meson spectra, baryon spectra, FITTING, fit.target, GISCREEN_CCBAR, charmonium, bottomonium, GEM, SHO, custom parameter file, print section, potential output, wavefunction output
+  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, GISTRING_BARYON, NRSTRING, NRSCREEN, BAGMIT, BAG, CMI, NONE, MIT bag, tetraquark, pentaquark, hexaquark, meson spectra, baryon spectra, FITTING, fit.target, GISCREEN_CCBAR, charmonium, bottomonium, GEM, SHO, custom parameter file, print section, potential output, wavefunction output
 ---
 
 # Gemstore Hadron Spectra Skill
@@ -59,8 +59,9 @@ The state list and the parameter starts live in `src/param/f*.c`. Do not put exp
 
 - `MESON`
 - `BARYON`
+- `BAG`
 
-Baryon `SPECTRA` accepts `GISTRING` and `GISCREEN` with basis `GEM`. `NRSTRING` and `NRSCREEN` baryon spectra are not implemented. `SHO` is meson-only.
+Baryon `SPECTRA` accepts `GISTRING` and `GISCREEN` with basis `GEM`. `NRSTRING` and `NRSCREEN` baryon spectra are not implemented. `SHO` is meson-only. Bag `SPECTRA` uses `BAGMIT` with basis `NONE` or `CMI`. Use `templates/bag_spectra_template.md`.
 
 ### Models
 
@@ -68,6 +69,7 @@ Baryon `SPECTRA` accepts `GISTRING` and `GISCREEN` with basis `GEM`. `NRSTRING` 
 - `GISCREEN`
 - `NRSTRING` — non-relativistic Cornell model, linear confinement
 - `NRSCREEN` — non-relativistic Cornell model, screened confinement
+- `BAGMIT` — MIT bag, for `system.type` `BAG` only
 
 Use `model.param` for presets:
 
@@ -85,6 +87,8 @@ Use `model.param` for presets:
 - `NRSTRING_CUSTOM`
 - `NRSCREEN_MESON`
 - `NRSCREEN_CUSTOM`
+- `BAGMIT_DEFAULT`
+- `BAGMIT_CUSTOM`
 
 For custom parameter sets, the model object must also include:
 
@@ -96,6 +100,8 @@ For custom parameter sets, the model object must also include:
 - `alpha_s` — constant strong coupling
 - `sigma` — contact smearing (GeV)
 - `mu` — screening mass (GeV). Required for `NRSCREEN`. `NRSTRING` does not read `mu`; confinement stays linear.
+
+`BAGMIT_CUSTOM` fields are listed in `templates/bag_spectra_template.md`.
 
 Examples:
 
@@ -119,11 +125,15 @@ Examples:
 
 - `GEM`
 - `SHO`
+- `CMI` — bag color–spin space
+- `NONE` — bag energy without CMI
 
 Basis-specific required parameters:
 
 - `GEM`: `nmax`, `rmax`, `rmin`
 - `SHO`: `nmax`, `beta`
+- `CMI`: `color` array and `spin` array (see `templates/bag_spectra_template.md`)
+- `NONE`: no extra fields
 
 ### Print Control
 
@@ -168,6 +178,12 @@ Prefer `GISTRING_BARYON` for the smeared linear GI set in `recycle/debug.h`. `GI
 
 `<project>.state.json` states have `mass`, `rms_r12`, `rms_r13`, `rms_r23`, and `eigenvector`. With `"print":{"wfn":"true"}` the program writes `<project>.basis.dat` and coefficient files `<project>.wfn.N.dat`. `"print":{"pot":"true"}` writes `<project>.pot.dat`.
 
+### Bag Quantum Numbers
+
+Inside `system` provide `nn`, `ns`, `nc`, `nb`. For `CMI` also provide `f1`–`f6` as needed so the ordered flavors match those counts. Use `templates/bag_spectra_template.md`. Examples live in `test/Spectra-Bag/`.
+
+`<project>.state.json` has `configuration` and `states` with `mass`, `R`, `x`, and color–spin `eigenvector` components. Bag runs do not write `.pot.dat` or `.wfn.N.dat`.
+
 ## Available gemstore CLI
 
 ```bash
@@ -179,7 +195,7 @@ Use `--compute <file.json>` for spectroscopy and for `FITTING`.
 ## Input Generation Rules
 
 - Always generate `.json` input files for normal runs.
-- Use `templates/meson_spectra_template.md` for meson spectra, `templates/meson_fitting_template.md` for meson fits, and `templates/baryon_spectra_template.md` for baryons.
+- Use `templates/meson_spectra_template.md` for meson spectra, `templates/meson_fitting_template.md` for meson fits, `templates/baryon_spectra_template.md` for baryons, and `templates/bag_spectra_template.md` for MIT bag spectra.
 - Use `scripts/generate_meson_inputs.py` only as a helper for meson JSON inputs.
 - Use `scripts/parse_meson_output.py` to parse and summarize gemstore JSON output files when helpful.
 - Do not generate the old `.inp` section-based format unless the user explicitly asks for historical compatibility.
@@ -222,9 +238,9 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 
 ### Understand the request
 
-- Identify meson or baryon, and the flavor content.
+- Identify meson, baryon, or bag, and the flavor content.
 - If the user asks to fit, set `task` to `FITTING` and choose `fit.target` from the six `GISCREEN_*` names. Do not ask the user for a mass table.
-- For a meson spectrum extract `S`, `L`, `J`. For a baryon extract `J`, `P`, `sym12`, `Lmax`, and `jl` if the user fixes it.
+- For a meson spectrum extract `S`, `L`, `J`. For a baryon extract `J`, `P`, `sym12`, `Lmax`, and `jl` if the user fixes it. For a bag extract `nn,ns,nc,nb`, `NONE` versus `CMI`, and the full color and spin lists when mixing.
 - Detect task type.
 - Detect requested model. For a fit, take the model from `fit.target`.
 - Detect requested basis and any basis-specific parameters.
@@ -233,7 +249,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 
 - Build a JSON input file.
 - For heavy quarkonia prefer `GISCREEN_CCBAR` or `GISCREEN_BBBAR` when appropriate.
-- Use `GISTRING_CUSTOM`, `GISCREEN_CUSTOM`, `NRSTRING_CUSTOM`, or `NRSCREEN_CUSTOM` only when the user explicitly has external parameter files.
+- Use `GISTRING_CUSTOM`, `GISCREEN_CUSTOM`, `NRSTRING_CUSTOM`, `NRSCREEN_CUSTOM`, or `BAGMIT_CUSTOM` only when the user explicitly has external parameter files.
 - For spectra runs, use a dedicated run directory and keep user files untouched unless they explicitly ask you to edit them.
 
 ### Execute safely
@@ -246,7 +262,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 
 - For `SPECTRA`, read `<project>.state.json`. For `FITTING`, read `<project>.fit.json` and report `chi2`, `valid`, `edm`, and the floated parameters.
 - Check for new text outputs: `<project>.pot.dat` (potential) and `<project>.wfn.N.dat` (wavefunctions per state) when `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set.
-- Summarize masses, RMS radii, and (if requested) potential/wavefunction file locations.
+- Summarize masses, RMS radii, and (if requested) potential/wavefunction file locations. For bag, report `st`, mass, \(R\), and the leading color–spin components.
 - Report eigenvectors when relevant.
 - Mention parse or validation errors with the exact offending field if gemstore rejects the input.
 
@@ -255,8 +271,9 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - Confirm parameters before large systematic runs.
 - Use the `"print"` section to control output of potential (`.pot.dat`) and wavefunction (`.wfn.N.dat`) files.
 - Prefer `GEM` unless the user explicitly asks for `SHO`.
-- Use exact parser spellings: `MESON`, `BARYON`, `GISCREEN`, `GISTRING`, `GISTRING_BARYON`, `NRSTRING`, `NRSCREEN`, `NRSTRING_MESON`, `NRSCREEN_MESON`, `GISCREEN_CCBAR`, etc.
+- Use exact parser spellings: `MESON`, `BARYON`, `BAG`, `GISCREEN`, `GISTRING`, `GISTRING_BARYON`, `NRSTRING`, `NRSCREEN`, `BAGMIT`, `BAGMIT_DEFAULT`, `CMI`, `NONE`, `NRSTRING_MESON`, `NRSCREEN_MESON`, `GISCREEN_CCBAR`, etc.
 - Baryon spectra stay on `GEM`. Do not emit `SHO` or an NR model for a baryon.
+- Bag spectra use `system` `BAG` and `model` `BAGMIT`. List a complete CMI color and spin set for each `st` that should mix.
 - Remember that `model.param` is the parameter-set key for `SPECTRA`.
 - For `*_CUSTOM`, always include `model.file`.
 - For `FITTING`, `fit.target` is the dataset key and `model` has no `param`.
@@ -268,5 +285,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - "Compute charmonium with SHO basis, nmax = 16, beta = 0.8, and do not print potential"
 - "Calculate the nnc 1/2+ baryon with GISTRING_BARYON, GEM, nmax = 6"
 - "Fit GISCREEN_CSBAR with GEM, nmax 20, rmax 30, rmin 0.1"
+- "MIT bag mass for nnn with no CMI"
+- "Bag tetraquark ccnn with tetra11 and tetra88, complete spin set in st = 0, 1, 2"
 
 When this skill is triggered, generate the exact JSON input, run `gemstore --compute <file>`, and report the resulting physics output cleanly, mentioning any generated `.pot.dat` or `.wfn.N.dat` files.

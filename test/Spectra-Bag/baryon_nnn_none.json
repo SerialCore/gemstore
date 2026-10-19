@@ -1,0 +1,22 @@
+{
+  "project": "baryon_nnn_none",
+  "task": "SPECTRA",
+  "model": {
+    "type": "BAGMIT",
+    "param": "BAGMIT_DEFAULT"
+  },
+  "system": {
+    "type": "BAG",
+    "nn": 3,
+    "ns": 0,
+    "nc": 0,
+    "nb": 0
+  },
+  "basis": {
+    "type": "NONE"
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
+  }
+}

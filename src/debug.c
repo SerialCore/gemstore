@@ -6,7 +6,6 @@
 
 #include <gemstore/debug.h>
 
-#include <gemstore/basis/basis.h>
 #include <gemstore/basis/intrin.h>
 #include <gemstore/basis/color.h>
 #include <gemstore/basis/spin.h>
@@ -23,9 +22,7 @@
 #include <gemstore/math/su3.h>
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
-#include <time.h>
 
 void debug_su3_product()
 {
@@ -121,8 +118,8 @@ void debug_casimir_operator()
     swv[3] = spin_wfn_tetra(1, 0, 1, 1);
     swv[4] = spin_wfn_tetra(0, 1, 1, 1);
     swv[5] = spin_wfn_tetra(0, 0, 0, 0);
-    cwv[0] = color_wfn_tetra6();
-    cwv[1] = color_wfn_tetra3();
+    cwv[0] = color_wfn_tetra66();
+    cwv[1] = color_wfn_tetra33();
 
     operator_sigma2(swv, 6, &sfac);
     operator_lambda2(cwv, 2, "qqQQ", &cfac);
@@ -149,11 +146,11 @@ void debug_color_wfn()
 {
     intrin_wfn_t wf, ref_wf;
 
-    wf = color_wfn_tetra1();
+    wf = color_wfn_tetra11();
     printf("ColorWFTetra1:\n");
     intrin_wfn_print(&wf);
 
-    ref_wf = color_wfn_tetra8();
+    ref_wf = color_wfn_tetra88();
     printf("\nColorWFTetra8:\n");
     intrin_wfn_print(&ref_wf);
 

@@ -7,8 +7,9 @@
 #ifndef GEMSTORE_MODEL_COMPUTE
 #define GEMSTORE_MODEL_COMPUTE
 
-#include <gemstore/param/argset.h>
+#include <gemstore/input.h>
 
+void compute_spectra_bag(const argsInput_t *input);
 void compute_spectra_meson(const argsInput_t *input);
 void compute_spectra_baryon(const argsInput_t *input);
 

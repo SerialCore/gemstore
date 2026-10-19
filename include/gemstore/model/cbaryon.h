@@ -7,8 +7,9 @@
 #ifndef GEMSTORE_MODEL_CBARYON
 #define GEMSTORE_MODEL_CBARYON
 
-#include <gemstore/param/argset.h>
+#include <gemstore/input.h>
 #include <gemstore/math/matrix.h>
+#include <gemstore/param/argset.h>
 
 /* Baryon SPECTRA on the three Jacobi GEM frames (c=1,2,3).
  * SCDK maps a bra/ket written in any frame onto the pair that a

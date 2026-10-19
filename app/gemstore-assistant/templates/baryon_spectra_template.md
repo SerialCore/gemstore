@@ -1,6 +1,6 @@
 # Gemstore Baryon Spectra JSON Template
 
-Matches `src/parse.c`. Baryon `SPECTRA` uses `GEM` with `GISTRING` or `GISCREEN`.
+Matches `src/parse.c`. Baryon `SPECTRA` uses `GEM` with `GISTRING` or `GISCREEN`. MIT bag baryons use `templates/bag_spectra_template.md`.
 
 ```json
 {

@@ -5,6 +5,7 @@
  */
 
 #include <gemstore/model/compute.h>
+#include <gemstore/model/bagmodel.h>
 #include <gemstore/model/cmeson.h>
 #include <gemstore/model/cbaryon.h>
 
@@ -13,13 +14,26 @@
 
 #include <gemstore/param/argset.h>
 
+#include <gemstore/input.h>
 #include <gemstore/types.h>
-#include <gemstore/parse.h>
 #include <gemstore/print.h>
 #include <gemstore/write.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+
+void compute_spectra_bag(const argsInput_t *input)
+{
+    argsBAGModel_t param;
+    bag_mit_t state[CMI_COLOR_MAX * CMI_SPIN_MAX];
+    char order[7] = {0};
+    int nstate = 0;
+
+    param = argsBAGModel_from(input);
+    bag_compute(input, &param, state, &nstate, order);
+    print_bag_spectra(state, nstate, order[0] ? order : NULL);
+    write_bag_spectra(input, state, nstate, order[0] ? order : NULL);
+}
 
 void compute_spectra_meson(const argsInput_t *input)
 {
@@ -36,10 +50,10 @@ void compute_spectra_meson(const argsInput_t *input)
         args_dynmc.model = input->model;
         args_dynmc.system = input->system;
 
-        if (input->orbit == ORBIT_GEM) {
+        if (input->basis == BASIS_GEM) {
             meson_nrmodel_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12);
         }
-        else if (input->orbit == ORBIT_SHO) {
+        else if (input->basis == BASIS_SHO) {
             meson_nrmodel_SHO(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12);
         }
         else {
@@ -69,10 +83,10 @@ void compute_spectra_meson(const argsInput_t *input)
         args_dynmc.model = input->model;
         args_dynmc.system = input->system;
 
-        if (input->orbit == ORBIT_GEM) {
+        if (input->basis == BASIS_GEM) {
             meson_gimodel_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12);
         }
-        else if (input->orbit == ORBIT_SHO) {
+        else if (input->basis == BASIS_SHO) {
             meson_gimodel_SHO(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12);
         }
         else {
@@ -121,7 +135,7 @@ void compute_spectra_baryon(const argsInput_t *input)
         args_dynmc.model = input->model;
         args_dynmc.system = input->system;
 
-        if (input->orbit != ORBIT_GEM) {
+        if (input->basis != BASIS_GEM) {
             fprintf(stderr, "Error: Baryon SPECTRA currently supports GEM basis only.\n");
             exit(1);
         }

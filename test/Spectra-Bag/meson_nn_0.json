@@ -1,0 +1,28 @@
+{
+  "project": "meson_nn_0",
+  "task": "SPECTRA",
+  "model": {
+    "type": "BAGMIT",
+    "param": "BAGMIT_DEFAULT"
+  },
+  "system": {
+    "type": "BAG",
+    "nn": 2,
+    "ns": 0,
+    "nc": 0,
+    "nb": 0,
+    "f1": 1,
+    "f2": 1
+  },
+  "basis": {
+    "type": "CMI",
+    "color": ["meson"],
+    "spin": [
+      {"st": 0, "st3": 0}
+    ]
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
+  }
+}

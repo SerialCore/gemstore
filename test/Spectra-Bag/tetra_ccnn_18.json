@@ -1,0 +1,35 @@
+{
+  "project": "tetra_ccnn_18",
+  "task": "SPECTRA",
+  "model": {
+    "type": "BAGMIT",
+    "param": "BAGMIT_DEFAULT"
+  },
+  "system": {
+    "type": "BAG",
+    "nn": 2,
+    "ns": 0,
+    "nc": 2,
+    "nb": 0,
+    "f1": 3,
+    "f2": 3,
+    "f3": 1,
+    "f4": 1
+  },
+  "basis": {
+    "type": "CMI",
+    "color": ["tetra11", "tetra88"],
+    "spin": [
+      {"s12": 1, "s34": 1, "st": 2, "st3": 2},
+      {"s12": 1, "s34": 1, "st": 1, "st3": 1},
+      {"s12": 1, "s34": 1, "st": 0, "st3": 0},
+      {"s12": 1, "s34": 0, "st": 1, "st3": 1},
+      {"s12": 0, "s34": 1, "st": 1, "st3": 1},
+      {"s12": 0, "s34": 0, "st": 0, "st3": 0}
+    ]
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
+  }
+}

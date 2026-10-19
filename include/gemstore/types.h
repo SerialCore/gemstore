@@ -39,14 +39,15 @@ typedef enum system_type {
 
 extern const char *system_type_str[];
 
-/* used for determining orbit type */
-typedef enum orbit_type {
-    ORBIT_SHO,
-    ORBIT_GEM,
-    ORBIT_NONE
-} orbit_type_t;
+/* used for determining basis type */
+typedef enum basis_type {
+    BASIS_SHO,
+    BASIS_GEM,
+    BASIS_CMI,
+    BASIS_NONE
+} basis_type_t;
 
-extern const char *orbit_type_str[];
+extern const char *basis_type_str[];
 
 /* used for determining fitting task */
 typedef enum fitting_type {
@@ -81,5 +82,26 @@ typedef enum param_type {
 } param_type_t;
 
 extern const char *param_type_str[];
+
+/* used for selecting a CMI color channel */
+typedef enum cmicolor_type {
+    CMI_COLOR_MESON,
+    CMI_COLOR_BARYON,
+    CMI_COLOR_TETRA11,
+    CMI_COLOR_TETRA33,
+    CMI_COLOR_TETRA66,
+    CMI_COLOR_TETRA88,
+    CMI_COLOR_PENTA688,
+    CMI_COLOR_PENTA388,
+    CMI_COLOR_PENTA11,
+    CMI_COLOR_HEXA1010,
+    CMI_COLOR_HEXA6868,
+    CMI_COLOR_HEXA6838,
+    CMI_COLOR_HEXA3868,
+    CMI_COLOR_HEXA3838,
+    CMI_COLOR_HEXA11
+} cmicolor_type_t;
+
+extern const char *cmicolor_type_str[];
 
 #endif

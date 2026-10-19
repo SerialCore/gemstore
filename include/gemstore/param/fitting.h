@@ -7,6 +7,7 @@
 #ifndef GEMSTORE_PARAM_FITTING
 #define GEMSTORE_PARAM_FITTING
 
+#include <gemstore/input.h>
 #include <gemstore/param/argset.h>
 
 /* Experimental masses and errors are MeV. The spectrum kernel returns GeV. */

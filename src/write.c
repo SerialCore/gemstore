@@ -9,6 +9,7 @@
 #include <gemstore/model/gimodel.h>
 #include <gemstore/model/nrmodel.h>
 #include <gemstore/model/wfntrans.h>
+#include <gemstore/types.h>
 
 #include "cJSON.h"
 
@@ -410,4 +411,109 @@ int write_baryon_gi_pot(const argsInput_t *input, const argsGIModel_t *args_mode
     }
 
     return 1;
+}
+
+int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nstate, const char *order)
+{
+    if (input == NULL || state == NULL || nstate < 1) {
+        fprintf(stderr, "Error: Invalid input parameters to write_bag_spectra()\n");
+        return 0;
+    }
+
+    FILE *pf;
+    cJSON *root;
+    cJSON *states;
+    char *json_text;
+    char path[267];
+    int ok;
+
+    sprintf(path, "%s%s", input->project, ".state.json");
+    pf = fopen(path, "w");
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+
+    root = cJSON_CreateObject();
+    if (root == NULL) {
+        fprintf(stderr, "Error: Cannot allocate JSON root for %s\n", path);
+        fclose(pf);
+        return 0;
+    }
+    if (order != NULL && order[0] != '\0') cJSON_AddStringToObject(root, "configuration", order);
+
+    states = cJSON_AddArrayToObject(root, "states");
+    if (states == NULL) {
+        fprintf(stderr, "Error: Cannot allocate states array for %s\n", path);
+        cJSON_Delete(root);
+        fclose(pf);
+        return 0;
+    }
+
+    for (int n = 0; n < nstate; n++) {
+        cJSON *obj = cJSON_CreateObject();
+        cJSON *xarr = cJSON_CreateArray();
+        cJSON *evec = cJSON_CreateArray();
+
+        if (obj == NULL || xarr == NULL || evec == NULL) {
+            cJSON_Delete(evec);
+            cJSON_Delete(xarr);
+            cJSON_Delete(obj);
+            fprintf(stderr, "Error: Cannot allocate state JSON for %s\n", path);
+            cJSON_Delete(root);
+            fclose(pf);
+            return 0;
+        }
+
+        cJSON_AddNumberToObject(obj, "index", n + 1);
+        if (isfinite(state[n].st)) cJSON_AddNumberToObject(obj, "st", state[n].st);
+        cJSON_AddNumberToObject(obj, "mass", state[n].mass);
+        cJSON_AddNumberToObject(obj, "R", state[n].R);
+        for (int f = 0; f < 4; f++) cJSON_AddItemToArray(xarr, cJSON_CreateNumber(state[n].x[f]));
+        cJSON_AddItemToObject(obj, "x", xarr);
+
+        for (int a = 0; a < state[n].nvec; a++) {
+            cJSON *comp = cJSON_CreateObject();
+            int cid = state[n].color_id[a];
+            const cmi_spin_t *ch = &state[n].spin_ch[a];
+
+            if (comp == NULL) {
+                cJSON_Delete(evec);
+                cJSON_Delete(obj);
+                fprintf(stderr, "Error: Cannot allocate eigenvector JSON for %s\n", path);
+                cJSON_Delete(root);
+                fclose(pf);
+                return 0;
+            }
+            if (input->basis == BASIS_CMI && cid >= CMI_COLOR_MESON && cid <= CMI_COLOR_HEXA11) {
+                cJSON_AddStringToObject(comp, "color", cmicolor_type_str[cid]);
+                cJSON_AddNumberToObject(comp, "s12", ch->s12);
+                cJSON_AddNumberToObject(comp, "s34", ch->s34);
+                cJSON_AddNumberToObject(comp, "s123", ch->s123);
+                cJSON_AddNumberToObject(comp, "s45", ch->s45);
+                cJSON_AddNumberToObject(comp, "s456", ch->s456);
+                cJSON_AddNumberToObject(comp, "st", ch->st);
+                cJSON_AddNumberToObject(comp, "st3", ch->st3);
+            }
+            cJSON_AddNumberToObject(comp, "c", state[n].coeff[a]);
+            cJSON_AddItemToArray(evec, comp);
+        }
+        cJSON_AddItemToObject(obj, "eigenvector", evec);
+        cJSON_AddItemToArray(states, obj);
+    }
+
+    json_text = cJSON_Print(root);
+    if (json_text == NULL) {
+        fprintf(stderr, "Error: Cannot serialize JSON output for %s\n", path);
+        cJSON_Delete(root);
+        fclose(pf);
+        return 0;
+    }
+    ok = (fputs(json_text, pf) != EOF);
+    if (!ok) fprintf(stderr, "Error: Failed writing JSON output to %s\n", path);
+
+    cJSON_Delete(root);
+    free(json_text);
+    if (fclose(pf) != 0) return 0;
+    return ok ? 1 : 0;
 }

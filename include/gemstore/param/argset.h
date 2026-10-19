@@ -7,6 +7,7 @@
 #ifndef GEMSTORE_PARAM_ARGSET
 #define GEMSTORE_PARAM_ARGSET
 
+#include <gemstore/input.h>
 #include <gemstore/types.h>
 
 typedef struct argsOrbit {
@@ -92,35 +93,6 @@ typedef struct argsBAGModel {
     double B;               /* bag constant */
     double Z;               /* ZPE constant */
 } argsBAGModel_t;
-
-typedef struct argsInput {
-    task_type_t task;
-    orbit_type_t orbit;
-    model_type_t model;
-    param_type_t param;
-    system_type_t system;
-    fitting_type_t target;
-    int print_pot;          /* if print potential */
-    int print_wfn;          /* if print wavefunction */
-    int f1;                 /* flavor 1 */
-    int f2;                 /* flavor 2 */
-    int f3;                 /* flavor 3 */
-    int f4;                 /* flavor 4 */
-    double S;               /* spin momentum S */
-    double L;               /* orbit momentum L */
-    double jl;              /* orbit momentum jl */
-    double J;               /* total momentum J */
-    int P;                  /* parity */
-    int sym12;              /* symmetry under 1<->2 exchange */
-    int Lmax;               /* baryon orbital truncation */
-    int nmax;               /* Gaussian parameter */
-    double rmax;            /* Gaussian parameter */
-    double rmin;            /* Gaussian parameter */
-    double beta;            /* harmonic oscillator parameter */
-    double omega;           /* complex-range Gaussian parameter */
-    char project[256];      /* project name */
-    char param_file[256];   /* parameter file name */
-} argsInput_t;
 
 /* Default meson parameters for model GIString */
 extern const argsGIModel_t argsGIString_meson;

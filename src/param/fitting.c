@@ -7,6 +7,7 @@
 #include <gemstore/param/fitting.h>
 #include <gemstore/model/cmeson.h>
 #include <gemstore/math/matrix.h>
+#include <gemstore/input.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -184,10 +185,10 @@ double fit_predict_mass(const argsInput_t *input, const fit_target_t *target,
         }
         dyn.model = one.model;
         dyn.system = one.system;
-        if (one.orbit == ORBIT_GEM) {
+        if (one.basis == BASIS_GEM) {
             meson_gimodel_GEM(&one, &model, &dyn, &eigenvalue, NULL, NULL, NULL);
         }
-        else if (one.orbit == ORBIT_SHO) {
+        else if (one.basis == BASIS_SHO) {
             meson_gimodel_SHO(&one, &model, &dyn, &eigenvalue, NULL, NULL, NULL);
         }
         else {
@@ -208,10 +209,10 @@ double fit_predict_mass(const argsInput_t *input, const fit_target_t *target,
         }
         dyn.model = one.model;
         dyn.system = one.system;
-        if (one.orbit == ORBIT_GEM) {
+        if (one.basis == BASIS_GEM) {
             meson_nrmodel_GEM(&one, &model, &dyn, &eigenvalue, NULL, NULL, NULL);
         }
-        else if (one.orbit == ORBIT_SHO) {
+        else if (one.basis == BASIS_SHO) {
             meson_nrmodel_SHO(&one, &model, &dyn, &eigenvalue, NULL, NULL, NULL);
         }
         else {
@@ -284,7 +285,7 @@ static void write_fit_result(const argsInput_t *input, const fit_target_t *targe
     fprintf(fp, "  \"target\": \"%s\",\n", fitting_type_str[input->target]);
     fprintf(fp, "  \"model\": \"%s\",\n", model_type_str[input->model]);
     fprintf(fp, "  \"system\": \"%s\",\n", system_type_str[input->system]);
-    fprintf(fp, "  \"basis\": \"%s\",\n", orbit_type_str[input->orbit]);
+    fprintf(fp, "  \"basis\": \"%s\",\n", basis_type_str[input->basis]);
     fprintf(fp, "  \"mass_unit\": \"MeV\",\n");
     fprintf(fp, "  \"chi2\": %.16g,\n", result->chi2);
     fprintf(fp, "  \"edm\": %.16g,\n", result->edm);
@@ -318,7 +319,7 @@ void fitting_run(const argsInput_t *input)
         fprintf(stderr, "FITTING currently supports only MESON\n");
         exit(1);
     }
-    if (input->orbit != ORBIT_GEM && input->orbit != ORBIT_SHO) {
+    if (input->basis != BASIS_GEM && input->basis != BASIS_SHO) {
         fprintf(stderr, "FITTING meson supports GEM and SHO\n");
         exit(1);
     }

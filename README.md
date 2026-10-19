@@ -9,7 +9,7 @@
 [![Platform: Linux/Unix](https://img.shields.io/badge/Platform-Linux%2FUnix-lightgrey.svg)](https://en.wikipedia.org/wiki/Unix)
 ![Status: Active Development](https://img.shields.io/badge/Status-Active%20Development-brightgreen.svg)
 
-**A powerful computational framework for calculating hadron spectroscopy using the Gaussian Expanding Method (GEM) and Godfrey-Isgur quark models.**
+**A computational framework for hadron spectroscopy: Gaussian Expanding Method (GEM) with Godfrey–Isgur potentials, and MIT bag spectra with optional color–spin mixing.**
 
 </div>
 
@@ -17,17 +17,16 @@
 
 ## Overview
 
-**GEMSTORE** is a specialized scientific software suite for hadron spectroscopy calculations using advanced quark models. It combines the computational efficiency of the **Gaussian Expanding Method** with the physics-rich **screen-modified Godfrey-Isgur (GI)** model to predict meson, baryon, and exotic hadron properties.
+**GEMSTORE** computes meson and baryon spectra with the **Gaussian Expanding Method** and **Godfrey–Isgur** (GI-screen / GI-string) and **Cornell** potentials, and MIT **bag** masses for mesons through hexaquarks, with or without color–magnetic mixing.
 
 ### Key Features
 
-- 🎯 **Multiple Quark Models**: GI-Screen, GI-String
-- 📊 **Spectral Calculations**: Masses, RMS radii, eigenvector analysis
-- 🔧 **Flexible Quantum Numbers**: Full support for arbitrary L, S, J combinations
-- 🤖 **AI-Assisted Workflows**: Integrated OpenCode assistant for intelligent task automation
-- 📈 **Advanced Data Analysis**: Eigenvector analysis, normalization validation, statistical summaries
-- ⚡ **High Performance**: Optimized C implementation with Minuit2 numerical library
-- 🔬 **Parameter Fitting**: Gradient-based optimization with Minuit2
+- 🎯 **Quark models**: GI-Screen, GI-String, NR Cornell, MIT bag
+- 📊 **Spectra**: masses, RMS radii (GEM), bag radius and color–spin eigenvectors
+- 🧩 **Multiquark bag CMI**: user-supplied color and spin channels, mixed by total spin `st`
+- 🔧 **Quantum numbers**: meson \(S,L,J\); baryon Jacobi GEM; bag flavor counts `nn,ns,nc,nb`
+- 🤖 **AI-assisted workflows**: `app/gemstore-assistant`
+- ⚡ **C implementation** with Minuit2 for meson parameter fits
 
 ---
 
@@ -57,20 +56,25 @@
 | **GI-String** | String-like linear confinement | Light mesons and general meson spectra |
 | **NR-String** | Non-relativistic Cornell potential with linear confinement | Meson spectra |
 | **NR-Screen** | Non-relativistic Cornell potential with screened confinement | Meson spectra |
+| **MIT bag** | Cavity energy plus optional color–magnetic / binding Hamiltonian | Meson, baryon, tetra, penta, hexa |
 
 ### Calculation Types
 
-- **SPECTRA**: Calculate complete hadron mass spectra with eigenvectors
-- **RADIUS**: Compute RMS radii and spatial distributions
+- **SPECTRA**: Mass spectra (meson, baryon, bag)
+- **FITTING**: Minuit2 meson parameter fits
 
 ### System Types
 
-- **MESON**: Quark-antiquark bound states (qq̄)
-- **BARYON**: Three-quark states (qqq)
+- **MESON**: Quark–antiquark (\(q\bar q\))
+- **BARYON**: Three-quark (\(qqq\))
+- **BAG**: MIT bag; flavor content from `nn`, `ns`, `nc`, `nb`
 
 ### Basis Set Options
 
-- **GEM** (Generalized Exponential Morse): Efficient Gaussian basis with exponential envelope
+- **GEM**: Gaussian expansion (meson and baryon)
+- **SHO**: Harmonic oscillator (meson)
+- **CMI**: Color–spin product space (bag)
+- **NONE**: Bag kinetic plus vacuum energy, no CMI
 
 ---
 
@@ -139,6 +143,9 @@ make uninstall
 
 # Fit a built-in GISCREEN dataset
 ./gemstore --compute test/FittingTask/giscreen_csbar.json
+
+# MIT bag with color–spin mixing
+./gemstore --compute test/Spectra-Bag/tetra_ccnn_18.json
 ```
 
 ### JSON Input Format
@@ -194,9 +201,9 @@ Run it:
 
 ```json
 "model": {
-  "type": "GISCREEN", "GISTRING", "NRSTRING", or "NRSCREEN",
-  "param": "GISCREEN_CCBAR", "GISTRING_CUSTOM", "NRSTRING_MESON", or "NRSCREEN_CUSTOM",
-  "file": "param_file.json"  // Only for CUSTOM params
+  "type": "GISCREEN", "GISTRING", "NRSTRING", "NRSCREEN", or "BAGMIT",
+  "param": "GISCREEN_CCBAR", "GISTRING_CUSTOM", "BAGMIT_DEFAULT", ...,
+  "file": "param_file.json"
 }
 ```
 
@@ -205,6 +212,7 @@ Run it:
 - `GISCREEN` — relativistic GI model, screened confinement
 - `NRSTRING` — non-relativistic Cornell model, linear confinement
 - `NRSCREEN` — non-relativistic Cornell model, screened confinement
+- `BAGMIT` — MIT bag (`system.type` must be `BAG`)
 
 **Predefined Parameter Sets:**
 - `GISCREEN_CCBAR` - Charm-anticharm with GI-Screen model
@@ -217,6 +225,8 @@ Run it:
 - `NRSCREEN_MESON` - Built-in meson parameters for NR-Screen
 - `NRSTRING_CUSTOM` - Custom NR-String parameters from file (requires `"file"`)
 - `NRSCREEN_CUSTOM` - Custom NR-Screen parameters from file (requires `"file"`)
+- `BAGMIT_DEFAULT` - Built-in MIT bag masses, bag constant \(B\), zero-point \(Z\), and pair bindings
+- `BAGMIT_CUSTOM` - Custom bag parameters from file (requires `"file"`)
 
 #### System Configuration
 
@@ -256,6 +266,18 @@ Run it:
 
 `P` is parity. `sym12` is the sign under \(1\leftrightarrow 2\). `Lmax` keeps \(l_\rho+l_\lambda\le L_{\max}\) on three Jacobi charts. Optional `jl` switches to the chart: \(c=1\), \(l_\rho=0\), \(l_\lambda=L_{\max}\). Pair with `GISTRING_BARYON`. `<project>.state.json` stores `mass`, `rms_r12`, `rms_r13`, `rms_r23`. Inputs: `test/Spectra-Baryon/`.
 
+**Bag** (`"type": "BAG"`).
+
+```json
+"system": {
+  "type": "BAG",
+  "nn": 2, "ns": 0, "nc": 2, "nb": 0,
+  "f1": 3, "f2": 3, "f3": 1, "f4": 1
+}
+```
+
+`nn,ns,nc,nb` are required flavor counts. `f1`–`f6` give the quark order for CMI (same flavor indices as mesons) and must match those counts. Omit `f1`–`f6` when `basis` is `NONE`. Inputs: `test/Spectra-Bag/`. Field list: `app/gemstore-assistant/templates/bag_spectra_template.md`.
+
 #### Basis Configuration
 
 **GEM (Generalized Exponential Morse):**
@@ -277,10 +299,23 @@ Run it:
 }
 ```
 
+**Bag CMI / NONE:**
+```json
+"basis": {
+  "type": "CMI",
+  "color": ["tetra11", "tetra88"],
+  "spin": [
+    {"s12": 1, "s34": 1, "st": 2, "st3": 2}
+  ]
+}
+```
+
+`NONE` has no `color` or `spin`. `CMI` takes 1–8 color names and 1–20 spin channels. Color names: `meson`, `baryon`, `tetra11`, `tetra33`, `tetra66`, `tetra88`, `penta688`, `penta388`, `penta11`, `hexa1010`, `hexa6868`, `hexa6838`, `hexa3868`, `hexa3838`, `hexa11`. Unused spin couplings stay 0. Different `st` do not mix. For five and six quarks the program keeps Pauli-allowed color⊗spin products.
+
 | Field | Type | Description | Range |
 |-------|------|-------------|-------|
-| `type` | string | Basis set type | `"GEM"`, `"SHO"` |
-| `nmax` | int | Number of basis functions | 8-32 (typical: 16) |
+| `type` | string | Basis set type | `"GEM"`, `"SHO"`, `"CMI"`, `"NONE"` |
+| `nmax` | int | Number of basis functions (GEM/SHO) | 8-32 (typical: 16) |
 | `rmax` | float | Maximum radius (fm; GEM) | 20.0-50.0 |
 | `rmin` | float | Minimum radius (fm; GEM) | 0.01-0.5 |
 | `beta` | float | HO scale parameter (GeV; SHO only) | 0.2-2.0 |
@@ -310,7 +345,7 @@ When enabled:
 
 ### JSON Output Format
 
-Generated by `write_meson_spectra()` in `src/print.c` (lines 234-379), GEMSTORE automatically creates `<project>.out.json`:
+`src/write.c` writes `<project>.state.json` (meson, baryon, and bag). A meson example:
 
 ```json
 {
@@ -422,7 +457,7 @@ Custom parameters can be supplied via external JSON file:
 | `epsilon_sos` | Thomas precession strength | 0.0-1.0 |
 | `epsilon_tens` | Tensor force strength | -0.5 to 0.1 |
 
-The GI fields above apply to `GISTRING` and `GISCREEN`. `NRSTRING` and `NRSCREEN` use a different `param` object. `NRSTRING` does not read `mu`.
+The GI fields above apply to `GISTRING` and `GISCREEN`. `NRSTRING` and `NRSCREEN` use a different `param` object. `NRSTRING` does not read `mu`. `BAGMIT_CUSTOM` uses the bag table below.
 
 **NRSTRING / NRSCREEN parameter fields:**
 
@@ -437,6 +472,15 @@ The GI fields above apply to `GISTRING` and `GISCREEN`. `NRSTRING` and `NRSCREEN
 | `alpha_s` | both | Constant strong coupling |
 | `sigma` | both | Contact smearing (GeV) |
 | `mu` | `NRSCREEN` | Screening mass (GeV). `NRSTRING` ignores this field and keeps linear confinement |
+
+**BAGMIT parameter fields** (`BAGMIT_DEFAULT` in `src/param/argset.c`):
+
+| Field | Description |
+|-------|-------------|
+| `mn`, `ms`, `mc`, `mb` | Quark masses (GeV); default \(m_n=0\) |
+| `B` | Bag constant (GeV\(^4\)) |
+| `Z` | Zero-point coefficient |
+| `Bcs`, `Bbs`, `Bcc`, `Bbc`, `Bbb` | Pair binding strengths (GeV) |
 
 ---
 
@@ -500,9 +544,26 @@ H c = E S c
 5. Solve generalized eigenvalue problem
 6. Extract masses and wavefunctions
 
-**Implementation**: `src/math/eigen.c`, `src/model/spectra.c`
+**Implementation**: `src/math/eigen.c`, `src/model/cmeson.c`, `src/model/cbaryon.c`
 
-### 4. Spectral Data Post-Processing
+### 4. MIT bag
+
+Bag energy at radius \(R\) (GeV\(^{-1}\)):
+
+```
+E0(R) = Σ_f n_f ω_f(R) + (4π/3) B R³ − Z/R
+ω_f = sqrt(m_f² + x_f²/R²)
+```
+
+\(x_f\) is the ground-state bag frequency. With `CMI`,
+
+```
+H(R) = E0(R) I − CMI(R) + Bind
+```
+
+Color and spin Casimir factor matrices (`operator_lambda2`, `operator_sigma2`) are built once. \(H(R)\) is assembled and diagonalized inside one `st` block while \(R\) is minimized in \((1,10)\). `NONE` varies \(E_0(R)\) only. Implementation: `src/model/bagmodel.c`, `src/basis/cmisym.c`, `src/math/cmi.c`.
+
+### 5. Spectral Data Post-Processing
 
 The RMS radius spectrum is analyzed for anomalies using quadratic interpolation:
 
@@ -512,7 +573,7 @@ The RMS radius spectrum is analyzed for anomalies using quadratic interpolation:
 
 **Implementation**: `src/math/interplt.c` (enhanced with debugging)
 
-### 5. Parameter Fitting
+### 6. Parameter Fitting
 
 A fit is a `--compute` run with `"task": "FITTING"`. `fit.target` names both the model and the built-in dataset, for example `GISCREEN_CCBAR`. The state list and the parameter starts, steps, bounds, and fixed flags are in `src/param/f*.c`.
 
@@ -561,10 +622,13 @@ Parse results, format output
 
 ```
 app/gemstore-assistant/
-├── SKILL.md                          # Main skill definition
-├── scripts/generate_meson_inputs.py  # Auto-generate input files
-├── templates/meson_spectra_template.md
-└── templates/baryon_spectra_template.md
+├── SKILL.md
+├── scripts/generate_meson_inputs.py
+└── templates/
+    ├── meson_spectra_template.md
+    ├── meson_fitting_template.md
+    ├── baryon_spectra_template.md
+    └── bag_spectra_template.md
 ```
 
 #### Usage with OpenCode
@@ -594,11 +658,11 @@ For details: see `app/gemstore-assistant/SKILL.md`
 
 | Function | Algorithm | Output |
 |----------|-----------|--------|
-| `spectra_meson_GEM()` | Solve Schrödinger equation (GEM basis) | Eigenvalues (masses) + eigenvectors |
-| `spectra_baryon_GEM()` | Three-quark GI spectrum (GEM, SCDK) | Masses, pair RMS, eigenvectors |
-| `radius_meson_GEM()` | Compute ⟨r²⟩^(1/2) with GEM basis | RMS radii |
-| `interpolate_quadratic()` | Fix anomalies in spectra | Corrected data |
-| `write_meson_spectra()` | Serialize results to JSON | `.out.json` file |
+| `compute_spectra_meson()` | GEM/SHO meson dispatcher | Masses, RMS, eigenvectors |
+| `compute_spectra_baryon()` | Three-quark GI spectrum (GEM) | Masses, pair RMS, eigenvectors |
+| `compute_spectra_bag()` | MIT bag dispatcher | Masses, \(R\), \(x_f\), CMI eigenvectors |
+| `bag_compute()` | Load CMI, mix by `st`, vary \(R\) | `bag_mit_t` states |
+| `write_meson_spectra()` / `write_bag_spectra()` | JSON in `src/write.c` | `.state.json` |
 
 ### Potential Functions (src/model/gimodel.c)
 
@@ -630,7 +694,8 @@ Gaussian smearing regularization for all potential components.
 |--------|---------|
 | `orbit.c` | GEM and SHO orbital basis functions |
 | `spin.c` | Spin SU(2) Clebsch-Gordan coefficients |
-| `color.c` | SU(3) color factors |
+| `color.c` | SU(3) color wave functions (`color_wfn_push`) |
+| `cmisym.c` | CMI color/spin load and Pauli selection |
 | `isospin.c` | Isospin basis states |
 | `intrin.c` | Intrinsic wavefunction representation |
 
@@ -687,7 +752,7 @@ Gaussian smearing regularization for all potential components.
 ./gemstore --compute cc_ground.json
 ```
 
-**Output** (`charmonium_ground.out.json`):
+**Output** (`charmonium_ground.state.json`):
 ```json
 {
   "generated": "2026-04-25 18:33:25",
@@ -763,7 +828,17 @@ Gaussian smearing regularization for all potential components.
 ./gemstore --compute cc_custom.json
 ```
 
-### Example 3: Parameter Fitting
+### Example 3: MIT bag tetraquark
+
+Worked input: `test/Spectra-Bag/tetra_ccnn_18.json`. `NONE` example: `test/Spectra-Bag/baryon_nnn_none.json`.
+
+```bash
+./gemstore --compute test/Spectra-Bag/tetra_ccnn_18.json
+```
+
+Output `tetra_ccnn_18.state.json` stores `mass`, variational `R`, frequencies `x`, and color–spin eigenvector components. The CLI table prints `st`, mass, \(R\), and \(x_n,x_s,x_c,x_b\).
+
+### Example 4: Parameter Fitting
 
 `model` gives the type only. `system` gives the type only. `fit.target` selects the dataset. These targets are meson fits, so `system.type` is `MESON` and `model.type` matches the model in the target name. Basis is `GEM` or `SHO`. The basis below is the one used with these datasets.
 
@@ -789,7 +864,7 @@ Gaussian smearing regularization for all potential components.
 
 The terminal prints one `call N  chi2 = ...` line per evaluation, then the parameter table, `chi2`, `valid`, and `edm`. Results go to `fit_ccbar.fit.json`. A worked input is `test/FittingTask/giscreen_csbar.json`.
 
-### Example 4: Light Mesons with GI-String Model
+### Example 5: Light Mesons with GI-String Model
 
 For light mesons (pions, kaons), GI-String model works better:
 
@@ -822,16 +897,13 @@ For light mesons (pions, kaons), GI-String model works better:
 
 ## Output Files
 
-### JSON Output (.out.json)
+### JSON Output (`.state.json`)
 
-Generated by `write_meson_spectra()` function in `src/print.c`:
+`src/write.c` writes `<project>.state.json` in the current directory:
 
-When you run:
 ```bash
 ./gemstore --compute myfile.json
 ```
-
-GEMSTORE automatically generates `myfile.out.json` with complete results in JSON format.
 
 **Output File Structure:**
 
@@ -897,22 +969,12 @@ GEMSTORE automatically generates `myfile.out.json` with complete results in JSON
 | `rms_radius` | float | Root-mean-square radius in fm |
 | `eigenvector` | array | Gaussian expansion coefficients (length = nmax) |
 
-**Example Files in test/:**
+**Example files:**
 
-- `test/amethyst.out.json` - Sample output with 16 states (GEM basis)
-- `test/diamond.out.json` - Sample output with predefined parameters
+- `test/Spectra-CustomParameter/amethyst.state.json` — GEM meson
+- `test/Spectra-Bag/*.state.json` — MIT bag (mass, \(R\), \(x\), color–spin components)
 
-**Output Generation Details:**
-
-The `write_meson_spectra()` function (src/print.c:234-379):
-1. Echoes all input configuration for reproducibility
-2. Records generation timestamp
-3. Outputs all eigenvalues as masses
-4. Computes and outputs RMS radii
-5. Includes normalized eigenvectors (expansion coefficients)
-6. Writes to `<project>.out.json` in the current directory
-
-This ensures all calculations are fully reproducible and can be analyzed with standard JSON tools or parsed by other applications.
+Bag states use `st`, `mass`, `R`, `x`, and an `eigenvector` array of `{color, s12, …, c}` objects. `NONE` writes `{c}` only.
 
 ---
 
@@ -920,48 +982,33 @@ This ensures all calculations are fully reproducible and can be analyzed with st
 
 ```
 gemstore/
-├── README.md                      # This file
-├── LICENSE                        # GPLv3 license
-├── Makefile                       # Build configuration
-├── gemstore                       # Compiled executable
-│
-├── include/gemstore/              # Public API headers
-│   ├── basis/                     # Wavefunction basis
-│   ├── math/                      # Mathematics library
-│   ├── model/                     # Physics models
-│   ├── param/                     # Input parameters
-│   └── entry.h, print.h           # Main interface
-│
-├── src/                           # Implementation (~5,000 LOC)
-│   ├── main.c                     # Entry point
-│   ├── entry.c                    # Task routing
-│   ├── print.c                    # Output formatting (enhanced)
-│   ├── basis/                     # Basis functions (~800 LOC)
-│   ├── math/                      # Mathematics (~1200 LOC)
-│   ├── model/                     # Physics models (~1800 LOC)
-│   └── param/                     # Parameter fitting
-│
-├── lib/                           # External libraries
-│   └── Minuit2/                   # Numerical optimization (CERN)
-│
-├── app/                           # AI Assistant for GEMSTORE
-│   └── gemstore-assistant/        # OpenCode integration
-│       ├── SKILL.md               # Skill definition
-│       ├── scripts/               # Helper scripts
-│       └── templates/             # Spectra and fitting templates
-│
-├── test/                          # Test cases & examples
-│   ├── amethyst.json              # Example: GEM basis
-│   ├── diamond.json               # Example: predefined params
-│   ├── amethyst.out.json          # Sample output
-│   ├── param_GISCREEN.json        # GI-Screen parameters
-│   ├── param_GISTRING.json        # GI-String parameters
-│   ├── FittingTask/               # FITTING input example
-│   ├── ScreenFitting-*/           # Stored fit logs
-│   └── Spectra-Baryon/            # Baryon GI-String examples
-
-Total LOC: ~7,800 (C + C++ + Headers)
+├── README.md
+├── LICENSE
+├── Makefile
+├── include/gemstore/
+│   ├── input.h          # argsInput_t (run JSON)
+│   ├── parse.h          # input and model-parameter JSON
+│   ├── read.h           # result JSON helpers
+│   ├── write.h          # <project>.state.json, pot, wfn
+│   ├── print.h          # CLI tables
+│   ├── types.h
+│   ├── basis/           # orbit, spin, color, cmisym, …
+│   ├── math/
+│   ├── model/           # bagmodel, cmeson, cbaryon, compute, …
+│   └── param/           # argset, fitting
+├── src/                 # mirrors include/; input.c, parse.c, read.c, write.c
+├── lib/Minuit2/
+├── app/gemstore-assistant/
+└── test/
+    ├── Spectra-Bag/     # MIT bag
+    ├── Spectra-Baryon/
+    ├── Spectra-SHO/
+    ├── Spectra-NRmodel/
+    ├── Spectra-CustomParameter/
+    └── FittingTask/
 ```
+
+Run JSON is parsed in `src/parse.c` into `argsInput_t` (`include/gemstore/input.h`). Model coefficients live in `src/param/argset.c`. `src/model/compute.c` dispatches meson, baryon, and bag. Result files are written from `src/write.c`; the terminal tables are `src/print.c`.
 
 ---
 
@@ -1017,7 +1064,7 @@ If you use GEMSTORE in research, please cite:
   year = {2026},
   url = {https://github.com/serialcore/gemstore},
   version = {0.1.4},
-  note = {Gaussian Expanding Method + Godfrey-Isgur Quark Models}
+  note = {GEM, Godfrey-Isgur, and MIT bag spectroscopy}
 }
 ```
 
@@ -1028,6 +1075,8 @@ If you use GEMSTORE in research, please cite:
 2. Bhatnagar, V., et al. (1995). "Towards a consistent quark model for baryons." *International Journal of Modern Physics A, 10*(03), 335-392.
 
 3. Fulton, R., et al. (1990). "Gaussian wave packets in the Hilbert space formalism." *Physical Review D*.
+
+4. Chodos, A., Jaffe, R. L., Johnson, K., Thorn, C. B., & Weisskopf, V. F. (1974). "New extended model of hadrons." *Physical Review D, 9*, 3471.
 
 ---
 
@@ -1071,6 +1120,6 @@ With the requirement that:
 ███████████████████████████████████████
 ```
 
-*Last Updated: April 2026*
+*Last Updated: October 2026*
 
 </div>

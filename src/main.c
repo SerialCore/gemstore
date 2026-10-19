@@ -39,7 +39,7 @@ int main(int argc, char **argv)
                 print_help();
                 return 0;
             case 'v':
-                printf("gemstore version 1.3\n");
+                printf("gemstore version 0v0\n");
                 return 0;
             default:
                 print_help();

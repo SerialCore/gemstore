@@ -8,8 +8,9 @@
 #include <gemstore/debug.h>
 #include <gemstore/print.h>
 #include <gemstore/parse.h>
+#include <gemstore/input.h>
+#include <gemstore/types.h>
 #include <gemstore/model/compute.h>
-#include <gemstore/param/argset.h>
 #include <gemstore/param/fitting.h>
 
 #include <stdio.h>
@@ -24,21 +25,28 @@ void entry_compute(const char* arg)
 
     if (input.task == TASK_SPECTRA) {
         if (input.system == SYSTEM_MESON) {
-            if (input.orbit != ORBIT_GEM && input.orbit != ORBIT_SHO) {
+            if (input.basis != BASIS_GEM && input.basis != BASIS_SHO) {
                 fprintf(stderr, "SPECTRA meson compute supports: GEM, SHO basis\n");
                 exit(1);
             }
             compute_spectra_meson(&input);
         }
         else if (input.system == SYSTEM_BARYON) {
-            if (input.orbit != ORBIT_GEM) {
+            if (input.basis != BASIS_GEM) {
                 fprintf(stderr, "SPECTRA baryon compute supports: GEM basis\n");
                 exit(1);
             }
             compute_spectra_baryon(&input);
         }
+        else if (input.system == SYSTEM_BAG) {
+            if (input.basis != BASIS_NONE && input.basis != BASIS_CMI) {
+                fprintf(stderr, "SPECTRA bag compute supports: NONE, CMI basis\n");
+                exit(1);
+            }
+            compute_spectra_bag(&input);
+        }
         else {
-            fprintf(stderr, "SPECTRA currently supports only MESON and BARYON systems\n");
+            fprintf(stderr, "SPECTRA currently supports only MESON, BARYON, and BAG systems\n");
             exit(1);
         }
     }

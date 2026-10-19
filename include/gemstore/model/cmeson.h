@@ -7,8 +7,9 @@
 #ifndef GEMSTORE_MODEL_CMESON
 #define GEMSTORE_MODEL_CMESON
 
-#include <gemstore/param/argset.h>
+#include <gemstore/input.h>
 #include <gemstore/math/matrix.h>
+#include <gemstore/param/argset.h>
 
 /* GI meson spectra on the GEM basis.
  * GEM overlap is pruned with matrix_orthogonal, same cutoff as baryons.

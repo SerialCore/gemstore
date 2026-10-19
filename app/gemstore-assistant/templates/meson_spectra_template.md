@@ -34,8 +34,8 @@ This template matches the current parser in `src/parse.c`.
 ## Allowed Values
 
 - `task`: `SPECTRA`, `DECAY3P0`, `COUPLCHN`, `SCATTER`. A parameter fit uses `FITTING` and `templates/meson_fitting_template.md`.
-- `system.type`: `MESON`, `BARYON`
-- `model.type`: `GISTRING`, `GISCREEN`, `NRSTRING`, `NRSCREEN`
+- `system.type`: `MESON`, `BARYON`. MIT bag uses `BAG` and `templates/bag_spectra_template.md`.
+- `model.type`: `GISTRING`, `GISCREEN`, `NRSTRING`, `NRSCREEN`. Bag uses `BAGMIT`.
 - `model.param`:
   - `GISTRING_MESON`
   - `GISTRING_BARYON`
@@ -51,7 +51,7 @@ This template matches the current parser in `src/parse.c`.
   - `NRSTRING_CUSTOM`
   - `NRSCREEN_MESON`
   - `NRSCREEN_CUSTOM`
-- `basis.type`: `GEM`, `SHO`
+- `basis.type`: `GEM`, `SHO`. Bag uses `NONE` or `CMI`.
 - `print.pot`, `print.wfn`: `"true"` or `"false"` (controls output of `.pot.dat` and `.wfn.N.dat` files)
 
 ## Custom Parameter Files

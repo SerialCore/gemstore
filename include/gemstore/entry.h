@@ -7,9 +7,6 @@
 #ifndef GEMSTORE_ENTRY
 #define GEMSTORE_ENTRY
 
-#include <gemstore/types.h>
-#include <gemstore/param/argset.h>
-
 /* dispatch --compute, including task FITTING */
 void entry_compute(const char* arg);
 

@@ -48,6 +48,7 @@
 #include <gemstore/math/matrix.h>
 #include <gemstore/math/integral.h>
 #include <gemstore/param/argset.h>
+#include <gemstore/input.h>
 
 #include <math.h>
 #include <stdlib.h>
@@ -61,14 +62,14 @@ double get_normalized_factor(const argsInput_t *input, const double *vector)
     int L = (int)input->L;
     int nmax = input->nmax;
     argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
-    if (input->orbit == ORBIT_GEM) {
+    if (input->basis == BASIS_GEM) {
         for (int i = 0; i < nmax; i++) {
             basis[i].n = i + 1;
             basis[i].l = L;
             basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
         }
     }
-    else if (input->orbit == ORBIT_SHO) {
+    else if (input->basis == BASIS_SHO) {
         for (int i = 0; i < nmax; i++) {
             basis[i].n = i;
             basis[i].l = L;
@@ -83,10 +84,10 @@ double get_normalized_factor(const argsInput_t *input, const double *vector)
             double overlap_ij = 0.0;
             double node_factor = 1.0 / sqrt(basis[i].scale + basis[j].scale);
 
-            if (input->orbit == ORBIT_GEM) {
+            if (input->basis == BASIS_GEM) {
                 overlap_ij = integral_nlr_overlap(GRnlr, node_factor, &basis[i], &basis[j]);
             }
-            else if (input->orbit == ORBIT_SHO) {
+            else if (input->basis == BASIS_SHO) {
                 overlap_ij = (i == j) ? 1.0 : 0.0;
             }
 
@@ -118,11 +119,11 @@ double get_state_wfn_value(const argsInput_t *input, const double *vector, doubl
         double basis_func = 0.0;
         double N = n + 1;
 
-        if (input->orbit == ORBIT_GEM) {
+        if (input->basis == BASIS_GEM) {
             double nu = getnu(N, nmax, input->rmax, input->rmin);
             basis_func = GRnlr(rGeV, N, L, nu) * exp(-nu * rGeV * rGeV);
         }
-        else if (input->orbit == ORBIT_SHO) {
+        else if (input->basis == BASIS_SHO) {
             basis_func = SRnlr(rGeV, n, L, input->beta) * exp(-0.5 * input->beta * input->beta * rGeV * rGeV);
         }
 

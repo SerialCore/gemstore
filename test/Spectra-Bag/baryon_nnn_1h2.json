@@ -1,0 +1,31 @@
+{
+  "project": "baryon_nnn_1h2",
+  "task": "SPECTRA",
+  "model": {
+    "type": "BAGMIT",
+    "param": "BAGMIT_DEFAULT"
+  },
+  "system": {
+    "type": "BAG",
+    "nn": 3,
+    "ns": 0,
+    "nc": 0,
+    "nb": 0,
+    "f1": 1,
+    "f2": 1,
+    "f3": 1
+  },
+  "basis": {
+    "type": "CMI",
+    "color": ["baryon"],
+    "spin": [
+      {"s12": 1, "st": 1.5, "st3": 1.5},
+      {"s12": 1, "st": 0.5, "st3": 0.5},
+      {"s12": 0, "st": 0.5, "st3": 0.5}
+    ]
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
+  }
+}

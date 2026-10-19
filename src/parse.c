@@ -5,9 +5,8 @@
  */
 
 #include <gemstore/parse.h>
+#include <gemstore/input.h>
 #include <gemstore/types.h>
-#include <gemstore/math/matrix.h>
-#include <gemstore/param/argset.h>
 
 #include "cJSON.h"
 
@@ -102,6 +101,18 @@ static cJSON *read_array_item(const cJSON *object, const char *key)
         exit(1);
     }
     return item;
+}
+
+static double read_number_or(const cJSON *object, const char *key, double fallback)
+{
+    cJSON *item = cJSON_GetObjectItemCaseSensitive(object, key);
+
+    if (item == NULL) return fallback;
+    if (!cJSON_IsNumber(item)) {
+        fprintf(stderr, "Invalid number: %s\n", key);
+        exit(1);
+    }
+    return item->valuedouble;
 }
 
 static void parse_task_string(const char *value, argsInput_t *input)
@@ -219,7 +230,16 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
     }
 
     if (input->system == SYSTEM_BAG) {
-        ;
+        input->nn = read_number_item(system_json, "nn")->valueint;
+        input->ns = read_number_item(system_json, "ns")->valueint;
+        input->nc = read_number_item(system_json, "nc")->valueint;
+        input->nb = read_number_item(system_json, "nb")->valueint;
+        input->f1 = (int)read_number_or(system_json, "f1", 0.0);
+        input->f2 = (int)read_number_or(system_json, "f2", 0.0);
+        input->f3 = (int)read_number_or(system_json, "f3", 0.0);
+        input->f4 = (int)read_number_or(system_json, "f4", 0.0);
+        input->f5 = (int)read_number_or(system_json, "f5", 0.0);
+        input->f6 = (int)read_number_or(system_json, "f6", 0.0);
     }
     else if (input->system == SYSTEM_MESON) {
         input->f1 = read_number_item(system_json, "f1")->valueint;
@@ -240,27 +260,102 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
     }
 }
 
+static void parse_cmi_basis(const cJSON *basis_json, argsInput_t *input)
+{
+    cJSON *color_json = read_array_item(basis_json, "color");
+    cJSON *spin_json = read_array_item(basis_json, "spin");
+    cJSON *item;
+    int n;
+
+    n = cJSON_GetArraySize(color_json);
+    if (n < 1 || n > CMI_COLOR_MAX) {
+        fprintf(stderr, "CMI color basis must contain 1 to %d channels\n", CMI_COLOR_MAX);
+        exit(1);
+    }
+    input->ncolor = n;
+    for (int i = 0; i < n; i++) {
+        const char *name;
+        int id;
+
+        item = cJSON_GetArrayItem(color_json, i);
+        if (!cJSON_IsString(item) || item->valuestring == NULL) {
+            fprintf(stderr, "CMI color channel %d is not a string\n", i + 1);
+            exit(1);
+        }
+        name = item->valuestring;
+        if (strcmp(name, "meson") == 0) id = CMI_COLOR_MESON;
+        else if (strcmp(name, "baryon") == 0) id = CMI_COLOR_BARYON;
+        else if (strcmp(name, "tetra11") == 0) id = CMI_COLOR_TETRA11;
+        else if (strcmp(name, "tetra33") == 0) id = CMI_COLOR_TETRA33;
+        else if (strcmp(name, "tetra66") == 0) id = CMI_COLOR_TETRA66;
+        else if (strcmp(name, "tetra88") == 0) id = CMI_COLOR_TETRA88;
+        else if (strcmp(name, "penta688") == 0) id = CMI_COLOR_PENTA688;
+        else if (strcmp(name, "penta388") == 0) id = CMI_COLOR_PENTA388;
+        else if (strcmp(name, "penta11") == 0) id = CMI_COLOR_PENTA11;
+        else if (strcmp(name, "hexa1010") == 0) id = CMI_COLOR_HEXA1010;
+        else if (strcmp(name, "hexa6868") == 0) id = CMI_COLOR_HEXA6868;
+        else if (strcmp(name, "hexa6838") == 0) id = CMI_COLOR_HEXA6838;
+        else if (strcmp(name, "hexa3868") == 0) id = CMI_COLOR_HEXA3868;
+        else if (strcmp(name, "hexa3838") == 0) id = CMI_COLOR_HEXA3838;
+        else if (strcmp(name, "hexa11") == 0) id = CMI_COLOR_HEXA11;
+        else {
+            fprintf(stderr, "Unknown CMI color basis: %s\n", name);
+            exit(1);
+        }
+        input->color_id[i] = id;
+    }
+
+    n = cJSON_GetArraySize(spin_json);
+    if (n < 1 || n > CMI_SPIN_MAX) {
+        fprintf(stderr, "CMI spin basis must contain 1 to %d channels\n", CMI_SPIN_MAX);
+        exit(1);
+    }
+    input->nspin = n;
+    for (int i = 0; i < n; i++) {
+        item = cJSON_GetArrayItem(spin_json, i);
+        if (!cJSON_IsObject(item)) {
+            fprintf(stderr, "CMI spin channel %d is not an object\n", i + 1);
+            exit(1);
+        }
+        input->spin_ch[i].s12 = read_number_or(item, "s12", 0.0);
+        input->spin_ch[i].s34 = read_number_or(item, "s34", 0.0);
+        input->spin_ch[i].s123 = read_number_or(item, "s123", 0.0);
+        input->spin_ch[i].s45 = read_number_or(item, "s45", 0.0);
+        input->spin_ch[i].s456 = read_number_or(item, "s456", 0.0);
+        input->spin_ch[i].st = read_number_or(item, "st", 0.0);
+        input->spin_ch[i].st3 = read_number_or(item, "st3", 0.0);
+    }
+}
+
 static void parse_basis_section(const cJSON *root, argsInput_t *input)
 {
     cJSON *basis_json = read_object_item(root, "basis");
     const char *type = read_string_item(basis_json, "type")->valuestring;
 
-    if (strcmp(type, "GEM") == 0) input->orbit = ORBIT_GEM;
-    else if (strcmp(type, "SHO") == 0) input->orbit = ORBIT_SHO;
-    else if (strcmp(type, "NONE") == 0) input->orbit = ORBIT_NONE;
+    if (strcmp(type, "GEM") == 0) input->basis = BASIS_GEM;
+    else if (strcmp(type, "SHO") == 0) input->basis = BASIS_SHO;
+    else if (strcmp(type, "CMI") == 0) input->basis = BASIS_CMI;
+    else if (strcmp(type, "NONE") == 0) input->basis = BASIS_NONE;
     else {
         fprintf(stderr, "Unknown basis type: %s\n", type);
         exit(1);
     }
 
-    if (input->orbit == ORBIT_GEM) {
+    if (input->basis == BASIS_GEM) {
         input->nmax = read_number_item(basis_json, "nmax")->valueint;
         input->rmax = read_number_item(basis_json, "rmax")->valuedouble;
         input->rmin = read_number_item(basis_json, "rmin")->valuedouble;
     }
-    else if (input->orbit == ORBIT_SHO) {
+    else if (input->basis == BASIS_SHO) {
         input->nmax = read_number_item(basis_json, "nmax")->valueint;
         input->beta = read_number_item(basis_json, "beta")->valuedouble;
+    }
+    else if (input->basis == BASIS_CMI) {
+        parse_cmi_basis(basis_json, input);
+    }
+    else if (input->basis == BASIS_NONE) {
+        input->ncolor = 0;
+        input->nspin = 0;
     }
 }
 
@@ -482,108 +577,6 @@ void parse_param_BAGMIT(const char *filename, argsBAGModel_t *args_model)
     args_model->Bbb = read_number_item(param_json, "Bbb")->valuedouble;
     args_model->B = read_number_item(param_json, "B")->valuedouble;
     args_model->Z = read_number_item(param_json, "Z")->valuedouble;
-
-    cJSON_Delete(root);
-    free(json_text);
-}
-
-void parse_meson_state(const char *filename, array_t *mass, array_t *radius, matrix_t *eigenvector)
-{
-    if (filename == NULL || mass == NULL || radius == NULL || eigenvector == NULL) {
-        fprintf(stderr, "Error: Invalid input parameters to parse_meson_state()\n");
-        exit(1);
-    }
-
-    if (mass->value == NULL || radius->value == NULL || eigenvector->value == NULL) {
-        fprintf(stderr, "Error: Arrays must be pre-allocated (non-NULL values)\n");
-        exit(1);
-    }
-
-    char *json_text = read_input_file(filename);
-    const char *parse_error = NULL;
-    cJSON *root = cJSON_Parse(json_text);
-
-    if (!root) {
-        parse_error = cJSON_GetErrorPtr();
-        fprintf(stderr, "Invalid JSON in state file %s", filename);
-        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
-        fprintf(stderr, "\n");
-        free(json_text);
-        exit(1);
-    }
-
-    /* Get states array using read_array_item */
-    cJSON *states_json = read_array_item(root, "states");
-    int num_states = cJSON_GetArraySize(states_json);
-    if (num_states <= 0) {
-        fprintf(stderr, "Error: Empty states array in %s\n", filename);
-        cJSON_Delete(root);
-        free(json_text);
-        exit(1);
-    }
-
-    /* Verify array dimensions match */
-    if (num_states != mass->len || num_states != radius->len || num_states != eigenvector->row) {
-        fprintf(stderr, "Error: State count mismatch (expected %d, got %d states in file)\n", 
-                mass->len, num_states);
-        cJSON_Delete(root);
-        free(json_text);
-        exit(1);
-    }
-
-    /* Get eigenvector length from first state */
-    cJSON *first_state = cJSON_GetArrayItem(states_json, 0);
-    cJSON *first_eigenvector = read_array_item(first_state, "eigenvector");
-    int eigenvector_len = cJSON_GetArraySize(first_eigenvector);
-    if (eigenvector_len != eigenvector->col) {
-        fprintf(stderr, "Error: Eigenvector length mismatch (expected %d, got %d)\n",
-                eigenvector->col, eigenvector_len);
-        cJSON_Delete(root);
-        free(json_text);
-        exit(1);
-    }
-
-    /* Parse states data */
-    for (int n = 0; n < num_states; n++) {
-        cJSON *state = cJSON_GetArrayItem(states_json, n);
-        if (!cJSON_IsObject(state)) {
-            fprintf(stderr, "Error: Invalid state object at index %d\n", n);
-            cJSON_Delete(root);
-            free(json_text);
-            exit(1);
-        }
-
-        /* Parse mass */
-        cJSON *mass_item = read_number_item(state, "mass");
-        mass->value[n] = mass_item->valuedouble;
-
-        /* Parse rms_radius */
-        cJSON *radius_item = read_number_item(state, "rms_radius");
-        radius->value[n] = radius_item->valuedouble;
-
-        /* Parse eigenvector using read_array_item */
-        cJSON *eigen_array = read_array_item(state, "eigenvector");
-        int current_eigen_len = cJSON_GetArraySize(eigen_array);
-        if (current_eigen_len != eigenvector_len) {
-            fprintf(stderr, "Error: Eigenvector length mismatch in state %d (expected %d, got %d)\n",
-                    n, eigenvector_len, current_eigen_len);
-            cJSON_Delete(root);
-            free(json_text);
-            exit(1);
-        }
-
-        /* Extract eigenvector coefficients */
-        for (int d = 0; d < eigenvector_len; d++) {
-            cJSON *coeff = cJSON_GetArrayItem(eigen_array, d);
-            if (!cJSON_IsNumber(coeff)) {
-                fprintf(stderr, "Error: Invalid eigenvector coefficient at state %d, index %d\n", n, d);
-                cJSON_Delete(root);
-                free(json_text);
-                exit(1);
-            }
-            eigenvector->value[n][d] = coeff->valuedouble;
-        }
-    }
 
     cJSON_Delete(root);
     free(json_text);

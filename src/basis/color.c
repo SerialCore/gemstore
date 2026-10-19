@@ -9,125 +9,1218 @@
 
 #include <math.h>
 
+static intrin_wfn_t color_wfn_push(int ncfg, int nterm, const double *c, const char *const *s)
+{
+    intrin_wfn_t wfn = intrin_wfn_init(ncfg);
+    for (int i = 0; i < nterm; i++) intrin_wfn_push(&wfn, c[i], s[i]);
+    return wfn;
+}
+
 intrin_wfn_t color_wfn_meson()
 {
-    intrin_wfn_t cwf = intrin_wfn_init(2);
-
-    double s3 = 1.0 / sqrt(3.0);
-
-    intrin_wfn_push(&cwf, s3, "rR");
-    intrin_wfn_push(&cwf, s3, "gG");
-    intrin_wfn_push(&cwf, s3, "bB");
-
-    return cwf;
+    const double c[3] = {
+        1.0 / sqrt(3.0),
+        1.0 / sqrt(3.0),
+        1.0 / sqrt(3.0)
+    };
+    const char *s[3] = {
+        "rR",
+        "gG",
+        "bB"
+    };
+    return color_wfn_push(2, 3, c, s);
 }
 
 intrin_wfn_t color_wfn_baryon()
 {
-    intrin_wfn_t cwf = intrin_wfn_init(3);
-
-    double s6 = 1.0 / sqrt(6.0);
-
-    intrin_wfn_push(&cwf, s6, "rgb");
-    intrin_wfn_push(&cwf, -s6, "grb");
-    intrin_wfn_push(&cwf, s6, "gbr");
-    intrin_wfn_push(&cwf, -s6, "bgr");
-    intrin_wfn_push(&cwf, s6, "brg");
-    intrin_wfn_push(&cwf, -s6, "rbg");
-
-    return cwf;
+    const double c[6] = {
+        1.0 / sqrt(6.0),
+        -1.0 / sqrt(6.0),
+        1.0 / sqrt(6.0),
+        -1.0 / sqrt(6.0),
+        1.0 / sqrt(6.0),
+        -1.0 / sqrt(6.0)
+    };
+    const char *s[6] = {
+        "rgb",
+        "grb",
+        "gbr",
+        "bgr",
+        "brg",
+        "rbg"
+    };
+    return color_wfn_push(3, 6, c, s);
 }
 
-intrin_wfn_t color_wfn_tetra1()
+intrin_wfn_t color_wfn_tetra11()
 {
-    intrin_wfn_t cwf = intrin_wfn_init(4);
-
-    double s9 = 1.0 / 3.0;
-
-    intrin_wfn_push(&cwf, s9, "rRrR");
-    intrin_wfn_push(&cwf, s9, "bBbB");
-    intrin_wfn_push(&cwf, s9, "gGgG");
-    intrin_wfn_push(&cwf, s9, "rRbB");
-    intrin_wfn_push(&cwf, s9, "rRgG");
-    intrin_wfn_push(&cwf, s9, "bBrR");
-    intrin_wfn_push(&cwf, s9, "bBgG");
-    intrin_wfn_push(&cwf, s9, "gGrR");
-    intrin_wfn_push(&cwf, s9, "gGbB");
-
-    return cwf;
+    const double c[9] = {
+        1.0 / 3.0,
+        1.0 / 3.0,
+        1.0 / 3.0,
+        1.0 / 3.0,
+        1.0 / 3.0,
+        1.0 / 3.0,
+        1.0 / 3.0,
+        1.0 / 3.0,
+        1.0 / 3.0
+    };
+    const char *s[9] = {
+        "rRrR",
+        "bBbB",
+        "gGgG",
+        "rRbB",
+        "rRgG",
+        "bBrR",
+        "bBgG",
+        "gGrR",
+        "gGbB"
+    };
+    return color_wfn_push(4, 9, c, s);
 }
 
-intrin_wfn_t color_wfn_tetra8()
+intrin_wfn_t color_wfn_tetra88()
 {
-    intrin_wfn_t cwf = intrin_wfn_init(4);
-
-    double s8 = 1.0 / sqrt(8.0);    /* 1/(2√2) = 1/√8 */
-    double s18 = 1.0 / sqrt(18.0);  /* 1/(3√2) = 1/√18 */
-    double s72 = 1.0 / sqrt(72.0);  /* 1/(6√2) = 1/√72 */
-
-    intrin_wfn_push(&cwf, s8, "bRrB");
-    intrin_wfn_push(&cwf, s8, "rBbR");
-    intrin_wfn_push(&cwf, s8, "gRrG");
-    intrin_wfn_push(&cwf, s8, "rGgR");
-    intrin_wfn_push(&cwf, s8, "gBbG");
-    intrin_wfn_push(&cwf, s8, "bGgB");
-    intrin_wfn_push(&cwf, s18, "rRrR");
-    intrin_wfn_push(&cwf, s18, "gGgG");
-    intrin_wfn_push(&cwf, s18, "bBbB");
-    intrin_wfn_push(&cwf, -s72, "rRgG");
-    intrin_wfn_push(&cwf, -s72, "gGrR");
-    intrin_wfn_push(&cwf, -s72, "bBgG");
-    intrin_wfn_push(&cwf, -s72, "gGbB");
-    intrin_wfn_push(&cwf, -s72, "bBrR");
-    intrin_wfn_push(&cwf, -s72, "rRbB");
-
-    return cwf;
+    const double c[15] = {
+        1.0 / sqrt(8.0),
+        1.0 / sqrt(8.0),
+        1.0 / sqrt(8.0),
+        1.0 / sqrt(8.0),
+        1.0 / sqrt(8.0),
+        1.0 / sqrt(8.0),
+        1.0 / sqrt(18.0),
+        1.0 / sqrt(18.0),
+        1.0 / sqrt(18.0),
+        -1.0 / sqrt(72.0),
+        -1.0 / sqrt(72.0),
+        -1.0 / sqrt(72.0),
+        -1.0 / sqrt(72.0),
+        -1.0 / sqrt(72.0),
+        -1.0 / sqrt(72.0)
+    };
+    const char *s[15] = {
+        "bRrB",
+        "rBbR",
+        "gRrG",
+        "rGgR",
+        "gBbG",
+        "bGgB",
+        "rRrR",
+        "gGgG",
+        "bBbB",
+        "rRgG",
+        "gGrR",
+        "bBgG",
+        "gGbB",
+        "bBrR",
+        "rRbB"
+    };
+    return color_wfn_push(4, 15, c, s);
 }
 
-intrin_wfn_t color_wfn_tetra3()
+intrin_wfn_t color_wfn_tetra33()
 {
-    intrin_wfn_t cwf = intrin_wfn_init(4);
-
-    double s12 = 1.0 / sqrt(12.0);  /* 1/(2√3) = 1/√12 */
-
-    intrin_wfn_push(&cwf,  s12, "rbBR");
-    intrin_wfn_push(&cwf, -s12, "brBR");
-    intrin_wfn_push(&cwf, -s12, "grGR");
-    intrin_wfn_push(&cwf,  s12, "rgGR");
-    intrin_wfn_push(&cwf,  s12, "gbBG");
-    intrin_wfn_push(&cwf, -s12, "bgBG");
-    intrin_wfn_push(&cwf,  s12, "grRG");
-    intrin_wfn_push(&cwf, -s12, "rgRG");
-    intrin_wfn_push(&cwf, -s12, "gbGB");
-    intrin_wfn_push(&cwf,  s12, "bgGB");
-    intrin_wfn_push(&cwf, -s12, "rbRB");
-    intrin_wfn_push(&cwf,  s12, "brRB");
-
-    return cwf;
+    const double c[12] = {
+        1.0 / sqrt(12.0),
+        -1.0 / sqrt(12.0),
+        -1.0 / sqrt(12.0),
+        1.0 / sqrt(12.0),
+        1.0 / sqrt(12.0),
+        -1.0 / sqrt(12.0),
+        1.0 / sqrt(12.0),
+        -1.0 / sqrt(12.0),
+        -1.0 / sqrt(12.0),
+        1.0 / sqrt(12.0),
+        -1.0 / sqrt(12.0),
+        1.0 / sqrt(12.0)
+    };
+    const char *s[12] = {
+        "rbBR",
+        "brBR",
+        "grGR",
+        "rgGR",
+        "gbBG",
+        "bgBG",
+        "grRG",
+        "rgRG",
+        "gbGB",
+        "bgGB",
+        "rbRB",
+        "brRB"
+    };
+    return color_wfn_push(4, 12, c, s);
 }
 
-intrin_wfn_t color_wfn_tetra6()
+intrin_wfn_t color_wfn_tetra66()
 {
-    intrin_wfn_t cwf = intrin_wfn_init(4);
+    const double c[15] = {
+        1.0 / sqrt(6.0),
+        1.0 / sqrt(6.0),
+        1.0 / sqrt(6.0),
+        1.0 / sqrt(24.0),
+        1.0 / sqrt(24.0),
+        1.0 / sqrt(24.0),
+        1.0 / sqrt(24.0),
+        1.0 / sqrt(24.0),
+        1.0 / sqrt(24.0),
+        1.0 / sqrt(24.0),
+        1.0 / sqrt(24.0),
+        1.0 / sqrt(24.0),
+        1.0 / sqrt(24.0),
+        1.0 / sqrt(24.0),
+        1.0 / sqrt(24.0)
+    };
+    const char *s[15] = {
+        "rrRR",
+        "ggGG",
+        "bbBB",
+        "rbBR",
+        "brBR",
+        "grGR",
+        "rgGR",
+        "gbBG",
+        "bgBG",
+        "grRG",
+        "rgRG",
+        "gbGB",
+        "bgGB",
+        "rbRB",
+        "brRB"
+    };
+    return color_wfn_push(4, 15, c, s);
+}
 
-    double s6 = 1.0 / sqrt(6.0);
-    double s24 = 1.0 / sqrt(24.0);  /* 1/(2√6) = 1/√24 */
+intrin_wfn_t color_wfn_penta688()
+{
+    const double c[30] = {
+        1/(2.0*sqrt(3)),
+        -0.25*1/sqrt(3),
+        -0.25*1/sqrt(3),
+        1/(4.0*sqrt(3)),
+        1/(4.0*sqrt(3)),
+        -0.5*1/sqrt(3),
+        -0.5*1/sqrt(3),
+        1/(4.0*sqrt(3)),
+        1/(4.0*sqrt(3)),
+        1/(4.0*sqrt(3)),
+        -0.25*1/sqrt(3),
+        1/(4.0*sqrt(3)),
+        -0.25*1/sqrt(3),
+        1/(4.0*sqrt(3)),
+        -0.25*1/sqrt(3),
+        -0.25*1/sqrt(3),
+        1/(4.0*sqrt(3)),
+        1/(2.0*sqrt(3)),
+        -0.25*1/sqrt(3),
+        -0.25*1/sqrt(3),
+        1/(4.0*sqrt(3)),
+        -0.25*1/sqrt(3),
+        1/(4.0*sqrt(3)),
+        -0.25*1/sqrt(3),
+        -0.25*1/sqrt(3),
+        -0.25*1/sqrt(3),
+        1/(2.0*sqrt(3)),
+        1/(4.0*sqrt(3)),
+        1/(4.0*sqrt(3)),
+        -0.5*1/sqrt(3)
+    };
+    const char *s[30] = {
+        "rrgbR",
+        "rgrbR",
+        "grrbR",
+        "rggbG",
+        "grgbG",
+        "ggrbG",
+        "rrbgR",
+        "rbrgR",
+        "brrgR",
+        "rgbrR",
+        "rgbgG",
+        "grbrR",
+        "grbgG",
+        "gbrgG",
+        "rbgrR",
+        "brgrR",
+        "bgrgG",
+        "ggbrG",
+        "gbgrG",
+        "bggrG",
+        "rbgbB",
+        "gbrbB",
+        "brgbB",
+        "bgrbB",
+        "rbbgB",
+        "brbgB",
+        "bbrgB",
+        "gbbrB",
+        "bgbrB",
+        "bbgrB"
+    };
+    return color_wfn_push(5, 30, c, s);
+}
 
-    intrin_wfn_push(&cwf, s6, "rrRR");
-    intrin_wfn_push(&cwf, s6, "ggGG");
-    intrin_wfn_push(&cwf, s6, "bbBB");
-    intrin_wfn_push(&cwf, s24, "rbBR");
-    intrin_wfn_push(&cwf, s24, "brBR");
-    intrin_wfn_push(&cwf, s24, "grGR");
-    intrin_wfn_push(&cwf, s24, "rgGR");
-    intrin_wfn_push(&cwf, s24, "gbBG");
-    intrin_wfn_push(&cwf, s24, "bgBG");
-    intrin_wfn_push(&cwf, s24, "grRG");
-    intrin_wfn_push(&cwf, s24, "rgRG");
-    intrin_wfn_push(&cwf, s24, "gbGB");
-    intrin_wfn_push(&cwf, s24, "bgGB");
-    intrin_wfn_push(&cwf, s24, "rbRB");
-    intrin_wfn_push(&cwf, s24, "brRB");
+intrin_wfn_t color_wfn_penta388()
+{
+    const double c[30] = {
+        0.25,
+        -0.25,
+        0.25,
+        -0.25,
+        -0.25,
+        0.25,
+        0.08333333333333333,
+        -0.16666666666666666,
+        -0.08333333333333333,
+        0.16666666666666666,
+        0.16666666666666666,
+        -0.08333333333333333,
+        -0.16666666666666666,
+        0.08333333333333333,
+        0.25,
+        -0.25,
+        0.16666666666666666,
+        -0.08333333333333333,
+        -0.08333333333333333,
+        -0.16666666666666666,
+        0.08333333333333333,
+        0.08333333333333333,
+        -0.08333333333333333,
+        0.08333333333333333,
+        -0.08333333333333333,
+        0.08333333333333333,
+        -0.25,
+        0.25,
+        0.25,
+        -0.25
+    };
+    const char *s[30] = {
+        "rgrbR",
+        "grrbR",
+        "rggbG",
+        "grgbG",
+        "rbrgR",
+        "brrgR",
+        "rbgrR",
+        "rbggG",
+        "brgrR",
+        "brggG",
+        "gbrrR",
+        "gbrgG",
+        "bgrrR",
+        "bgrgG",
+        "gbgrG",
+        "bggrG",
+        "rgbbB",
+        "rgbrR",
+        "rgbgG",
+        "grbbB",
+        "grbrR",
+        "grbgG",
+        "gbrbB",
+        "bgrbB",
+        "brgbB",
+        "rbgbB",
+        "rbbgB",
+        "brbgB",
+        "gbbrB",
+        "bgbrB"
+    };
+    return color_wfn_push(5, 30, c, s);
+}
 
-    return cwf;
+intrin_wfn_t color_wfn_penta11()
+{
+    const double c[18] = {
+        1/(3.0*sqrt(2)),
+        1/(3.0*sqrt(2)),
+        1/(3.0*sqrt(2)),
+        -0.3333333333333333*1/sqrt(2),
+        -0.3333333333333333*1/sqrt(2),
+        -0.3333333333333333*1/sqrt(2),
+        -0.3333333333333333*1/sqrt(2),
+        -0.3333333333333333*1/sqrt(2),
+        -0.3333333333333333*1/sqrt(2),
+        -0.3333333333333333*1/sqrt(2),
+        -0.3333333333333333*1/sqrt(2),
+        -0.3333333333333333*1/sqrt(2),
+        1/(3.0*sqrt(2)),
+        1/(3.0*sqrt(2)),
+        1/(3.0*sqrt(2)),
+        1/(3.0*sqrt(2)),
+        1/(3.0*sqrt(2)),
+        1/(3.0*sqrt(2))
+    };
+    const char *s[18] = {
+        "rgbrR",
+        "rgbbB",
+        "rgbgG",
+        "grbrR",
+        "grbbB",
+        "grbgG",
+        "bgrrR",
+        "bgrbB",
+        "bgrgG",
+        "rbgrR",
+        "rbgbB",
+        "rbggG",
+        "gbrrR",
+        "gbrbB",
+        "gbrgG",
+        "brgrR",
+        "brgbB",
+        "brggG"
+    };
+    return color_wfn_push(5, 18, c, s);
+}
+
+intrin_wfn_t color_wfn_hexa1010()
+{
+    const double c[93] = {
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/(6.0*sqrt(10)),
+        1/sqrt(10),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/sqrt(10),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/(3.0*sqrt(10)),
+        1/sqrt(10)
+    };
+    const char *s[93] = {
+        "rgbRGB",
+        "rgbGRB",
+        "rgbGBR",
+        "rgbRBG",
+        "rgbBRG",
+        "rgbBGR",
+        "grbRGB",
+        "grbGRB",
+        "grbGBR",
+        "grbRBG",
+        "grbBRG",
+        "grbBGR",
+        "gbrRGB",
+        "gbrGRB",
+        "gbrGBR",
+        "gbrRBG",
+        "gbrBRG",
+        "gbrBGR",
+        "rbgRGB",
+        "rbgGRB",
+        "rbgGBR",
+        "rbgRBG",
+        "rbgBRG",
+        "rbgBGR",
+        "brgRGB",
+        "brgGRB",
+        "brgGBR",
+        "brgRBG",
+        "brgBRG",
+        "brgBGR",
+        "bgrRGB",
+        "bgrGRB",
+        "bgrGBR",
+        "bgrRBG",
+        "bgrBRG",
+        "bgrBGR",
+        "rrrRRR",
+        "rgrRGR",
+        "rgrRRG",
+        "rgrGRR",
+        "rrgRGR",
+        "rrgRRG",
+        "rrgGRR",
+        "grrRGR",
+        "grrRRG",
+        "grrGRR",
+        "ggrGGR",
+        "ggrRGG",
+        "ggrGRG",
+        "rggGGR",
+        "rggRGG",
+        "rggGRG",
+        "grgGGR",
+        "grgRGG",
+        "grgGRG",
+        "gggGGG",
+        "rrbRRB",
+        "rrbRBR",
+        "rrbBRR",
+        "rbrRRB",
+        "rbrRBR",
+        "rbrBRR",
+        "brrRRB",
+        "brrRBR",
+        "brrBRR",
+        "ggbGGB",
+        "ggbGBG",
+        "ggbBGG",
+        "gbgGGB",
+        "gbgGBG",
+        "gbgBGG",
+        "bggGGB",
+        "bggGBG",
+        "bggBGG",
+        "bbrBBR",
+        "bbrBRB",
+        "bbrRBB",
+        "brbBBR",
+        "brbBRB",
+        "brbRBB",
+        "rbbBBR",
+        "rbbBRB",
+        "rbbRBB",
+        "gbbGBB",
+        "gbbBBG",
+        "gbbBGB",
+        "bbgGBB",
+        "bbgBBG",
+        "bbgBGB",
+        "bgbGBB",
+        "bgbBBG",
+        "bgbBGB",
+        "bbbBBB"
+    };
+    return color_wfn_push(6, 93, c, s);
+}
+
+intrin_wfn_t color_wfn_hexa6868()
+{
+    const double c[90] = {
+        1/(3.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        -0.16666666666666666*1/sqrt(2),
+        -0.16666666666666666*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        -0.16666666666666666*1/sqrt(2),
+        -0.16666666666666666*1/sqrt(2),
+        1/(3.0*sqrt(2)),
+        1/(3.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        -0.16666666666666666*1/sqrt(2),
+        -0.16666666666666666*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        1/(6.0*sqrt(2)),
+        1/(6.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        1/(6.0*sqrt(2)),
+        1/(6.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        1/(6.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        1/(6.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        1/(6.0*sqrt(2)),
+        1/(6.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        1/(6.0*sqrt(2)),
+        1/(6.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        1/(6.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        1/(6.0*sqrt(2)),
+        1/(3.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        -0.16666666666666666*1/sqrt(2),
+        -0.16666666666666666*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        -0.16666666666666666*1/sqrt(2),
+        -0.16666666666666666*1/sqrt(2),
+        1/(3.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        -0.16666666666666666*1/sqrt(2),
+        -0.16666666666666666*1/sqrt(2),
+        1/(3.0*sqrt(2))
+    };
+    const char *s[90] = {
+        "rrgRRG",
+        "rrgRGR",
+        "rrgGRR",
+        "rgrRRG",
+        "rgrRGR",
+        "rgrGRR",
+        "grrRRG",
+        "grrRGR",
+        "grrGRR",
+        "rggRGG",
+        "rggGRG",
+        "rggGGR",
+        "grgRGG",
+        "grgGRG",
+        "grgGGR",
+        "ggrRGG",
+        "ggrGRG",
+        "ggrGGR",
+        "rrbRRB",
+        "rrbRBR",
+        "rrbBRR",
+        "rbrRRB",
+        "rbrRBR",
+        "rbrBRR",
+        "brrRRB",
+        "brrRBR",
+        "brrBRR",
+        "rgbRGB",
+        "rgbGRB",
+        "rgbGBR",
+        "rgbRBG",
+        "rgbBRG",
+        "rgbBGR",
+        "grbRGB",
+        "grbGRB",
+        "grbGBR",
+        "grbRBG",
+        "grbBRG",
+        "grbBGR",
+        "gbrRGB",
+        "gbrGRB",
+        "gbrGBR",
+        "gbrRBG",
+        "gbrBRG",
+        "gbrBGR",
+        "rbgRGB",
+        "rbgGRB",
+        "rbgGBR",
+        "rbgRBG",
+        "rbgBRG",
+        "rbgBGR",
+        "brgRGB",
+        "brgGRB",
+        "brgGBR",
+        "brgRBG",
+        "brgBRG",
+        "brgBGR",
+        "bgrRGB",
+        "bgrGRB",
+        "bgrGBR",
+        "bgrRBG",
+        "bgrBRG",
+        "bgrBGR",
+        "ggbGGB",
+        "ggbGBG",
+        "ggbBGG",
+        "gbgGGB",
+        "gbgGBG",
+        "gbgBGG",
+        "bggGGB",
+        "bggGBG",
+        "bggBGG",
+        "rbbRBB",
+        "rbbBRB",
+        "rbbBBR",
+        "brbRBB",
+        "brbBRB",
+        "brbBBR",
+        "bbrRBB",
+        "bbrBRB",
+        "bbrBBR",
+        "gbbGBB",
+        "gbbBGB",
+        "gbbBBG",
+        "bgbGBB",
+        "bgbBGB",
+        "bgbBBG",
+        "bbgGBB",
+        "bbgBGB",
+        "bbgBBG"
+    };
+    return color_wfn_push(6, 90, c, s);
+}
+
+intrin_wfn_t color_wfn_hexa6838()
+{
+    const double c[60] = {
+        1/(2.0*sqrt(6)),
+        -0.5*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        -0.5*1/sqrt(6),
+        1/(2.0*sqrt(6)),
+        1/(2.0*sqrt(6)),
+        -0.5*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        1/(2.0*sqrt(6)),
+        -0.5*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        -0.5*1/sqrt(6),
+        1/(2.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        -0.5*1/sqrt(6),
+        1/(2.0*sqrt(6))
+    };
+    const char *s[60] = {
+        "rrgRGR",
+        "rrgGRR",
+        "rgrRGR",
+        "rgrGRR",
+        "grrRGR",
+        "grrGRR",
+        "rggRGG",
+        "rggGRG",
+        "grgRGG",
+        "grgGRG",
+        "ggrRGG",
+        "ggrGRG",
+        "rrbRBR",
+        "rrbBRR",
+        "rbrRBR",
+        "rbrBRR",
+        "brrRBR",
+        "brrBRR",
+        "rgbRBG",
+        "rgbBRG",
+        "rgbGBR",
+        "rgbBGR",
+        "grbRBG",
+        "grbBRG",
+        "grbGBR",
+        "grbBGR",
+        "gbrRBG",
+        "gbrBRG",
+        "rbgGBR",
+        "rbgBGR",
+        "brgGBR",
+        "brgBGR",
+        "bgrRBG",
+        "bgrBRG",
+        "ggbGBG",
+        "ggbBGG",
+        "gbgGBG",
+        "gbgBGG",
+        "bggGBG",
+        "bggBGG",
+        "rbgRGB",
+        "rbgGRB",
+        "gbrRGB",
+        "gbrGRB",
+        "brgRGB",
+        "brgGRB",
+        "bgrRGB",
+        "bgrGRB",
+        "rbbRBB",
+        "rbbBRB",
+        "brbRBB",
+        "brbBRB",
+        "bbrRBB",
+        "bbrBRB",
+        "gbbGBB",
+        "gbbBGB",
+        "bgbGBB",
+        "bgbBGB",
+        "bbgGBB",
+        "bbgBGB"
+    };
+    return color_wfn_push(6, 60, c, s);
+}
+
+intrin_wfn_t color_wfn_hexa3868()
+{
+    const double c[60] = {
+        1/(2.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        -0.5*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        -0.5*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        1/(2.0*sqrt(6)),
+        1/(2.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        -0.5*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        1/(2.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        -0.5*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        -0.25*1/sqrt(6),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        -0.5*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        1/(2.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        1/(4.0*sqrt(6)),
+        -0.5*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        -0.25*1/sqrt(6),
+        1/(2.0*sqrt(6))
+    };
+    const char *s[60] = {
+        "rgrRRG",
+        "rgrRGR",
+        "rgrGRR",
+        "grrRRG",
+        "grrRGR",
+        "grrGRR",
+        "rggRGG",
+        "rggGRG",
+        "rggGGR",
+        "grgRGG",
+        "grgGRG",
+        "grgGGR",
+        "rbrRRB",
+        "rbrRBR",
+        "rbrBRR",
+        "brrRRB",
+        "brrRBR",
+        "brrBRR",
+        "rbgRGB",
+        "rbgGRB",
+        "rbgGBR",
+        "rbgBGR",
+        "brgRGB",
+        "brgGRB",
+        "brgGBR",
+        "brgBGR",
+        "gbrRGB",
+        "gbrGRB",
+        "gbrRBG",
+        "gbrBRG",
+        "bgrRGB",
+        "bgrGRB",
+        "bgrRBG",
+        "bgrBRG",
+        "gbgGGB",
+        "gbgGBG",
+        "gbgBGG",
+        "bggGGB",
+        "bggGBG",
+        "bggBGG",
+        "rgbRBG",
+        "rgbGBR",
+        "rgbBRG",
+        "rgbBGR",
+        "grbRBG",
+        "grbGBR",
+        "grbBRG",
+        "grbBGR",
+        "rbbRBB",
+        "rbbBRB",
+        "rbbBBR",
+        "brbRBB",
+        "brbBRB",
+        "brbBBR",
+        "gbbGBB",
+        "gbbBGB",
+        "gbbBBG",
+        "bgbGBB",
+        "bgbBGB",
+        "bgbBBG"
+    };
+    return color_wfn_push(6, 60, c, s);
+}
+
+intrin_wfn_t color_wfn_hexa3838()
+{
+    const double c[60] = {
+        1/(4.0*sqrt(2)),
+        -0.25*1/sqrt(2),
+        -0.25*1/sqrt(2),
+        1/(4.0*sqrt(2)),
+        1/(4.0*sqrt(2)),
+        -0.25*1/sqrt(2),
+        -0.25*1/sqrt(2),
+        1/(4.0*sqrt(2)),
+        1/(4.0*sqrt(2)),
+        -0.25*1/sqrt(2),
+        -0.25*1/sqrt(2),
+        1/(4.0*sqrt(2)),
+        1/(6.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        -0.16666666666666666*1/sqrt(2),
+        1/(6.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        1/(6.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        1/(6.0*sqrt(2)),
+        1/(4.0*sqrt(2)),
+        -0.25*1/sqrt(2),
+        -0.25*1/sqrt(2),
+        1/(4.0*sqrt(2)),
+        1/(6.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        -0.16666666666666666*1/sqrt(2),
+        1/(6.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        -0.08333333333333333*1/sqrt(2),
+        1/(12.0*sqrt(2)),
+        1/(12.0*sqrt(2)),
+        -0.08333333333333333*1/sqrt(2),
+        1/(4.0*sqrt(2)),
+        -0.25*1/sqrt(2),
+        -0.25*1/sqrt(2),
+        1/(4.0*sqrt(2)),
+        1/(4.0*sqrt(2)),
+        -0.25*1/sqrt(2),
+        -0.25*1/sqrt(2),
+        1/(4.0*sqrt(2))
+    };
+    const char *s[60] = {
+        "rgrRGR",
+        "rgrGRR",
+        "grrRGR",
+        "grrGRR",
+        "rggRGG",
+        "rggGRG",
+        "grgRGG",
+        "grgGRG",
+        "rbrRBR",
+        "rbrBRR",
+        "brrRBR",
+        "brrBRR",
+        "rbgRBG",
+        "rbgBRG",
+        "rbgGBR",
+        "rbgBGR",
+        "brgRBG",
+        "brgBRG",
+        "brgGBR",
+        "brgBGR",
+        "gbrRBG",
+        "gbrBRG",
+        "gbrGBR",
+        "gbrBGR",
+        "bgrRBG",
+        "bgrBRG",
+        "bgrGBR",
+        "bgrBGR",
+        "gbgGBG",
+        "gbgBGG",
+        "bggGBG",
+        "bggBGG",
+        "rgbRGB",
+        "rgbGRB",
+        "rgbGBR",
+        "rgbBGR",
+        "rgbBRG",
+        "rgbRBG",
+        "grbRGB",
+        "grbGRB",
+        "grbGBR",
+        "grbBGR",
+        "grbBRG",
+        "grbRBG",
+        "gbrRGB",
+        "gbrGRB",
+        "bgrRGB",
+        "bgrGRB",
+        "brgRGB",
+        "brgGRB",
+        "rbgRGB",
+        "rbgGRB",
+        "rbbRBB",
+        "rbbBRB",
+        "brbRBB",
+        "brbBRB",
+        "gbbGBB",
+        "gbbBGB",
+        "bgbGBB",
+        "bgbBGB"
+    };
+    return color_wfn_push(6, 60, c, s);
+}
+
+intrin_wfn_t color_wfn_hexa11()
+{
+    const double c[36] = {
+        0.16666666666666666,
+        -0.16666666666666666,
+        -0.16666666666666666,
+        -0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        -0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        -0.16666666666666666,
+        -0.16666666666666666,
+        -0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        -0.16666666666666666,
+        -0.16666666666666666,
+        -0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        -0.16666666666666666,
+        -0.16666666666666666,
+        0.16666666666666666,
+        -0.16666666666666666,
+        -0.16666666666666666,
+        -0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666,
+        -0.16666666666666666,
+        -0.16666666666666666,
+        -0.16666666666666666,
+        0.16666666666666666,
+        0.16666666666666666
+    };
+    const char *s[36] = {
+        "rgbRGB",
+        "rgbGRB",
+        "rgbBGR",
+        "rgbRBG",
+        "rgbGBR",
+        "rgbBRG",
+        "grbRGB",
+        "grbGRB",
+        "grbBGR",
+        "grbRBG",
+        "grbGBR",
+        "grbBRG",
+        "bgrRGB",
+        "bgrGRB",
+        "bgrBGR",
+        "bgrRBG",
+        "bgrGBR",
+        "bgrBRG",
+        "rbgRGB",
+        "rbgGRB",
+        "rbgBGR",
+        "rbgRBG",
+        "rbgGBR",
+        "rbgBRG",
+        "gbrRGB",
+        "gbrGRB",
+        "gbrBGR",
+        "gbrRBG",
+        "gbrGBR",
+        "gbrBRG",
+        "brgRGB",
+        "brgGRB",
+        "brgBGR",
+        "brgRBG",
+        "brgGBR",
+        "brgBRG"
+    };
+    return color_wfn_push(6, 36, c, s);
 }

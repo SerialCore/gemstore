@@ -20,17 +20,26 @@ matrix_t matrix_init(int row, int col)
 	for (int i = 0; i < row; i++) {
 		value[i] = (double*)calloc((size_t)col, sizeof(double));
 	}
+	for (int i = 0; i < row; i++) {
+		for (int j = 0; j < col; j++) {
+			value[i][j] = 0.0;
+		}
+	}
+
 	mat.value = value;
 	mat.row = row;
 	mat.col = col;
-
 	return mat;
 }
 
 matrix_t matrix_random(int row, int col)
 {
-	matrix_t mat = matrix_init(row, col);
+	matrix_t mat;
 
+	double **value = (double**)malloc((size_t)row * sizeof(double*));
+	for (int i = 0; i < row; i++) {
+		value[i] = (double*)calloc((size_t)col, sizeof(double));
+	}
 	srand(time(NULL));
 	for (int i = 0; i < row; i++) {
 		for (int j = 0; j < col; j++) {
@@ -38,6 +47,9 @@ matrix_t matrix_random(int row, int col)
 		}
 	}
 
+	mat.value = value;
+	mat.row = row;
+	mat.col = col;
 	return mat;
 }
 
@@ -331,10 +343,8 @@ void matrix_free(matrix_t *mat)
 array_t array_init(int len)
 {
 	array_t arr;
-
-	arr.value = (double*)calloc((size_t)len, sizeof(double));
+	arr.value = (double*)malloc((size_t)len * sizeof(double));
 	arr.len = len;
-
 	return arr;
 }
 
