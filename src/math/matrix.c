@@ -228,9 +228,8 @@ int matrix_orthogonal(const matrix_t *N, double rel_thresh, matrix_t *vt)
 		return 0;
 	}
 
-	printf("overlap N: rank %d / %d  (drop λ ≤ %.2e, λ_max=%.3e)\n",
-		nkeep, n, n_thresh, n_emax);
-	fflush(stdout);
+	//printf("overlap N: rank %d / %d  (drop λ ≤ %.2e, λ_max=%.3e)\n", nkeep, n, n_thresh, n_emax);
+	//fflush(stdout);
 
 	*vt = matrix_init(nkeep, n);
 	int row = 0;
