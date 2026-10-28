@@ -5,6 +5,7 @@
  */
 
 #include <gemstore/debug.h>
+#include <gemstore/write.h>
 
 #include <gemstore/basis/intrin.h>
 #include <gemstore/basis/color.h>
@@ -21,7 +22,11 @@
 #include <gemstore/math/soc.h>
 #include <gemstore/math/su3.h>
 
+#include <gemstore/model/obemodel.h>
+#include <gemstore/basis/orbit.h>
+
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 void debug_su3_product()
@@ -429,4 +434,83 @@ void debug_eigen_system_complex()
     cmatrix_free(&v);
     carray_free(&res1);
     carray_free(&res2);
+}
+
+/* Liu 2018 Table II, elastic D* Ξ (vector meson + Dirac baryon).
+ * f = κ g. I = 0 => ⟨τ1·τ2⟩ = 2I(I+1)−3 = −3 on π and ρ.
+ * ζ = +1 (no charge conjugation). I = 1 would be iso = +1.
+ */
+static void debug_obe_fill_liu_dstar_xi(argsOBEStatModel_t *model, double iso)
+{
+    const double g_pi1 = 0.60, g_pi2 = -0.25;
+    const double g_sig = 3.4;
+    const double g_rho1 = 2.6, g_rho2 = 2.9;
+    const double g_omg1 = 2.6, g_omg2 = 2.9;
+    const double kap_rho1 = 4.5, kap_rho2 = -1.5;
+    const double kap_omg1 = 4.5, kap_omg2 = -1.5;
+
+    memset(model, 0, sizeof(*model));
+    model->lambda = 1.04;
+    model->tensor_mass1 = 1.867;
+    model->tensor_mass2 = 1.318;
+    model->eta = 1.0;
+    model->type1 = OBE_LEG_VECTOR;
+    model->type2 = OBE_LEG_DIRAC;
+    model->g_pi1 = g_pi1;
+    model->g_pi2 = g_pi2;
+    model->g_sigma1 = g_sig;
+    model->g_sigma2 = g_sig;
+    model->g_rho1 = g_rho1;
+    model->g_rho2 = g_rho2;
+    model->f_rho1 = kap_rho1 * g_rho1;
+    model->f_rho2 = kap_rho2 * g_rho2;
+    model->g_omega1 = g_omg1;
+    model->g_omega2 = g_omg2;
+    model->f_omega1 = kap_omg1 * g_omg1;
+    model->f_omega2 = kap_omg2 * g_omg2;
+    model->iso_pi = iso;
+    model->iso_rho = iso;
+}
+
+static void debug_obe_print_samples(const argsOBEStatModel_t *model)
+{
+    double sample[] = {0.1, 0.5, 1.0, 2.0, 5.0};
+    int i;
+
+    printf("  r[fm]         Vc[GeV]           Vss[GeV]          Vt[GeV]           V[GeV]\n");
+    for (i = 0; i < 5; i++) {
+        double vc, vss, vt;
+        obe_radial(model, sample[i] * GEMSTORE_FM, &vc, &vss, &vt);
+        printf("  %6.2f    %16.8e    %16.8e    %16.8e    %16.8e\n",
+            sample[i], vc, vss, vt, vc + vss + vt);
+    }
+}
+
+void debug_obe_potential()
+{
+    const char *path = "debug_obe.pot.dat";
+    argsOBEStatModel_t model;
+
+    debug_obe_fill_liu_dstar_xi(&model, -3.0);
+
+    printf("OBE debug potential: elastic D* Xi (Vector + Dirac), Liu 2018 Table II\n");
+    printf("  Lambda = %.3f GeV, M1 = %.3f, M2 = %.3f GeV\n",
+        model.lambda, model.tensor_mass1, model.tensor_mass2);
+    printf("  g(D*) = 0.60, g(Xi) = -0.25; g_sigma = 3.4, 3.4\n");
+    printf("  g_rho = g_omega = 2.6 (D*), 2.9 (Xi); kappa_rho = kappa_omega = 4.5, -1.5\n");
+    printf("  f = kappa g => f_rho = %.2f, %.2f; f_omega = %.2f, %.2f\n",
+        model.f_rho1, model.f_rho2, model.f_omega1, model.f_omega2);
+    printf("  zeta = +1 (cc = 0); I = 0, iso_pi = iso_rho = -3\n");
+    debug_obe_print_samples(&model);
+
+    printf("  I = 1, iso_pi = iso_rho = +1 (same couplings, not written to file)\n");
+    debug_obe_fill_liu_dstar_xi(&model, 1.0);
+    debug_obe_print_samples(&model);
+
+    debug_obe_fill_liu_dstar_xi(&model, -3.0);
+    if (!write_obe_pot(path, &model)) {
+        fprintf(stderr, "Failed to write %s\n", path);
+        return;
+    }
+    printf("Wrote %s (I = 0, r = 0.01 .. 10 fm, same grid as GI .pot.dat)\n", path);
 }

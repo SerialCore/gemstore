@@ -118,9 +118,6 @@ static double read_number_or(const cJSON *object, const char *key, double fallba
 static void parse_task_string(const char *value, argsInput_t *input)
 {
     if (strcmp(value, "SPECTRA") == 0) input->task = TASK_SPECTRA;
-    else if (strcmp(value, "DECAY3P0") == 0) input->task = TASK_DECAY3P0;
-    else if (strcmp(value, "COUPLCHN") == 0) input->task = TASK_COUPLCHN;
-    else if (strcmp(value, "SCATTER") == 0) input->task = TASK_SCATTER;
     else if (strcmp(value, "FITTING") == 0) input->task = TASK_FITTING;
     else {
         fprintf(stderr, "Unknown task: %s\n", value);

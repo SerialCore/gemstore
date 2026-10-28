@@ -8,9 +8,6 @@
 
 const char *task_type_str[] = {
     [TASK_SPECTRA] = "SPECTRA",
-    [TASK_DECAY3P0] = "DECAY3P0",
-    [TASK_COUPLCHN] = "COUPLCHN",
-    [TASK_SCATTER] = "SCATTER",
     [TASK_FITTING] = "FITTING"
 };
 
@@ -19,14 +16,16 @@ const char *model_type_str[] = {
     [MODEL_GISCREEN] = "GISCREEN",
     [MODEL_NRSTRING] = "NRSTRING",
     [MODEL_NRSCREEN] = "NRSCREEN",
-    [MODEL_BAGMIT] = "BAGMIT"
+    [MODEL_BAGMIT] = "BAGMIT",
+    [MODEL_OBESTAT] = "OBESTAT"
 };
 
 const char *system_type_str[] = {
     [SYSTEM_BAG] = "BAG",
     [SYSTEM_MESON] = "MESON",
     [SYSTEM_BARYON] = "BARYON",
-    [SYSTEM_MOLECULE] = "MOLECULE"
+    [SYSTEM_MOLECUL2] = "MOLECUL2",
+    [SYSTEM_MOLECUL3] = "MOLECUL3"
 };
 
 const char *basis_type_str[] = {

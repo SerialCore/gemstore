@@ -33,7 +33,8 @@ void print_help()
     printf("Arguments:\n");
     printf("  -c, --compute         run FILE. task is SPECTRA or FITTING\n");
     printf("  -d, --debug           debug UNIT such as su3_product, soc_operator, casimir_operator, \n");
-    printf("                        color_wfn, spin_wfn, isospin_wfn, orbit_wfn, eigen_system\n");
+    printf("                        color_wfn, spin_wfn, isospin_wfn, orbit_wfn, eigen_system,\n");
+    printf("                        obe_potential\n");
     printf("  -h,--help             show this help\n");
     printf("  -v,--version          show version\n\n");
 }

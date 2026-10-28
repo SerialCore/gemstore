@@ -10,9 +10,6 @@
 /* used for dispatching task */
 typedef enum task_type {
     TASK_SPECTRA,
-    TASK_DECAY3P0,
-    TASK_COUPLCHN,
-    TASK_SCATTER,
     TASK_FITTING
 } task_type_t;
 
@@ -24,7 +21,8 @@ typedef enum model_type {
     MODEL_GISCREEN,
     MODEL_NRSTRING,
     MODEL_NRSCREEN,
-    MODEL_BAGMIT
+    MODEL_BAGMIT,
+    MODEL_OBESTAT
 } model_type_t;
 
 extern const char *model_type_str[];
@@ -34,7 +32,8 @@ typedef enum system_type {
     SYSTEM_BAG,
     SYSTEM_MESON,
     SYSTEM_BARYON,
-    SYSTEM_MOLECULE
+    SYSTEM_MOLECUL2,
+    SYSTEM_MOLECUL3
 } system_type_t;
 
 extern const char *system_type_str[];

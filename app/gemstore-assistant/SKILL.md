@@ -36,9 +36,6 @@ Use exact uppercase strings where shown below.
 
 - `SPECTRA`
 - `FITTING`
-- `DECAY3P0`
-- `COUPLCHN`
-- `SCATTER`
 
 ### Fitting
 

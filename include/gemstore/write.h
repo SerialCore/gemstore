@@ -10,6 +10,7 @@
 #include <gemstore/input.h>
 #include <gemstore/math/matrix.h>
 #include <gemstore/model/bagmodel.h>
+#include <gemstore/model/obemodel.h>
 #include <gemstore/param/argset.h>
 
 /* Write {len} of meson spectra to a file, including mass, RMS radius, and eigenvectors */
@@ -30,6 +31,9 @@ int write_meson_nr_pot(const argsInput_t *input, const argsNRModel_t *args_model
 
 /* Write baryon pair potentials V12, V13, V23 (central GI, colour −2/3) */
 int write_baryon_gi_pot(const argsInput_t *input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc);
+
+/* Write OBE radial pieces versus r in fm. Last column is V = Vc + Vss + Vt. */
+int write_obe_pot(const char *path, const argsOBEStatModel_t *model);
 
 /* Write bag spectra: mass, R, x, and color-spin eigenvector of each state. */
 int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nstate, const char *order);

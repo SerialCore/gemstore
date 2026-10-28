@@ -66,5 +66,6 @@ void entry_debug(const char* arg)
     else if (strcmp(arg, "orbit_wfn") == 0) debug_orbit_wfn();
     else if (strcmp(arg, "eigen_system") == 0) debug_eigen_system();
     else if (strcmp(arg, "eigen_system_complex") == 0) debug_eigen_system_complex();
+    else if (strcmp(arg, "obe_potential") == 0) debug_obe_potential();
     else {fprintf(stderr, "Unknown debug unit: %s\n", arg); exit(1);}
 }

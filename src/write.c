@@ -5,9 +5,11 @@
  */
 
 #include <gemstore/write.h>
+#include <gemstore/basis/orbit.h>
 #include <gemstore/math/soc.h>
 #include <gemstore/model/gimodel.h>
 #include <gemstore/model/nrmodel.h>
+#include <gemstore/model/obemodel.h>
 #include <gemstore/model/wfntrans.h>
 #include <gemstore/types.h>
 
@@ -403,6 +405,39 @@ int write_baryon_gi_pot(const argsInput_t *input, const argsGIModel_t *args_mode
         }
         fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n",
             r, Vpair[0], Vpair[1], Vpair[2], Vpair[0] + Vpair[1] + Vpair[2]);
+    }
+
+    if (fclose(pf) != 0) {
+        fprintf(stderr, "Error: Failed to close file %s\n", path);
+        return 0;
+    }
+
+    return 1;
+}
+
+int write_obe_pot(const char *path, const argsOBEStatModel_t *model)
+{
+    FILE *pf;
+    double rmin = 0.01;
+    double rmax = 10.0;
+    double dr = 0.01;
+
+    if (path == NULL || model == NULL) {
+        fprintf(stderr, "Error: Invalid input parameters to write_obe_pot()\n");
+        return 0;
+    }
+
+    pf = fopen(path, "w");
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+
+    fprintf(pf, "# r[fm]    Vc[GeV]    Vss[GeV]    Vt[GeV]    V[GeV]\n");
+    for (double r = rmin; r <= rmax; r += dr) {
+        double vc, vss, vt;
+        obe_radial(model, r * GEMSTORE_FM, &vc, &vss, &vt);
+        fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, vc, vss, vt, vc + vss + vt);
     }
 
     if (fclose(pf) != 0) {
