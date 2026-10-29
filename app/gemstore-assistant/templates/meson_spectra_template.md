@@ -34,8 +34,8 @@ This template matches the current parser in `src/parse.c`.
 ## Allowed Values
 
 - `task`: `SPECTRA`. A parameter fit uses `FITTING` and `templates/meson_fitting_template.md`.
-- `system.type`: `MESON`, `BARYON`. MIT bag uses `BAG` and `templates/bag_spectra_template.md`.
-- `model.type`: `GISTRING`, `GISCREEN`, `NRSTRING`, `NRSCREEN`. Bag uses `BAGMIT`.
+- `system.type`: `MESON`, `BARYON`. MIT bag uses `BAG` and `templates/bag_spectra_template.md`. Two-body molecules use `MOLECUL2` and `templates/molecule_spectra_template.md`.
+- `model.type`: `GISTRING`, `GISCREEN`, `NRSTRING`, `NRSCREEN`. Bag uses `BAGMIT`. Molecules use `OBESTAT`.
 - `model.param`:
   - `GISTRING_MESON`
   - `GISTRING_BARYON`
