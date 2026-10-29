@@ -8,6 +8,7 @@
 #include <gemstore/parse.h>
 #include <gemstore/input.h>
 #include <gemstore/math/matrix.h>
+#include <gemstore/param/argset.h>
 #include <gemstore/types.h>
 
 #include <stdio.h>
@@ -34,7 +35,7 @@ void print_help()
     printf("  -c, --compute         run FILE. task is SPECTRA or FITTING\n");
     printf("  -d, --debug           debug UNIT such as su3_product, soc_operator, casimir_operator, \n");
     printf("                        color_wfn, spin_wfn, isospin_wfn, orbit_wfn, eigen_system,\n");
-    printf("                        obe_potential\n");
+    printf("                        eigen_system_complex\n");
     printf("  -h,--help             show this help\n");
     printf("  -v,--version          show version\n\n");
 }
@@ -95,7 +96,8 @@ void print_input_parameters(const argsInput_t *input)
     printf("  System Type:          %-50s\n", system_type_str[input->system]);
     printf("  Basis Type:           %-50s\n", basis_type_str[input->basis]);
     if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
-        || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM) {
+        || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
+        || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM) {
         printf("  Parameter File:       %-50s\n", input->param_file);
     }
     printf("\n");
@@ -132,8 +134,12 @@ void print_input_parameters(const argsInput_t *input)
         return;
     }
 
-    /* Quark Flavor Configuration */
-    printf("Quark Flavor Configuration:\n");
+    if (input->system == SYSTEM_MOLECUL2 || input->system == SYSTEM_MOLECUL3) {
+        printf("Hadron Configuration:\n");
+    }
+    else {
+        printf("Quark Flavor Configuration:\n");
+    }
     if (input->system == SYSTEM_MESON) {
         printf("  Flavor 1 (f1):        %-50d\n", input->f1);
         printf("  Flavor 2 (f2):        %-50d\n", input->f2);
@@ -149,11 +155,21 @@ void print_input_parameters(const argsInput_t *input)
         printf("  c quarks (nc):        %-50d\n", input->nc);
         printf("  b quarks (nb):        %-50d\n", input->nb);
     }
+    else if (input->system == SYSTEM_MOLECUL2) {
+        printf("  Leg 1 type:           %-50s\n", obe_leg_type_str[input->type1]);
+        printf("  Leg 2 type:           %-50s\n", obe_leg_type_str[input->type2]);
+        printf("  Physical mass m1:     %-50.6f GeV\n", input->m1);
+        printf("  Physical mass m2:     %-50.6f GeV\n", input->m2);
+        printf("  cc1, cc2:             %d, %d\n", input->cc1, input->cc2);
+        printf("  eta:                  %-50.6f\n", input->eta);
+        printf("  iso_pi (pion):        %-50.6f\n", input->iso_pi);
+        printf("  iso_rho (rho):        %-50.6f\n", input->iso_rho);
+    }
     printf("\n");
 
     /* Angular Momentum Quantum Numbers */
     printf("Angular Momentum Quantum Numbers:\n");
-    if (input->system == SYSTEM_MESON) {
+    if (input->system == SYSTEM_MESON || input->system == SYSTEM_MOLECUL2) {
         printf("  Spin Momentum (S):    %-50.6f\n", input->S);
         printf("  Orbital Momentum (L): %-50.6f\n", input->L);
         printf("  Total Momentum (J):   %-50.6f\n", input->J);
@@ -182,8 +198,7 @@ void print_input_parameters(const argsInput_t *input)
 
         printf("  Potential Parameters:\n");
         printf("    String Tension (b):      %-46.6f\n", args_model.b);
-        if (input->model == MODEL_GISCREEN)
-            printf("    Screen Length (mu):      %-46.6f\n", args_model.mu);
+        printf("    Screen Length (mu):      %-46.6f\n", args_model.mu);
         printf("    Constant Potential (c):  %-46.6f\n", args_model.c);
         printf("\n");
 
@@ -207,8 +222,7 @@ void print_input_parameters(const argsInput_t *input)
 
         printf("  Potential Parameters:\n");
         printf("    String Tension (b):      %-46.6f\n", args_model.b);
-        if (input->model == MODEL_NRSCREEN)
-            printf("    Screen Length (mu):      %-46.6f\n", args_model.mu);
+        printf("    Screen Length (mu):      %-46.6f\n", args_model.mu);
         printf("    Constant Potential (c):  %-46.6f\n", args_model.c);
         printf("    Coupling Constant (as):  %-46.6f\n", args_model.alpha_s);
         printf("    Smearing (sigma):        %-46.6f\n", args_model.sigma);
@@ -226,6 +240,22 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Bag Parameters:\n");
         printf("    Bag Constant (B):        %-44.6e GeV^4\n", bag.B);
         printf("    Zero Point (Z):          %-46.6f\n", bag.Z);
+        printf("\n");
+    }
+    else if (input->model == MODEL_OBESTAT) {
+        argsOBEModel_t obe = argsOBEModel_from(input);
+        printf("  Parameter file (cutoff, tensor masses, couplings):\n");
+        printf("    Lambda:                  %-46.6f GeV\n", obe.lambda);
+        printf("    Tensor mass M1:          %-46.6f GeV\n", obe.tensor_mass1);
+        printf("    Tensor mass M2:          %-46.6f GeV\n", obe.tensor_mass2);
+        printf("    g_pi:                    %.6f, %.6f\n", obe.g_pi1, obe.g_pi2);
+        printf("    g_sigma:                 %.6f, %.6f\n", obe.g_sigma1, obe.g_sigma2);
+        printf("    g_rho:                   %.6f, %.6f\n", obe.g_rho1, obe.g_rho2);
+        printf("    f_rho:                   %.6f, %.6f\n", obe.f_rho1, obe.f_rho2);
+        printf("    g_omega:                 %.6f, %.6f\n", obe.g_omega1, obe.g_omega2);
+        printf("    f_omega:                 %.6f, %.6f\n", obe.f_omega1, obe.f_omega2);
+        printf("\n");
+        printf("  Legs, iso, eta, and cc are taken from the system JSON.\n");
         printf("\n");
     }
 }
@@ -296,6 +326,77 @@ void print_meson_spectra(const array_t *eigenvalue, const matrix_t *eigenvector,
     printf("  Mass range:          %.6f - %.6f GeV (Δ=%.6f GeV)\n", 
         min_mass, max_mass, max_mass - min_mass);
     printf("  RMS radius range:    %.6f - %.6f fm (Δ=%.6f fm)\n", 
+        min_rms, max_rms, max_rms - min_rms);
+    printf("  Total c^T N c:       %.10f\n", total_norm);
+    printf("\n");
+}
+
+void print_mol2_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, const matrix_t *overlap,
+    const array_t *rms12, double threshold, int len)
+{
+    if (eigenvalue == NULL || eigenvector == NULL || overlap == NULL || rms12 == NULL) {
+        return;
+    }
+
+    printf("\n");
+    printf("================================================================================\n");
+    printf("                          MOLECULE RESULTS SUMMARY                            \n");
+    printf("================================================================================\n");
+    printf("\n");
+    printf("  Threshold m1+m2:     %.6f GeV\n", threshold);
+    printf("  Ebind = Mass - (m1+m2). Negative is bound.\n");
+    printf("\n");
+
+    double min_mass = eigenvalue->value[0];
+    double max_mass = eigenvalue->value[0];
+    double min_rms = rms12->value[0];
+    double max_rms = rms12->value[0];
+    double total_norm = 0.0;
+    int num_states = 0;
+
+    for (int n = 0; n < len; n++) {
+        if (n < eigenvalue->len) {
+            if (eigenvalue->value[n] < min_mass) min_mass = eigenvalue->value[n];
+            if (eigenvalue->value[n] > max_mass) max_mass = eigenvalue->value[n];
+        }
+        if (n < rms12->len) {
+            if (rms12->value[n] < min_rms) min_rms = rms12->value[n];
+            if (rms12->value[n] > max_rms) max_rms = rms12->value[n];
+        }
+        num_states++;
+    }
+
+    printf("%-6s%-12s%-12s%-12s%-12s%-15s\n",
+        "State", "Mass(GeV)", "Ebind(GeV)", "RMS(fm)", "max|c|", "c^T N c");
+    printf("------+-----------+----------+-----------+-----------+--------------\n");
+
+    for (int n = 0; n < len; n++) {
+        double norm = 0.0;
+        double maxc = 0.0;
+        int nbas = eigenvector->col;
+        for (int i = 0; i < nbas; i++) {
+            double c = fabs(eigenvector->value[n][i]);
+            if (c > maxc) maxc = c;
+        }
+        for (int i = 0; i < nbas; i++) {
+            for (int j = 0; j < nbas; j++) {
+                norm += eigenvector->value[n][i] * overlap->value[i][j] * eigenvector->value[n][j];
+            }
+        }
+        total_norm += norm;
+        printf("%-6d%-12.6f%-12.6f%-12.6f%-12.6f%-15.10f\n",
+            n + 1, eigenvalue->value[n], eigenvalue->value[n] - threshold,
+            rms12->value[n], maxc, norm);
+    }
+
+    printf("\n");
+    printf("GLOBAL STATISTICS:\n");
+    printf("  Number of states:    %d\n", num_states);
+    printf("  Mass range:          %.6f - %.6f GeV (Δ=%.6f GeV)\n",
+        min_mass, max_mass, max_mass - min_mass);
+    printf("  Binding range:       %.6f - %.6f GeV\n",
+        min_mass - threshold, max_mass - threshold);
+    printf("  RMS radius range:    %.6f - %.6f fm (Δ=%.6f fm)\n",
         min_rms, max_rms, max_rms - min_rms);
     printf("  Total c^T N c:       %.10f\n", total_norm);
     printf("\n");

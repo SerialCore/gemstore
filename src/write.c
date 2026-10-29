@@ -10,6 +10,7 @@
 #include <gemstore/model/gimodel.h>
 #include <gemstore/model/nrmodel.h>
 #include <gemstore/model/obemodel.h>
+#include <gemstore/model/cmol2.h>
 #include <gemstore/model/wfntrans.h>
 #include <gemstore/types.h>
 
@@ -25,7 +26,6 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
         return 0;
     }
 
-    int nmax = input->nmax;
     FILE *pf;
     cJSON *root = NULL;
     cJSON *states = NULL;
@@ -75,7 +75,7 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
         cJSON_AddNumberToObject(state_obj, "mass", mass->value[n]);
         cJSON_AddNumberToObject(state_obj, "rms_radius", radius->value[n]);
 
-        for (int d = 0; d < nmax; d++) {
+        for (int d = 0; d < vector->col; d++) {
             cJSON_AddItemToArray(eigenvector, cJSON_CreateNumber(vector->value[n][d]));
         }
 
@@ -200,6 +200,111 @@ int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const ma
     return state;
 }
 
+int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nstate, const char *order)
+{
+    if (input == NULL || state == NULL || nstate < 1) {
+        fprintf(stderr, "Error: Invalid input parameters to write_bag_spectra()\n");
+        return 0;
+    }
+
+    FILE *pf;
+    cJSON *root;
+    cJSON *states;
+    char *json_text;
+    char path[267];
+    int ok;
+
+    sprintf(path, "%s%s", input->project, ".state.json");
+    pf = fopen(path, "w");
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+
+    root = cJSON_CreateObject();
+    if (root == NULL) {
+        fprintf(stderr, "Error: Cannot allocate JSON root for %s\n", path);
+        fclose(pf);
+        return 0;
+    }
+    if (order != NULL && order[0] != '\0') cJSON_AddStringToObject(root, "configuration", order);
+
+    states = cJSON_AddArrayToObject(root, "states");
+    if (states == NULL) {
+        fprintf(stderr, "Error: Cannot allocate states array for %s\n", path);
+        cJSON_Delete(root);
+        fclose(pf);
+        return 0;
+    }
+
+    for (int n = 0; n < nstate; n++) {
+        cJSON *obj = cJSON_CreateObject();
+        cJSON *xarr = cJSON_CreateArray();
+        cJSON *evec = cJSON_CreateArray();
+
+        if (obj == NULL || xarr == NULL || evec == NULL) {
+            cJSON_Delete(evec);
+            cJSON_Delete(xarr);
+            cJSON_Delete(obj);
+            fprintf(stderr, "Error: Cannot allocate state JSON for %s\n", path);
+            cJSON_Delete(root);
+            fclose(pf);
+            return 0;
+        }
+
+        cJSON_AddNumberToObject(obj, "index", n + 1);
+        if (isfinite(state[n].st)) cJSON_AddNumberToObject(obj, "st", state[n].st);
+        cJSON_AddNumberToObject(obj, "mass", state[n].mass);
+        cJSON_AddNumberToObject(obj, "R", state[n].R);
+        for (int f = 0; f < 4; f++) cJSON_AddItemToArray(xarr, cJSON_CreateNumber(state[n].x[f]));
+        cJSON_AddItemToObject(obj, "x", xarr);
+
+        for (int a = 0; a < state[n].nvec; a++) {
+            cJSON *comp = cJSON_CreateObject();
+            int cid = state[n].color_id[a];
+            const cmi_spin_t *ch = &state[n].spin_ch[a];
+
+            if (comp == NULL) {
+                cJSON_Delete(evec);
+                cJSON_Delete(obj);
+                fprintf(stderr, "Error: Cannot allocate eigenvector JSON for %s\n", path);
+                cJSON_Delete(root);
+                fclose(pf);
+                return 0;
+            }
+            if (input->basis == BASIS_CMI && cid >= CMI_COLOR_MESON && cid <= CMI_COLOR_HEXA11) {
+                cJSON_AddStringToObject(comp, "color", cmicolor_type_str[cid]);
+                cJSON_AddNumberToObject(comp, "s12", ch->s12);
+                cJSON_AddNumberToObject(comp, "s34", ch->s34);
+                cJSON_AddNumberToObject(comp, "s123", ch->s123);
+                cJSON_AddNumberToObject(comp, "s45", ch->s45);
+                cJSON_AddNumberToObject(comp, "s456", ch->s456);
+                cJSON_AddNumberToObject(comp, "st", ch->st);
+                cJSON_AddNumberToObject(comp, "st3", ch->st3);
+            }
+            cJSON_AddNumberToObject(comp, "c", state[n].coeff[a]);
+            cJSON_AddItemToArray(evec, comp);
+        }
+        cJSON_AddItemToObject(obj, "eigenvector", evec);
+        cJSON_AddItemToArray(states, obj);
+    }
+
+    json_text = cJSON_Print(root);
+    if (json_text == NULL) {
+        fprintf(stderr, "Error: Cannot serialize JSON output for %s\n", path);
+        cJSON_Delete(root);
+        fclose(pf);
+        return 0;
+    }
+    ok = (fputs(json_text, pf) != EOF);
+    if (!ok) fprintf(stderr, "Error: Failed writing JSON output to %s\n", path);
+
+    cJSON_Delete(root);
+    free(json_text);
+    if (fclose(pf) != 0) return 0;
+    return ok ? 1 : 0;
+}
+
 int write_meson_wfn(const argsInput_t *input, const matrix_t *vector)
 {
     if (input == NULL || vector == NULL) {
@@ -234,6 +339,74 @@ int write_meson_wfn(const argsInput_t *input, const matrix_t *vector)
             double uwfn = r * wfn;
             double density = r * r * wfn * wfn;
             fprintf(pf, "%.8f    %.8e    %.8e    %.8e\n", r, wfn, uwfn, density);
+        }
+
+        if (fclose(pf) != 0) {
+            fprintf(stderr, "Error: Failed to close file %s\n", path);
+            state = 0;
+        }
+    }
+
+    return state;
+}
+
+int write_mol2_wfn(const argsInput_t *input, const matrix_t *vector)
+{
+    double rmin = 0.01;
+    double rmax = 10.0;
+    double dr = 0.01;
+    int Lch[MOL2_CHMAX];
+    double Sch[MOL2_CHMAX];
+    int nch;
+    int nstate;
+    int nmax;
+    int state = 1;
+    int n;
+
+    if (input == NULL || vector == NULL) {
+        fprintf(stderr, "Error: Invalid input parameters to write_mol2_wfn()\n");
+        return 0;
+    }
+
+    nch = mol2_build_channels(input, Lch, Sch, MOL2_CHMAX);
+    nmax = input->nmax;
+    nstate = vector->row;
+    if (nch < 1 || nmax < 1 || vector->col < nch * nmax) {
+        fprintf(stderr, "Error: write_mol2_wfn needs nch * nmax coefficients per state.\n");
+        return 0;
+    }
+    if (input->rmax > rmax) {
+        rmax = input->rmax;
+    }
+
+    for (n = 0; n < nstate; n++) {
+        FILE *pf;
+        char path[275];
+        int a;
+
+        sprintf(path, "%s.wfn.%d.dat", input->project, n + 1);
+        pf = fopen(path, "w");
+        if (pf == NULL) {
+            fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+            state = 0;
+            continue;
+        }
+
+        fprintf(pf, "# r[fm]");
+        for (a = 0; a < nch; a++) {
+            fprintf(pf, "    R%d[L=%d,S=%.1f,fm^(-3/2)]", a, Lch[a], Sch[a]);
+        }
+        fprintf(pf, "    r^2 sum_a |R_a|^2 [fm^(-1)]\n");
+        for (double r = rmin; r <= rmax; r += dr) {
+            double density = 0.0;
+            fprintf(pf, "%.8f", r);
+            for (a = 0; a < nch; a++) {
+                double wfn = get_gem_channel_wfn(Lch[a], nmax, input->rmax, input->rmin,
+                    &vector->value[n][a * nmax], r);
+                density += r * r * wfn * wfn;
+                fprintf(pf, "    %.8e", wfn);
+            }
+            fprintf(pf, "    %.8e\n", density);
         }
 
         if (fclose(pf) != 0) {
@@ -415,18 +588,20 @@ int write_baryon_gi_pot(const argsInput_t *input, const argsGIModel_t *args_mode
     return 1;
 }
 
-int write_obe_pot(const char *path, const argsOBEStatModel_t *model)
+int write_obe_pot(const argsInput_t *input, const argsOBEModel_t *args_model)
 {
-    FILE *pf;
-    double rmin = 0.01;
-    double rmax = 10.0;
-    double dr = 0.01;
-
-    if (path == NULL || model == NULL) {
+    if (args_model == NULL) {
         fprintf(stderr, "Error: Invalid input parameters to write_obe_pot()\n");
         return 0;
     }
 
+    double rmin = 0.01;
+    double rmax = 10.0;
+    double dr = 0.01;
+    
+    FILE *pf;
+    char path[264];
+    sprintf(path, "%s%s", input->project, ".pot.dat");
     pf = fopen(path, "w");
     if (pf == NULL) {
         fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
@@ -436,7 +611,7 @@ int write_obe_pot(const char *path, const argsOBEStatModel_t *model)
     fprintf(pf, "# r[fm]    Vc[GeV]    Vss[GeV]    Vt[GeV]    V[GeV]\n");
     for (double r = rmin; r <= rmax; r += dr) {
         double vc, vss, vt;
-        obe_radial(model, r * GEMSTORE_FM, &vc, &vss, &vt);
+        obe_radial(args_model, r * GEMSTORE_FM, &vc, &vss, &vt);
         fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, vc, vss, vt, vc + vss + vt);
     }
 
@@ -446,109 +621,4 @@ int write_obe_pot(const char *path, const argsOBEStatModel_t *model)
     }
 
     return 1;
-}
-
-int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nstate, const char *order)
-{
-    if (input == NULL || state == NULL || nstate < 1) {
-        fprintf(stderr, "Error: Invalid input parameters to write_bag_spectra()\n");
-        return 0;
-    }
-
-    FILE *pf;
-    cJSON *root;
-    cJSON *states;
-    char *json_text;
-    char path[267];
-    int ok;
-
-    sprintf(path, "%s%s", input->project, ".state.json");
-    pf = fopen(path, "w");
-    if (pf == NULL) {
-        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
-        return 0;
-    }
-
-    root = cJSON_CreateObject();
-    if (root == NULL) {
-        fprintf(stderr, "Error: Cannot allocate JSON root for %s\n", path);
-        fclose(pf);
-        return 0;
-    }
-    if (order != NULL && order[0] != '\0') cJSON_AddStringToObject(root, "configuration", order);
-
-    states = cJSON_AddArrayToObject(root, "states");
-    if (states == NULL) {
-        fprintf(stderr, "Error: Cannot allocate states array for %s\n", path);
-        cJSON_Delete(root);
-        fclose(pf);
-        return 0;
-    }
-
-    for (int n = 0; n < nstate; n++) {
-        cJSON *obj = cJSON_CreateObject();
-        cJSON *xarr = cJSON_CreateArray();
-        cJSON *evec = cJSON_CreateArray();
-
-        if (obj == NULL || xarr == NULL || evec == NULL) {
-            cJSON_Delete(evec);
-            cJSON_Delete(xarr);
-            cJSON_Delete(obj);
-            fprintf(stderr, "Error: Cannot allocate state JSON for %s\n", path);
-            cJSON_Delete(root);
-            fclose(pf);
-            return 0;
-        }
-
-        cJSON_AddNumberToObject(obj, "index", n + 1);
-        if (isfinite(state[n].st)) cJSON_AddNumberToObject(obj, "st", state[n].st);
-        cJSON_AddNumberToObject(obj, "mass", state[n].mass);
-        cJSON_AddNumberToObject(obj, "R", state[n].R);
-        for (int f = 0; f < 4; f++) cJSON_AddItemToArray(xarr, cJSON_CreateNumber(state[n].x[f]));
-        cJSON_AddItemToObject(obj, "x", xarr);
-
-        for (int a = 0; a < state[n].nvec; a++) {
-            cJSON *comp = cJSON_CreateObject();
-            int cid = state[n].color_id[a];
-            const cmi_spin_t *ch = &state[n].spin_ch[a];
-
-            if (comp == NULL) {
-                cJSON_Delete(evec);
-                cJSON_Delete(obj);
-                fprintf(stderr, "Error: Cannot allocate eigenvector JSON for %s\n", path);
-                cJSON_Delete(root);
-                fclose(pf);
-                return 0;
-            }
-            if (input->basis == BASIS_CMI && cid >= CMI_COLOR_MESON && cid <= CMI_COLOR_HEXA11) {
-                cJSON_AddStringToObject(comp, "color", cmicolor_type_str[cid]);
-                cJSON_AddNumberToObject(comp, "s12", ch->s12);
-                cJSON_AddNumberToObject(comp, "s34", ch->s34);
-                cJSON_AddNumberToObject(comp, "s123", ch->s123);
-                cJSON_AddNumberToObject(comp, "s45", ch->s45);
-                cJSON_AddNumberToObject(comp, "s456", ch->s456);
-                cJSON_AddNumberToObject(comp, "st", ch->st);
-                cJSON_AddNumberToObject(comp, "st3", ch->st3);
-            }
-            cJSON_AddNumberToObject(comp, "c", state[n].coeff[a]);
-            cJSON_AddItemToArray(evec, comp);
-        }
-        cJSON_AddItemToObject(obj, "eigenvector", evec);
-        cJSON_AddItemToArray(states, obj);
-    }
-
-    json_text = cJSON_Print(root);
-    if (json_text == NULL) {
-        fprintf(stderr, "Error: Cannot serialize JSON output for %s\n", path);
-        cJSON_Delete(root);
-        fclose(pf);
-        return 0;
-    }
-    ok = (fputs(json_text, pf) != EOF);
-    if (!ok) fprintf(stderr, "Error: Failed writing JSON output to %s\n", path);
-
-    cJSON_Delete(root);
-    free(json_text);
-    if (fclose(pf) != 0) return 0;
-    return ok ? 1 : 0;
 }

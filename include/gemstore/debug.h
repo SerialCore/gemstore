@@ -34,7 +34,4 @@ void debug_eigen_system();
 /* Debug complex eigen system */
 void debug_eigen_system_complex();
 
-/* Write a sample OBE V(r) curve (D* Ξ, Liu couplings) to debug_obe.pot.dat */
-void debug_obe_potential();
-
 #endif

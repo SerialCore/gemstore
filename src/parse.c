@@ -115,6 +115,15 @@ static double read_number_or(const cJSON *object, const char *key, double fallba
     return item->valuedouble;
 }
 
+static obe_leg_type_t parse_obe_leg_name(const char *name)
+{
+    if (strcmp(name, "DIRAC") == 0) return OBE_LEG_DIRAC;
+    if (strcmp(name, "VECTOR") == 0) return OBE_LEG_VECTOR;
+    if (strcmp(name, "PSEUDOSCALAR") == 0) return OBE_LEG_PSEUDOSCALAR;
+    fprintf(stderr, "Unknown OBE leg type: %s\n", name);
+    exit(1);
+}
+
 static void parse_task_string(const char *value, argsInput_t *input)
 {
     if (strcmp(value, "SPECTRA") == 0) input->task = TASK_SPECTRA;
@@ -136,6 +145,7 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
     else if (strcmp(type, "NRSTRING") == 0) input->model = MODEL_NRSTRING;
     else if (strcmp(type, "NRSCREEN") == 0) input->model = MODEL_NRSCREEN;
     else if (strcmp(type, "BAGMIT") == 0) input->model = MODEL_BAGMIT;
+    else if (strcmp(type, "OBESTAT") == 0) input->model = MODEL_OBESTAT;
     else {
         fprintf(stderr, "Unknown model type: %s\n", type);
         exit(1);
@@ -193,10 +203,17 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
             exit(1);
         }
     }
+    else if (input->model == MODEL_OBESTAT) {
+        if (strcmp(param, "OBESTAT_CUSTOM") == 0) input->param = PARAM_OBESTAT_CUSTOM;
+        else {
+            fprintf(stderr, "Unknown OBESTAT parameter set: %s\n", param);
+            exit(1);
+        }
+    }
 
     if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
         || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
-        || input->param == PARAM_BAGMIT_CUSTOM) {
+        || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM) {
         const char *file = read_string_item(model_json, "file")->valuestring;
         if (strlen(file) > 0) {
             strncpy(input->param_file, file, 256);
@@ -217,6 +234,8 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
     if (strcmp(type, "BAG") == 0) input->system = SYSTEM_BAG;
     else if (strcmp(type, "MESON") == 0) input->system = SYSTEM_MESON;
     else if (strcmp(type, "BARYON") == 0) input->system = SYSTEM_BARYON;
+    else if (strcmp(type, "MOLECUL2") == 0) input->system = SYSTEM_MOLECUL2;
+    else if (strcmp(type, "MOLECUL3") == 0) input->system = SYSTEM_MOLECUL3;
     else {
         fprintf(stderr, "Unsupported system type: %s\n", type);
         exit(1);
@@ -254,6 +273,20 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
         input->sym12 = read_number_item(system_json, "sym12")->valueint;
         input->Lmax = read_number_item(system_json, "Lmax")->valueint;
         input->jl = read_number_item(system_json, "jl")->valueint;
+    }
+    else if (input->system == SYSTEM_MOLECUL2) {
+        input->type1 = parse_obe_leg_name(read_string_item(system_json, "type1")->valuestring);
+        input->type2 = parse_obe_leg_name(read_string_item(system_json, "type2")->valuestring);
+        input->m1 = read_number_item(system_json, "m1")->valuedouble;
+        input->m2 = read_number_item(system_json, "m2")->valuedouble;
+        input->cc1 = (int)read_number_or(system_json, "cc1", 0.0);
+        input->cc2 = (int)read_number_or(system_json, "cc2", 0.0);
+        input->eta = read_number_or(system_json, "eta", 0.0);
+        input->iso_pi = read_number_item(system_json, "iso_pi")->valuedouble;
+        input->iso_rho = read_number_item(system_json, "iso_rho")->valuedouble;
+        input->S = read_number_item(system_json, "S")->valuedouble;
+        input->L = read_number_item(system_json, "L")->valuedouble;
+        input->J = read_number_item(system_json, "J")->valuedouble;
     }
 }
 
@@ -574,6 +607,43 @@ void parse_param_BAGMIT(const char *filename, argsBAGModel_t *args_model)
     args_model->Bbb = read_number_item(param_json, "Bbb")->valuedouble;
     args_model->B = read_number_item(param_json, "B")->valuedouble;
     args_model->Z = read_number_item(param_json, "Z")->valuedouble;
+
+    cJSON_Delete(root);
+    free(json_text);
+}
+
+void parse_param_OBESTAT(const char *filename, argsOBEModel_t *args_model)
+{
+    char *json_text = read_input_file(filename);
+    const char *parse_error = NULL;
+    cJSON *root = cJSON_Parse(json_text);
+    cJSON *param_json;
+
+    if (!root) {
+        parse_error = cJSON_GetErrorPtr();
+        fprintf(stderr, "Invalid OBESTAT parameter JSON in %s", filename);
+        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
+        fprintf(stderr, "\n");
+        free(json_text);
+        exit(1);
+    }
+
+    param_json = read_object_item(root, "param");
+    args_model->lambda = read_number_item(param_json, "lambda")->valuedouble;
+    args_model->tensor_mass1 = read_number_item(param_json, "tensor_mass1")->valuedouble;
+    args_model->tensor_mass2 = read_number_item(param_json, "tensor_mass2")->valuedouble;
+    args_model->g_pi1 = read_number_item(param_json, "g_pi1")->valuedouble;
+    args_model->g_pi2 = read_number_item(param_json, "g_pi2")->valuedouble;
+    args_model->g_sigma1 = read_number_item(param_json, "g_sigma1")->valuedouble;
+    args_model->g_sigma2 = read_number_item(param_json, "g_sigma2")->valuedouble;
+    args_model->g_rho1 = read_number_item(param_json, "g_rho1")->valuedouble;
+    args_model->g_rho2 = read_number_item(param_json, "g_rho2")->valuedouble;
+    args_model->f_rho1 = read_number_or(param_json, "f_rho1", 0.0);
+    args_model->f_rho2 = read_number_or(param_json, "f_rho2", 0.0);
+    args_model->g_omega1 = read_number_item(param_json, "g_omega1")->valuedouble;
+    args_model->g_omega2 = read_number_item(param_json, "g_omega2")->valuedouble;
+    args_model->f_omega1 = read_number_or(param_json, "f_omega1", 0.0);
+    args_model->f_omega2 = read_number_or(param_json, "f_omega2", 0.0);
 
     cJSON_Delete(root);
     free(json_text);

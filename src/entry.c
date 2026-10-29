@@ -45,8 +45,19 @@ void entry_compute(const char* arg)
             }
             compute_spectra_bag(&input);
         }
+        else if (input.system == SYSTEM_MOLECUL2) {
+            if (input.basis != BASIS_GEM) {
+                fprintf(stderr, "SPECTRA MOLECUL2 compute supports: GEM basis\n");
+                exit(1);
+            }
+            compute_spectra_mol2(&input);
+        }
+        else if (input.system == SYSTEM_MOLECUL3) {
+            fprintf(stderr, "SPECTRA MOLECUL3 is not implemented.\n");
+            exit(1);
+        }
         else {
-            fprintf(stderr, "SPECTRA currently supports only MESON, BARYON, and BAG systems\n");
+            fprintf(stderr, "SPECTRA currently supports MESON, BARYON, BAG, and MOLECUL2 systems\n");
             exit(1);
         }
     }
@@ -66,6 +77,5 @@ void entry_debug(const char* arg)
     else if (strcmp(arg, "orbit_wfn") == 0) debug_orbit_wfn();
     else if (strcmp(arg, "eigen_system") == 0) debug_eigen_system();
     else if (strcmp(arg, "eigen_system_complex") == 0) debug_eigen_system_complex();
-    else if (strcmp(arg, "obe_potential") == 0) debug_obe_potential();
     else {fprintf(stderr, "Unknown debug unit: %s\n", arg); exit(1);}
 }

@@ -1,0 +1,34 @@
+{
+  "project": "dstar_xi_I0",
+  "task": "SPECTRA",
+  "model": {
+    "type": "OBESTAT",
+    "param": "OBESTAT_CUSTOM",
+    "file": "param_OBESTAT_dstarxi.json"
+  },
+  "system": {
+    "type": "MOLECUL2",
+    "type1": "VECTOR",
+    "type2": "DIRAC",
+    "m1": 2.010,
+    "m2": 1.318,
+    "cc1": 0,
+    "cc2": 0,
+    "eta": 0,
+    "iso_pi": -3,
+    "iso_rho": -3,
+    "S": 0.5,
+    "L": 0,
+    "J": 0.5
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 20,
+    "rmax": 30.0,
+    "rmin": 0.1
+  },
+  "print": {
+    "pot": "true",
+    "wfn": "false"
+  }
+}

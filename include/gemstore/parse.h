@@ -28,4 +28,8 @@ void parse_param_NRSCREEN(const char *filename, argsNRModel_t *args_model);
 /* parse MITBAG parameters */
 void parse_param_BAGMIT(const char *filename, argsBAGModel_t *args_model);
 
+/* parse OBESTAT param file: lambda, tensor_mass1/2, g_*, f_*.
+ * Legs, cc, eta, iso_pi, iso_rho, m1/m2 stay in the system JSON. */
+void parse_param_OBESTAT(const char *filename, argsOBEModel_t *args_model);
+
 #endif

@@ -94,6 +94,33 @@ typedef struct argsBAGModel {
     double Z;               /* ZPE constant */
 } argsBAGModel_t;
 
+typedef struct argsOBEModel {
+    double lambda;          /* common monopole cutoff, GeV */
+    double tensor_mass1;    /* M in f/(2M) on leg 1, not pole mass */
+    double tensor_mass2;    /* M in f/(2M) on leg 2, not pole mass */
+    double g_pi1, g_pi2;    /* g couplings for pion vertex */
+    double g_sigma1, g_sigma2;
+    double g_rho1, g_rho2, f_rho1, f_rho2;       /* f = κ g */
+    double g_omega1, g_omega2, f_omega1, f_omega2;
+    obe_leg_type_t type1;   /* DIRAC 1/2, VECTOR 1-, PSEUDOSCALAR 0- */
+    obe_leg_type_t type2;
+    int cc1;                /* meson C-parity; 0 no G flip, nonzero flips G=-1 exchanges for π,ω; Dirac ignored */
+    int cc2;
+    double eta;             /* MM C-parity on π and magnetic vector; write +1 or −1; 0 is read as +1; MB/BB ignored */
+    double iso_pi;          /* ⟨τ1·τ2⟩ on π; I=0 → −3, I=1 → +1; 0 → +1 */
+    double iso_rho;         /* ⟨τ1·τ2⟩ on ρ; same as iso_pi; σ/ω always 1 */
+} argsOBEModel_t;
+
+typedef struct argsOBEModelDy {
+    double mi;              /* physical mass of hadron 1 */
+    double mj;              /* physical mass of hadron 2 */
+    double OCent;
+    double OSdS;
+    double OLSi;
+    double OLSj;
+    double OTens;
+} argsOBEModelDy_t;
+
 /* Default meson parameters for model GIString */
 extern const argsGIModel_t argsGIString_meson;
 
@@ -135,6 +162,9 @@ argsNRModel_t argsNRModel_from(const argsInput_t *input);
 
 /* Get MIT bag model parameters from input */
 argsBAGModel_t argsBAGModel_from(const argsInput_t *input);
+
+/* Param file: lambda, tensor_mass, g, f. System JSON: legs, cc, eta, iso_pi, iso_rho. */
+argsOBEModel_t argsOBEModel_from(const argsInput_t *input);
 
 /* Get quark mass from any model */
 static inline double getmq(int index, const void *args_model)

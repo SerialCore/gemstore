@@ -60,7 +60,14 @@ const char *param_type_str[] = {
     [PARAM_NRSTRING_CUSTOM] = "NRSTRING_CUSTOM",
     [PARAM_NRSCREEN_CUSTOM] = "NRSCREEN_CUSTOM",
     [PARAM_BAGMIT_DEFAULT] = "BAGMIT_DEFAULT",
-    [PARAM_BAGMIT_CUSTOM] = "BAGMIT_CUSTOM"
+    [PARAM_BAGMIT_CUSTOM] = "BAGMIT_CUSTOM",
+    [PARAM_OBESTAT_CUSTOM] = "OBESTAT_CUSTOM"
+};
+
+const char *obe_leg_type_str[] = {
+    [OBE_LEG_DIRAC] = "DIRAC",
+    [OBE_LEG_PSEUDOSCALAR] = "PSEUDOSCALAR",
+    [OBE_LEG_VECTOR] = "VECTOR"
 };
 
 const char *cmicolor_type_str[] = {

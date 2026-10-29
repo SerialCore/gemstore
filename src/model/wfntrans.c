@@ -109,9 +109,10 @@ double get_state_wfn_value(const argsInput_t *input, const double *vector, doubl
         return 0.0;
     }
 
+    /* L is fixed for single channel */
     int L = (int)input->L;
     int nmax = input->nmax;
-    double fm = 5.06773093854369882649;
+    double fm = GEMSTORE_FM;
     double rGeV = r * fm;
     double psi_r = 0.0;
 
@@ -131,6 +132,26 @@ double get_state_wfn_value(const argsInput_t *input, const double *vector, doubl
     }
 
     return psi_r * normalized * pow(fm, 1.5);
+}
+
+double get_gem_channel_wfn(int L, int nmax, double rmax, double rmin, const double *coeff, double r)
+{
+    /* L is a variable for S-D mixing */
+    int n;
+    double fm = GEMSTORE_FM;
+    double rGeV = r * fm;
+    double psi_r = 0.0;
+
+    if (coeff == NULL || nmax < 1) {
+        return 0.0;
+    }
+
+    for (n = 0; n < nmax; n++) {
+        double nu = getnu(n + 1, nmax, rmax, rmin);
+        double basis_func = GRnlr(rGeV, n + 1, L, nu) * exp(-nu * rGeV * rGeV);
+        psi_r += coeff[n] * basis_func;
+    }
+    return psi_r * pow(fm, 1.5);
 }
 
 void get_effective_beta_sho(const argsInput_t *input, const array_t *radius, array_t *ebeta, int len)

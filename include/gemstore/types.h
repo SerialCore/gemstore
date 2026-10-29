@@ -78,9 +78,19 @@ typedef enum param_type {
     PARAM_NRSCREEN_CUSTOM,
     PARAM_BAGMIT_DEFAULT,
     PARAM_BAGMIT_CUSTOM,
+    PARAM_OBESTAT_CUSTOM
 } param_type_t;
 
 extern const char *param_type_str[];
+
+/* used for selecting an OBE hadron leg */
+typedef enum obe_leg_type {
+    OBE_LEG_DIRAC,
+    OBE_LEG_PSEUDOSCALAR,
+    OBE_LEG_VECTOR
+} obe_leg_type_t;
+
+extern const char *obe_leg_type_str[];
 
 /* used for selecting a CMI color channel */
 typedef enum cmicolor_type {

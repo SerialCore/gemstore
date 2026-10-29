@@ -9,6 +9,9 @@
 #include <gemstore/types.h>
 #include <gemstore/parse.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
 const argsGIModel_t argsGIString_meson = {
     .mn = 0.220,
     .ms = 0.419,
@@ -222,3 +225,18 @@ argsBAGModel_t argsBAGModel_from(const argsInput_t *input)
     return args_model;
 }
 
+argsOBEModel_t argsOBEModel_from(const argsInput_t *input)
+{
+    argsOBEModel_t args_model = {0};
+
+    parse_param_OBESTAT(input->param_file, &args_model);
+    args_model.type1 = input->type1;
+    args_model.type2 = input->type2;
+    args_model.cc1 = input->cc1;
+    args_model.cc2 = input->cc2;
+    args_model.eta = input->eta;
+    args_model.iso_pi = input->iso_pi;
+    args_model.iso_rho = input->iso_rho;
+
+    return args_model;
+}

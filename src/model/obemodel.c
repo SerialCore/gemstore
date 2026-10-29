@@ -17,13 +17,14 @@
  */
 
 #include <gemstore/model/obemodel.h>
+#include <gemstore/types.h>
 
 #include <math.h>
 #include <stddef.h>
 
 #define OBE_UNPACK(ctx) \
-    const argsOBEStatModel_t *args_model = ((const obe_pot_ctx_t *)(ctx))->model; \
-    const argsOBEStatModelDy_t *args_dynmc = ((const obe_pot_ctx_t *)(ctx))->dyn; \
+    const argsOBEModel_t *args_model = ((const obe_pot_ctx_t *)(ctx))->model; \
+    const argsOBEModelDy_t *args_dynmc = ((const obe_pot_ctx_t *)(ctx))->dyn; \
     (void)args_model; \
     (void)args_dynmc
 
@@ -206,7 +207,7 @@ static double obe_pi_vertex(obe_leg_type_t type, double g_liu)
     return g_liu / den;
 }
 
-static void obe_raw_gf(const argsOBEStatModel_t *model, int boson, int which,
+static void obe_raw_gf(const argsOBEModel_t *model, int boson, int which,
     double *g, double *f)
 {
     int first = (which == 1);
@@ -239,7 +240,7 @@ static void obe_raw_gf(const argsOBEStatModel_t *model, int boson, int which,
  * and −1 when ChargeConjugation is set on a G = −1 exchange (π, ω). Dirac
  * legs are left unchanged. which is 1 or 2.
  */
-static void obe_leg_coup(const argsOBEStatModel_t *model, int boson, int which,
+static void obe_leg_coup(const argsOBEModel_t *model, int boson, int which,
     double *g, double *f)
 {
     const obe_boson_t *b = &obe_boson[boson];
@@ -254,7 +255,7 @@ static void obe_leg_coup(const argsOBEStatModel_t *model, int boson, int which,
     *f *= s;
 }
 
-static double obe_iso(const argsOBEStatModel_t *model, int boson)
+static double obe_iso(const argsOBEModel_t *model, int boson)
 {
     double iso;
 
@@ -277,7 +278,7 @@ static double obe_iso(const argsOBEStatModel_t *model, int boson)
  * is the contraction of {0, g q} against {0, −(f/m) q_leg} with q2 = −q.
  * eta multiplies MM pion and MM magnetic vector only.
  */
-static void obe_add_exchange(const argsOBEStatModel_t *model, int boson,
+static void obe_add_exchange(const argsOBEModel_t *model, int boson,
     double r, double *vc, double *vss, double *vt)
 {
     const obe_boson_t *b = &obe_boson[boson];
@@ -330,7 +331,7 @@ static void obe_add_exchange(const argsOBEStatModel_t *model, int boson,
     *vt += -beta * kt;
 }
 
-void obe_radial(const argsOBEStatModel_t *model, double r, double *vc, double *vss, double *vt)
+void obe_radial(const argsOBEModel_t *model, double r, double *vc, double *vss, double *vt)
 {
     int i;
     double c = 0.0, ss = 0.0, t = 0.0;
@@ -346,10 +347,28 @@ void obe_radial(const argsOBEStatModel_t *model, double r, double *vc, double *v
 }
 
 /* Fold a spin–orbit matrix element into a radial kernel. NULL dyn leaves the kernel. */
-static double obe_op(const argsOBEStatModelDy_t *dyn, double op, double radial)
+static double obe_op(const argsOBEModelDy_t *dyn, double op, double radial)
 {
     if (dyn == NULL) return radial;
     return op * radial;
+}
+
+double obe_leg_spin(obe_leg_type_t type)
+{
+    if (type == OBE_LEG_DIRAC) return 0.5;
+    if (type == OBE_LEG_VECTOR) return 1.0;
+    return 0.0;
+}
+
+double OBEVt(double p, void *ctx)
+{
+    double mi, mj, mu;
+    OBE_UNPACK(ctx);
+    mi = args_dynmc->mi;
+    mj = args_dynmc->mj;
+    if (mi <= 0.0 || mj <= 0.0) return 0.0;
+    mu = mi * mj / (mi + mj);
+    return args_dynmc->OCent * (mi + mj + p * p / (2.0 * mu));
 }
 
 double OBEVc(double r, void *ctx)

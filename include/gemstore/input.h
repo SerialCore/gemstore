@@ -47,6 +47,18 @@ typedef struct argsInput {
     double jl;              /* orbit momentum jl */
     double J;               /* total momentum J */
     int P;                  /* parity */
+    double m1;              /* physical mass of hadron 1 */
+    double m2;              /* physical mass of hadron 2 */
+    double m3;              /* physical mass of hadron 3 */
+    obe_leg_type_t type1;   /* Dirac / VECTOR / PSEUDOSCALAR of hadron 1 */
+    obe_leg_type_t type2;   /* Dirac / VECTOR / PSEUDOSCALAR of hadron 2 */
+    obe_leg_type_t type3;   /* Dirac / VECTOR / PSEUDOSCALAR of hadron 3 */
+    int cc1;                /* meson C on leg 1; G = −1 exchanges pick up ζ */
+    int cc2;                /* meson C on leg 2; G = −1 exchanges pick up ζ */
+    int cc3;                /* meson C on leg 3; G = −1 exchanges pick up ζ */
+    double eta;             /* MM C-parity on π and magnetic vector; 0 → +1 */
+    double iso_pi;          /* ⟨τ1·τ2⟩ on pion; I = 0 is −3, I = 1 is +1 */
+    double iso_rho;         /* ⟨τ1·τ2⟩ on rho; write both, do not use iso */
     int sym12;              /* symmetry under 1<->2 exchange */
     int Lmax;               /* baryon orbital truncation */
     int nmax;               /* Gaussian parameter */

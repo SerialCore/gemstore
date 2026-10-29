@@ -27,6 +27,10 @@ void print_input_parameters(const argsInput_t *input);
 void print_meson_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, const matrix_t *overlap, 
     const array_t *rms12, int len);
 
+/* Two-body molecule spectra. threshold is m1+m2; Ebind = Mass - threshold. */
+void print_mol2_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, const matrix_t *overlap,
+    const array_t *rms12, double threshold, int len);
+
 /* Print baryon spectra with overlap-metric normalization checks and pair RMS */
 void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, const matrix_t *overlap,
     const array_t *rms12, const array_t *rms13, const array_t *rms23, int len);

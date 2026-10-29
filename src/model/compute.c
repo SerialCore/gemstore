@@ -8,6 +8,7 @@
 #include <gemstore/model/bagmodel.h>
 #include <gemstore/model/cmeson.h>
 #include <gemstore/model/cbaryon.h>
+#include <gemstore/model/cmol2.h>
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/math/interplt.h>
@@ -159,4 +160,56 @@ void compute_spectra_baryon(const argsInput_t *input)
         fprintf(stderr, "Error: Unsupported model for baryon spectra.\n");
         exit(1);
     }
+}
+
+void compute_spectra_mol2(const argsInput_t *input)
+{
+    int nmax = input->nmax;
+    int nch = mol2_channel_count(input);
+    int ntot = nch * nmax;
+    array_t eigenvalue;
+    matrix_t eigenvector;
+    matrix_t overlap = {0};
+    array_t rms12 = {0};
+    argsOBEModel_t args_model;
+    argsOBEModelDy_t args_dynmc = {0};
+
+    if (input->model != MODEL_OBESTAT) {
+        fprintf(stderr, "Error: MOLECUL2 SPECTRA supports OBESTAT only.\n");
+        exit(1);
+    }
+    if (input->basis != BASIS_GEM) {
+        fprintf(stderr, "Error: MOLECUL2 SPECTRA currently supports GEM basis only.\n");
+        exit(1);
+    }
+    if (input->m1 <= 0.0 || input->m2 <= 0.0) {
+        fprintf(stderr, "Error: MOLECUL2 needs positive physical masses m1 and m2.\n");
+        exit(1);
+    }
+
+    if (nch < 1 || ntot < 1) {
+        fprintf(stderr, "Error: MOLECUL2 has no partial-wave channels for this J, L.\n");
+        exit(1);
+    }
+
+    eigenvalue = array_init(ntot);
+    eigenvector = matrix_init(ntot, ntot);
+
+    args_model = argsOBEModel_from(input);
+    mol2_obestat_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12);
+
+    print_mol2_spectra(&eigenvalue, &eigenvector, &overlap, &rms12, input->m1 + input->m2, eigenvalue.len);
+    write_meson_spectra(input, &eigenvalue, &rms12, &eigenvector, eigenvalue.len);
+
+    if (input->print_pot) {
+        write_obe_pot(input, &args_model);
+    }
+    if (input->print_wfn) {
+        write_mol2_wfn(input, &eigenvector);
+    }
+
+    array_free(&eigenvalue);
+    array_free(&rms12);
+    matrix_free(&eigenvector);
+    matrix_free(&overlap);
 }
