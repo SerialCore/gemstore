@@ -70,7 +70,7 @@ void compute_spectra_meson(const argsInput_t *input)
             write_meson_nr_pot(input, &args_model, &args_dynmc);
         }
         if (input->print_wfn) {
-            write_meson_wfn(input, &eigenvector);
+            write_meson_wfn(input, &eigenvector, &overlap);
         }
 
         array_free(&eigenvalue);
@@ -103,7 +103,7 @@ void compute_spectra_meson(const argsInput_t *input)
             write_meson_gi_pot(input, &args_model, &args_dynmc);
         }
         if (input->print_wfn) {
-            write_meson_wfn(input, &eigenvector);
+            write_meson_wfn(input, &eigenvector, &overlap);
         }
 
         array_free(&eigenvalue);
@@ -205,7 +205,7 @@ void compute_spectra_mol2(const argsInput_t *input)
         write_obe_pot(input, &args_model);
     }
     if (input->print_wfn) {
-        write_mol2_wfn(input, &eigenvector);
+        write_mol2_wfn(input, &eigenvector, &overlap);
     }
 
     array_free(&eigenvalue);

@@ -370,9 +370,9 @@ Controls output of potential and wavefunction files:
 
 When enabled:
 - Meson potential: `<project>.pot.dat` (`r`, `V`)
-- Meson wavefunction: `<project>.wfn.N.dat` (`r`, `R`, `u`, `r²|R|²`), 0.01–10 fm
+- Meson wavefunction: `<project>.wfn.N.dat` (`r`, `R`, `u`, `r²|R|²`), from 0.01 fm to \(\max(10, r_{\max})\) fm (SHO \(r_{\max}=0\) stays at 10 fm)
 - Molecule potential: `<project>.pot.dat` (`r`, `Vc`, `Vss`, `Vt`, `V`)
-- Molecule wavefunction: `<project>.wfn.N.dat` (one \(R_a\) per partial wave, grid to `rmax`)
+- Molecule wavefunction: `<project>.wfn.N.dat` (one \(R_a\) per partial wave, same radial grid)
 
 ### JSON Output Format
 
@@ -409,9 +409,9 @@ When enabled:
 When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set:
 
 - **Meson potential**: `<project>.pot.dat` — two-column file (`r`, `V(r)`), 0.01–10 fm
-- **Meson wavefunction**: `<project>.wfn.N.dat` — `r`, `R`, `u=rR`, `r²|R|²`, 0.01–10 fm
+- **Meson wavefunction**: `<project>.wfn.N.dat` — `r`, `R`, `u=rR`, `r²|R|²`, from 0.01 fm to \(\max(10, r_{\max})\) fm
 - **Molecule potential**: `<project>.pot.dat` — `r`, `Vc`, `Vss`, `Vt`, `V`, 0.01–10 fm
-- **Molecule wavefunction**: `<project>.wfn.N.dat` — per-channel \(R_a(r)\) out to the GEM `rmax`
+- **Molecule wavefunction**: `<project>.wfn.N.dat` — per-channel \(R_a(r)\) on the same radial grid
 
 **Example output line:**
 ```text

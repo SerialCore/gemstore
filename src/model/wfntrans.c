@@ -12,8 +12,8 @@
  *     integral dr r^2 |R(r)|^2 = 1,
  *     <r^2> = integral dr r^4 |R(r)|^2.
  *
- * This means get_normalized_factor() and the meson RMS output work with R(r)
- * together with the radial measure. The overlap integrals in
+ * This means the meson RMS output and the overlap-normalized radial dump
+ * work with R(r) together with the radial measure. The overlap integrals in
  * src/math/integral.c therefore include the extra r^2 factor, and the radius
  * integrals include r^4. This is mathematically equivalent to the reduced
  * wavefunction convention
@@ -29,14 +29,14 @@
  * basis scale nu returned by getnu() is in GeV^2, the radial argument used in
  * the Gaussian/SHO basis functions is in GeV^-1, and beta is combined with
  * the radius in the same natural-unit convention. For that reason,
- * get_state_wfn_value() converts the plotting radius from fm to GeV^-1 before
- * evaluating the basis.
+ * get_gem_channel_wfn() and get_sho_channel_wfn() convert the plotting radius
+ * from fm to GeV^-1 before evaluating the basis.
  *
- * After the basis sum is formed, the overlap-based normalization factor
- * normalized = 1 / sqrt(c^T S c) is applied to the pointwise wavefunction.
- * The final return value is then converted back to an fm-based radial
- * wavefunction so that the normalization condition above holds with r measured
- * in fm. The exported quantities should therefore be interpreted as
+ * After the basis sum is formed, the meson writer multiplies by
+ * 1 / sqrt(c^T N c) from matrix_expect() on the solver overlap N. The channel
+ * functions return an fm-based radial wavefunction so that the normalization
+ * condition above holds with r measured in fm once that factor is applied.
+ * The exported quantities should therefore be interpreted as
  *
  *     R(r)            [fm^(-3/2)],
  *     u(r) = r R(r)   [fm^(-1/2)],
@@ -45,98 +45,13 @@
 
 #include <gemstore/model/wfntrans.h>
 #include <gemstore/basis/orbit.h>
-#include <gemstore/math/matrix.h>
-#include <gemstore/math/integral.h>
-#include <gemstore/param/argset.h>
 #include <gemstore/input.h>
 
 #include <math.h>
-#include <stdlib.h>
-
-double get_normalized_factor(const argsInput_t *input, const double *vector)
-{
-    if (input == NULL || vector == NULL) {
-        return 1.0;
-    }
-
-    int L = (int)input->L;
-    int nmax = input->nmax;
-    argsOrbit_t *basis = (argsOrbit_t *)malloc(nmax * sizeof(argsOrbit_t));
-    if (input->basis == BASIS_GEM) {
-        for (int i = 0; i < nmax; i++) {
-            basis[i].n = i + 1;
-            basis[i].l = L;
-            basis[i].scale = getnu(i + 1, nmax, input->rmax, input->rmin);
-        }
-    }
-    else if (input->basis == BASIS_SHO) {
-        for (int i = 0; i < nmax; i++) {
-            basis[i].n = i;
-            basis[i].l = L;
-            basis[i].scale = input->beta;
-        }
-    }
-
-    double normalized = 1.0;
-    double overlap_sum = 0.0;
-    for (int i = 0; i < nmax; i++) {
-        for (int j = 0; j < nmax; j++) {
-            double overlap_ij = 0.0;
-            double node_factor = 1.0 / sqrt(basis[i].scale + basis[j].scale);
-
-            if (input->basis == BASIS_GEM) {
-                overlap_ij = integral_nlr_overlap(GRnlr, node_factor, &basis[i], &basis[j]);
-            }
-            else if (input->basis == BASIS_SHO) {
-                overlap_ij = (i == j) ? 1.0 : 0.0;
-            }
-
-            overlap_sum += vector[i] * overlap_ij * vector[j];
-        }
-    }
-
-    if (fabs(overlap_sum) > 1e-12) {
-        normalized = sqrt(1.0 / overlap_sum);
-    }
-
-    free(basis);
-    return normalized;
-}
-
-double get_state_wfn_value(const argsInput_t *input, const double *vector, double normalized, double r)
-{
-    if (input == NULL || vector == NULL) {
-        return 0.0;
-    }
-
-    /* L is fixed for single channel */
-    int L = (int)input->L;
-    int nmax = input->nmax;
-    double fm = GEMSTORE_FM;
-    double rGeV = r * fm;
-    double psi_r = 0.0;
-
-    for (int n = 0; n < nmax; n++) {
-        double basis_func = 0.0;
-        double N = n + 1;
-
-        if (input->basis == BASIS_GEM) {
-            double nu = getnu(N, nmax, input->rmax, input->rmin);
-            basis_func = GRnlr(rGeV, N, L, nu) * exp(-nu * rGeV * rGeV);
-        }
-        else if (input->basis == BASIS_SHO) {
-            basis_func = SRnlr(rGeV, n, L, input->beta) * exp(-0.5 * input->beta * input->beta * rGeV * rGeV);
-        }
-
-        psi_r += vector[n] * basis_func;
-    }
-
-    return psi_r * normalized * pow(fm, 1.5);
-}
+#include <stddef.h>
 
 double get_gem_channel_wfn(int L, int nmax, double rmax, double rmin, const double *coeff, double r)
 {
-    /* L is a variable for S-D mixing */
     int n;
     double fm = GEMSTORE_FM;
     double rGeV = r * fm;
@@ -149,6 +64,24 @@ double get_gem_channel_wfn(int L, int nmax, double rmax, double rmin, const doub
     for (n = 0; n < nmax; n++) {
         double nu = getnu(n + 1, nmax, rmax, rmin);
         double basis_func = GRnlr(rGeV, n + 1, L, nu) * exp(-nu * rGeV * rGeV);
+        psi_r += coeff[n] * basis_func;
+    }
+    return psi_r * pow(fm, 1.5);
+}
+
+double get_sho_channel_wfn(int L, int nmax, double beta, const double *coeff, double r)
+{
+    int n;
+    double fm = GEMSTORE_FM;
+    double rGeV = r * fm;
+    double psi_r = 0.0;
+
+    if (coeff == NULL || nmax < 1) {
+        return 0.0;
+    }
+
+    for (n = 0; n < nmax; n++) {
+        double basis_func = SRnlr(rGeV, n, L, beta) * exp(-0.5 * beta * beta * rGeV * rGeV);
         psi_r += coeff[n] * basis_func;
     }
     return psi_r * pow(fm, 1.5);

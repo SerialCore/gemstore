@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 int write_meson_spectra(const argsInput_t *input, const array_t *mass, const array_t *radius, const matrix_t *vector, int len)
 {
@@ -305,9 +306,10 @@ int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nsta
     return ok ? 1 : 0;
 }
 
-int write_meson_wfn(const argsInput_t *input, const matrix_t *vector)
+int write_meson_wfn(const argsInput_t *input, const matrix_t *vector, const matrix_t *overlap)
 {
-    if (input == NULL || vector == NULL) {
+    if (input == NULL || vector == NULL || overlap == NULL || overlap->value == NULL
+        || overlap->row != vector->col || overlap->col != vector->col) {
         fprintf(stderr, "Error: Invalid input parameters to write_meson_wfn()\n");
         return 0;
     }
@@ -318,10 +320,17 @@ int write_meson_wfn(const argsInput_t *input, const matrix_t *vector)
     int nstate = vector->row;
     int state = 1;
 
+    if (input->rmax > rmax) {
+        rmax = input->rmax;
+    }
+
     for (int n = 0; n < nstate; n++) {
         FILE *pf;
         char path[275];
+        double nrm;
         double normalized;
+        int L = (int)input->L;
+        int nmax = input->nmax;
 
         sprintf(path, "%s.wfn.%d.dat", input->project, n + 1);
         pf = fopen(path, "w");
@@ -331,11 +340,19 @@ int write_meson_wfn(const argsInput_t *input, const matrix_t *vector)
             continue;
         }
 
-        normalized = get_normalized_factor(input, vector->value[n]);
+        nrm = matrix_expect(vector, n, overlap);
+        normalized = (nrm > 1e-16) ? sqrt(1.0 / nrm) : 1.0;
         fprintf(pf, "# r[fm]    R(r)[fm^(-3/2)]    u(r)=rR(r)[fm^(-1/2)]    r^2|R(r)|^2[fm^(-1)]\n");
 
         for (double r = rmin; r <= rmax; r += dr) {
-            double wfn = get_state_wfn_value(input, vector->value[n], normalized, r);
+            double wfn = 0.0;
+            if (input->basis == BASIS_GEM) {
+                wfn = get_gem_channel_wfn(L, nmax, input->rmax, input->rmin, vector->value[n], r);
+            }
+            else if (input->basis == BASIS_SHO) {
+                wfn = get_sho_channel_wfn(L, nmax, input->beta, vector->value[n], r);
+            }
+            wfn *= normalized;
             double uwfn = r * wfn;
             double density = r * r * wfn * wfn;
             fprintf(pf, "%.8f    %.8e    %.8e    %.8e\n", r, wfn, uwfn, density);
@@ -350,7 +367,7 @@ int write_meson_wfn(const argsInput_t *input, const matrix_t *vector)
     return state;
 }
 
-int write_mol2_wfn(const argsInput_t *input, const matrix_t *vector)
+int write_mol2_wfn(const argsInput_t *input, const matrix_t *vector, const matrix_t *overlap)
 {
     double rmin = 0.01;
     double rmax = 10.0;
@@ -363,7 +380,8 @@ int write_mol2_wfn(const argsInput_t *input, const matrix_t *vector)
     int state = 1;
     int n;
 
-    if (input == NULL || vector == NULL) {
+    if (input == NULL || vector == NULL || overlap == NULL || overlap->value == NULL
+        || overlap->row != vector->col || overlap->col != vector->col) {
         fprintf(stderr, "Error: Invalid input parameters to write_mol2_wfn()\n");
         return 0;
     }
@@ -383,6 +401,8 @@ int write_mol2_wfn(const argsInput_t *input, const matrix_t *vector)
         FILE *pf;
         char path[275];
         int a;
+        double nrm;
+        double normalized;
 
         sprintf(path, "%s.wfn.%d.dat", input->project, n + 1);
         pf = fopen(path, "w");
@@ -392,6 +412,8 @@ int write_mol2_wfn(const argsInput_t *input, const matrix_t *vector)
             continue;
         }
 
+        nrm = matrix_expect(vector, n, overlap);
+        normalized = (nrm > 1e-16) ? sqrt(1.0 / nrm) : 1.0;
         fprintf(pf, "# r[fm]");
         for (a = 0; a < nch; a++) {
             fprintf(pf, "    R%d[L=%d,S=%.1f,fm^(-3/2)]", a, Lch[a], Sch[a]);
@@ -403,6 +425,7 @@ int write_mol2_wfn(const argsInput_t *input, const matrix_t *vector)
             for (a = 0; a < nch; a++) {
                 double wfn = get_gem_channel_wfn(Lch[a], nmax, input->rmax, input->rmin,
                     &vector->value[n][a * nmax], r);
+                wfn *= normalized;
                 density += r * r * wfn * wfn;
                 fprintf(pf, "    %.8e", wfn);
             }

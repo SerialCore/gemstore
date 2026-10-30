@@ -13,7 +13,6 @@
 #include <gemstore/math/eigen.h>
 #include <gemstore/math/matrix.h>
 #include <gemstore/math/integral.h>
-#include <gemstore/model/wfntrans.h>
 #include <gemstore/param/argset.h>
 
 #include <gemstore/input.h>
@@ -36,11 +35,11 @@ static void add_sandwiched(matrix_t *H, const matrix_t *vt, const matrix_t *V, c
     matrix_sum(H, tmp, H);
 }
 
-/* RMS from c^T r^2 c in the original basis. Allocates *rms_out when both pointers are set. */
+/* RMS from (c^T r^2 c) / (c^T N c) in the original basis. Allocates *rms_out when both pointers are set. */
 static void meson_radius_RMS(const argsInput_t *input, const argsOrbit_t *basis, int nmax,
-    matrix_t *v_out, array_t *rms_out)
+    const matrix_t *Nfi, matrix_t *v_out, array_t *rms_out)
 {
-    if (rms_out == NULL || v_out == NULL) {
+    if (rms_out == NULL || v_out == NULL || Nfi == NULL) {
         return;
     }
 
@@ -60,8 +59,14 @@ static void meson_radius_RMS(const argsInput_t *input, const argsOrbit_t *basis,
 
     *rms_out = array_init(v_out->row);
     for (int n = 0; n < v_out->row; n++) {
-        double normalized = get_normalized_factor(input, v_out->value[n]);
-        rms_out->value[n] = sqrt(matrix_expect(v_out, n, &mR2)) * normalized / GEMSTORE_FM;
+        double nrm = matrix_expect(v_out, n, Nfi);
+        double r2 = matrix_expect(v_out, n, &mR2);
+        if (nrm > 1e-16 && r2 > 0.0) {
+            rms_out->value[n] = sqrt(r2 / nrm) / GEMSTORE_FM;
+        }
+        else {
+            rms_out->value[n] = 0.0;
+        }
     }
     matrix_free(&mR2);
 }
@@ -229,7 +234,7 @@ void meson_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args_
         *n_out = matrix_init(Nfi.row, Nfi.col);
         matrix_copy(&Nfi, n_out);
     }
-    meson_radius_RMS(args_input, basis, nmax, v_out, rms_out);
+    meson_radius_RMS(args_input, basis, nmax, &Nfi, v_out, rms_out);
 
     free(basis);
     matrix_free(&temp);
@@ -389,7 +394,7 @@ void meson_gimodel_SHO(const argsInput_t *args_input, const argsGIModel_t *args_
         *n_out = matrix_init(Nfi.row, Nfi.col);
         matrix_copy(&Nfi, n_out);
     }
-    meson_radius_RMS(args_input, basis, nmax, v_out, rms_out);
+    meson_radius_RMS(args_input, basis, nmax, &Nfi, v_out, rms_out);
 
     free(basis);
     matrix_free(&temp);
@@ -496,7 +501,7 @@ void meson_nrmodel_GEM(const argsInput_t *args_input, const argsNRModel_t *args_
         *n_out = matrix_init(Nfi.row, Nfi.col);
         matrix_copy(&Nfi, n_out);
     }
-    meson_radius_RMS(args_input, basis, nmax, v_out, rms_out);
+    meson_radius_RMS(args_input, basis, nmax, &Nfi, v_out, rms_out);
 
     free(basis);
     matrix_free(&mT);
@@ -591,7 +596,7 @@ void meson_nrmodel_SHO(const argsInput_t *args_input, const argsNRModel_t *args_
         *n_out = matrix_init(Nfi.row, Nfi.col);
         matrix_copy(&Nfi, n_out);
     }
-    meson_radius_RMS(args_input, basis, nmax, v_out, rms_out);
+    meson_radius_RMS(args_input, basis, nmax, &Nfi, v_out, rms_out);
 
     free(basis);
     matrix_free(&mT);

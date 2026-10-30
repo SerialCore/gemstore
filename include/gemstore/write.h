@@ -22,11 +22,11 @@ int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const ma
 /* Write bag spectra: mass, R, x, and color-spin eigenvector of each state. */
 int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nstate, const char *order);
 
-/* Write meson wavefunctions to a file */
-int write_meson_wfn(const argsInput_t *input, const matrix_t *vector);
+/* Write meson wavefunctions to a file. overlap is the solver N. */
+int write_meson_wfn(const argsInput_t *input, const matrix_t *vector, const matrix_t *overlap);
 
-/* Write two-body molecule wavefunctions: one R_a(r) column per partial wave. */
-int write_mol2_wfn(const argsInput_t *input, const matrix_t *vector);
+/* Write two-body molecule wavefunctions: one R_a(r) column per partial wave. overlap is the solver N. */
+int write_mol2_wfn(const argsInput_t *input, const matrix_t *vector, const matrix_t *overlap);
 
 /* Write GI potential to a file */
 int write_meson_gi_pot(const argsInput_t *input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc);

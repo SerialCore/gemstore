@@ -206,7 +206,7 @@ Inside `system` provide `type1`, `type2`, `m1`, `m2`, `iso_pi`, `iso_rho`, `S`, 
 
 The Hamiltonian is static LO OBE: \(H=T+V_C+V_{ss}+V_t\), \(V_{ls}=0\). CLI `Ebind = Mass − (m1+m2)`. Treat a state as bound only if `Ebind < 0` and RMS is clearly smaller than `rmax`. Near-threshold RMS \(\approx\) `rmax` is a box state. Do not report Liu scattering lengths; this path is a bound GEM spectrum.
 
-`"print":{"pot":"true"}` writes `<project>.pot.dat` as `r  Vc  Vss  Vt  V`. `"print":{"wfn":"true"}` writes per-channel radial functions out to `rmax`.
+`"print":{"pot":"true"}` writes `<project>.pot.dat` as `r  Vc  Vss  Vt  V`. `"print":{"wfn":"true"}` writes per-channel radial functions from 0.01 fm to \(\max(10, r_{\max})\) fm.
 
 ## Available gemstore CLI
 
@@ -255,8 +255,8 @@ Each entry in `states` contains:
 - `eigenvector` — array of expansion coefficients (meson: length `nmax`; molecule: length `nch × nmax`)
 
 When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional text files are generated:
-- Meson: `<project>.pot.dat` (r, V) and `<project>.wfn.N.dat` (r, R, u, r²|R|²), 990 points from 0.01–10.0 fm
-- Molecule: `<project>.pot.dat` (r, Vc, Vss, Vt, V) on 0.01–10 fm; `<project>.wfn.N.dat` has one \(R_a\) per partial wave out to `rmax`
+- Meson: `<project>.pot.dat` (r, V) on 0.01–10 fm; `<project>.wfn.N.dat` (r, R, u, r²|R|²) from 0.01 fm to \(\max(10, r_{\max})\) fm (SHO \(r_{\max}=0\) stays at 10 fm)
+- Molecule: `<project>.pot.dat` (r, Vc, Vss, Vt, V) on 0.01–10 fm; `<project>.wfn.N.dat` has one \(R_a\) per partial wave on the same radial grid as the meson wavefunction
 
 ## Workflow
 

@@ -10,14 +10,11 @@
 #include <gemstore/input.h>
 #include <gemstore/math/matrix.h>
 
-/* Get the normalization factor for a given state vector. */
-double get_normalized_factor(const argsInput_t *input, const double *vector);
-
-/* Evaluate the overlap-normalized radial wave function at radius r in fm. */
-double get_state_wfn_value(const argsInput_t *input, const double *vector, double normalized, double r);
-
 /* One GEM partial-wave block. coeff has nmax entries. r is in fm. */
 double get_gem_channel_wfn(int L, int nmax, double rmax, double rmin, const double *coeff, double r);
+
+/* One SHO partial-wave block. coeff has nmax entries. r is in fm. */
+double get_sho_channel_wfn(int L, int nmax, double beta, const double *coeff, double r);
 
 /* Compute effective SHO beta values that reproduce the target RMS radii. */
 void get_effective_beta_sho(const argsInput_t *input, const array_t *radius, array_t *ebeta, int len);

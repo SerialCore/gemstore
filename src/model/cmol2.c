@@ -99,14 +99,8 @@ static void mol2_radius_RMS(const argsOrbit_t *basis, int nch, int nmax, const m
 
     *rms_out = array_init(v_out->row);
     for (n = 0; n < v_out->row; n++) {
-        double nrm = 0.0;
-        double r2;
-        for (i = 0; i < ntot; i++) {
-            for (j = 0; j < ntot; j++) {
-                nrm += v_out->value[n][i] * Nfi->value[i][j] * v_out->value[n][j];
-            }
-        }
-        r2 = matrix_expect(v_out, n, &mR2);
+        double nrm = matrix_expect(v_out, n, Nfi);
+        double r2 = matrix_expect(v_out, n, &mR2);
         if (nrm > 1e-16 && r2 > 0.0) {
             rms_out->value[n] = sqrt(r2 / nrm) / GEMSTORE_FM;
         }

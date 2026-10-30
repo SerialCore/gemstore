@@ -108,5 +108,5 @@ Static LO OBE: \(H=T+V_C+V_{ss}+V_t\), \(V_{ls}=0\). Tensor mixes \(L\) with \(L
 CLI prints `Mass`, `Ebind = Mass − (m1+m2)`, `RMS`. Negative `Ebind` with RMS clearly below `rmax` is a bound state. Near-threshold RMS \(\approx\) `rmax` is a box state.
 
 - `"print":{"pot":"true"}` writes `<project>.pot.dat`: `r[fm]  Vc  Vss  Vt  V` on 0.01–10 fm with unit spin matrix elements.
-- `"print":{"wfn":"true"}` writes `<project>.wfn.N.dat` through `write_mol2_wfn`: one \(R_a(r)\) column per partial wave, out to `rmax`.
+- `"print":{"wfn":"true"}` writes `<project>.wfn.N.dat` through `write_mol2_wfn`: one \(R_a(r)\) column per partial wave, from 0.01 fm to \(\max(10, r_{\max})\) fm.
 - `<project>.state.json` reuses the meson writer: `mass`, `rms_radius`, `eigenvector` of length `nch * nmax`.

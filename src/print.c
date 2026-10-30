@@ -308,12 +308,7 @@ void print_meson_spectra(const array_t *eigenvalue, const matrix_t *eigenvector,
             double c = fabs(eigenvector->value[n][i]);
             if (c > maxc) maxc = c;
         }
-        for (int i = 0; i < nbas; i++) {
-            for (int j = 0; j < nbas; j++) {
-                norm += eigenvector->value[n][i] * overlap->value[i][j] * eigenvector->value[n][j];
-            }
-        }
-        
+        norm = matrix_expect(eigenvector, n, overlap);
         total_norm += norm;
         
         printf("%-6d%-12.6f%-12.6f%-12.6f%-15.10f\n",
@@ -378,11 +373,7 @@ void print_mol2_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, 
             double c = fabs(eigenvector->value[n][i]);
             if (c > maxc) maxc = c;
         }
-        for (int i = 0; i < nbas; i++) {
-            for (int j = 0; j < nbas; j++) {
-                norm += eigenvector->value[n][i] * overlap->value[i][j] * eigenvector->value[n][j];
-            }
-        }
+        norm = matrix_expect(eigenvector, n, overlap);
         total_norm += norm;
         printf("%-6d%-12.6f%-12.6f%-12.6f%-12.6f%-15.10f\n",
             n + 1, eigenvalue->value[n], eigenvalue->value[n] - threshold,
@@ -434,13 +425,7 @@ void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector
             double c = fabs(eigenvector->value[n][i]);
             if (c > maxc) maxc = c;
         }
-
-        for (int i = 0; i < eigenvector->col; i++) {
-            for (int j = 0; j < eigenvector->col; j++) {
-                norm += eigenvector->value[n][i] * overlap->value[i][j] * eigenvector->value[n][j];
-            }
-        }
-
+        norm = matrix_expect(eigenvector, n, overlap);
         total_norm += norm;
 
         double r12 = (rms12 && n < rms12->len) ? rms12->value[n] : 0.0;
