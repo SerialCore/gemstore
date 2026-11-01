@@ -62,7 +62,7 @@ void thread_load(thread_fun fun, void *args, int length, int threads)
 		arg_thread[i].args = args;
 	}
 	for (int i = 0; i < threads; i++) {
-		/* Recycle mt_load: every worker gets the task-array base so
+		/* every worker gets the task-array base so
 		 * thread_run can index arg_thread[pos]. Passing &arg_thread[i]
 		 * makes f(&args_thread[pos]) walk off the array. */
 		pthread_create(&thread_id[i], NULL, thread_run, arg_thread);

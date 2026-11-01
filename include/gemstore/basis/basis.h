@@ -7,7 +7,7 @@
 #ifndef GEMSTORE_BASIS_BASIS
 #define GEMSTORE_BASIS_BASIS
 
-/* Three-body Jacobi GEM basis (recycle/basis.h). Meson uses argsOrbit_t.
+/* Three-body Jacobi GEM basis. Meson uses argsOrbit_t.
  * Four-body quantum numbers would be basis_4b and bases_4b. */
 
 typedef struct basis_3b {

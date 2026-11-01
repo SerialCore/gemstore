@@ -14,10 +14,8 @@
 #include <math.h>
 #include <stdio.h>
 
-/* Normalization of one GEM factor r^l exp(-ν r^2). Factorial2[n] is n!!. */
-static double Nnl(int l,double nu)
-{
-	const double Factorial2[300]={
+/* n!!, n = 0..299, for the GEM normalization. */
+static const double factorial2[300] = {
 		 1.00000000000000000000E+000, 1.00000000000000000000E+000, 2.00000000000000000000E+000, 3.00000000000000000000E+000, 8.00000000000000000000E+000,
 		 1.50000000000000000000E+001, 4.80000000000000000000E+001, 1.05000000000000000000E+002, 3.84000000000000000000E+002, 9.45000000000000000000E+002,
 		 3.84000000000000000000E+003, 1.03950000000000000000E+004, 4.60800000000000000000E+004, 1.35135000000000000000E+005, 6.45120000000000000000E+005,
@@ -80,8 +78,10 @@ static double Nnl(int l,double nu)
 		 4.22651724780911225221E+301, 9.12126853398276772434E+302, 1.25527562259930633890E+304, 2.71813802312686478185E+305, 3.75327411157192595333E+306
 	};
 
-	double pi=3.14159265358979324;
-    return sqrt(pow(2.,l+2.)*pow(2*nu,l+1.5)/(sqrt(pi)*Factorial2[2*l+1]));
+/* Normalization of one GEM factor r^l exp(-ν r^2). */
+static double Nnl(int l,double nu)
+{
+	return sqrt(pow(2.,l+2.)*pow(2*nu,l+1.5)/(sqrt(M_PI)*factorial2[2*l+1]));
 }
 
 /* Pair separation ρ. jacobi_3b_r_1 on the bra chart and the ket chart.
@@ -125,7 +125,6 @@ static void getT1r(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	double coec, coet, coeso;
 	double hrho11, hrho12, hrho13, hrho14;
 	double hlambda11, hlambda12, hlambda13, hlambda14;
-	double pi = 3.14159265358979324;
 	int i;
 
 	jacobi_3b_r_1(m1, m2, m3, a, c, &alpha_ac, &beta_ac, &gamma_ac, &delta_ac);
@@ -210,9 +209,9 @@ static void getT1r(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	h23 = lDr[2];
 	h24 = lDr[3];
 
-	coec = 4 * pi * pow(sqrt(pi / aRR), 3);
-	coet = 16 * pi * sqrt(24 * pi) * pow(sqrt(pi / aRR), 3);
-	coeso = (4 * pi) / aRR * sqrt(pi / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * pi * pi) / 3;
+	coec = 4 * M_PI * pow(sqrt(M_PI / aRR), 3);
+	coet = 16 * M_PI * sqrt(24 * M_PI) * pow(sqrt(M_PI / aRR), 3);
+	coeso = (4 * M_PI) / aRR * sqrt(M_PI / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * M_PI * M_PI) / 3;
 
 	alpha_i = 1;
 	alpha_j = 0;
@@ -353,7 +352,6 @@ static void getTir(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	double h21, h22, h23, h24;
 	double coec, coet, coeso;
 	double hrho11, hrho12, hrho13, hrho14;
-	double pi = 3.14159265358979324;
 	int i;
 
 	double mai,maj,mak,mbi,mbj,mbk;
@@ -435,9 +433,9 @@ static void getTir(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	h23 = lDr[2];
 	h24 = lDr[3];
 
-	coec = 4 * pi * pow(sqrt(pi / aRR), 3);
-	coet = 16 * pi * sqrt(24 * pi) * pow(sqrt(pi / aRR), 3);
-	coeso = (4 * pi) / aRR * sqrt(pi / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * pi * pi) / 3;
+	coec = 4 * M_PI * pow(sqrt(M_PI / aRR), 3);
+	coet = 16 * M_PI * sqrt(24 * M_PI) * pow(sqrt(M_PI / aRR), 3);
+	coeso = (4 * M_PI) / aRR * sqrt(M_PI / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * M_PI * M_PI) / 3;
 
 	alpha_i = 1;
 	beta_i = 0;
@@ -534,7 +532,6 @@ static void getTjr(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	double h21, h22, h23, h24;
 	double coec, coet, coeso;
 	double hrho11, hrho12, hrho13, hrho14;
-	double pi = 3.14159265358979324;
 	int i;
 
 	double mai,maj,mak,mbi,mbj,mbk;
@@ -621,9 +618,9 @@ static void getTjr(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	h23 = lDr[2];
 	h24 = lDr[3];
 
-	coec = 4 * pi * pow(sqrt(pi / aRR), 3);
-	coet = 16 * pi * sqrt(24 * pi) * pow(sqrt(pi / aRR), 3);
-	coeso = (4 * pi) / aRR * sqrt(pi / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * pi * pi) / 3;
+	coec = 4 * M_PI * pow(sqrt(M_PI / aRR), 3);
+	coet = 16 * M_PI * sqrt(24 * M_PI) * pow(sqrt(M_PI / aRR), 3);
+	coeso = (4 * M_PI) / aRR * sqrt(M_PI / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * M_PI * M_PI) / 3;
 
 	alpha_i = 1;
 	beta_i = 0;
@@ -719,7 +716,6 @@ static void getT2r(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	double coec, coet, coeso;
 	double hrho11, hrho12, hrho13, hrho14;
 	double hlambda11, hlambda12, hlambda13, hlambda14;
-	double pi = 3.14159265358979324;
 	int i;
 
 	jacobi_3b_r_2(m1, m2, m3, a, c, &alpha_ac, &beta_ac, &gamma_ac, &delta_ac);
@@ -804,9 +800,9 @@ static void getT2r(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	h23 = lDr[2];
 	h24 = lDr[3];
 
-	coec = 4 * pi * pow(sqrt(pi / aRR), 3);
-	coet = 16 * pi * sqrt(24 * pi) * pow(sqrt(pi / aRR), 3);
-	coeso = (4 * pi) / aRR * sqrt(pi / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * pi * pi) / 3;
+	coec = 4 * M_PI * pow(sqrt(M_PI / aRR), 3);
+	coet = 16 * M_PI * sqrt(24 * M_PI) * pow(sqrt(M_PI / aRR), 3);
+	coeso = (4 * M_PI) / aRR * sqrt(M_PI / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * M_PI * M_PI) / 3;
 
 	alpha_i = 1;
 	alpha_j = 0;
@@ -944,7 +940,6 @@ static void getT1p(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	double coec, coet, coeso;
 	double hrho11, hrho12, hrho13, hrho14;
 	double hlambda11, hlambda12, hlambda13, hlambda14;
-	double pi = 3.14159265358979324;
 	int i;
 
 	jacobi_3b_p_1(m1, m2, m3, a, c, &alpha_ac, &beta_ac, &gamma_ac, &delta_ac);
@@ -1029,9 +1024,9 @@ static void getT1p(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	h23 = lDr[2];
 	h24 = lDr[3];
 
-	coec = 4 * pi * pow(sqrt(pi / aRR), 3);
-	coet = 16 * pi * sqrt(24 * pi) * pow(sqrt(pi / aRR), 3);
-	coeso = (4 * pi) / aRR * sqrt(pi / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * pi * pi) / 3;
+	coec = 4 * M_PI * pow(sqrt(M_PI / aRR), 3);
+	coet = 16 * M_PI * sqrt(24 * M_PI) * pow(sqrt(M_PI / aRR), 3);
+	coeso = (4 * M_PI) / aRR * sqrt(M_PI / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * M_PI * M_PI) / 3;
 
 	alpha_i = 1;
 	alpha_j = 0;
@@ -1169,7 +1164,6 @@ static void getT2p(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	double coec, coet, coeso;
 	double hrho11, hrho12, hrho13, hrho14;
 	double hlambda11, hlambda12, hlambda13, hlambda14;
-	double pi = 3.14159265358979324;
 	int i;
 
 	jacobi_3b_p_2(m1, m2, m3, a, c, &alpha_ac, &beta_ac, &gamma_ac, &delta_ac);
@@ -1254,9 +1248,9 @@ static void getT2p(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	h23 = lDr[2];
 	h24 = lDr[3];
 
-	coec = 4 * pi * pow(sqrt(pi / aRR), 3);
-	coet = 16 * pi * sqrt(24 * pi) * pow(sqrt(pi / aRR), 3);
-	coeso = (4 * pi) / aRR * sqrt(pi / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * pi * pi) / 3;
+	coec = 4 * M_PI * pow(sqrt(M_PI / aRR), 3);
+	coet = 16 * M_PI * sqrt(24 * M_PI) * pow(sqrt(M_PI / aRR), 3);
+	coeso = (4 * M_PI) / aRR * sqrt(M_PI / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * M_PI * M_PI) / 3;
 
 	alpha_i = 1;
 	alpha_j = 0;
@@ -1394,7 +1388,6 @@ static void getTpi(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	double coec, coet, coeso;
 	double hrho11, hrho12, hrho13, hrho14;
 	double hlambda11, hlambda12, hlambda13, hlambda14;
-	double pi = 3.14159265358979324;
 	int i;
 
 	jacobi_3b_p_i(m1, m2, m3, a, c, &alpha_ac, &beta_ac, &gamma_ac, &delta_ac);
@@ -1479,9 +1472,9 @@ static void getTpi(basis_3b qf, basis_3b qi, double* txrp_cent, int c, int vt)
 	h23 = lDr[2];
 	h24 = lDr[3];
 
-	coec = 4 * pi * pow(sqrt(pi / aRR), 3);
-	coet = 16 * pi * sqrt(24 * pi) * pow(sqrt(pi / aRR), 3);
-	coeso = (4 * pi) / aRR * sqrt(pi / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * pi * pi) / 3;
+	coec = 4 * M_PI * pow(sqrt(M_PI / aRR), 3);
+	coet = 16 * M_PI * sqrt(24 * M_PI) * pow(sqrt(M_PI / aRR), 3);
+	coeso = (4 * M_PI) / aRR * sqrt(M_PI / (4 * aRR)) * (-sqrt(3)) * (16 * sqrt(2) * M_PI * M_PI) / 3;
 
 	alpha_i = 1;
 	alpha_j = 0;
@@ -1702,7 +1695,7 @@ void tjr_soji(basis_3b qf,basis_3b qi,double *t,int *lent,int c)
 }
 
 /* Σ_i coe[i] * Π_j t[j]^{nfgh[i][j]} * t[19] * t[20] * iv(t[18], nfgh[i][18]). */
-double inteVcenPartA(txrp_vtype get_trxp_vtype, sumckdk_scdk scdk, basis_3b qf, basis_3b qi, kin_radial_fn iv, void *ctx, int c)
+double inteVcenPartA(txrp_vtype get_trxp_vtype, ckdk_scdk scdk, basis_3b qf, basis_3b qi, kin_radial_fn iv, void *ctx, int c)
 {
 	int i,j;
 	double p,sum;

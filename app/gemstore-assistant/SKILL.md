@@ -181,9 +181,9 @@ Inside `system` provide `f1`, `f2`, `f3`, `J`, `P`, `sym12`, `Lmax`. Basis must 
 - `P`: parity, `+1` or `-1`
 - `sym12`: sign under exchange of quarks 1 and 2
 - `Lmax`: keep channels with \(l_\rho+l_\lambda\le L_{\max}\) on three Jacobi charts
-- `jl`: optional. If set, build the `recycle` chart only (`c=1`, \(l_\rho=0\), \(l_\lambda=L_{\max}\), that \(j_l\))
+- `jl`: required by the parser. The basis includes every \(j_l\) that couples to \(J^P\); this field does not select a chart.
 
-Prefer `GISTRING_BARYON` for the smeared linear GI set in `recycle/debug.h`. `GISTRING_MESON` is a different fit.
+Prefer `GISTRING_BARYON` for the smeared linear GI set `argsGIString_baryon` in `src/param/argset.c`. `GISTRING_MESON` is a different fit.
 
 `<project>.state.json` states have `mass`, `rms_r12`, `rms_r13`, `rms_r23`, and `eigenvector`. With `"print":{"wfn":"true"}` the program writes `<project>.basis.dat` and coefficient files `<project>.wfn.N.dat`. `"print":{"pot":"true"}` writes `<project>.pot.dat`.
 

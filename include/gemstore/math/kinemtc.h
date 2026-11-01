@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Kinematic weights of one pair matrix element between two GEM Gaussians.
- * The angular polynomial is sumckdk. The pair potential is the callback iv.
+ * The angular polynomial is ckdk. The pair potential is the callback iv.
  *
  * A basis Gaussian is written in its own Jacobi chart. The operator acts
  * on the separation r of channel c, with spectator coordinate R. getT*
@@ -41,7 +41,7 @@
 #define GEMSTORE_MATH_KINEMTC
 
 #include <gemstore/basis/basis.h>
-#include <gemstore/math/sumckdk.h>
+#include <gemstore/math/ckdk.h>
 
 /* Fills t[] for one bra/ket pair. lent is the number of polynomial bases. */
 typedef void (*txrp_vtype)(basis_3b, basis_3b, double *, int *, int);
@@ -71,7 +71,7 @@ void tjr_sojj(basis_3b qf, basis_3b qi, double *t, int *lent, int c);
 void tjr_soji(basis_3b qf, basis_3b qi, double *t, int *lent, int c);
 
 /* Contract the angular polynomial with t[] and the radial callback. */
-double inteVcenPartA(txrp_vtype get_trxp_vtype, sumckdk_scdk scdk, basis_3b qf, basis_3b qi,
+double inteVcenPartA(txrp_vtype get_trxp_vtype, ckdk_scdk scdk, basis_3b qf, basis_3b qi,
     kin_radial_fn iv, void *ctx, int c);
 
 #endif

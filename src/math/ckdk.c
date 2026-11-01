@@ -1,6 +1,26 @@
-double almj(int l,int m,int j)
-{
-	double factorial[171]={
+/*
+ * Copyright (C) 2026, Wen-Xuan Zhang <serialcore@outlook.com>
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * Angular polynomial of the three-body GEM.
+ * The exponent layout is documented in ckdk.h.
+ */
+
+#include <gemstore/math/ckdk.h>
+
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+/* One term of a Y_lm expansion: c (d · n̂)^l, d = (x, y, z). */
+typedef struct {
+    int len;
+    double *c;
+    double **d;
+} ckdk_cdlm;
+
+static const double ckdk_factorial[171] = {
 		 1.00000000000000000000E+000, 1.00000000000000000000E+000, 2.00000000000000000000E+000, 6.00000000000000000000E+000, 2.40000000000000000000E+001,
 		 1.20000000000000000000E+002, 7.20000000000000000000E+002, 5.04000000000000000000E+003, 4.03200000000000000000E+004, 3.62880000000000000000E+005,
 		 3.62880000000000000000E+006, 3.99168000000000000000E+007, 4.79001600000000000000E+008, 6.22702080000000000000E+009, 8.71782912000000000000E+010,
@@ -36,152 +56,31 @@ double almj(int l,int m,int j)
 		 4.71472363599206132240E+284, 7.59070505394721872907E+286, 1.22969421873944943411E+289, 2.00440157654530257759E+291, 3.28721858553429622726E+293,
 		 5.42391066613158877498E+295, 9.00369170577843736647E+297, 1.50361651486499904020E+300, 2.52607574497319838753E+302, 4.26906800900470527493E+304,
 		 7.25741561530799896739E+306
-	};
-	double pi=3.1415926535897932385;
+};
 
-	return sqrt((2*l+1)*factorial[l-m]/factorial[l+m])*factorial[l+m]*pow(-1,j+m)*pow(2,-1-2*j-m)/(sqrt(pi)*factorial[j]*factorial[l-2*j-m]*factorial[j+m]);
+/* Y_lm power-series weight for summation index j. The table is n!. */
+static double almj(int l,int m,int j)
+{
+	const double *factorial = ckdk_factorial;
+
+	return sqrt((2*l+1)*factorial[l-m]/factorial[l+m])*factorial[l+m]*pow(-1,j+m)*pow(2,-1-2*j-m)/(sqrt(M_PI)*factorial[j]*factorial[l-2*j-m]*factorial[j+m]);
 }
 
-double binomial(int n,int m)
+/* C(n, m) from the same n! table. */
+static double binomial(int n,int m)
 {
-	double factorial[171]={
-		 1.00000000000000000000E+000, 1.00000000000000000000E+000, 2.00000000000000000000E+000, 6.00000000000000000000E+000, 2.40000000000000000000E+001,
-		 1.20000000000000000000E+002, 7.20000000000000000000E+002, 5.04000000000000000000E+003, 4.03200000000000000000E+004, 3.62880000000000000000E+005,
-		 3.62880000000000000000E+006, 3.99168000000000000000E+007, 4.79001600000000000000E+008, 6.22702080000000000000E+009, 8.71782912000000000000E+010,
-		 1.30767436800000000000E+012, 2.09227898880000000000E+013, 3.55687428096000000000E+014, 6.40237370572800000000E+015, 1.21645100408832000000E+017,
-		 2.43290200817664000000E+018, 5.10909421717094400000E+019, 1.12400072777760768000E+021, 2.58520167388849766400E+022, 6.20448401733239439360E+023,
-		 1.55112100433309859840E+025, 4.03291461126605635584E+026, 1.08888694504183521607E+028, 3.04888344611713860501E+029, 8.84176199373970195454E+030,
-		 2.65252859812191058636E+032, 8.22283865417792281772E+033, 2.63130836933693530167E+035, 8.68331761881188649551E+036, 2.95232799039604140847E+038,
-		 1.03331479663861449296E+040, 3.71993326789901217468E+041, 1.37637530912263450463E+043, 5.23022617466601111760E+044, 2.03978820811974433586E+046,
-		 8.15915283247897734345E+047, 3.34525266131638071081E+049, 1.40500611775287989854E+051, 6.04152630633738356373E+052, 2.65827157478844876804E+054,
-		 1.19622220865480194561E+056, 5.50262215981208894985E+057, 2.58623241511168180642E+059, 1.24139155925360726708E+061, 6.08281864034267560872E+062,
-		 3.04140932017133780436E+064, 1.55111875328738228022E+066, 8.06581751709438785716E+067, 4.27488328406002556429E+069, 2.30843697339241380472E+071,
-		 1.26964033536582759259E+073, 7.10998587804863451854E+074, 4.05269195048772167556E+076, 2.35056133128287857182E+078, 1.38683118545689835737E+080,
-		 8.32098711274139014427E+081, 5.07580213877224798800E+083, 3.14699732603879375256E+085, 1.98260831540444006411E+087, 1.26886932185884164103E+089,
-		 8.24765059208247066672E+090, 5.44344939077443064003E+092, 3.64711109181886852882E+094, 2.48003554243683059960E+096, 1.71122452428141311372E+098,
-		 1.19785716699698917960E+100, 8.50478588567862317521E+101, 6.12344583768860868615E+103, 4.47011546151268434089E+105, 3.30788544151938641225E+107,
-		 2.48091408113953980919E+109, 1.88549470166605025498E+111, 1.45183092028285869634E+113, 1.13242811782062978314E+115, 8.94618213078297528685E+116,
-		 7.15694570462638022948E+118, 5.79712602074736798588E+120, 4.75364333701284174842E+122, 3.94552396972065865119E+124, 3.31424013456535326699E+126,
-		 2.81710411438055027694E+128, 2.42270953836727323817E+130, 2.10775729837952771721E+132, 1.85482642257398439114E+134, 1.65079551609084610812E+136,
-		 1.48571596448176149730E+138, 1.35200152767840296255E+140, 1.24384140546413072554E+142, 1.15677250708164157475E+144, 1.08736615665674308027E+146,
-		 1.03299784882390592626E+148, 9.91677934870949689209E+149, 9.61927596824821198533E+151, 9.42689044888324774562E+153, 9.33262154439441526817E+155,
-		 9.33262154439441526817E+157, 9.42594775983835942085E+159, 9.61446671503512660926E+161, 9.90290071648618040754E+163, 1.02990167451456276238E+166,
-		 1.08139675824029090050E+168, 1.14628056373470835453E+170, 1.22652020319613793935E+172, 1.32464181945182897449E+174, 1.44385958320249358220E+176,
-		 1.58824554152274294042E+178, 1.76295255109024466387E+180, 1.97450685722107402353E+182, 2.23119274865981364659E+184, 2.54355973347218755712E+186,
-		 2.92509369349301569068E+188, 3.39310868445189820119E+190, 3.96993716080872089540E+192, 4.68452584975429065657E+194, 5.57458576120760588132E+196,
-		 6.68950291344912705758E+198, 8.09429852527344373968E+200, 9.87504420083360136241E+202, 1.21463043670253296757E+205, 1.50614174151114087979E+207,
-		 1.88267717688892609974E+209, 2.37217324288004688567E+211, 3.01266001845765954481E+213, 3.85620482362580421735E+215, 4.97450422247728744039E+217,
-		 6.46685548922047367250E+219, 8.47158069087882051098E+221, 1.11824865119600430745E+224, 1.48727070609068572890E+226, 1.99294274616151887673E+228,
-		 2.69047270731805048359E+230, 3.65904288195254865768E+232, 5.01288874827499166103E+234, 6.91778647261948849222E+236, 9.61572319694108900419E+238,
-		 1.34620124757175246058E+241, 1.89814375907617096942E+243, 2.69536413788816277658E+245, 3.85437071718007277052E+247, 5.55029383273930478955E+249,
-		 8.04792605747199194484E+251, 1.17499720439091082394E+254, 1.72724589045463891120E+256, 2.55632391787286558858E+258, 3.80892263763056972698E+260,
-		 5.71338395644585459047E+262, 8.62720977423324043162E+264, 1.31133588568345254560E+267, 2.00634390509568239477E+269, 3.08976961384735088795E+271,
-		 4.78914290146339387633E+273, 7.47106292628289444708E+275, 1.17295687942641442819E+278, 1.85327186949373479654E+280, 2.94670227249503832650E+282,
-		 4.71472363599206132240E+284, 7.59070505394721872907E+286, 1.22969421873944943411E+289, 2.00440157654530257759E+291, 3.28721858553429622726E+293,
-		 5.42391066613158877498E+295, 9.00369170577843736647E+297, 1.50361651486499904020E+300, 2.52607574497319838753E+302, 4.26906800900470527493E+304,
-		 7.25741561530799896739E+306
-	};
+	const double *factorial = ckdk_factorial;
 	return factorial[n]/(factorial[n-m]*factorial[m]);
 }
 
-
-
-
-typedef struct{
-	int len;
-	double *c;
-	double **d;
-}sumckdk_cdlm;
-
-
-void sumckdk_cdlm_init(sumckdk_cdlm *cdlm)
+static void ckdk_cdlm_init(ckdk_cdlm *cdlm)
 {
 	cdlm->len=0;
 	cdlm->c=(double*)malloc(sizeof(double)*0);
 	cdlm->d=(double**)malloc(sizeof(double*)*0);
 }
 
-void sumckdk_cdlm_logs(sumckdk_cdlm cdlm)
-{
-	int i;
-	for(i=0;i<cdlm.len;i++)
-	{
-		printf("%4d: %15.10f | %15.10f %15.10f %15.10f\n",i,cdlm.c[i],cdlm.d[i][0],cdlm.d[i][1],cdlm.d[i][2]);
-	}
-}
-
-void sumckdk_cdlm_push(sumckdk_cdlm *cdlm,double c,double dx,double dy,double dz)
-{
-	cdlm->c=(double*)realloc(cdlm->c,sizeof(double)*(cdlm->len+1));
-	cdlm->c[cdlm->len]=c;
-	cdlm->d=(double**)realloc(cdlm->d,sizeof(double*)*(cdlm->len+1));
-	cdlm->d[cdlm->len]=(double*)malloc(sizeof(double)*3);
-	cdlm->d[cdlm->len][0]=dx;
-	cdlm->d[cdlm->len][1]=dy;
-	cdlm->d[cdlm->len][2]=dz;
-	cdlm->len++;
-}
-
-void sumckdk_cdlm_cali(sumckdk_cdlm *cdlm,int l,int m)
-{
-	double pi=3.1415926535897932385;
-	int j,p,q,s,t,u;
-	double c;
-	sumckdk_cdlm_init(cdlm);
-	if(0==l && 0==m)
-	{
-		sumckdk_cdlm_push(cdlm,1/sqrt(4*pi),0,0,0);
-		return;
-	}
-	for(j=0;j<=(l-m)/2;j++)
-	{
-		p=l-m-2*j;
-		q=m+j;
-		for(s=0;s<=p;s++)
-		{
-			for(t=0;t<=q;t++)
-			{
-				for(u=0;u<=j;u++)
-				{
-					c=pow(l*0.25,l)*almj(l,m,j)*binomial(p,s)*binomial(q,t)*binomial(j,u)*pow(-1,s+t+u);
-					sumckdk_cdlm_push(cdlm,c,(j+q-2*t-2*u)*1.0/l,+(-j+q-2*t+2*u)*1.0/l,(p-2*s)*1.0/l);
-				}
-			}
-		}
-	}
-}
-
-
-void sumckdk_cdlm_calf(sumckdk_cdlm *cdlm,int l,int m)
-{
-	double pi=3.1415926535897932385;
-	int j,p,q,s,t,u;
-	double c;
-	sumckdk_cdlm_init(cdlm);
-	if(0==l && 0==m)
-	{
-		sumckdk_cdlm_push(cdlm,1/sqrt(4*pi),0,0,0);
-		return;
-	}
-	for(j=0;j<=(l-m)/2;j++)
-	{
-		p=l-m-2*j;
-		q=m+j;
-		for(s=0;s<=p;s++)
-		{
-			for(t=0;t<=q;t++)
-			{
-				for(u=0;u<=j;u++)
-				{
-					c=pow(l*0.25,l)*almj(l,m,j)*binomial(p,s)*binomial(q,t)*binomial(j,u)*pow(-1,s+t+u);
-					sumckdk_cdlm_push(cdlm,c,(j+q-2*t-2*u)*1.0/l,-(-j+q-2*t+2*u)*1.0/l,(p-2*s)*1.0/l);
-				}
-			}
-		}
-	}
-}
-
-void sumckdk_cdlm_free(sumckdk_cdlm *cdlm)
+static void ckdk_cdlm_free(ckdk_cdlm *cdlm)
 {
 	int i;
 	for(i=0;i<cdlm->len;i++)
@@ -193,20 +92,56 @@ void sumckdk_cdlm_free(sumckdk_cdlm *cdlm)
 	cdlm->len=0;
 }
 
-typedef struct{
-	int len;
-	double *coe;
-	int **nfgh;
-}sumckdk_scdk;
+static void ckdk_cdlm_push(ckdk_cdlm *cdlm,double c,double dx,double dy,double dz)
+{
+	cdlm->c=(double*)realloc(cdlm->c,sizeof(double)*(cdlm->len+1));
+	cdlm->c[cdlm->len]=c;
+	cdlm->d=(double**)realloc(cdlm->d,sizeof(double*)*(cdlm->len+1));
+	cdlm->d[cdlm->len]=(double*)malloc(sizeof(double)*3);
+	cdlm->d[cdlm->len][0]=dx;
+	cdlm->d[cdlm->len][1]=dy;
+	cdlm->d[cdlm->len][2]=dz;
+	cdlm->len++;
+}
 
-void sumckdk_scdk_init(sumckdk_scdk *scdk)
+/* Y_lm as monomials c (d · n̂)^l. ysign is +1 for a ket and -1 for a bra. */
+static void ckdk_cdlm_expand(ckdk_cdlm *cdlm, int l, int m, int ysign)
+{
+	int j, p, q, s, t, u;
+	double c;
+
+	ckdk_cdlm_init(cdlm);
+	if (l == 0 && m == 0) {
+		ckdk_cdlm_push(cdlm, 1 / sqrt(4 * M_PI), 0, 0, 0);
+		return;
+	}
+	for (j = 0; j <= (l - m) / 2; j++) {
+		p = l - m - 2 * j;
+		q = m + j;
+		for (s = 0; s <= p; s++) {
+			for (t = 0; t <= q; t++) {
+				for (u = 0; u <= j; u++) {
+					c = pow(l * 0.25, l) * almj(l, m, j)
+						* binomial(p, s) * binomial(q, t) * binomial(j, u)
+						* pow(-1, s + t + u);
+					ckdk_cdlm_push(cdlm, c,
+						(j + q - 2 * t - 2 * u) * 1.0 / l,
+						ysign * (-j + q - 2 * t + 2 * u) * 1.0 / l,
+						(p - 2 * s) * 1.0 / l);
+				}
+			}
+		}
+	}
+}
+
+void ckdk_scdk_init(ckdk_scdk *scdk)
 {
 	scdk->len=0;
 	scdk->coe=(double*)malloc(sizeof(double)*0);
 	scdk->nfgh=(int**)malloc(sizeof(int*)*0);
 }
 
-void sumckdk_scdk_free(sumckdk_scdk *scdk)
+void ckdk_scdk_free(ckdk_scdk *scdk)
 {
 	int i;
 	for(i=0;i<scdk->len;i++)
@@ -218,17 +153,9 @@ void sumckdk_scdk_free(sumckdk_scdk *scdk)
 	scdk->len=0;
 }
 
-
-void sumckdk_scdk_logs(sumckdk_scdk scdk)
-{
-	int i;
-	for(i=0;i<scdk.len;i++)
-	{
-		printf("%4d: %18.10E |nf:%2d f:%2d %2d %2d %2d |ng:%2d g:%2d %2d %2d %2d|h1= %2d %2d %2d %2d |h2= %2d %2d %2d %2d|int=%2d\n",i,scdk.coe[i],scdk.nfgh[i][0],scdk.nfgh[i][1],scdk.nfgh[i][2],scdk.nfgh[i][3],scdk.nfgh[i][4],scdk.nfgh[i][5],scdk.nfgh[i][6],scdk.nfgh[i][7],scdk.nfgh[i][8],scdk.nfgh[i][9],scdk.nfgh[i][10],scdk.nfgh[i][11],scdk.nfgh[i][12],scdk.nfgh[i][13],scdk.nfgh[i][14],scdk.nfgh[i][15],scdk.nfgh[i][16],scdk.nfgh[i][17],scdk.nfgh[i][18]);
-	}
-}
-
-void sumckdk_scdk_push(sumckdk_scdk *scdk,double coe,int nf,int nf1,int nf2,int nf3,int nf4,int ng,int ng1,int ng2,int ng3,int ng4,int nh11,int nh12,int nh13,int nh14,int nh21,int nh22,int nh23,int nh24)
+/* Merge coe into a term with the same 18 exponents, or append one.
+ * Slot 18 stays -1 until spinang writes the radial power. */
+static void ckdk_scdk_push(ckdk_scdk *scdk,double coe,int nf,int nf1,int nf2,int nf3,int nf4,int ng,int ng1,int ng2,int ng3,int ng4,int nh11,int nh12,int nh13,int nh14,int nh21,int nh22,int nh23,int nh24)
 {
 	int i,push;
 	push = 1;
@@ -252,8 +179,7 @@ void sumckdk_scdk_push(sumckdk_scdk *scdk,double coe,int nf,int nf1,int nf2,int 
 				scdk->nfgh[i][14]==nh21&&
 				scdk->nfgh[i][15]==nh22&&
 				scdk->nfgh[i][16]==nh23&&
-				scdk->nfgh[i][17]==nh24&&
-				1==1
+				scdk->nfgh[i][17]==nh24
 				)
 		{
 			scdk->coe[i]+=coe;
@@ -290,7 +216,9 @@ void sumckdk_scdk_push(sumckdk_scdk *scdk,double coe,int nf,int nf1,int nf2,int 
 	}
 }
 
-void sumckdk_scdk_spfy(sumckdk_scdk *scdk)
+/* Compact to terms above machine epsilon. Exponents 0..17 move with coe;
+ * slot 18 is left untouched, so call this before spinang fills that slot. */
+static void ckdk_scdk_spfy(ckdk_scdk *scdk)
 {
 	int i,j,k;
 	double eps=1.1102230246251565404E-16;
@@ -320,10 +248,14 @@ void sumckdk_scdk_spfy(sumckdk_scdk *scdk)
 	scdk->nfgh=(int**)realloc(scdk->nfgh,sizeof(int*)*(scdk->len));
 }
 
-void sumckdk_scdk_calc(sumckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4,int lh1,int lh2,int m1,int m2,int m3,int m4,int mh1,int mh2,pthread_mutex_t *mutex,int lock)
+/* Add cit times the angular polynomial of one bra/ket/operator product.
+ * l1,l2 and m1,m2 are the bra l_ρ, l_λ. l3,l4 are the ket.
+ * lh1,mh1 and lh2,mh2 are the operator harmonics.
+ * See ckdk.h for the exponent layout and the mutex rule. */
+void ckdk_scdk_calc(ckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4,int lh1,int lh2,int m1,int m2,int m3,int m4,int mh1,int mh2,pthread_mutex_t *mutex,int lock)
 {
 	int n;
-	sumckdk_cdlm cdlm1,cdlm2,cdlm3,cdlm4;
+	ckdk_cdlm cdlm1,cdlm2,cdlm3,cdlm4;
 	int nf,ng;
 	int f12,f13,f14,f23,f24,f34;
 	int g12,g13,g14,g23,g24,g34;
@@ -347,21 +279,27 @@ void sumckdk_scdk_calc(sumckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4
 	{
 		pthread_mutex_lock(mutex);
 	}
-	sumckdk_cdlm_calf(&cdlm1,l1,m1);
-	sumckdk_cdlm_calf(&cdlm2,l2,m2);
-	sumckdk_cdlm_cali(&cdlm3,l3,m3);
-	sumckdk_cdlm_cali(&cdlm4,l4,m4);
+	/* 1,2: bra ρ and λ. 3,4: ket ρ and λ. */
+	ckdk_cdlm_expand(&cdlm1, l1, m1, -1);
+	ckdk_cdlm_expand(&cdlm2, l2, m2, -1);
+	ckdk_cdlm_expand(&cdlm3, l3, m3, +1);
+	ckdk_cdlm_expand(&cdlm4, l4, m4, +1);
 	if(1==lock)
 	{
 		pthread_mutex_unlock(mutex);
 	}
 	
+	/* The leftover degree must be even. n is that degree over 2, the number
+	 * of pairwise contractions. Each one is assigned to the pair (nf) or the
+	 * spectator (ng), with nf + ng = n. This return does not free cdlm1..4. */
 	if((l1+l2+l3+l4-lh1-lh2)%2!=0)
 	{
-		printf("error_sumckdk_scdk_calc\n");
+		printf("error_ckdk_scdk_calc\n");
 		return;
 	}
 	n=(l1+l2+l3+l4-lh1-lh2)/2;
+	/* f_ab, g_ab: how many pair and spectator contractions join harmonics a and b.
+	 * ha, hb, hc: powers of d_z, d_x-d_y and d_x+d_y inside one operator harmonic. */
 	for(nf=0;nf<=n;nf++)
 	{
 		ng=n-nf;
@@ -418,6 +356,7 @@ void sumckdk_scdk_calc(sumckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4
 					      	nf2=f12+f23+f24;ng2=g12+g23+g24;nh12=ha12+hb12+hc12;nh22=ha22+hb22+hc22;
 				     		nf3=f13+f23+f34;ng3=g13+g23+g34;nh13=ha13+hb13+hc13;nh23=ha23+hb23+hc23;
 			     			nf4=f14+f24+f34;ng4=g14+g24+g34;nh14=ha14+hb14+hc14;nh24=ha24+hb24+hc24;
+		     				/* Harmonic k is saturated when its pair, spectator and operator powers sum to l_k. */
 		     				if(nf1+ng1+nh11+nh21==l1 && nf2+ng2+nh12+nh22==l2 && nf3+ng3+nh13+nh23==l3 && nf4+ng4+nh14+nh24==l4)
 						{
 							coe=binomial(nf,f12)*binomial(nf-f12,f13)*binomial(nf-f12-f13,f14)*binomial(nf-f12-f13-f14,f23)*binomial(nf-f12-f13-f14-f23,f24)*
@@ -440,6 +379,7 @@ void sumckdk_scdk_calc(sumckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4
 								d23=0;
 								d24=0;
 								d34=0;
+								/* Quadratic form on the stored d: +x x - y y + z z. */
 								for(k=0;k<3;k++)
 								{
 									if(1==k)
@@ -499,7 +439,7 @@ void sumckdk_scdk_calc(sumckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4
 							{
 								pthread_mutex_lock(mutex);
 							}
-							sumckdk_scdk_push(scdk,cit*coe*almj(lh1,mh1,j1)*almj(lh2,mh2,j2)*sc*pow(2,nf+ng),nf,nf1,nf2,nf3,nf4,ng,ng1,ng2,ng3,ng4,nh11,nh12,nh13,nh14,nh21,nh22,nh23,nh24);
+							ckdk_scdk_push(scdk,cit*coe*almj(lh1,mh1,j1)*almj(lh2,mh2,j2)*sc*pow(2,nf+ng),nf,nf1,nf2,nf3,nf4,ng,ng1,ng2,ng3,ng4,nh11,nh12,nh13,nh14,nh21,nh22,nh23,nh24);
 							if(1==lock)
 							{
 								pthread_mutex_unlock(mutex);
@@ -520,47 +460,12 @@ void sumckdk_scdk_calc(sumckdk_scdk *scdk,double cit,int l1,int l2,int l3,int l4
 		}}}}}
 	}
 
+	/* Always locked, including when lock is 0. */
 	pthread_mutex_lock(mutex);
-	sumckdk_cdlm_free(&cdlm1);
-	sumckdk_cdlm_free(&cdlm2);
-	sumckdk_cdlm_free(&cdlm3);
-	sumckdk_cdlm_free(&cdlm4);
-	sumckdk_scdk_spfy(scdk);
+	ckdk_cdlm_free(&cdlm1);
+	ckdk_cdlm_free(&cdlm2);
+	ckdk_cdlm_free(&cdlm3);
+	ckdk_cdlm_free(&cdlm4);
+	ckdk_scdk_spfy(scdk);
 	pthread_mutex_unlock(mutex);
 }
-
-double sumckdk_scdk_vals(sumckdk_scdk scdk,double coef,double f1,double f2,double f3,double f4,double coeg,double g1,double g2,double g3,double g4,double h11,double h12,double h13,double h14,double h21,double h22,double h23,double h24)
-{
-	int i;
-	double sum;
-	sum=0;
-	for(i=0;i<scdk.len;i++)
-	{
-		sum+=scdk.coe[i]*
-			pow(coef,scdk.nfgh[i][ 0])*
-			sin(     scdk.nfgh[i][ 0])*
-			pow(  f1,scdk.nfgh[i][ 1])*
-			pow(  f2,scdk.nfgh[i][ 2])*
-			pow(  f3,scdk.nfgh[i][ 3])*
-			pow(  f4,scdk.nfgh[i][ 4])*
-			pow(coeg,scdk.nfgh[i][ 5])*
-			cos(     scdk.nfgh[i][ 5])*
-			pow(  g1,scdk.nfgh[i][ 6])*
-			pow(  g2,scdk.nfgh[i][ 7])*
-			pow(  g3,scdk.nfgh[i][ 8])*
-			pow(  g4,scdk.nfgh[i][ 9])*
-			pow( h11,scdk.nfgh[i][10])*
-			pow( h12,scdk.nfgh[i][11])*
-			pow( h13,scdk.nfgh[i][12])*
-			pow( h14,scdk.nfgh[i][13])*
-			pow( h21,scdk.nfgh[i][14])*
-			pow( h22,scdk.nfgh[i][15])*
-			pow( h23,scdk.nfgh[i][16])*
-			pow( h24,scdk.nfgh[i][17])*
-			1;
-	}
-	return sum;
-}
-
-
-

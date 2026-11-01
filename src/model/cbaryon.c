@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Baryon SPECTRA with SCDK matrix elements (recycle/mfi.h, debug.h, res.h).
+ * Baryon SPECTRA with SCDK matrix elements.
  * The GEM basis spans lρ+lλ ≤ Lmax and every jl that couples to J^P.
  * f1,f2 are the pair named by sym12. An identical pair that is not 12
  * (cbb, ncc, …) is rejected; relabel so the identical quarks are f1,f2.
@@ -22,8 +22,8 @@
 
 #include <gemstore/math/kinemtc.h>
 #include <gemstore/model/giradial.h>
-#include <gemstore/model/spinang.h>
-#include <gemstore/math/sumckdk.h>
+#include <gemstore/math/spinang.h>
+#include <gemstore/math/ckdk.h>
 #include <gemstore/math/soc.h>
 #include <gemstore/math/eigen.h>
 #include <gemstore/math/matrix.h>
@@ -39,7 +39,7 @@ typedef struct baryon_gi {
     bases_3b qnlist_spfy;
     bases_3b qnlist_full;
     matrix_t **mlsj;
-    sumckdk_scdk ****scdk[21];
+    ckdk_scdk ****scdk[21];
     scdk_vargs_t varg;
 
     matrix_t Nfi;
@@ -302,7 +302,7 @@ static void calc_scdk_mt(void *args)
     for (int nfp = 0; nfp < len_part[nf]; nfp++) {
         for (int ni = 0; ni < len_list; ni++) {
             for (int nip = 0; nip < len_part[ni]; nip++) {
-                sumckdk_scdk_vtype(&job->scdk[op][nf][nfp][ni][nip],
+                ckdk_scdk_vtype(&job->scdk[op][nf][nfp][ni][nip],
                     scdk_vfn[op], scdk_fg[op], job->qnlist_spfy, job->mlsj,
                     nf, nfp, ni, nip, mtargs->mutex, mtargs->lock, scdk_pair[op]);
             }
@@ -310,7 +310,7 @@ static void calc_scdk_mt(void *args)
     }
 }
 
-static double me_add(txrp_vtype kin, sumckdk_scdk scdk, basis_3b qf, basis_3b qi,
+static double me_add(txrp_vtype kin, ckdk_scdk scdk, basis_3b qf, basis_3b qi,
     void *ctx, kin_radial_fn iv, int c)
 {
     return inteVcenPartA(kin, scdk, qf, qi, iv, ctx, c);
@@ -398,27 +398,27 @@ static void getmfi(void *args)
     }
 }
 
-static void baryon_scdk_table_alloc(int *len_part, int len_list, sumckdk_scdk *****tab)
+static void baryon_scdk_table_alloc(int *len_part, int len_list, ckdk_scdk *****tab)
 {
-    *tab = (sumckdk_scdk ****)malloc(sizeof(sumckdk_scdk ***) * (size_t)len_list);
+    *tab = (ckdk_scdk ****)malloc(sizeof(ckdk_scdk ***) * (size_t)len_list);
     for (int i = 0; i < len_list; i++) {
-        (*tab)[i] = (sumckdk_scdk ***)malloc(sizeof(sumckdk_scdk **) * (size_t)len_part[i]);
+        (*tab)[i] = (ckdk_scdk ***)malloc(sizeof(ckdk_scdk **) * (size_t)len_part[i]);
         for (int j = 0; j < len_part[i]; j++) {
-            (*tab)[i][j] = (sumckdk_scdk **)malloc(sizeof(sumckdk_scdk *) * (size_t)len_list);
+            (*tab)[i][j] = (ckdk_scdk **)malloc(sizeof(ckdk_scdk *) * (size_t)len_list);
             for (int k = 0; k < len_list; k++) {
-                (*tab)[i][j][k] = (sumckdk_scdk *)malloc(sizeof(sumckdk_scdk) * (size_t)len_part[k]);
+                (*tab)[i][j][k] = (ckdk_scdk *)malloc(sizeof(ckdk_scdk) * (size_t)len_part[k]);
             }
         }
     }
 }
 
-static void baryon_scdk_table_free(int *len_part, int len_list, sumckdk_scdk *****tab)
+static void baryon_scdk_table_free(int *len_part, int len_list, ckdk_scdk *****tab)
 {
     for (int i = 0; i < len_list; i++) {
         for (int j = 0; j < len_part[i]; j++) {
             for (int k = 0; k < len_list; k++) {
                 for (int l = 0; l < len_part[k]; l++) {
-                    sumckdk_scdk_free(&((*tab)[i][j][k][l]));
+                    ckdk_scdk_free(&((*tab)[i][j][k][l]));
                 }
                 free((*tab)[i][j][k]);
             }
@@ -477,7 +477,7 @@ void baryon_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args
     matrix_t tV = matrix_init(nkeep, nkeep);
     matrix_t tP = matrix_init(nkeep, nkeep);
 
-    /* Recycle eigsys: each pair is mapped with SCDK, then βVβ per pair. */
+    /* each pair is mapped with SCDK, then βVβ per pair. */
     matrix_t Hfi = matrix_init(nkeep, nkeep);
     for (int p = 0; p < 3; p++) {
         add_reduced(&Hfi, &vt, &job.T[p], &temp);
