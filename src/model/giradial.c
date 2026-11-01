@@ -3,16 +3,16 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Radial integrals of the baryon GI operators (recycle inteCenV).
- * deltaij/betaij use 0.5+epsilon. They do not add the epsilon^2 term in GIVdelta*.
+ * Baryon GI radial moments. K(x) is the gimodel potential; the
+ * quadrature is integral_exp_rn. Overlap and <x^2> stay closed forms.
  */
 
 #include <gemstore/model/giradial.h>
 #include <gemstore/basis/channel.h>
 #include <gemstore/model/gimodel.h>
+#include <gemstore/math/integral.h>
 
 #include <math.h>
-#include <stdio.h>
 
 void scdk_vargs_from_model(scdk_vargs_t *varg, const argsGIModel_t *model, model_type_t mtype)
 {
@@ -40,88 +40,53 @@ void scdk_vargs_from_model(scdk_vargs_t *varg, const argsGIModel_t *model, model
     varg->model = mtype;
 }
 
-
-typedef double (*vCenPart)(double,basis_3b,basis_3b,scdk_vargs_t,int);
-
-static double getsigmaij(double sigma0,double s,double mi,double mj)
+/* Spin-angular weight is ±1. spinang supplies the real coefficient.
+ * quark != 0 selects √(p²+m²) for quark c; otherwise mi, mj are the pair. */
+static double gi_moment(potential_t pot, double b11, int n, basis_3b qf, int c,
+    const scdk_vargs_t *varg, int quark, system_type_t system,
+    double olsi, double olsj, double osds, double otens)
 {
-	return sqrt(sigma0 * sigma0 * (0.5 + 0.5 * pow(4.0 * mi * mj / ((mi + mj) * (mi + mj)), 4.0))+ s * s * pow(2.0 * mi * mj / (mi + mj), 2.0));
-}
+    argsGIModel_t model = {0};
+    argsGIModelDy_t dyn = {0};
+    gi_pot_ctx_t ctx;
+    double mi, mj, mk;
 
-static void getsigmakij(double *sigmakij, double *gammak,double sigma0,double s,double mi,double mj)
-{
-	int k;
-	double sigmaij2=pow(getsigmaij(sigma0,s,mi,mj),2);
-	for(k=0;k<3;k++)
-	{
-		sigmakij[k]=1/sqrt(1/pow(gammak[k],2)+1/sigmaij2);
-	}
-}
+    model.b = varg->b;
+    model.mu = varg->mu;
+    model.c = varg->c;
+    model.sigma_0 = varg->sigma0;
+    model.s = varg->s;
+    model.epsilon_cont = varg->econt;
+    model.epsilon_sov = varg->esov;
+    model.epsilon_sos = varg->esos;
+    model.epsilon_tens = varg->etens;
 
-/* √(p²+m²). c = 1, 2, 3 reads qf.m1, m2, m3. qi is unused. */
-static double Ti(double p,basis_3b qf,basis_3b qi,scdk_vargs_t varg,int c)
-{
-	double mc;
-	switch(c)
-	{
-		case 1:
-			mc=qf.m1;
-			break;
-		case 2:
-			mc=qf.m2;
-			break;
-		case 3:
-			mc=qf.m3;
-			break;
-		default:
-			printf("error_Ti\n");
-			mc=0;
-			break;
-	}
-	return  sqrt(p*p+mc*mc);
-}
+    if (quark) {
+        if (c == 1) mi = qf.m1;
+        else if (c == 2) mi = qf.m2;
+        else if (c == 3) mi = qf.m3;
+        else mi = 0.0;
+        mj = mi;
+    } else {
+        channel_3b_ijk(qf.m1, qf.m2, qf.m3, &mi, &mj, &mk, c);
+        (void)mk;
+    }
 
-
-/* 50-point recycle quadrature for ∫ x^n exp(-b11 x^2) K(x) dx.
- * The nodes are divided by √b11. This table is not integral_exp_rn. */
-static double InteCenV(double b11,int n,basis_3b qf,basis_3b qi,vCenPart v,scdk_vargs_t varg,int c)
-{
-	#define InteLength 50
-	
-	const double InteWeight[InteLength]={
-		 9.49074370469973154861E-003, 2.20248042432282550986E-002, 3.43744122779471232838E-002, 4.62954423315795426704E-002, 5.74270673524102611643E-002,
-		 6.72616743347232737151E-002, 7.51655105427606561651E-002, 8.04487210189303589897E-002, 8.24866653780293862703E-002, 8.08772841479732575406E-002,
-		 7.55968131214373958980E-002, 6.70988969096135470989E-002, 5.63037514101928791197E-002, 4.44533647270852744933E-002, 3.28602655529441193691E-002,
-		 2.26281047022441036531E-002, 1.44421205638529698147E-002, 8.49988917441698033564E-003, 4.58981582947691516137E-003, 2.26248032155746286264E-003,
-		 1.01296345857313010366E-003, 4.09855051025779821045E-004, 1.49103396554347145977E-004, 4.85209725035065972790E-005, 1.40499187954310526217E-005,
-		 3.60057445584128798598E-006, 8.12054885660543383779E-007, 1.60236226323028537512E-007, 2.74914498210976715853E-008, 4.07393870688591939297E-009,
-		 5.17733909405469218567E-010, 5.59883137228935952164E-011, 5.10833440280922385331E-012, 3.89531180859741328527E-013, 2.45631708318249480239E-014,
-		 1.26561330926208323536E-015, 5.25582653443700296954E-017, 1.73149373479240142712E-018, 4.44198243358375823341E-020, 8.68013859892778184465E-022,
-		 1.25805074779480909285E-023, 1.30871663315222277155E-025, 9.37690669168311366587E-028, 4.38351942427205493247E-030, 1.25991102592426549802E-032,
-		 1.45161317869704793270E-035, 1.44829917427803858346E-037,-2.07564613115271761842E-039, 1.59488572462612746697E-041,-3.26209228139812174140E-044
-	};
-	const double InteNode[InteLength]={
-		 3.69941668941189387078E-003, 1.94655785593001262377E-002, 4.77232575110775569884E-002, 8.82994741423326136810E-002, 1.40944249831512837831E-001,
-		 2.05343824732975154536E-001, 2.81130944731155938791E-001, 3.67895701867100816092E-001, 4.65196632382567480466E-001, 5.72571575839739193266E-001,
-		 6.89547864293400636314E-001, 8.15651524129035456870E-001, 9.50415293767051842487E-001, 1.09338537085220496150E+000, 1.24412689394047714663E+000,
-		 1.40222823252836353434E+000, 1.56730420579590844586E+000, 1.73899837732924138424E+000, 1.91698458425367595630E+000, 2.10096785886658098596E+000,
-		 2.29068489295538163123E+000, 2.48590418287233886279E+000, 2.68642597976929227008E+000, 2.89208215616667258410E+000, 3.10273608869143607692E+000,
-		 3.31828264842635672287E+000, 3.53864838570112628139E+000, 3.76379199610129929525E+000, 3.99370515987453091261E+000, 4.22841385900133938902E+000,
-		 4.46798029678176976527E+000, 4.71250557663335036490E+000, 4.96213334417320913961E+000, 5.21705466625021294844E+000, 5.47751452299329293275E+000,
-		 5.74382044124152601111E+000, 6.01635402812180604868E+000, 6.29558651982983683470E+000, 6.58210002638651010927E+000, 6.87661707965657488199E+000,
-		 7.18004266516692291795E+000, 7.49352570514240963406E+000, 7.81855215039574067889E+000, 8.15709210450168878089E+000, 8.51184526474371849140E+000,
-		 8.88668005924412897894E+000, 9.28749674141648604654E+000, 9.72416586588463146083E+000, 1.02158862585784281522E+001, 1.08129860729453608573E+001
-	};
-	double r,res;
-	int i;
-	res=0;
-	for(i=0;i<InteLength;i++)
-	{
-		r=InteNode[i]/sqrt(b11);
-		res=res+InteWeight[i]*v(r,qf,qi,varg,c)*pow(r,n);
-	}
-	res=res/sqrt(b11);
-	return res;
+    dyn.model = varg->model;
+    dyn.system = system;
+    dyn.mi = mi;
+    dyn.mj = mj;
+    dyn.Cij = -2.0 / 3.0;
+    dyn.OCent = 1.0;
+    dyn.OSdS = osds;
+    dyn.OLSi = olsi;
+    dyn.OLSj = olsj;
+    dyn.OTens = otens;
+    dyn.Sigij = sigma_ij(mi, mj, varg->sigma0, varg->s);
+    sigma_k_ij(dyn.Sigij, dyn.Sigkij);
+    ctx.model = &model;
+    ctx.dyn = &dyn;
+    return integral_exp_rn(pot, b11, n, &ctx);
 }
 
 /* ∫_0^∞ r^n exp(-a r^2) dr = (1/2) a^{-(n+1)/2} Γ((n+1)/2).
@@ -137,430 +102,141 @@ static double InteExprn(double a,int n)
 	return 0.5e0*pow(a,-0.5*(1+n))*GammaSemiInt[n+1];
 }
 
-/* Closed form of ∫ r^n exp(-a r^2) erf(b r) dr for n = 1, 3, 5, 7, 9.
- * Any other n prints and returns 0. */
-static double InteExpErfrn(double a, double b, int n)
+double inteNfi(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-    double result = 0.0;
-    
-    switch(n)
-    {
-        case 1:
-            result = b / (2.0 * a * sqrt(a + b * b));
-            break;
-            
-        case 3:
-            result = (3.0 * a * b + 2.0 * pow(b, 3)) / (4.0 * pow(a, 2) * pow(a + b * b, 1.5));
-            break;
-            
-        case 5:
-            result = (15.0 * pow(a, 2) * b + 20.0 * a * pow(b, 3) + 8.0 * pow(b, 5)) / 
-                     (8.0 * pow(a, 3) * pow(a + b * b, 2.5));
-            break;
-            
-        case 7:
-            result = (3.0 * b * (35.0 * pow(a, 3) + 70.0 * pow(a, 2) * pow(b, 2) + 
-                     56.0 * a * pow(b, 4) + 16.0 * pow(b, 6))) / 
-                     (16.0 * pow(a, 4) * pow(a + b * b, 3.5));
-            break;
-            
-        case 9:
-            result = (3.0 * b * (315.0 * pow(a, 4) + 840.0 * pow(a, 3) * pow(b, 2) + 
-                     1008.0 * pow(a, 2) * pow(b, 4) + 576.0 * a * pow(b, 6) + 128.0 * pow(b, 8))) / 
-                     (32.0 * pow(a, 5) * pow(a + b * b, 4.5));
-            break;
-            
-        default:
-            printf("only n=1,3,5,7,9\n");
-            result = 0.0;
-            break;
-    }
-    
-    return result;
+    (void)qf;
+    (void)qi;
+    (void)ctx;
+    (void)c;
+    return InteExprn(b11, n);
 }
 
-/* Callbacks below. Names and the GISTRING / GISCREEN split are in giradial.h. */
-double inteNfi(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
+double inteVogeG(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	(void)ctx;
-
-	return InteExprn(b11,n);
+    (void)qi;
+    return gi_moment(GIVcoul, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 0, 0, 0);
 }
 
-double inteVogeG(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
+double inteVcont(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	double sigmakij[3];
-	int k;
-	double mi,mj,mk;
-	double res=0;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	getsigmakij(sigmakij,varg.gamma,varg.sigma0,varg.s,mi,mj);
-	for(k=0;k<3;k++)
-	{
-		res=res-2*varg.alpha[k]*InteExpErfrn(b11,sigmakij[k],n-1)/3.0;
-	}
-	return res;
+    (void)qi;
+    return gi_moment(GIVcont, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 0, 1, 0);
 }
 
-double inteVcont(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
+double inteVtens(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	double pi=3.1415926535897932385;
-	double sigmakij[3];
-	int k;
-	double mi,mj,mk;
-	double res=0;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	getsigmakij(sigmakij,varg.gamma,varg.sigma0,varg.s,mi,mj);
-	for(k=0;k<3;k++)
-	{
-		res=res+16*varg.alpha[k]*pow(sigmakij[k],3)*InteExprn(pow(sigmakij[k],2)+b11,n)/(9*mi*mj*sqrt(pi));
-	}
-	return res;
+    (void)qi;
+    return gi_moment(GIVtens, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 0, 0, 1);
 }
 
-double inteVtens(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
+double inteVsovii(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	double pi=3.1415926535897932385;
-	double sigmakij[3];
-	int k;
-	double mi,mj,mk;
-	double res=0;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	getsigmakij(sigmakij,varg.gamma,varg.sigma0,varg.s,mi,mj);
-	for(k=0;k<3;k++)
-	{
-		res=res-4*varg.alpha[k]*sigmakij[k]*InteExprn(pow(sigmakij[k],2)+b11,n-2)/(3*mi*mj*sqrt(pi))-8*varg.alpha[k]*pow(sigmakij[k],3)*InteExprn(pow(sigmakij[k],2)+b11,n)/(9*mi*mj*sqrt(pi))+2*varg.alpha[k]*InteExpErfrn(b11,sigmakij[k],n-3)/(3*mi*mj);
-
-	}
-	return res;
+    (void)qi;
+    return gi_moment(GIVsovi, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 1, 0, 0, 0);
 }
 
-double inteVsovii(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
+double inteVsovjj(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	double pi=3.1415926535897932385;
-	double sigmakij[3];
-	int k;
-	double mi,mj,mk;
-	double res=0;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	getsigmakij(sigmakij,varg.gamma,varg.sigma0,varg.s,mi,mj);
-	for(k=0;k<3;k++)
-	{
-		res=res-2*varg.alpha[k]*sigmakij[k]*InteExprn(pow(sigmakij[k],2)+b11,n-2)/(3*sqrt(pi)*mi*mi)+varg.alpha[k]*InteExpErfrn(b11,sigmakij[k],n-3)/(3*mi*mi);
-	}
-	return res;
+    (void)qi;
+    return gi_moment(GIVsovj, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 1, 0, 0);
 }
 
-double inteVsovjj(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
+/* GIVsovij folds both legs. Split them with the meson sign and OLSi = ±1. */
+double inteVsovij(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	double pi=3.1415926535897932385;
-	double sigmakij[3];
-	int k;
-	double mi,mj,mk;
-	double res=0;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	getsigmakij(sigmakij,varg.gamma,varg.sigma0,varg.s,mi,mj);
-	for(k=0;k<3;k++)
-	{
-		res=res+2*varg.alpha[k]*sigmakij[k]*InteExprn(pow(sigmakij[k],2)+b11,n-2)/(3*sqrt(pi)*mj*mj)-varg.alpha[k]*InteExpErfrn(b11,sigmakij[k],n-3)/(3*mj*mj);
-	}
-	return res;
+    (void)qi;
+    return gi_moment(GIVsovij, b11, n, qf, c, ctx, 0, SYSTEM_MESON, 1, 0, 0, 0);
 }
 
-double inteVsovij(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
+double inteVsovji(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	double pi=3.1415926535897932385;
-	double sigmakij[3];
-	int k;
-	double mi,mj,mk;
-	double res=0;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	getsigmakij(sigmakij,varg.gamma,varg.sigma0,varg.s,mi,mj);
-	for(k=0;k<3;k++)
-	{
-		res=res-4*varg.alpha[k]*sigmakij[k]*InteExprn(pow(sigmakij[k],2)+b11,n-2)/(3*sqrt(pi)*mi*mj)+2*varg.alpha[k]*InteExpErfrn(b11,sigmakij[k],n-3)/(3*mi*mj);
-	}
-	return res;
+    (void)qi;
+    return gi_moment(GIVsovij, b11, n, qf, c, ctx, 0, SYSTEM_MESON, -1, 0, 0, 0);
 }
 
-double inteVsovji(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
+double inteVstring(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	double pi=3.1415926535897932385;
-	double sigmakij[3];
-	int k;
-	double mi,mj,mk;
-	double res=0;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	getsigmakij(sigmakij,varg.gamma,varg.sigma0,varg.s,mi,mj);
-	for(k=0;k<3;k++)
-	{
-		res=res+4*varg.alpha[k]*sigmakij[k]*InteExprn(pow(sigmakij[k],2)+b11,n-2)/(3*sqrt(pi)*mi*mj)-2*varg.alpha[k]*InteExpErfrn(b11,sigmakij[k],n-3)/(3*mi*mj);
-	}
-	return res;
+    (void)qi;
+    return gi_moment(GIVconf, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 0, 0, 0);
 }
 
-/* Baryon pair colour Cij = −2/3, OCent = 1. Matches recycle c/2 on the constant. */
-static double baryon_vconf_r(double r, basis_3b qf, basis_3b qi, scdk_vargs_t varg, int c)
+double inteVsosii(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	double mi, mj, mk;
-	channel_3b_ijk(qf.m1, qf.m2, qf.m3, &mi, &mj, &mk, c);
-	double sigmaij = getsigmaij(varg.sigma0, varg.s, mi, mj);
-	double Cij = -2.0 / 3.0;
-	(void)qi;
-	if (r == 0.0) {
-		return -0.75 * Cij * varg.c;
-	}
-	if (varg.model == MODEL_GISCREEN && varg.mu > 0.0) {
-		double sig2 = sigmaij * sigmaij;
-		double mu = varg.mu;
-		double mu2_4sig2 = mu * mu / (4.0 * sig2);
-		double mu_m = mu - 2.0 * r * sig2;
-		double mu_p = mu + 2.0 * r * sig2;
-		double pref = -3.0 * Cij * varg.b * exp(-r * mu) / (16.0 * r * mu * sig2);
-		double inner1 = 4.0 * r * sig2 * exp(r * mu);
-		double inner2 = mu_m * exp(mu2_4sig2) * erfc(mu_m / (2.0 * sigmaij));
-		double inner3 = mu_p * exp(mu2_4sig2 + 2.0 * r * mu) * erfc(mu_p / (2.0 * sigmaij));
-		return pref * (inner1 + inner2 - inner3) - 0.75 * Cij * varg.c;
-	}
-	double rsig = r * sigmaij;
-	double pref = -3.0 * Cij * varg.b / (8.0 * r * sigmaij * sigmaij);
-	double inner1 = (2.0 / sqrt(3.1415926535897932385)) * r * sigmaij * exp(-rsig * rsig);
-	double inner2 = (1.0 + 2.0 * rsig * rsig) * erf(rsig);
-	return pref * (inner1 + inner2) - 0.75 * Cij * varg.c;
+    (void)qi;
+    return gi_moment(GIVsosi, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 1, 0, 0, 0);
 }
 
-static double baryon_vsosii_r(double r, basis_3b qf, basis_3b qi, scdk_vargs_t varg, int c)
+double inteVsosjj(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	double mi, mj, mk;
-	channel_3b_ijk(qf.m1, qf.m2, qf.m3, &mi, &mj, &mk, c);
-	if (r == 0.0) {
-		return 0.0;
-	}
-	double h = 1e-6 * (r > 1e-8 ? r : 1.0);
-	double dV = (baryon_vconf_r(r + h, qf, qi, varg, c) - baryon_vconf_r(r - h, qf, qi, varg, c)) / (2.0 * h);
-	return -dV / (2.0 * r * mi * mi);
+    (void)qi;
+    return gi_moment(GIVsosj, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 1, 0, 0);
 }
 
-static double baryon_vsosjj_r(double r, basis_3b qf, basis_3b qi, scdk_vargs_t varg, int c)
+double intepogeG(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	double mi, mj, mk;
-	channel_3b_ijk(qf.m1, qf.m2, qf.m3, &mi, &mj, &mk, c);
-	if (r == 0.0) {
-		return 0.0;
-	}
-	double h = 1e-6 * (r > 1e-8 ? r : 1.0);
-	double dV = (baryon_vconf_r(r + h, qf, qi, varg, c) - baryon_vconf_r(r - h, qf, qi, varg, c)) / (2.0 * h);
-	return dV / (2.0 * r * mj * mj);
+    (void)qi;
+    return gi_moment(GIVbetaijcoul, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 0, 0, 0);
 }
 
-double inteVstring(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
+double intepcont(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	double pi=3.1415926535897932385;
-	double sigmaij;
-	double mi,mj,mk;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	if (varg.model == MODEL_GISCREEN && varg.mu > 0.0) {
-		return InteCenV(b11, n, qf, qi, baryon_vconf_r, varg, c);
-	}
-	sigmaij=getsigmaij(varg.sigma0,varg.s,mi,mj);
-	return varg.b*varg.f*InteExprn(pow(sigmaij,2)+b11,n)/(sqrt(pi)*sigmaij)+varg.b*varg.f*InteExpErfrn(b11,sigmaij,n+1)+varg.b*varg.f*InteExpErfrn(b11,sigmaij,n-1)/(2*pow(sigmaij,2))+varg.c*InteExprn(b11,n)/2;
+    (void)qi;
+    return gi_moment(GIVdeltaijcont, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 0, 0, 0);
 }
 
-double inteVsosii(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
+double inteptens(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	double pi=3.1415926535897932385;
-	double sigmaij;
-	double mi,mj,mk;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	if (varg.model == MODEL_GISCREEN && varg.mu > 0.0) {
-		return InteCenV(b11, n, qf, qi, baryon_vsosii_r, varg, c);
-	}
-	sigmaij=getsigmaij(varg.sigma0,varg.s,mi,mj);
-	return -varg.b*varg.f*InteExprn(pow(sigmaij,2)+b11,n-2)/(2*sqrt(pi)*sigmaij*pow(mi,2))-varg.b*varg.f*InteExpErfrn(b11,sigmaij,n-1)/(2*pow(mi,2))+varg.b*varg.f*InteExpErfrn(b11,sigmaij,n-3)/(4*pow(sigmaij,2)*pow(mi,2));
+    (void)qi;
+    return gi_moment(GIVdeltaijtens, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 0, 0, 0);
 }
 
-double inteVsosjj(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
+double intepsovii(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	double pi=3.1415926535897932385;
-	double sigmaij;
-	double mi,mj,mk;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	if (varg.model == MODEL_GISCREEN && varg.mu > 0.0) {
-		return InteCenV(b11, n, qf, qi, baryon_vsosjj_r, varg, c);
-	}
-	sigmaij=getsigmaij(varg.sigma0,varg.s,mi,mj);
-	return  varg.b*varg.f*InteExprn(pow(sigmaij,2)+b11,n-2)/(2*sqrt(pi)*sigmaij*pow(mj,2))+varg.b*varg.f*InteExpErfrn(b11,sigmaij,n-1)/(2*pow(mj,2))-varg.b*varg.f*InteExpErfrn(b11,sigmaij,n-3)/(4*pow(sigmaij,2)*pow(mj,2));
+    (void)qi;
+    return gi_moment(GIVdeltaiisov, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 0, 0, 0);
 }
 
-static double betaij(double r,double mi,double mj,double epsilon)
+double intepsovjj(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	return pow(1+r*r/(sqrt(r*r+mi*mi)*sqrt(r*r+mj*mj)),0.5+epsilon);
+    (void)qi;
+    return gi_moment(GIVdeltajjsov, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 0, 0, 0);
 }
 
-static double deltaij(double r,double mi,double mj,double epsilon)
+double intepsovji(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	return pow(mi*mj/(sqrt(r*r+mi*mi)*sqrt(r*r+mj*mj)),0.5+epsilon);
+    (void)qi;
+    return gi_moment(GIVdeltaijsov, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 0, 0, 0);
 }
 
-static double pogeG(double r,basis_3b qf,basis_3b qi,scdk_vargs_t varg,int c)
+double intepsovij(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	double mi,mj,mk;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	return betaij(r,mi,mj,varg.eCoul);
+    (void)qi;
+    return gi_moment(GIVdeltaijsov, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 0, 0, 0);
 }
 
-static double pcont(double r,basis_3b qf,basis_3b qi,scdk_vargs_t varg,int c)
+double intepsosii(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	double mi,mj,mk;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	return deltaij(r,mi,mj,varg.econt);
+    (void)qi;
+    return gi_moment(GIVdeltaiisos, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 0, 0, 0);
 }
 
-static double ptens(double r,basis_3b qf,basis_3b qi,scdk_vargs_t varg,int c)
+double intepsosjj(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	double mi,mj,mk;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	return deltaij(r,mi,mj,varg.etens);
+    (void)qi;
+    return gi_moment(GIVdeltajjsos, b11, n, qf, c, ctx, 0, SYSTEM_BARYON, 0, 0, 0, 0);
 }
 
-static double psovii(double r,basis_3b qf,basis_3b qi,scdk_vargs_t varg,int c)
+double inteTi(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	double mi,mj,mk;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	return deltaij(r,mi,mi,varg.esov);
+    (void)qi;
+    return gi_moment(GIVt_quark, b11, n, qf, c, ctx, 1, SYSTEM_BARYON, 0, 0, 0, 0);
 }
 
-static double psovjj(double r,basis_3b qf,basis_3b qi,scdk_vargs_t varg,int c)
+double inteRMS(double b11, int n, basis_3b qf, basis_3b qi, void *ctx, int c)
 {
-	double mi,mj,mk;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	return deltaij(r,mj,mj,varg.esov);
+    (void)qf;
+    (void)qi;
+    (void)ctx;
+    (void)c;
+    return InteExprn(b11, n + 2);
 }
-
-static double psovji(double r,basis_3b qf,basis_3b qi,scdk_vargs_t varg,int c)
-{
-	double mi,mj,mk;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	return deltaij(r,mj,mi,varg.esov);
-}
-
-static double psovij(double r,basis_3b qf,basis_3b qi,scdk_vargs_t varg,int c)
-{
-	double mi,mj,mk;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	return deltaij(r,mi,mj,varg.esov);
-}
-
-static double psosii(double r,basis_3b qf,basis_3b qi,scdk_vargs_t varg,int c)
-{
-	double mi,mj,mk;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	return deltaij(r,mi,mi,varg.esos);
-}
-
-static double psosjj(double r,basis_3b qf,basis_3b qi,scdk_vargs_t varg,int c)
-{
-	double mi,mj,mk;
-	channel_3b_ijk(qf.m1,qf.m2,qf.m3,&mi,&mj,&mk,c);
-	return deltaij(r,mj,mj,varg.esos);
-}
-
-double intepogeG(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
-{
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	return InteCenV(b11,n,qf,qi,pogeG,varg,c);
-}
-
-double intepcont(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
-{
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	return InteCenV(b11,n,qf,qi,pcont,varg,c);
-}
-
-double inteptens(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
-{
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	return InteCenV(b11,n,qf,qi,ptens,varg,c);
-}
-
-double intepsovii(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
-{
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	return InteCenV(b11,n,qf,qi,psovii,varg,c);
-}
-
-double intepsovjj(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
-{
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	return InteCenV(b11,n,qf,qi,psovjj,varg,c);
-}
-
-double intepsovji(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
-{
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	return InteCenV(b11,n,qf,qi,psovji,varg,c);
-}
-
-double intepsovij(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
-{
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	return InteCenV(b11,n,qf,qi,psovij,varg,c);
-}
-
-double intepsosii(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
-{
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	return InteCenV(b11,n,qf,qi,psosii,varg,c);
-}
-
-double intepsosjj(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
-{
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	return InteCenV(b11,n,qf,qi,psosjj,varg,c);
-}
-
-double inteTi(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
-{
-	scdk_vargs_t varg = *(const scdk_vargs_t *)ctx;
-
-	return InteCenV(b11,n,qf,qi,Ti,varg,c);
-}
-
-
-double inteRMS(double b11,int n,basis_3b qf,basis_3b qi,void *ctx,int c)
-{
-	(void)ctx;
-
-	return InteExprn(b11,n+2);
-}
-
-

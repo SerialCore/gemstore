@@ -59,8 +59,12 @@ double GIVdeltaijcont(double p, void *ctx)
     double cent = args_dynmc->OCent;
 
     double deltaij = cent * mi * mj / (sqrt(p * p + mi * mi) * sqrt(p * p + mj * mj));
+    double exponent = 0.5 + epsilon_cont;
+    if (args_dynmc->model == MODEL_GISCREEN) {
+        exponent += epsilon_cont * epsilon_cont;
+    }
 
-    return pow(deltaij, 0.5 + epsilon_cont + epsilon_cont * epsilon_cont);
+    return pow(deltaij, exponent);
 }
 
 double GIVdeltaiisov(double p, void *ctx)
@@ -71,8 +75,12 @@ double GIVdeltaiisov(double p, void *ctx)
     double cent = args_dynmc->OCent;
 
     double deltaii = cent * mi * mi / (sqrt(p * p + mi * mi) * sqrt(p * p + mi * mi));
+    double exponent = 0.5 + epsilon_sov;
+    if (args_dynmc->model == MODEL_GISCREEN) {
+        exponent += epsilon_sov * epsilon_sov;
+    }
 
-    return pow(deltaii, 0.5 + epsilon_sov + epsilon_sov * epsilon_sov);
+    return pow(deltaii, exponent);
 }
 
 double GIVdeltajjsov(double p, void *ctx)
@@ -83,8 +91,12 @@ double GIVdeltajjsov(double p, void *ctx)
     double cent = args_dynmc->OCent;
 
     double deltajj = cent * mj * mj / (sqrt(p * p + mj * mj) * sqrt(p * p + mj * mj));
+    double exponent = 0.5 + epsilon_sov;
+    if (args_dynmc->model == MODEL_GISCREEN) {
+        exponent += epsilon_sov * epsilon_sov;
+    }
 
-    return pow(deltajj, 0.5 + epsilon_sov + epsilon_sov * epsilon_sov);
+    return pow(deltajj, exponent);
 }
 
 double GIVdeltaijsov(double p, void *ctx)
@@ -96,8 +108,12 @@ double GIVdeltaijsov(double p, void *ctx)
     double cent = args_dynmc->OCent;
 
     double deltaij = cent * mi * mj / (sqrt(p * p + mi * mi) * sqrt(p * p + mj * mj));
+    double exponent = 0.5 + epsilon_sov;
+    if (args_dynmc->model == MODEL_GISCREEN) {
+        exponent += epsilon_sov * epsilon_sov;
+    }
 
-    return pow(deltaij, 0.5 + epsilon_sov + epsilon_sov * epsilon_sov);
+    return pow(deltaij, exponent);
 }
 
 double GIVdeltaiisos(double p, void *ctx)
@@ -108,8 +124,12 @@ double GIVdeltaiisos(double p, void *ctx)
     double cent = args_dynmc->OCent;
 
     double deltaii = cent * mi * mi / (sqrt(p * p + mi * mi) * sqrt(p * p + mi * mi));
+    double exponent = 0.5 + epsilon_sos;
+    if (args_dynmc->model == MODEL_GISCREEN) {
+        exponent += epsilon_sos * epsilon_sos;
+    }
 
-    return pow(deltaii, 0.5 + epsilon_sos + epsilon_sos * epsilon_sos);
+    return pow(deltaii, exponent);
 }
 
 double GIVdeltajjsos(double p, void *ctx)
@@ -120,8 +140,12 @@ double GIVdeltajjsos(double p, void *ctx)
     double cent = args_dynmc->OCent;
 
     double deltajj = cent * mj * mj / (sqrt(p * p + mj * mj) * sqrt(p * p + mj * mj));
+    double exponent = 0.5 + epsilon_sos;
+    if (args_dynmc->model == MODEL_GISCREEN) {
+        exponent += epsilon_sos * epsilon_sos;
+    }
 
-    return pow(deltajj, 0.5 + epsilon_sos + epsilon_sos * epsilon_sos);
+    return pow(deltajj, exponent);
 }
 
 double GIVdeltaijtens(double p, void *ctx)
@@ -133,8 +157,12 @@ double GIVdeltaijtens(double p, void *ctx)
     double cent = args_dynmc->OCent;
 
     double deltaij = cent * mi * mj / (sqrt(p * p + mi * mi) * sqrt(p * p + mj * mj));
+    double exponent = 0.5 + epsilon_tens;
+    if (args_dynmc->model == MODEL_GISCREEN) {
+        exponent += epsilon_tens * epsilon_tens;
+    }
 
-    return pow(deltaij, 0.5 + epsilon_tens + epsilon_tens * epsilon_tens);
+    return pow(deltaij, exponent);
 }
 
 double GIVcoul(double r, void *ctx)

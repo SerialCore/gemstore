@@ -3,19 +3,22 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Radial integrals of the baryon GI operators (recycle inteCenV).
+ * Radial integrals of the baryon GI operators.
  * Each function is ∫_0^∞ x^n exp(-b11 x^2) K(x) dx and is passed to
  * inteVcenPartA. For a coordinate operator x is the pair separation.
  * intep* and inteTi are reached through a momentum map, so x is that
  * momentum. ctx points at scdk_vargs_t.
  *
- * gimodel.c stores the same potentials as V(r) for the meson integral.
- * These kernels do not call it. GISTRING uses the closed erf integrals.
- * GISCREEN with mu > 0 evaluates confinement and the scalar spin-orbit
- * with the 50-point InteCenV rule from recycle, not integral_exp_rn.
+ * K is a gimodel.c potential (GIVcoul, GIVconf, GIVcont, GIVtens,
+ * GIVso*, GIVbeta*, GIVdelta*, GIVt_quark). The spin-angular factor is
+ * left at ±1: spinang multiplies it. C_ij is −2/3. The quadrature is
+ * integral_exp_rn, the same 50-point half-range Hermite rule as the
+ * meson radial integral. Overlap and ⟨x²⟩ stay closed forms.
  *
- * δ_ij and β_ij are raised to 0.5+ε. GIVdelta* also puts ε^2 in the
- * exponent; that term is absent here. Confinement uses C_ij = -2/3.
+ * GIVsovij is the meson combination of the i and j legs. The baryon
+ * tables want those legs separately, so inteVsovij / inteVsovji call it
+ * with system meson and OLSi = ±1, OLSj = 0.
+ *
  * scdk_vargs_from_model copies the GI parameters and sets f = 0.5, eCoul = 0.
  */
 
