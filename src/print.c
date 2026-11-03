@@ -86,10 +86,13 @@ void print_input_parameters(const argsInput_t *input)
     printf("Configuration Settings:\n");
     printf("  Project Name:         %-50s\n", input->project);
     printf("  Task Type:            %-50s\n", task_type_str[input->task]);
-    printf("  System Type:          %-50s\n", system_type_str[input->system]);
     printf("  Basis Type:           %-50s\n", basis_type_str[input->basis]);
-    if (input->model == MODEL_HYBRID) {
+    if (input->task == TASK_FITTING) {
+        printf("  Fit Target:           %-50s\n", fitting_type_str[input->target]);
+    }
+    else if (input->model == MODEL_HYBRID) {
         static const char *pair_name[MOL3_PAIR_N] = { "12", "13", "23" };
+        printf("  System Type:          %-50s\n", system_type_str[input->system]);
         printf("  Model Type:           %-50s\n", model_type_str[input->model]);
         for (int p = 0; p < MOL3_PAIR_N; p++) {
             printf("  Pair %s model:        %-50s\n", pair_name[p], model_type_str[input->mol3_pairs[p].model]);
@@ -98,13 +101,9 @@ void print_input_parameters(const argsInput_t *input)
         }
     }
     else {
+        printf("  System Type:          %-50s\n", system_type_str[input->system]);
         printf("  Model Type:           %-50s\n", model_type_str[input->model]);
-        if (input->task == TASK_FITTING) {
-            printf("  Fit Target:           %-50s\n", fitting_type_str[input->target]);
-        }
-        else {
-            printf("  Parameter Set:        %-50s\n", param_type_str[input->param]);
-        }
+        printf("  Parameter Set:        %-50s\n", param_type_str[input->param]);
         if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
             || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
             || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM) {

@@ -31,6 +31,7 @@ static const fit_param_t k_params[] = {
 
 const fit_target_t fit_target_giscreen_bcbar = {
     MODEL_GISCREEN,
+    SYSTEM_MESON,
     k_states,
     (int)(sizeof k_states / sizeof k_states[0]),
     k_params,

@@ -630,7 +630,7 @@ Meson RMS spectra are checked for high-\(n\) anomalies using quadratic interpola
 
 ### 7. Parameter Fitting
 
-A fit is a `--compute` run with `"task": "FITTING"`. `fit.target` names both the model and the built-in dataset, for example `GISCREEN_CCBAR`. The state list and the parameter starts, steps, bounds, and fixed flags are in `src/param/f*.c`.
+A fit is a `--compute` run with `"task": "FITTING"`. `fit.target` is a pinned entry such as `GISCREEN_CCBAR`; it names the model and the built-in dataset. JSON does not carry `model` or `system`. The state list and the parameter starts, steps, bounds, and fixed flags are in `src/param/f*.c`.
 
 **Fit function**:
 ```
@@ -903,18 +903,15 @@ Output `tetra_ccnn_18.state.json` stores `mass`, variational `R`, frequencies `x
 
 ### Example 4: Parameter Fitting
 
-`model` gives the type only. `system` gives the type only. `fit.target` selects the dataset. These targets are meson fits, so `system.type` is `MESON` and `model.type` matches the model in the target name. Basis is `GEM` or `SHO`. The basis below is the one used with these datasets.
+`fit.target` selects the pinned dataset. That entry sets the model and the meson state list. Do not write `model`, `system`, or `print`. Basis is `GEM` or `SHO`. The basis below is the one used with these datasets.
 
 **Input file** (`fit_ccbar.json`):
 ```json
 {
   "project": "fit_ccbar",
   "task": "FITTING",
-  "model": { "type": "GISCREEN" },
-  "system": { "type": "MESON" },
-  "basis": { "type": "GEM", "nmax": 20, "rmax": 30.0, "rmin": 0.1 },
-  "print": { "pot": "false", "wfn": "false" },
-  "fit": { "target": "GISCREEN_CCBAR" }
+  "fit": { "target": "GISCREEN_CCBAR" },
+  "basis": { "type": "GEM", "nmax": 20, "rmax": 30.0, "rmin": 0.1 }
 }
 ```
 

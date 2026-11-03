@@ -184,10 +184,6 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
         exit(1);
     }
 
-    if (input->task == TASK_FITTING) {
-        return;
-    }
-
     param = read_string_item(model_json, "param")->valuestring;
 
     if (input->model == MODEL_GISTRING) {
@@ -272,10 +268,6 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
     else {
         fprintf(stderr, "Unsupported system type: %s\n", type);
         exit(1);
-    }
-
-    if (input->task == TASK_FITTING) {
-        return;
     }
 
     if (input->system == SYSTEM_BAG) {
@@ -426,6 +418,11 @@ static void parse_basis_section(const cJSON *root, argsInput_t *input)
         exit(1);
     }
 
+    if (input->task == TASK_FITTING && input->basis != BASIS_GEM && input->basis != BASIS_SHO) {
+        fprintf(stderr, "FITTING meson supports GEM and SHO\n");
+        exit(1);
+    }
+
     if (input->basis == BASIS_GEM) {
         input->nmax = read_number_item(basis_json, "nmax")->valueint;
         input->rmax = read_number_item(basis_json, "rmax")->valuedouble;
@@ -490,12 +487,14 @@ void parse_input_file(const char *filename, argsInput_t *input)
     input->project[255] = '\0';
 
     parse_task_section(root, input);
-    parse_model_section(root, input);
-    parse_system_section(root, input);
     parse_basis_section(root, input);
-    parse_print_section(root, input);
     if (input->task == TASK_FITTING) {
         parse_fit_section(root, input);
+    }
+    else {
+        parse_model_section(root, input);
+        parse_system_section(root, input);
+        parse_print_section(root, input);
     }
 
     cJSON_Delete(root);

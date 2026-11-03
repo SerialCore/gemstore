@@ -6,20 +6,15 @@ A fit is `gemstore --compute FILE` with `task` set to `FITTING`.
 {
   "project": "fit_ccbar",
   "task": "FITTING",
-  "model": { "type": "GISCREEN" },
-  "system": { "type": "MESON" },
-  "basis": { "type": "GEM", "nmax": 20, "rmax": 30.0, "rmin": 0.1 },
-  "print": { "pot": "false", "wfn": "false" },
-  "fit": { "target": "GISCREEN_CCBAR" }
+  "fit": { "target": "GISCREEN_CCBAR" },
+  "basis": { "type": "GEM", "nmax": 20, "rmax": 30.0, "rmin": 0.1 }
 }
 ```
 
 ## Fields
 
-- `model` has `type` only. It must be the model named by `fit.target`.
-- `system` has `type` only. Current targets are meson fits, so the type is `MESON`.
+- Do not write `model`, `system`, or `print`. The pinned `fit.target` sets the model and the meson dataset. `print.pot` and `print.wfn` stay off.
 - `basis` is `GEM` (`nmax`, `rmax`, `rmin`) or `SHO` (`nmax`, `beta`). The GEM values above are the ones used with these datasets.
-- `print` is required. Keep both flags `"false"` for a fit.
 - `fit.target` selects the built-in state list and parameter table in `src/param/f*.c`.
 
 ## fit.target

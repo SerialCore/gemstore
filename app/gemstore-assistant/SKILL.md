@@ -22,11 +22,9 @@ The parser expects:
 
 - top-level `project`
 - top-level `task`
-- object `model`
-- object `system`
 - object `basis`
-- object `print`
-- object `fit` when `task` is `FITTING`
+- for `SPECTRA`: object `model`, object `system`, object `print`
+- for `FITTING`: object `fit` (`target` only). Do not write `model`, `system`, or `print`.
 
 Use exact uppercase strings where shown below.
 
@@ -43,12 +41,10 @@ Use `templates/meson_fitting_template.md`. A fit uses `gemstore --compute FILE`.
 
 For `task` `FITTING`:
 
-- `model` has `type` only
-- `system` has `type` only. Current targets use `MESON`
-- `basis` is `GEM` or `SHO`. Use `nmax` 20, `rmax` 30, `rmin` 0.1 unless the user chooses another basis
-- `print.pot` and `print.wfn` stay `"false"`
 - `fit.target` is one of `GISCREEN_MESON`, `GISCREEN_BBBAR`, `GISCREEN_BCBAR`, `GISCREEN_BSBAR`, `GISCREEN_CCBAR`, `GISCREEN_CSBAR`
-- `model.type` is the model inside that target name
+- The pinned target sets the model and the meson dataset. Do not write `model` or `system`
+- `basis` is `GEM` or `SHO`. Use `nmax` 20, `rmax` 30, `rmin` 0.1 unless the user chooses another basis
+- Do not write `print`
 
 The state list and the parameter starts live in `src/param/f*.c`. Do not put experimental masses or starting values in the JSON. Each evaluation prints `call N  chi2 = ...`. Read `<project>.fit.json` for `chi2`, `valid`, `edm`, parameters, and per-state `mass_calc`, `mass_exp`, and `residual`. Masses there are in MeV.
 
@@ -264,7 +260,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 ### Understand the request
 
 - Identify meson, baryon, bag, or two-body molecule, and the flavor or hadron content.
-- If the user asks to fit, set `task` to `FITTING` and choose `fit.target` from the six `GISCREEN_*` names. Do not ask the user for a mass table.
+- If the user asks to fit, set `task` to `FITTING` and choose `fit.target` from the six `GISCREEN_*` names. Write `project`, `task`, `basis`, and `fit` only. Do not ask the user for a mass table.
 - For a meson spectrum extract `S`, `L`, `J`. For a baryon extract `J`, `P`, `sym12`, `Lmax`, and `jl` if the user fixes it. For a bag extract `nn,ns,nc,nb`, `NONE` versus `CMI`, and the full color and spin lists when mixing. For a molecule extract the two legs, physical masses, `iso_pi` and `iso_rho`, `J`, and lowest `L`.
 - Detect task type.
 - Detect requested model. For a fit, take the model from `fit.target`.
@@ -302,7 +298,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - Molecule spectra use `system` `MOLECUL2`, `model` `OBESTAT`, `param` `OBESTAT_CUSTOM`, basis `GEM`. Write `iso_pi` and `iso_rho` separately. Do not emit `MOLECUL3` as a working compute path.
 - Remember that `model.param` is the parameter-set key for `SPECTRA`.
 - For `*_CUSTOM`, always include `model.file`.
-- For `FITTING`, `fit.target` is the dataset key and `model` has no `param`.
+- For `FITTING`, `fit.target` is the dataset key. Do not write `model`, `system`, or `print`.
 
 ## Example Requests
 

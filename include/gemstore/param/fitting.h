@@ -35,6 +35,7 @@ typedef struct fit_param {
 
 typedef struct fit_target {
     model_type_t model;
+    system_type_t system;
     const fit_state_t *states;
     int nstates;
     const fit_param_t *params;

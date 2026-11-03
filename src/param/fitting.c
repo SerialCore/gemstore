@@ -172,7 +172,7 @@ double fit_predict_mass(const argsInput_t *input, const fit_target_t *target,
     one.J = state->J;
     eigenvalue = array_init(one.nmax);
 
-    if (one.model == MODEL_GISTRING || one.model == MODEL_GISCREEN) {
+    if (target->model == MODEL_GISTRING || target->model == MODEL_GISCREEN) {
         argsGIModel_t model;
         argsGIModelDy_t dyn = {0};
 
@@ -183,8 +183,8 @@ double fit_predict_mass(const argsInput_t *input, const fit_target_t *target,
                 exit(1);
             }
         }
-        dyn.model = one.model;
-        dyn.system = one.system;
+        dyn.model = target->model;
+        dyn.system = target->system;
         if (one.basis == BASIS_GEM) {
             meson_gimodel_GEM(&one, &model, &dyn, &eigenvalue, NULL, NULL, NULL);
         }
@@ -196,7 +196,7 @@ double fit_predict_mass(const argsInput_t *input, const fit_target_t *target,
             exit(1);
         }
     }
-    else if (one.model == MODEL_NRSTRING || one.model == MODEL_NRSCREEN) {
+    else if (target->model == MODEL_NRSTRING || target->model == MODEL_NRSCREEN) {
         argsNRModel_t model;
         argsNRModelDy_t dyn = {0};
 
@@ -207,8 +207,8 @@ double fit_predict_mass(const argsInput_t *input, const fit_target_t *target,
                 exit(1);
             }
         }
-        dyn.model = one.model;
-        dyn.system = one.system;
+        dyn.model = target->model;
+        dyn.system = target->system;
         if (one.basis == BASIS_GEM) {
             meson_nrmodel_GEM(&one, &model, &dyn, &eigenvalue, NULL, NULL, NULL);
         }
@@ -283,8 +283,8 @@ static void write_fit_result(const argsInput_t *input, const fit_target_t *targe
 
     fprintf(fp, "{\n");
     fprintf(fp, "  \"target\": \"%s\",\n", fitting_type_str[input->target]);
-    fprintf(fp, "  \"model\": \"%s\",\n", model_type_str[input->model]);
-    fprintf(fp, "  \"system\": \"%s\",\n", system_type_str[input->system]);
+    fprintf(fp, "  \"model\": \"%s\",\n", model_type_str[target->model]);
+    fprintf(fp, "  \"system\": \"%s\",\n", system_type_str[target->system]);
     fprintf(fp, "  \"basis\": \"%s\",\n", basis_type_str[input->basis]);
     fprintf(fp, "  \"mass_unit\": \"MeV\",\n");
     fprintf(fp, "  \"chi2\": %.16g,\n", result->chi2);
@@ -315,23 +315,13 @@ void fitting_run(const argsInput_t *input)
     const fit_target_t *target;
     fit_result_t result = {0};
 
-    if (input->system != SYSTEM_MESON) {
-        fprintf(stderr, "FITTING currently supports only MESON\n");
-        exit(1);
-    }
     if (input->basis != BASIS_GEM && input->basis != BASIS_SHO) {
         fprintf(stderr, "FITTING meson supports GEM and SHO\n");
         exit(1);
     }
 
     target = k_targets[input->target];
-    if (target->model != input->model) {
-        fprintf(stderr, "Fit target %s is defined for %s, not %s\n",
-            fitting_type_str[input->target], model_type_str[target->model], model_type_str[input->model]);
-        exit(1);
-    }
-
-    fit_params_check(input->model, target->params, target->nparams);
+    fit_params_check(target->model, target->params, target->nparams);
     fit_states_check(input, target->states, target->nstates);
     fit_minuit_run(input, target, &result);
     printf("chi2 = %.8g  valid = %s  edm = %.8g\n",
