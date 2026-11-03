@@ -86,19 +86,30 @@ void print_input_parameters(const argsInput_t *input)
     printf("Configuration Settings:\n");
     printf("  Project Name:         %-50s\n", input->project);
     printf("  Task Type:            %-50s\n", task_type_str[input->task]);
-    printf("  Model Type:           %-50s\n", model_type_str[input->model]);
-    if (input->task == TASK_FITTING) {
-        printf("  Fit Target:           %-50s\n", fitting_type_str[input->target]);
-    }
-    else {
-        printf("  Parameter Set:        %-50s\n", param_type_str[input->param]);
-    }
     printf("  System Type:          %-50s\n", system_type_str[input->system]);
     printf("  Basis Type:           %-50s\n", basis_type_str[input->basis]);
-    if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
-        || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
-        || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM) {
-        printf("  Parameter File:       %-50s\n", input->param_file);
+    if (input->model == MODEL_HYBRID) {
+        static const char *pair_name[MOL3_PAIR_N] = { "12", "13", "23" };
+        printf("  Model Type:           %-50s\n", model_type_str[input->model]);
+        for (int p = 0; p < MOL3_PAIR_N; p++) {
+            printf("  Pair %s model:        %-50s\n", pair_name[p], model_type_str[input->mol3_pairs[p].model]);
+            printf("  Pair %s param:        %-50s\n", pair_name[p], param_type_str[input->mol3_pairs[p].param]);
+            printf("  Pair %s file:         %-50s\n", pair_name[p], input->mol3_pairs[p].param_file);
+        }
+    }
+    else {
+        printf("  Model Type:           %-50s\n", model_type_str[input->model]);
+        if (input->task == TASK_FITTING) {
+            printf("  Fit Target:           %-50s\n", fitting_type_str[input->target]);
+        }
+        else {
+            printf("  Parameter Set:        %-50s\n", param_type_str[input->param]);
+        }
+        if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
+            || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
+            || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM) {
+            printf("  Parameter File:       %-50s\n", input->param_file);
+        }
     }
     printf("\n");
 
@@ -134,12 +145,8 @@ void print_input_parameters(const argsInput_t *input)
         return;
     }
 
-    if (input->system == SYSTEM_MOLECUL2 || input->system == SYSTEM_MOLECUL3) {
-        printf("Hadron Configuration:\n");
-    }
-    else {
-        printf("Quark Flavor Configuration:\n");
-    }
+    /* System configurations */
+    printf("System Configuration:\n");
     if (input->system == SYSTEM_MESON) {
         printf("  Flavor 1 (f1):        %-50d\n", input->f1);
         printf("  Flavor 2 (f2):        %-50d\n", input->f2);
@@ -165,6 +172,20 @@ void print_input_parameters(const argsInput_t *input)
         printf("  iso_pi (pion):        %-50.6f\n", input->iso_pi);
         printf("  iso_rho (rho):        %-50.6f\n", input->iso_rho);
     }
+    else if (input->system == SYSTEM_MOLECUL3) {
+        printf("  Leg 1 type:           %-50s\n", obe_leg_type_str[input->type1]);
+        printf("  Leg 2 type:           %-50s\n", obe_leg_type_str[input->type2]);
+        printf("  Leg 3 type:           %-50s\n", obe_leg_type_str[input->type3]);
+        printf("  Physical mass m1:     %-50.6f GeV\n", input->m1);
+        printf("  Physical mass m2:     %-50.6f GeV\n", input->m2);
+        printf("  Physical mass m3:     %-50.6f GeV\n", input->m3);
+        printf("  cc1, cc2, cc3:        %d, %d, %d\n", input->cc1, input->cc2, input->cc3);
+        static const char *pair_name[MOL3_PAIR_N] = { "12", "13", "23" };
+        for (int p = 0; p < MOL3_PAIR_N; p++) {
+            printf("  Mol3 pair %s iso_pi, iso_rho, eta:  %.6f, %.6f, %.6f\n",
+                pair_name[p], input->mol3_pairs[p].iso_pi, input->mol3_pairs[p].iso_rho, input->mol3_pairs[p].eta);
+        }
+    }
     printf("\n");
 
     /* Angular Momentum Quantum Numbers */
@@ -174,7 +195,7 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Orbital Momentum (L): %-50.6f\n", input->L);
         printf("  Total Momentum (J):   %-50.6f\n", input->J);
     }
-    else if (input->system == SYSTEM_BARYON) {
+    else if (input->system == SYSTEM_BARYON || input->system == SYSTEM_MOLECUL3) {
         printf("  1<->2 symmetry:       %-50d\n", input->sym12);
         printf("  Parity (P):           %-50d\n", input->P);
         printf("  Jacobi Lmax:          %-50d\n", input->Lmax);
@@ -187,7 +208,26 @@ void print_input_parameters(const argsInput_t *input)
 
     /* Model Parameters */
     printf("Model Parameters:\n");
-    if (input->model == MODEL_GISTRING || input->model == MODEL_GISCREEN) {
+    if (input->model == MODEL_HYBRID) {
+        static const char *pair_name[MOL3_PAIR_N] = { "12", "13", "23" };
+        for (int p = 0; p < MOL3_PAIR_N; p++) {
+            printf("  Pair %s (%s, %s):\n", pair_name[p],
+                model_type_str[input->mol3_pairs[p].model], input->mol3_pairs[p].param_file);
+            if (input->mol3_pairs[p].model == MODEL_OBESTAT) {
+                argsOBEModel_t args_model = argsOBEModel_from(input, p);
+                printf("    Lambda:                  %-46.6f GeV\n", args_model.lambda);
+                printf("    Tensor mass M1, M2:      %.6f, %.6f GeV\n", args_model.tensor_mass1, args_model.tensor_mass2);
+                printf("    g_pi:                    %.6f, %.6f\n", args_model.g_pi1, args_model.g_pi2);
+                printf("    g_sigma:                 %.6f, %.6f\n", args_model.g_sigma1, args_model.g_sigma2);
+                printf("    g_rho:                   %.6f, %.6f\n", args_model.g_rho1, args_model.g_rho2);
+                printf("    f_rho:                   %.6f, %.6f\n", args_model.f_rho1, args_model.f_rho2);
+                printf("    g_omega:                 %.6f, %.6f\n", args_model.g_omega1, args_model.g_omega2);
+                printf("    f_omega:                 %.6f, %.6f\n", args_model.f_omega1, args_model.f_omega2);
+            }
+        }
+        printf("\n");
+    }
+    else if (input->model == MODEL_GISTRING || input->model == MODEL_GISCREEN) {
         argsGIModel_t args_model = argsGIModel_from(input);
         printf("  Quark Masses:\n");
         printf("    Light Quark (n)   (mn):  %-46.6f GeV\n", args_model.mn);
@@ -229,33 +269,31 @@ void print_input_parameters(const argsInput_t *input)
         printf("\n");
     }
     else if (input->model == MODEL_BAGMIT) {
-        argsBAGModel_t bag = argsBAGModel_from(input);
+        argsBAGModel_t args_model = argsBAGModel_from(input);
         printf("  Quark Masses:\n");
-        printf("    Light Quark (n)   (mn):  %-46.6f GeV\n", bag.mn);
-        printf("    Strange Quark (s) (ms):  %-46.6f GeV\n", bag.ms);
-        printf("    Charm Quark (c)   (mc):  %-46.6f GeV\n", bag.mc);
-        printf("    Bottom Quark (b)  (mb):  %-46.6f GeV\n", bag.mb);
+        printf("    Light Quark (n)   (mn):  %-46.6f GeV\n", args_model.mn);
+        printf("    Strange Quark (s) (ms):  %-46.6f GeV\n", args_model.ms);
+        printf("    Charm Quark (c)   (mc):  %-46.6f GeV\n", args_model.mc);
+        printf("    Bottom Quark (b)  (mb):  %-46.6f GeV\n", args_model.mb);
         printf("\n");
     
         printf("  Bag Parameters:\n");
-        printf("    Bag Constant (B):        %-44.6e GeV^4\n", bag.B);
-        printf("    Zero Point (Z):          %-46.6f\n", bag.Z);
+        printf("    Bag Constant (B):        %-44.6e GeV^4\n", args_model.B);
+        printf("    Zero Point (Z):          %-46.6f\n", args_model.Z);
         printf("\n");
     }
     else if (input->model == MODEL_OBESTAT) {
-        argsOBEModel_t obe = argsOBEModel_from(input);
+        argsOBEModel_t args_model = argsOBEModel_from(input, 0);
         printf("  Parameter file (cutoff, tensor masses, couplings):\n");
-        printf("    Lambda:                  %-46.6f GeV\n", obe.lambda);
-        printf("    Tensor mass M1:          %-46.6f GeV\n", obe.tensor_mass1);
-        printf("    Tensor mass M2:          %-46.6f GeV\n", obe.tensor_mass2);
-        printf("    g_pi:                    %.6f, %.6f\n", obe.g_pi1, obe.g_pi2);
-        printf("    g_sigma:                 %.6f, %.6f\n", obe.g_sigma1, obe.g_sigma2);
-        printf("    g_rho:                   %.6f, %.6f\n", obe.g_rho1, obe.g_rho2);
-        printf("    f_rho:                   %.6f, %.6f\n", obe.f_rho1, obe.f_rho2);
-        printf("    g_omega:                 %.6f, %.6f\n", obe.g_omega1, obe.g_omega2);
-        printf("    f_omega:                 %.6f, %.6f\n", obe.f_omega1, obe.f_omega2);
-        printf("\n");
-        printf("  Legs, iso, eta, and cc are taken from the system JSON.\n");
+        printf("    Lambda:                  %-46.6f GeV\n", args_model.lambda);
+        printf("    Tensor mass M1:          %-46.6f GeV\n", args_model.tensor_mass1);
+        printf("    Tensor mass M2:          %-46.6f GeV\n", args_model.tensor_mass2);
+        printf("    g_pi:                    %.6f, %.6f\n", args_model.g_pi1, args_model.g_pi2);
+        printf("    g_sigma:                 %.6f, %.6f\n", args_model.g_sigma1, args_model.g_sigma2);
+        printf("    g_rho:                   %.6f, %.6f\n", args_model.g_rho1, args_model.g_rho2);
+        printf("    f_rho:                   %.6f, %.6f\n", args_model.f_rho1, args_model.f_rho2);
+        printf("    g_omega:                 %.6f, %.6f\n", args_model.g_omega1, args_model.g_omega2);
+        printf("    f_omega:                 %.6f, %.6f\n", args_model.f_omega1, args_model.f_omega2);
         printf("\n");
     }
 }

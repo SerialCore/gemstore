@@ -195,7 +195,7 @@ void compute_spectra_mol2(const argsInput_t *input)
     eigenvalue = array_init(ntot);
     eigenvector = matrix_init(ntot, ntot);
 
-    args_model = argsOBEModel_from(input);
+    args_model = argsOBEModel_from(input, 0);
     mol2_obestat_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12);
 
     print_mol2_spectra(&eigenvalue, &eigenvector, &overlap, &rms12, input->m1 + input->m2, eigenvalue.len);

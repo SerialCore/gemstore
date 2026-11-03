@@ -225,9 +225,39 @@ argsBAGModel_t argsBAGModel_from(const argsInput_t *input)
     return args_model;
 }
 
-argsOBEModel_t argsOBEModel_from(const argsInput_t *input)
+argsOBEModel_t argsOBEModel_from(const argsInput_t *input, int p)
 {
     argsOBEModel_t args_model = {0};
+    
+    if (input->model == MODEL_HYBRID) {
+        if (p < 0 || p >= MOL3_PAIR_N) {
+            fprintf(stderr, "Error: argsOBEModel_from pair index must be 0, 1, or 2.\n");
+            exit(1);
+        }
+        parse_param_OBESTAT(input->mol3_pairs[p].param_file, &args_model);
+        if (p == 0) {
+            args_model.type1 = input->type1;
+            args_model.type2 = input->type2;
+            args_model.cc1 = input->cc1;
+            args_model.cc2 = input->cc2;
+        }
+        else if (p == 1) {
+            args_model.type1 = input->type1;
+            args_model.type2 = input->type3;
+            args_model.cc1 = input->cc1;
+            args_model.cc2 = input->cc3;
+        }
+        else {
+            args_model.type1 = input->type2;
+            args_model.type2 = input->type3;
+            args_model.cc1 = input->cc2;
+            args_model.cc2 = input->cc3;
+        }
+        args_model.eta = input->mol3_pairs[p].eta;
+        args_model.iso_pi = input->mol3_pairs[p].iso_pi;
+        args_model.iso_rho = input->mol3_pairs[p].iso_rho;
+        return args_model;
+    }
 
     parse_param_OBESTAT(input->param_file, &args_model);
     args_model.type1 = input->type1;
@@ -237,6 +267,5 @@ argsOBEModel_t argsOBEModel_from(const argsInput_t *input)
     args_model.eta = input->eta;
     args_model.iso_pi = input->iso_pi;
     args_model.iso_rho = input->iso_rho;
-
     return args_model;
 }

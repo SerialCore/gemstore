@@ -163,8 +163,9 @@ argsNRModel_t argsNRModel_from(const argsInput_t *input);
 /* Get MIT bag model parameters from input */
 argsBAGModel_t argsBAGModel_from(const argsInput_t *input);
 
-/* Param file: lambda, tensor_mass, g, f. System JSON: legs, cc, eta, iso_pi, iso_rho. */
-argsOBEModel_t argsOBEModel_from(const argsInput_t *input);
+/* Full OBE args for compute. MOLECUL2 ignores p and uses param_file plus type1/2.
+ * MOLECUL3 uses mol3_pairs[p] (p = 0,1,2 → pairs 12, 13, 23) and the two legs of that pair. */
+argsOBEModel_t argsOBEModel_from(const argsInput_t *input, int p);
 
 /* Get quark mass from any model */
 static inline double getmq(int index, const void *args_model)

@@ -11,6 +11,17 @@
 
 #define CMI_COLOR_MAX 8
 #define CMI_SPIN_MAX 20
+#define MOL3_PAIR_N 3
+
+/* One pair in a three-body molecule: model1 → 1-2, model2 → 1-3, model3 → 2-3. */
+typedef struct mol3_pair {
+    model_type_t model;
+    param_type_t param;
+    double iso_pi;          /* ⟨τi·τj⟩ on π; I=0 → −3, I=1 → +1 */
+    double iso_rho;         /* ⟨τi·τj⟩ on ρ */
+    double eta;             /* MM C-parity on this pair; 0 → +1 */
+    char param_file[256];
+} mol3_pair_t;
 
 /* One spin channel. Unused couplings stay 0. */
 typedef struct cmi_spin {
@@ -72,6 +83,7 @@ typedef struct argsInput {
     cmi_spin_t spin_ch[CMI_SPIN_MAX];
     char project[256];      /* project name */
     char param_file[256];   /* parameter file name */
+    mol3_pair_t mol3_pairs[MOL3_PAIR_N];  /* MOLECUL3 pairs 12, 13, 23 */
 } argsInput_t;
 
 #endif

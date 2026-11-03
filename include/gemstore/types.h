@@ -22,7 +22,8 @@ typedef enum model_type {
     MODEL_NRSTRING,
     MODEL_NRSCREEN,
     MODEL_BAGMIT,
-    MODEL_OBESTAT
+    MODEL_OBESTAT,
+    MODEL_HYBRID
 } model_type_t;
 
 extern const char *model_type_str[];

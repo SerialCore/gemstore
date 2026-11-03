@@ -17,7 +17,8 @@ const char *model_type_str[] = {
     [MODEL_NRSTRING] = "NRSTRING",
     [MODEL_NRSCREEN] = "NRSCREEN",
     [MODEL_BAGMIT] = "BAGMIT",
-    [MODEL_OBESTAT] = "OBESTAT"
+    [MODEL_OBESTAT] = "OBESTAT",
+    [MODEL_HYBRID] = "HYBRID"
 };
 
 const char *system_type_str[] = {

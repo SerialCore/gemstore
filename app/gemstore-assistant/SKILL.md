@@ -58,7 +58,7 @@ The state list and the parameter starts live in `src/param/f*.c`. Do not put exp
 - `BARYON`
 - `BAG`
 - `MOLECUL2`
-- `MOLECUL3` — parsed, compute is not implemented
+- `MOLECUL3` — parsed; `model.type` is `HYBRID` with nested `model1`/`model2`/`model3` (pairs 12/13/23); compute is not implemented
 
 Baryon `SPECTRA` accepts `GISTRING` and `GISCREEN` with basis `GEM`. `NRSTRING` and `NRSCREEN` baryon spectra are not implemented. `SHO` is meson-only. Bag `SPECTRA` uses `BAGMIT` with basis `NONE` or `CMI`. Use `templates/bag_spectra_template.md`. Two-body molecules use `MOLECUL2` + `OBESTAT` + `GEM`. Use `templates/molecule_spectra_template.md`.
 
@@ -69,7 +69,8 @@ Baryon `SPECTRA` accepts `GISTRING` and `GISCREEN` with basis `GEM`. `NRSTRING` 
 - `NRSTRING` — non-relativistic Cornell model, linear confinement
 - `NRSCREEN` — non-relativistic Cornell model, screened confinement
 - `BAGMIT` — MIT bag, for `system.type` `BAG` only
-- `OBESTAT` — static elastic one-boson exchange, for `system.type` `MOLECUL2` only
+- `OBESTAT` — static elastic one-boson exchange, for `system.type` `MOLECUL2`, or as a nested pair model under `HYBRID`
+- `HYBRID` — three pair models `model1`/`model2`/`model3` (pairs 12/13/23), for `system.type` `MOLECUL3`
 
 Use `model.param` for presets:
 

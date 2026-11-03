@@ -124,14 +124,42 @@ static obe_leg_type_t parse_obe_leg_name(const char *name)
     exit(1);
 }
 
-static void parse_task_string(const char *value, argsInput_t *input)
+static void parse_task_section(const cJSON *root, argsInput_t *input)
 {
-    if (strcmp(value, "SPECTRA") == 0) input->task = TASK_SPECTRA;
-    else if (strcmp(value, "FITTING") == 0) input->task = TASK_FITTING;
+    const char *task = read_string_item(root, "task")->valuestring;
+
+    if (strcmp(task, "SPECTRA") == 0) input->task = TASK_SPECTRA;
+    else if (strcmp(task, "FITTING") == 0) input->task = TASK_FITTING;
     else {
-        fprintf(stderr, "Unknown task: %s\n", value);
+        fprintf(stderr, "Unknown task: %s\n", task);
         exit(1);
     }
+}
+
+static void parse_model_section(const cJSON *root, argsInput_t *input);
+static void parse_model_hybrid(const cJSON *model_json, argsInput_t *input)
+{
+    static const char *pair_key[MOL3_PAIR_N] = { "model1", "model2", "model3" };
+    int p;
+
+    input->model = MODEL_HYBRID;
+    for (p = 0; p < MOL3_PAIR_N; p++) {
+        cJSON *wrap = cJSON_CreateObject();
+        cJSON *src = read_object_item(model_json, pair_key[p]);
+
+        if (wrap == NULL) {
+            fprintf(stderr, "Out of memory while parsing %s\n", pair_key[p]);
+            exit(1);
+        }
+        cJSON_AddItemReferenceToObject(wrap, "model", src);
+        parse_model_section(wrap, input);
+        input->mol3_pairs[p].model = input->model;
+        input->mol3_pairs[p].param = input->param;
+        strncpy(input->mol3_pairs[p].param_file, input->param_file, 256);
+        input->mol3_pairs[p].param_file[255] = '\0';
+        cJSON_Delete(wrap);
+    }
+    input->model = MODEL_HYBRID;
 }
 
 static void parse_model_section(const cJSON *root, argsInput_t *input)
@@ -139,6 +167,11 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
     cJSON *model_json = read_object_item(root, "model");
     const char *type = read_string_item(model_json, "type")->valuestring;
     const char *param;
+
+    if (strcmp(type, "HYBRID") == 0) {
+        parse_model_hybrid(model_json, input);
+        return;
+    }
 
     if (strcmp(type, "GISTRING") == 0) input->model = MODEL_GISTRING;
     else if (strcmp(type, "GISCREEN") == 0) input->model = MODEL_GISCREEN;
@@ -288,6 +321,28 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
         input->L = read_number_item(system_json, "L")->valuedouble;
         input->J = read_number_item(system_json, "J")->valuedouble;
     }
+    else if (input->system == SYSTEM_MOLECUL3) {
+        input->type1 = parse_obe_leg_name(read_string_item(system_json, "type1")->valuestring);
+        input->type2 = parse_obe_leg_name(read_string_item(system_json, "type2")->valuestring);
+        input->type3 = parse_obe_leg_name(read_string_item(system_json, "type3")->valuestring);
+        input->m1 = read_number_item(system_json, "m1")->valuedouble;
+        input->m2 = read_number_item(system_json, "m2")->valuedouble;
+        input->m3 = read_number_item(system_json, "m3")->valuedouble;
+        input->cc1 = (int)read_number_or(system_json, "cc1", 0.0);
+        input->cc2 = (int)read_number_or(system_json, "cc2", 0.0);
+        input->cc3 = (int)read_number_or(system_json, "cc3", 0.0);
+        input->J = read_number_item(system_json, "J")->valuedouble;
+        input->P = read_number_item(system_json, "P")->valueint;
+        input->Lmax = read_number_item(system_json, "Lmax")->valueint;
+        input->sym12 = (int)read_number_or(system_json, "sym12", 0.0);
+        static const char *pair_key[MOL3_PAIR_N] = { "pair1", "pair2", "pair3" };
+        for (int p = 0; p < MOL3_PAIR_N; p++) {
+            cJSON *pair_json = read_object_item(system_json, pair_key[p]);
+            input->mol3_pairs[p].iso_pi = read_number_item(pair_json, "iso_pi")->valuedouble;
+            input->mol3_pairs[p].iso_rho = read_number_item(pair_json, "iso_rho")->valuedouble;
+            input->mol3_pairs[p].eta = read_number_or(pair_json, "eta", 0.0);
+        }
+    }
 }
 
 static void parse_cmi_basis(const cJSON *basis_json, argsInput_t *input)
@@ -434,7 +489,7 @@ void parse_input_file(const char *filename, argsInput_t *input)
     strncpy(input->project, read_string_item(root, "project")->valuestring, 256);
     input->project[255] = '\0';
 
-    parse_task_string(read_string_item(root, "task")->valuestring, input);
+    parse_task_section(root, input);
     parse_model_section(root, input);
     parse_system_section(root, input);
     parse_basis_section(root, input);
