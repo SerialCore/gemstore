@@ -1,6 +1,6 @@
-# Gemstore Two-Body Molecule Spectra JSON Template
+# Gemstore Molecule Spectra JSON Template
 
-Matches `src/parse.c`. Two-body molecular `SPECTRA` uses `system.type` `MOLECUL2`, `model.type` `OBESTAT`, `model.param` `OBESTAT_CUSTOM`, and basis `GEM`. Three-body `MOLECUL3` is parsed and not computed. Example: `test/Spectra-Molecule2/`.
+Matches `src/parse.c`. Two-body molecular `SPECTRA` uses `system.type` `MOLECUL2`, `model.type` `OBESTAT`, `model.param` `OBESTAT_CUSTOM`, and basis `GEM`. Example: `test/Spectra-Molecule2/`. Three-body `MOLECUL3` uses `model.type` `HYBRID` with nested pair `OBESTAT` models. Example: `test/Spectra-Molecule3/`.
 
 The parameter file holds the OBE couplings for a pair of species. The system JSON holds the state (legs, masses, isospin, C, J).
 
@@ -110,3 +110,45 @@ CLI prints `Mass`, `Ebind = Mass − (m1+m2)`, `RMS`. Negative `Ebind` with RMS 
 - `"print":{"pot":"true"}` writes `<project>.pot.dat`: `r[fm]  Vc  Vss  Vt  V` on 0.01–10 fm with unit spin matrix elements.
 - `"print":{"wfn":"true"}` writes `<project>.wfn.N.dat` through `write_mol2_wfn`: one \(R_a(r)\) column per partial wave, from 0.01 fm to \(\max(10, r_{\max})\) fm.
 - `<project>.state.json` reuses the meson writer: `mass`, `rms_radius`, `eigenvector` of length `nch * nmax`.
+
+## Three-body (`MOLECUL3`)
+
+```json
+{
+  "project": "dkkstar",
+  "task": "SPECTRA",
+  "model": {
+    "type": "HYBRID",
+    "model1": { "type": "OBESTAT", "param": "OBESTAT_CUSTOM", "file": "param_OBESTAT_dk.json" },
+    "model2": { "type": "OBESTAT", "param": "OBESTAT_CUSTOM", "file": "param_OBESTAT_dkstar.json" },
+    "model3": { "type": "OBESTAT", "param": "OBESTAT_CUSTOM", "file": "param_OBESTAT_kkstar.json" }
+  },
+  "system": {
+    "type": "MOLECUL3",
+    "type1": "PSEUDOSCALAR",
+    "type2": "PSEUDOSCALAR",
+    "type3": "VECTOR",
+    "m1": 1.867,
+    "m2": 0.494,
+    "m3": 0.892,
+    "J": 1.0,
+    "P": -1,
+    "I": 0.5,
+    "Lmax": 2,
+    "sym12": 0,
+    "pair1": { "iso_pi": -3, "iso_rho": -3, "eta": 0 },
+    "pair2": { "iso_pi": -3, "iso_rho": -3, "eta": 0 },
+    "pair3": { "iso_pi": 1, "iso_rho": 1, "eta": 0 }
+  },
+  "basis": { "type": "GEM", "nmax": 6, "rmax": 30.0, "rmin": 0.1 },
+  "print": { "pot": "false", "wfn": "false" }
+}
+```
+
+- Nested models are pairs 12, 13, 23. `nmax` is widths per Jacobi axis; \(n_{\mathrm{full}}=n_{\mathrm{ang}}\times n_{\max}^2\).
+- `I` is required total isospin. Pair \(t_{ij}\) is a basis quantum number; \(\pi/\rho\) use \(\langle\tau_i\cdot\tau_j\rangle\) of the operator pair after recoupling. `pair*.iso_pi`/`iso_rho` are parsed but ignored. Optional `t1`,`t2`,`t3` default to \(1/2\). DKK* uses \(I=1/2\).
+- `sym12=0` uses three independent charts (distinguishable hadrons).
+- `sym12=-1` on identical Dirac legs uses S3 (one chart c=1) and fermion Pauli \((-1)^{l_\rho+s_{ij}+t_{ij}}=-1\).
+- CLI `Ebind = Mass − (m1+m2+m3)` and three pair RMS. Bound only if `Ebind < 0` and RMS is clearly below `rmax`.
+- `"print":{"pot":"true"}` writes three pair blocks in `<project>.pot.dat`.
+- Run from `test/Spectra-Molecule3/` so relative pair files resolve. Use a distinct `project` per scan.

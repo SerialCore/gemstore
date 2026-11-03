@@ -201,6 +201,102 @@ int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const ma
     return state;
 }
 
+int write_mol3_spectra(const argsInput_t *input, const array_t *mass, const matrix_t *vector,
+    const array_t *rms12, const array_t *rms13, const array_t *rms23, double threshold, int len)
+{
+    if (input == NULL || mass == NULL || vector == NULL || len <= 0) {
+        fprintf(stderr, "Error: Invalid input parameters to write_mol3_spectra()\n");
+        return 0;
+    }
+
+    FILE *pf;
+    cJSON *root = NULL;
+    cJSON *states = NULL;
+    char *json_text = NULL;
+    int state = 0;
+
+    char path[267];
+    sprintf(path, "%s%s", input->project, ".state.json");
+    pf = fopen(path, "w");
+
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+
+    root = cJSON_CreateObject();
+    if (root == NULL) {
+        fprintf(stderr, "Error: Cannot allocate JSON root for %s\n", path);
+        fclose(pf);
+        return 0;
+    }
+
+    cJSON_AddNumberToObject(root, "threshold", threshold);
+    states = cJSON_AddArrayToObject(root, "states");
+    if (states == NULL) {
+        fprintf(stderr, "Error: Cannot allocate states array for %s\n", path);
+        cJSON_Delete(root);
+        fclose(pf);
+        return 0;
+    }
+
+    for (int n = 0; n < len; n++) {
+        cJSON *state_obj = cJSON_CreateObject();
+        cJSON *eigenvector = cJSON_CreateArray();
+
+        if (state_obj == NULL || eigenvector == NULL) {
+            cJSON_Delete(eigenvector);
+            cJSON_Delete(state_obj);
+            fprintf(stderr, "Error: Cannot allocate state JSON for %s\n", path);
+            cJSON_Delete(root);
+            fclose(pf);
+            return 0;
+        }
+
+        cJSON_AddNumberToObject(state_obj, "index", n + 1);
+        cJSON_AddNumberToObject(state_obj, "mass", mass->value[n]);
+        cJSON_AddNumberToObject(state_obj, "ebind", mass->value[n] - threshold);
+        if (rms12 && n < rms12->len) {
+            cJSON_AddNumberToObject(state_obj, "rms_r12", rms12->value[n]);
+        }
+        if (rms13 && n < rms13->len) {
+            cJSON_AddNumberToObject(state_obj, "rms_r13", rms13->value[n]);
+        }
+        if (rms23 && n < rms23->len) {
+            cJSON_AddNumberToObject(state_obj, "rms_r23", rms23->value[n]);
+        }
+
+        for (int d = 0; d < vector->col; d++) {
+            cJSON_AddItemToArray(eigenvector, cJSON_CreateNumber(vector->value[n][d]));
+        }
+
+        cJSON_AddItemToObject(state_obj, "eigenvector", eigenvector);
+        cJSON_AddItemToArray(states, state_obj);
+    }
+
+    json_text = cJSON_Print(root);
+    if (json_text == NULL) {
+        fprintf(stderr, "Error: Cannot serialize JSON output for %s\n", path);
+        cJSON_Delete(root);
+        fclose(pf);
+        return 0;
+    }
+
+    if (fputs(json_text, pf) == EOF) {
+        fprintf(stderr, "Error: Failed writing JSON output to %s\n", path);
+        cJSON_Delete(root);
+        free(json_text);
+        fclose(pf);
+        return 0;
+    }
+
+    state = fclose(pf) == 0 ? 1 : 0;
+    cJSON_Delete(root);
+    free(json_text);
+
+    return state;
+}
+
 int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nstate, const char *order)
 {
     if (input == NULL || state == NULL || nstate < 1) {
@@ -636,6 +732,48 @@ int write_obe_pot(const argsInput_t *input, const argsOBEModel_t *args_model)
         double vc, vss, vt;
         obe_radial(args_model, r * GEMSTORE_FM, &vc, &vss, &vt);
         fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, vc, vss, vt, vc + vss + vt);
+    }
+
+    if (fclose(pf) != 0) {
+        fprintf(stderr, "Error: Failed to close file %s\n", path);
+        return 0;
+    }
+
+    return 1;
+}
+
+int write_mol3_pot(const argsInput_t *input)
+{
+    static const char *pair_name[MOL3_PAIR_N] = { "12", "13", "23" };
+    double rmin = 0.01;
+    double rmax = 10.0;
+    double dr = 0.01;
+    FILE *pf;
+    char path[264];
+    int p;
+
+    if (input == NULL) {
+        fprintf(stderr, "Error: Invalid input parameters to write_mol3_pot()\n");
+        return 0;
+    }
+
+    sprintf(path, "%s%s", input->project, ".pot.dat");
+    pf = fopen(path, "w");
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+
+    for (p = 0; p < MOL3_PAIR_N; p++) {
+        argsOBEModel_t model = argsOBEModel_from(input, p);
+        fprintf(pf, "# pair %s\n", pair_name[p]);
+        fprintf(pf, "# r[fm]    Vc[GeV]    Vss[GeV]    Vt[GeV]    V[GeV]\n");
+        for (double r = rmin; r <= rmax; r += dr) {
+            double vc, vss, vt;
+            obe_radial(&model, r * GEMSTORE_FM, &vc, &vss, &vt);
+            fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, vc, vss, vt, vc + vss + vt);
+        }
+        fprintf(pf, "\n");
     }
 
     if (fclose(pf) != 0) {

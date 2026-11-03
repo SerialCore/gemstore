@@ -35,6 +35,10 @@ void print_mol2_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, 
 void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, const matrix_t *overlap,
     const array_t *rms12, const array_t *rms13, const array_t *rms23, int len);
 
+/* Three-body molecule spectra. threshold is m1+m2+m3; Ebind = Mass - threshold. */
+void print_mol3_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, const matrix_t *overlap,
+    const array_t *rms12, const array_t *rms13, const array_t *rms23, double threshold, int len);
+
 /* Print one variational bag result per color-spin state. order is NULL without CMI. */
 void print_bag_spectra(const bag_mit_t *state, int nstate, const char *order);
 

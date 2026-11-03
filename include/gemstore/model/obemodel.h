@@ -51,6 +51,10 @@ typedef struct obe_pot_ctx {
 /* Spin of an OBE leg: Dirac 1/2, vector 1, 0± 0. */
 double obe_leg_spin(obe_leg_type_t type);
 
+/* Intrinsic parity: Dirac +1, VECTOR (1−) and PSEUDOSCALAR (0−) −1.
+ * Elastic 0+ currently shares PSEUDOSCALAR vertices and this parity. */
+int obe_leg_parity(obe_leg_type_t type);
+
 /* Radial pieces without spin matrix elements: V = vc + vss (s1·s2) + vt S12. */
 void obe_radial(const argsOBEModel_t *model, double r, double *vc, double *vss, double *vt);
 

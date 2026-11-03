@@ -199,6 +199,11 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Parity (P):           %-50d\n", input->P);
         printf("  Jacobi Lmax:          %-50d\n", input->Lmax);
         printf("  Total Momentum (J):   %-50.6f\n", input->J);
+        if (input->system == SYSTEM_MOLECUL3) {
+            printf("  Total isospin (I):    %-50.6f\n", input->iso_I);
+            printf("  Particle t1,t2,t3:    %.6f, %.6f, %.6f\n",
+                input->iso_t1, input->iso_t2, input->iso_t3);
+        }
     }
     else if (input->system == SYSTEM_BAG) {
         printf("  Defined in color-magnetic basis parameters\n");
@@ -451,6 +456,7 @@ void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector
         "State", "Mass(GeV)", "r12(fm)", "r13(fm)", "r23(fm)", "max|c|", "c^T N c");
     printf("------+-----------+---------+---------+---------+-----------+--------------\n");
 
+    int nshow = 20;
     for (int n = 0; n < len; n++) {
         double norm = 0.0;
         double maxc = 0.0;
@@ -464,6 +470,11 @@ void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector
         }
         norm = matrix_expect(eigenvector, n, overlap);
         total_norm += norm;
+
+        if (n >= nshow) {
+            printf("  ... %d more states in the .state.json file\n", len - nshow);
+            break;
+        }
 
         double r12 = (rms12 && n < rms12->len) ? rms12->value[n] : 0.0;
         double r13 = (rms13 && n < rms13->len) ? rms13->value[n] : 0.0;
@@ -479,6 +490,70 @@ void print_baryon_spectra(const array_t *eigenvalue, const matrix_t *eigenvector
     printf("  Mass range:          %.6f - %.6f GeV (Δ=%.6f GeV)\n",
         min_mass, max_mass, max_mass - min_mass);
     printf("  Total norm sum:      %.10f\n", total_norm);
+    printf("\n");
+}
+
+void print_mol3_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, const matrix_t *overlap,
+    const array_t *rms12, const array_t *rms13, const array_t *rms23, double threshold, int len)
+{
+    if (eigenvalue == NULL || eigenvector == NULL || overlap == NULL) {
+        return;
+    }
+
+    printf("\n");
+    printf("================================================================================\n");
+    printf("                       THREE-BODY MOLECULE RESULTS SUMMARY                    \n");
+    printf("================================================================================\n");
+    printf("\n");
+    printf("  Threshold m1+m2+m3:  %.6f GeV\n", threshold);
+    printf("  Ebind = Mass - (m1+m2+m3). Negative is bound.\n");
+    printf("\n");
+
+    double min_mass = eigenvalue->value[0];
+    double max_mass = eigenvalue->value[0];
+    double total_norm = 0.0;
+
+    printf("%-6s%-12s%-12s%-10s%-10s%-10s%-12s%-15s\n",
+        "State", "Mass(GeV)", "Ebind(GeV)", "r12(fm)", "r13(fm)", "r23(fm)", "max|c|", "c^T N c");
+    printf("------+-----------+----------+---------+---------+---------+-----------+--------------\n");
+
+    int nshow = 20;
+    for (int n = 0; n < len; n++) {
+        double norm = 0.0;
+        double maxc = 0.0;
+
+        if (eigenvalue->value[n] < min_mass) min_mass = eigenvalue->value[n];
+        if (eigenvalue->value[n] > max_mass) max_mass = eigenvalue->value[n];
+
+        for (int i = 0; i < eigenvector->col; i++) {
+            double c = fabs(eigenvector->value[n][i]);
+            if (c > maxc) maxc = c;
+        }
+        norm = matrix_expect(eigenvector, n, overlap);
+        total_norm += norm;
+
+        if (n >= nshow) {
+            printf("  ... %d more states in the .state.json file\n", len - nshow);
+            break;
+        }
+
+        double r12 = (rms12 && n < rms12->len) ? rms12->value[n] : 0.0;
+        double r13 = (rms13 && n < rms13->len) ? rms13->value[n] : 0.0;
+        double r23 = (rms23 && n < rms23->len) ? rms23->value[n] : 0.0;
+
+        printf(" %-5d%-12.6f%-12.6f%-10.4f%-10.4f%-10.4f%-12.6f%-15.10f\n",
+            n + 1, eigenvalue->value[n], eigenvalue->value[n] - threshold,
+            r12, r13, r23, maxc, norm);
+    }
+
+    printf("\n");
+    printf("GLOBAL STATISTICS:\n");
+    printf("  Number of states:    %d\n", len);
+    printf("  Mass range:          %.6f - %.6f GeV (Δ=%.6f GeV)\n",
+        min_mass, max_mass, max_mass - min_mass);
+    printf("  Binding range:       %.6f - %.6f GeV\n",
+        min_mass - threshold, max_mass - threshold);
+    printf("  Total c^T N c:       %.10f\n", total_norm);
     printf("\n");
 }
 

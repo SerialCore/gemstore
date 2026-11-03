@@ -1,0 +1,64 @@
+{
+  "project": "nnn",
+  "task": "SPECTRA",
+  "model": {
+    "type": "HYBRID",
+    "model1": {
+      "type": "OBESTAT",
+      "param": "OBESTAT_CUSTOM",
+      "file": "param_OBESTAT_nn.json"
+    },
+    "model2": {
+      "type": "OBESTAT",
+      "param": "OBESTAT_CUSTOM",
+      "file": "param_OBESTAT_nn.json"
+    },
+    "model3": {
+      "type": "OBESTAT",
+      "param": "OBESTAT_CUSTOM",
+      "file": "param_OBESTAT_nn.json"
+    }
+  },
+  "system": {
+    "type": "MOLECUL3",
+    "type1": "DIRAC",
+    "type2": "DIRAC",
+    "type3": "DIRAC",
+    "m1": 0.938,
+    "m2": 0.938,
+    "m3": 0.938,
+    "cc1": 0,
+    "cc2": 0,
+    "cc3": 0,
+    "J": 0.5,
+    "P": 1,
+    "I": 0.5,
+    "Lmax": 2,
+    "sym12": -1,
+    "pair1": {
+      "iso_pi": -1,
+      "iso_rho": -1,
+      "eta": 0
+    },
+    "pair2": {
+      "iso_pi": -1,
+      "iso_rho": -1,
+      "eta": 0
+    },
+    "pair3": {
+      "iso_pi": -1,
+      "iso_rho": -1,
+      "eta": 0
+    }
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 4,
+    "rmax": 10.0,
+    "rmin": 0.1
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
+  }
+}

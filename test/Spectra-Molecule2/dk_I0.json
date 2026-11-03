@@ -1,0 +1,34 @@
+{
+  "project": "dk_I0",
+  "task": "SPECTRA",
+  "model": {
+    "type": "OBESTAT",
+    "param": "OBESTAT_CUSTOM",
+    "file": "param_OBESTAT_dk.json"
+  },
+  "system": {
+    "type": "MOLECUL2",
+    "type1": "PSEUDOSCALAR",
+    "type2": "PSEUDOSCALAR",
+    "m1": 1.867,
+    "m2": 0.494,
+    "cc1": 0,
+    "cc2": 0,
+    "eta": 0,
+    "iso_pi": -3,
+    "iso_rho": -3,
+    "S": 0.0,
+    "L": 0,
+    "J": 0.0
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 20,
+    "rmax": 30.0,
+    "rmin": 0.1
+  },
+  "print": {
+    "pot": "true",
+    "wfn": "false"
+  }
+}

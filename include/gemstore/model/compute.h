@@ -13,5 +13,6 @@ void compute_spectra_bag(const argsInput_t *input);
 void compute_spectra_meson(const argsInput_t *input);
 void compute_spectra_baryon(const argsInput_t *input);
 void compute_spectra_mol2(const argsInput_t *input);
+void compute_spectra_mol3(const argsInput_t *input);
 
 #endif

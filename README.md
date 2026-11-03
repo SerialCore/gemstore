@@ -58,11 +58,11 @@
 | **NR-String** | Non-relativistic Cornell potential with linear confinement | Meson spectra |
 | **NR-Screen** | Non-relativistic Cornell potential with screened confinement | Meson spectra |
 | **MIT bag** | Cavity energy plus optional color–magnetic / binding Hamiltonian | Meson, baryon, tetra, penta, hexa |
-| **OBE-static** | Elastic static \(\pi\sigma\rho\omega\) (\(V_C+V_{ss}+V_t\), \(V_{ls}=0\)) | Two-body hadron molecules |
+| **OBE-static** | Elastic static \(\pi\sigma\rho\omega\) (\(V_C+V_{ss}+V_t\), \(V_{ls}=0\)) | Two- and three-body hadron molecules |
 
 ### Calculation Types
 
-- **SPECTRA**: Mass spectra (meson, baryon, bag, two-body molecule)
+- **SPECTRA**: Mass spectra (meson, baryon, bag, two- and three-body molecule)
 - **FITTING**: Minuit2 meson parameter fits
 
 ### System Types
@@ -71,11 +71,11 @@
 - **BARYON**: Three-quark (\(qqq\))
 - **BAG**: MIT bag; flavor content from `nn`, `ns`, `nc`, `nb`
 - **MOLECUL2**: Two-body molecule (hadron–hadron OBE on GEM)
-- **MOLECUL3**: Parsed; three-body compute is not implemented
+- **MOLECUL3**: Three-body molecule (HYBRID pair OBESTAT on GEM; example `test/Spectra-Molecule3/`)
 
 ### Basis Set Options
 
-- **GEM**: Gaussian expansion (meson, baryon, two-body molecule)
+- **GEM**: Gaussian expansion (meson, baryon, two- and three-body molecule)
 - **SHO**: Harmonic oscillator (meson)
 - **CMI**: Color–spin product space (bag)
 - **NONE**: Bag kinetic plus vacuum energy, no CMI

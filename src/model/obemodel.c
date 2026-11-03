@@ -360,6 +360,12 @@ double obe_leg_spin(obe_leg_type_t type)
     return 0.0;
 }
 
+int obe_leg_parity(obe_leg_type_t type)
+{
+    if (type == OBE_LEG_DIRAC) return 1;
+    return -1;
+}
+
 double OBEVt(double p, void *ctx)
 {
     double mi, mj, mu;

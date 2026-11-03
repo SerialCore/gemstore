@@ -70,6 +70,10 @@ typedef struct argsInput {
     double eta;             /* MM C-parity on π and magnetic vector; 0 → +1 */
     double iso_pi;          /* ⟨τ1·τ2⟩ on pion; I = 0 is −3, I = 1 is +1 */
     double iso_rho;         /* ⟨τ1·τ2⟩ on rho; write both, do not use iso */
+    double iso_I;           /* MOLECUL3 total isospin. Not named I (complex.h). */
+    double iso_t1;          /* particle isospin 1; default 1/2 */
+    double iso_t2;          /* particle isospin 2; default 1/2 */
+    double iso_t3;          /* particle isospin 3; default 1/2 */
     int sym12;              /* symmetry under 1<->2 exchange */
     int Lmax;               /* baryon orbital truncation */
     int nmax;               /* Gaussian parameter */

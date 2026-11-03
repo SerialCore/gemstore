@@ -53,11 +53,14 @@ void entry_compute(const char* arg)
             compute_spectra_mol2(&input);
         }
         else if (input.system == SYSTEM_MOLECUL3) {
-            fprintf(stderr, "SPECTRA MOLECUL3 is not implemented.\n");
-            exit(1);
+            if (input.basis != BASIS_GEM) {
+                fprintf(stderr, "SPECTRA MOLECUL3 compute supports: GEM basis\n");
+                exit(1);
+            }
+            compute_spectra_mol3(&input);
         }
         else {
-            fprintf(stderr, "SPECTRA currently supports MESON, BARYON, BAG, and MOLECUL2 systems\n");
+            fprintf(stderr, "SPECTRA currently supports MESON, BARYON, BAG, MOLECUL2, and MOLECUL3 systems\n");
             exit(1);
         }
     }

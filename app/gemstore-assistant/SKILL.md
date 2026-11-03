@@ -1,6 +1,6 @@
 ---
 name: gemstore-assistant
-description: Expert agent for running hadron spectroscopy simulations using the gemstore program. Handles JSON input generation for the current parser, meson and baryon GEM/SHO spectra, two-body molecular GEM with static OBE (MOLECUL2 + OBESTAT), MIT bag spectra (BAG + BAGMIT with NONE or CMI), built-in meson parameter fits, basis selection, preset or custom parameter-file models, potential/wavefunction output control, and structured JSON + text outputs.
+description: Expert agent for running hadron spectroscopy simulations using the gemstore program. Handles JSON input generation for the current parser, meson and baryon GEM/SHO spectra, two-body molecular GEM with static OBE (MOLECUL2 + OBESTAT), three-body molecular GEM with HYBRID pair OBESTAT (MOLECUL3), MIT bag spectra (BAG + BAGMIT with NONE or CMI), built-in meson parameter fits, basis selection, preset or custom parameter-file models, potential/wavefunction output control, and structured JSON + text outputs.
 license: MIT
 compatibility: opencode
 metadata:
@@ -54,9 +54,9 @@ The state list and the parameter starts live in `src/param/f*.c`. Do not put exp
 - `BARYON`
 - `BAG`
 - `MOLECUL2`
-- `MOLECUL3` — parsed; `model.type` is `HYBRID` with nested `model1`/`model2`/`model3` (pairs 12/13/23); compute is not implemented
+- `MOLECUL3` — three-body molecule; `model.type` is `HYBRID` with nested `model1`/`model2`/`model3` (pairs 12/13/23). Basis `GEM`. Example: `test/Spectra-Molecule3/dkkstar.json`
 
-Baryon `SPECTRA` accepts `GISTRING` and `GISCREEN` with basis `GEM`. `NRSTRING` and `NRSCREEN` baryon spectra are not implemented. `SHO` is meson-only. Bag `SPECTRA` uses `BAGMIT` with basis `NONE` or `CMI`. Use `templates/bag_spectra_template.md`. Two-body molecules use `MOLECUL2` + `OBESTAT` + `GEM`. Use `templates/molecule_spectra_template.md`.
+Baryon `SPECTRA` accepts `GISTRING` and `GISCREEN` with basis `GEM`. `NRSTRING` and `NRSCREEN` baryon spectra are not implemented. `SHO` is meson-only. Bag `SPECTRA` uses `BAGMIT` with basis `NONE` or `CMI`. Use `templates/bag_spectra_template.md`. Two-body molecules use `MOLECUL2` + `OBESTAT` + `GEM`. Three-body molecules use `MOLECUL3` + `HYBRID` + `GEM`. Use `templates/molecule_spectra_template.md`.
 
 ### Models
 
@@ -205,6 +205,18 @@ The Hamiltonian is static LO OBE: \(H=T+V_C+V_{ss}+V_t\), \(V_{ls}=0\). CLI `Ebi
 
 `"print":{"pot":"true"}` writes `<project>.pot.dat` as `r  Vc  Vss  Vt  V`. `"print":{"wfn":"true"}` writes per-channel radial functions from 0.01 fm to \(\max(10, r_{\max})\) fm.
 
+### Three-Body Molecule Quantum Numbers
+
+Inside `system` provide `type1`–`type3`, `m1`–`m3`, `J`, `P`, `I`, `Lmax`, `sym12`, and `pair1`/`pair2`/`pair3` (`iso_pi`, `iso_rho`, `eta`). Optional `cc1`–`cc3` default to 0; optional `t1`,`t2`,`t3` default to \(1/2\). Basis must be `GEM`. Model must be `HYBRID` with three nested `OBESTAT` + `OBESTAT_CUSTOM` pair files. Example: `test/Spectra-Molecule3/dkkstar.json`.
+
+- Legs: `DIRAC`, `VECTOR`, `PSEUDOSCALAR`. Intrinsic parity is `+1` for Dirac and `−1` for vector/pseudoscalar; total \(P=P_1 P_2 P_3 (-1)^{l_\rho+l_\lambda}\)
+- `nmax` is the number of GEM widths per Jacobi axis. The space is \(n_{\mathrm{ang}}\times n_{\max}^2\). Do not treat `nmax` as a spectroscopic \(n_r\)
+- `I` is required total isospin. Pair \(t_{ij}\) is a basis quantum number recoupled to \(I\); pair `iso_pi`/`iso_rho` are parsed but ignored. DKK* uses \(I=1/2\)
+- `sym12=0` keeps three independent Jacobi charts (distinguishable hadrons). `sym12=-1` on identical Dirac legs uses S3 (one chart) plus fermion Pauli \((-1)^{l_\rho+s_{ij}+t_{ij}}=-1\)
+- Hamiltonian is NR \(\sum m_i+\sum p_i^2/(2m_i)\) plus pair \(V_C+V_{ss}+V_t\). Elastic \(0^-\) pairs have \(V_{ss}=V_t=0\) and no pion. \(P\leftrightarrow P^*\) transitions are not in OBESTAT
+- CLI `Ebind = Mass − (m1+m2+m3)`. Bound only if `Ebind < 0` and pair RMS is clearly smaller than `rmax`. CLI prints the first 20 states; the rest live in `<project>.state.json`
+- Run from the directory that holds the three pair parameter files. Use distinct `project` names so `.state.json` files do not overwrite each other
+
 ## Available gemstore CLI
 
 ```bash
@@ -295,7 +307,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - Use exact parser spellings: `MESON`, `BARYON`, `BAG`, `MOLECUL2`, `GISCREEN`, `GISTRING`, `GISTRING_BARYON`, `NRSTRING`, `NRSCREEN`, `BAGMIT`, `BAGMIT_DEFAULT`, `OBESTAT`, `OBESTAT_CUSTOM`, `CMI`, `NONE`, `NRSTRING_MESON`, `NRSCREEN_MESON`, `GISCREEN_CCBAR`, `DIRAC`, `VECTOR`, `PSEUDOSCALAR`, etc.
 - Baryon spectra stay on `GEM`. Do not emit `SHO` or an NR model for a baryon.
 - Bag spectra use `system` `BAG` and `model` `BAGMIT`. List a complete CMI color and spin set for each `st` that should mix.
-- Molecule spectra use `system` `MOLECUL2`, `model` `OBESTAT`, `param` `OBESTAT_CUSTOM`, basis `GEM`. Write `iso_pi` and `iso_rho` separately. Do not emit `MOLECUL3` as a working compute path.
+- Two-body molecules use `system` `MOLECUL2`, `model` `OBESTAT`, `param` `OBESTAT_CUSTOM`, basis `GEM`. Three-body molecules use `MOLECUL3` + `HYBRID` + three nested `OBESTAT_CUSTOM` files. Write `iso_pi` and `iso_rho` separately.
 - Remember that `model.param` is the parameter-set key for `SPECTRA`.
 - For `*_CUSTOM`, always include `model.file`.
 - For `FITTING`, `fit.target` is the dataset key. Do not write `model`, `system`, or `print`.

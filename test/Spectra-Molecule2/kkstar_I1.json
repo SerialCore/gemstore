@@ -1,0 +1,34 @@
+{
+  "project": "kkstar_I1",
+  "task": "SPECTRA",
+  "model": {
+    "type": "OBESTAT",
+    "param": "OBESTAT_CUSTOM",
+    "file": "param_OBESTAT_kkstar.json"
+  },
+  "system": {
+    "type": "MOLECUL2",
+    "type1": "PSEUDOSCALAR",
+    "type2": "VECTOR",
+    "m1": 0.494,
+    "m2": 0.892,
+    "cc1": 0,
+    "cc2": 0,
+    "eta": 0,
+    "iso_pi": 1,
+    "iso_rho": 1,
+    "S": 1.0,
+    "L": 0,
+    "J": 1.0
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 20,
+    "rmax": 30.0,
+    "rmin": 0.1
+  },
+  "print": {
+    "pot": "true",
+    "wfn": "false"
+  }
+}

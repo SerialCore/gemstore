@@ -1,0 +1,19 @@
+{
+  "param": {
+    "lambda": 1.10,
+    "tensor_mass1": 0.940,
+    "tensor_mass2": 0.940,
+    "g_pi1": 0.89,
+    "g_pi2": 0.89,
+    "g_sigma1": 10.2,
+    "g_sigma2": 10.2,
+    "g_rho1": 2.9,
+    "g_rho2": 2.9,
+    "f_rho1": 10.73,
+    "f_rho2": 10.73,
+    "g_omega1": 12.92,
+    "g_omega2": 12.92,
+    "f_omega1": -1.5504,
+    "f_omega2": -1.5504
+  }
+}

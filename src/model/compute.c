@@ -9,6 +9,7 @@
 #include <gemstore/model/cmeson.h>
 #include <gemstore/model/cbaryon.h>
 #include <gemstore/model/cmol2.h>
+#include <gemstore/model/cmol3.h>
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/math/interplt.h>
@@ -210,6 +211,53 @@ void compute_spectra_mol2(const argsInput_t *input)
 
     array_free(&eigenvalue);
     array_free(&rms12);
+    matrix_free(&eigenvector);
+    matrix_free(&overlap);
+}
+
+void compute_spectra_mol3(const argsInput_t *input)
+{
+    array_t eigenvalue = {0};
+    matrix_t eigenvector = {0};
+    matrix_t overlap = {0};
+    array_t rms12 = {0};
+    array_t rms13 = {0};
+    array_t rms23 = {0};
+    double threshold;
+
+    if (input->model != MODEL_HYBRID) {
+        fprintf(stderr, "Error: MOLECUL3 SPECTRA supports HYBRID pair models only.\n");
+        exit(1);
+    }
+    if (input->basis != BASIS_GEM) {
+        fprintf(stderr, "Error: MOLECUL3 SPECTRA currently supports GEM basis only.\n");
+        exit(1);
+    }
+    if (input->m1 <= 0.0 || input->m2 <= 0.0 || input->m3 <= 0.0) {
+        fprintf(stderr, "Error: MOLECUL3 needs positive physical masses m1, m2, and m3.\n");
+        exit(1);
+    }
+    if (input->nmax < 1) {
+        fprintf(stderr, "Error: MOLECUL3 needs nmax >= 1.\n");
+        exit(1);
+    }
+
+    threshold = input->m1 + input->m2 + input->m3;
+    mol3_obestat_GEM(input, &eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23);
+
+    print_mol3_spectra(&eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23,
+        threshold, eigenvalue.len);
+    write_mol3_spectra(input, &eigenvalue, &eigenvector, &rms12, &rms13, &rms23,
+        threshold, eigenvalue.len);
+
+    if (input->print_pot) {
+        write_mol3_pot(input);
+    }
+
+    array_free(&eigenvalue);
+    array_free(&rms12);
+    array_free(&rms13);
+    array_free(&rms23);
     matrix_free(&eigenvector);
     matrix_free(&overlap);
 }

@@ -19,6 +19,13 @@ int write_meson_spectra(const argsInput_t *input, const array_t *mass, const arr
 int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const matrix_t *vector,
     const array_t *rms12, const array_t *rms13, const array_t *rms23, int len);
 
+/* Write three-body molecule spectra: mass, Ebind, pair RMS, eigenvectors. */
+int write_mol3_spectra(const argsInput_t *input, const array_t *mass, const matrix_t *vector,
+    const array_t *rms12, const array_t *rms13, const array_t *rms23, double threshold, int len);
+
+/* Write three pair OBE curves into {project}.pot.dat. */
+int write_mol3_pot(const argsInput_t *input);
+
 /* Write bag spectra: mass, R, x, and color-spin eigenvector of each state. */
 int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nstate, const char *order);
 

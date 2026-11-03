@@ -274,22 +274,39 @@ void cmatrix_product(const cmatrix_t *matA, const cmatrix_t *matB, cmatrix_t *ma
 
 void cmatrix_productT(const cmatrix_t *matA, const cmatrix_t *matB, cmatrix_t *matC)
 {
+	/* C = A B A^H. Two n^3 products; a naive four-loop is n^4. */
+	int nkeep, nbas, i, j, k, l;
+	cmatrix_t tmp;
+
 	if (matA->col != matB->row || matB->col != matA->col
 		|| matA->row != matC->row || matA->row != matC->col) {
 		printf("error_matrix_productT: dimension mismatch\n");
 		return;
 	}
 
-	for (int i = 0; i < matA->row; i++) {
-		for (int j = 0; j < matC->col; j++) {
-			matC->value[i][j] = 0.0 + 0.0*I;
-			for (int k = 0; k < matA->col; k++) {
-				for (int l = 0; l < matB->col; l++) {
-					matC->value[i][j] += matA->value[i][k] * matB->value[k][l] * conj(matA->value[j][l]);
-				}
+	nkeep = matA->row;
+	nbas = matA->col;
+	tmp = cmatrix_init(nbas, nkeep);
+
+	for (k = 0; k < nbas; k++) {
+		for (j = 0; j < nkeep; j++) {
+			double complex s = 0.0;
+			for (l = 0; l < nbas; l++) {
+				s += matB->value[k][l] * conj(matA->value[j][l]);
 			}
+			tmp.value[k][j] = s;
 		}
 	}
+	for (i = 0; i < nkeep; i++) {
+		for (j = 0; j < nkeep; j++) {
+			double complex s = 0.0;
+			for (k = 0; k < nbas; k++) {
+				s += matA->value[i][k] * tmp.value[k][j];
+			}
+			matC->value[i][j] = s;
+		}
+	}
+	cmatrix_free(&tmp);
 }
 
 void cmatrix_print(const cmatrix_t *mat)
