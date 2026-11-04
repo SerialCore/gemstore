@@ -1,0 +1,64 @@
+{
+  "project": "dstardstard_I15_J0",
+  "task": "SPECTRA",
+  "model": {
+    "type": "HYBRID",
+    "model1": {
+      "type": "OBESTAT",
+      "param": "OBESTAT_CUSTOM",
+      "file": "param_OBESTAT_dstardstar.json"
+    },
+    "model2": {
+      "type": "OBESTAT",
+      "param": "OBESTAT_CUSTOM",
+      "file": "param_OBESTAT_dstard.json"
+    },
+    "model3": {
+      "type": "OBESTAT",
+      "param": "OBESTAT_CUSTOM",
+      "file": "param_OBESTAT_dstard.json"
+    }
+  },
+  "system": {
+    "type": "MOLECUL3",
+    "type1": "VECTOR",
+    "type2": "VECTOR",
+    "type3": "PSEUDOSCALAR",
+    "m1": 2.009,
+    "m2": 2.009,
+    "m3": 1.867,
+    "cc1": 0,
+    "cc2": 0,
+    "cc3": 0,
+    "J": 0.0,
+    "P": -1,
+    "I": 1.5,
+    "Lmax": 2,
+    "sym12": 0,
+    "pair1": {
+      "iso_pi": -3,
+      "iso_rho": -3,
+      "eta": 0
+    },
+    "pair2": {
+      "iso_pi": -3,
+      "iso_rho": -3,
+      "eta": 0
+    },
+    "pair3": {
+      "iso_pi": -3,
+      "iso_rho": -3,
+      "eta": 0
+    }
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 6,
+    "rmax": 20.0,
+    "rmin": 0.1
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
+  }
+}

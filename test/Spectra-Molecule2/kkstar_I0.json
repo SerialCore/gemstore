@@ -1,5 +1,5 @@
 {
-  "project": "kkstar_I1",
+  "project": "kkstar_I0",
   "task": "SPECTRA",
   "model": {
     "type": "OBESTAT",
@@ -15,8 +15,8 @@
     "cc1": 0,
     "cc2": 0,
     "eta": 0,
-    "iso_pi": 1,
-    "iso_rho": 1,
+    "iso_pi": -3,
+    "iso_rho": -3,
     "S": 1.0,
     "L": 0,
     "J": 1.0

@@ -53,8 +53,8 @@
   },
   "basis": {
     "type": "GEM",
-    "nmax": 3,
-    "rmax": 10.0,
+    "nmax": 6,
+    "rmax": 20.0,
     "rmin": 0.1
   },
   "print": {
