@@ -10,6 +10,7 @@
 #include <gemstore/model/cbaryon.h>
 #include <gemstore/model/cmol2.h>
 #include <gemstore/model/cmol3.h>
+#include <gemstore/model/ykwmodel.h>
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/math/interplt.h>
@@ -174,9 +175,11 @@ void compute_spectra_mol2(const argsInput_t *input)
     array_t rms12 = {0};
     argsOBEModel_t args_model;
     argsOBEModelDy_t args_dynmc = {0};
+    argsYKWModel_t ykw_model;
+    argsYKWModelDy_t ykw_dyn = {0};
 
-    if (input->model != MODEL_OBESTAT) {
-        fprintf(stderr, "Error: MOLECUL2 SPECTRA supports OBESTAT only.\n");
+    if (input->model != MODEL_OBESTAT && input->model != MODEL_YUKAWA) {
+        fprintf(stderr, "Error: MOLECUL2 SPECTRA supports OBESTAT and YUKAWA.\n");
         exit(1);
     }
     if (input->basis != BASIS_GEM) {
@@ -196,14 +199,25 @@ void compute_spectra_mol2(const argsInput_t *input)
     eigenvalue = array_init(ntot);
     eigenvector = matrix_init(ntot, ntot);
 
-    args_model = argsOBEModel_from(input, 0);
-    mol2_obestat_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12);
+    if (input->model == MODEL_YUKAWA) {
+        ykw_model = argsYKWModel_from(input, 0);
+        mol2_yukawa_GEM(input, &ykw_model, &ykw_dyn, &eigenvalue, &eigenvector, &overlap, &rms12);
+    }
+    else if (input->model == MODEL_OBESTAT) {
+        args_model = argsOBEModel_from(input, 0);
+        mol2_obestat_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12);
+    }
 
     print_mol2_spectra(&eigenvalue, &eigenvector, &overlap, &rms12, input->m1 + input->m2, eigenvalue.len);
     write_meson_spectra(input, &eigenvalue, &rms12, &eigenvector, eigenvalue.len);
 
     if (input->print_pot) {
-        write_obe_pot(input, &args_model);
+        if (input->model == MODEL_YUKAWA) {
+            write_mol2_ykw_pot(input, &ykw_model);
+        }
+        else if (input->model == MODEL_OBESTAT) {
+            write_mol2_obe_pot(input, &args_model);
+        }
     }
     if (input->print_wfn) {
         write_mol2_wfn(input, &eigenvector, &overlap);
@@ -243,7 +257,7 @@ void compute_spectra_mol3(const argsInput_t *input)
     }
 
     threshold = input->m1 + input->m2 + input->m3;
-    mol3_obestat_GEM(input, &eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23);
+    mol3_hybrid_GEM(input, &eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23);
 
     print_mol3_spectra(&eigenvalue, &eigenvector, &overlap, &rms12, &rms13, &rms23,
         threshold, eigenvalue.len);

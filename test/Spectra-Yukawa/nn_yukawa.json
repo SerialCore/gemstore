@@ -1,0 +1,34 @@
+{
+  "project": "nn_yukawa",
+  "task": "SPECTRA",
+  "model": {
+    "type": "YUKAWA",
+    "param": "YUKAWA_CUSTOM",
+    "file": "param_YUKAWA_mt13.json"
+  },
+  "system": {
+    "type": "MOLECUL2",
+    "type1": "DIRAC",
+    "type2": "DIRAC",
+    "m1": 0.938942,
+    "m2": 0.938942,
+    "cc1": 0,
+    "cc2": 0,
+    "eta": 0,
+    "iso_pi": -3,
+    "iso_rho": -3,
+    "S": 1.0,
+    "L": 0,
+    "J": 1.0
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 20,
+    "rmax": 20.0,
+    "rmin": 0.05
+  },
+  "print": {
+    "pot": "true",
+    "wfn": "false"
+  }
+}

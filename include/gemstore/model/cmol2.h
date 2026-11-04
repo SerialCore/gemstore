@@ -26,4 +26,10 @@ int mol2_channel_count(const argsInput_t *input);
 void mol2_obestat_GEM(const argsInput_t *args_input, const argsOBEModel_t *args_model, argsOBEModelDy_t *args_dynmc, 
     array_t *e_out, matrix_t *v_out, matrix_t *n_out, array_t *rms_out);
 
+/* Two-body GEM with MODEL_YUKAWA. Same partial-wave blocks as OBESTAT.
+ * V = Vc + Vss (σ1·σ2) on Dirac legs; Vt = 0, so L and L+2 do not mix.
+ * Eigenvalues are the molecule mass. */
+void mol2_yukawa_GEM(const argsInput_t *args_input, const argsYKWModel_t *args_model, argsYKWModelDy_t *args_dynmc,
+    array_t *e_out, matrix_t *v_out, matrix_t *n_out, array_t *rms_out);
+
 #endif

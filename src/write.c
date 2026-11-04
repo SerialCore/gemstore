@@ -10,6 +10,7 @@
 #include <gemstore/model/gimodel.h>
 #include <gemstore/model/nrmodel.h>
 #include <gemstore/model/obemodel.h>
+#include <gemstore/model/ykwmodel.h>
 #include <gemstore/model/cmol2.h>
 #include <gemstore/model/wfntrans.h>
 #include <gemstore/types.h>
@@ -707,7 +708,7 @@ int write_baryon_gi_pot(const argsInput_t *input, const argsGIModel_t *args_mode
     return 1;
 }
 
-int write_obe_pot(const argsInput_t *input, const argsOBEModel_t *args_model)
+int write_mol2_obe_pot(const argsInput_t *input, const argsOBEModel_t *args_model)
 {
     if (args_model == NULL) {
         fprintf(stderr, "Error: Invalid input parameters to write_obe_pot()\n");
@@ -742,6 +743,51 @@ int write_obe_pot(const argsInput_t *input, const argsOBEModel_t *args_model)
     return 1;
 }
 
+int write_mol2_ykw_pot(const argsInput_t *input, const argsYKWModel_t *args_model)
+{
+    double rmin = 0.01;
+    double rmax = 10.0;
+    double dr = 0.01;
+    FILE *pf;
+    char path[264];
+
+    if (args_model == NULL) {
+        fprintf(stderr, "Error: Invalid input parameters to write_ykw_pot()\n");
+        return 0;
+    }
+
+    sprintf(path, "%s%s", input->project, ".pot.dat");
+    pf = fopen(path, "w");
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+
+    fprintf(pf, "# r[fm]    Vc[GeV]    Vss[GeV]    Vt[GeV]    V[GeV]\n");
+    fprintf(pf, "# Vss is the coefficient of sigma1·sigma2. Vt is 0.\n");
+
+    argsYKWModelDy_t dyn = {0};
+    ykw_pot_ctx_t ctx;
+    dyn.OCent = 1.0;
+    dyn.OSdS = 1.0;
+    ctx.model = args_model;
+    ctx.dyn = &dyn;
+    for (double r = rmin; r <= rmax; r += dr) {
+        double rg = r * GEMSTORE_FM;
+        double vc = YKWVc(rg, &ctx);
+        double vss = YKWVss(rg, &ctx);
+
+        fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, vc, vss, 0.0, vc + vss);
+    }
+
+    if (fclose(pf) != 0) {
+        fprintf(stderr, "Error: Failed to close file %s\n", path);
+        return 0;
+    }
+
+    return 1;
+}
+
 int write_mol3_pot(const argsInput_t *input)
 {
     static const char *pair_name[MOL3_PAIR_N] = { "12", "13", "23" };
@@ -765,13 +811,38 @@ int write_mol3_pot(const argsInput_t *input)
     }
 
     for (p = 0; p < MOL3_PAIR_N; p++) {
-        argsOBEModel_t model = argsOBEModel_from(input, p);
-        fprintf(pf, "# pair %s\n", pair_name[p]);
+        fprintf(pf, "# pair %s  %s\n", pair_name[p], model_type_str[input->mol3_pairs[p].model]);
         fprintf(pf, "# r[fm]    Vc[GeV]    Vss[GeV]    Vt[GeV]    V[GeV]\n");
-        for (double r = rmin; r <= rmax; r += dr) {
-            double vc, vss, vt;
-            obe_radial(&model, r * GEMSTORE_FM, &vc, &vss, &vt);
-            fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, vc, vss, vt, vc + vss + vt);
+        if (input->mol3_pairs[p].model == MODEL_YUKAWA) {
+            argsYKWModel_t model = argsYKWModel_from(input, p);
+            argsYKWModelDy_t dyn = {0};
+            ykw_pot_ctx_t ctx;
+
+            dyn.OCent = 1.0;
+            dyn.OSdS = 1.0;
+            ctx.model = &model;
+            ctx.dyn = &dyn;
+            for (double r = rmin; r <= rmax; r += dr) {
+                double rg = r * GEMSTORE_FM;
+                double vc = YKWVc(rg, &ctx);
+                double vss = YKWVss(rg, &ctx);
+
+                fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, vc, vss, 0.0, vc + vss);
+            }
+        }
+        else if (input->mol3_pairs[p].model == MODEL_OBESTAT) {
+            argsOBEModel_t model = argsOBEModel_from(input, p);
+            for (double r = rmin; r <= rmax; r += dr) {
+                double vc, vss, vt;
+                obe_radial(&model, r * GEMSTORE_FM, &vc, &vss, &vt);
+                fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, vc, vss, vt, vc + vss + vt);
+            }
+        }
+        else {
+            fprintf(stderr, "Error: write_mol3_pot does not know pair model %s.\n",
+                model_type_str[input->mol3_pairs[p].model]);
+            fclose(pf);
+            return 0;
         }
         fprintf(pf, "\n");
     }

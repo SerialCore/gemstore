@@ -1,0 +1,9 @@
+{
+  "param": {
+    "terms": [
+      {"V": 1438.72, "mu": 3.11, "wigner": 1.0, "bartlett": 0.0},
+      {"V": -570.4265, "mu": 1.55, "wigner": 1.0, "bartlett": 0.0},
+      {"V": -56.4585, "mu": 1.55, "wigner": 0.0, "bartlett": 1.0}
+    ]
+  }
+}

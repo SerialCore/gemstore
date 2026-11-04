@@ -3,8 +3,8 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Three-body molecular GEM. SCDK kinematics as in cbaryon; pair kernels
- * are static elastic OBE (OBEVc / OBEVss / OBEVtens) through
+ * Three-body molecular GEM. SCDK kinematics as in cbaryon. Each pair
+ * supplies its own radial kernel (OBESTAT or YUKAWA) through
  * integral_exp_rn. Kinetics are non-relativistic.
  *
  * H = Σ m_i + Σ p_i²/(2m_i) + Σ_pairs (Vc + Vss s_i·s_j + Vt S12).
@@ -13,6 +13,7 @@
 
 #include <gemstore/model/cmol3.h>
 #include <gemstore/model/obemodel.h>
+#include <gemstore/model/ykwmodel.h>
 #include <gemstore/model/giradial.h>
 
 #include <gemstore/basis/basis.h>
@@ -37,17 +38,29 @@
 #define MOL3_NOP 9
 #define MOL3_ISO_K 4
 
+/* One isospin slot of one pair. ctx is owned by mol3_vargs and stays put. */
+typedef struct mol3_kernel {
+    potential_t vc;
+    potential_t vss;
+    potential_t vt;
+    void *ctx;
+} mol3_kernel_t;
+
 typedef struct mol3_vargs {
     int n_tp[3];
     double tp_val[3][MOL3_ISO_K];
-    argsOBEModel_t model_I[3][MOL3_ISO_K];
-    argsOBEModelDy_t dyn_I[3][MOL3_ISO_K];
-    obe_pot_ctx_t pair_I[3][MOL3_ISO_K];
+    int has_vt[3];
+    mol3_kernel_t ker[3][MOL3_ISO_K];
+    argsOBEModel_t obe_m[3][MOL3_ISO_K];
+    argsOBEModelDy_t obe_d[3][MOL3_ISO_K];
+    obe_pot_ctx_t obe_c[3][MOL3_ISO_K];
+    argsYKWModel_t ykw_m[3];
+    argsYKWModelDy_t ykw_d[3];
+    ykw_pot_ctx_t ykw_c[3];
 } mol3_vargs_t;
 
 typedef struct mol3_iv {
-    mol3_vargs_t *varg;
-    int k;
+    void *ctx;
     potential_t pot;
 } mol3_iv_t;
 
@@ -162,7 +175,7 @@ static double mol3_inte_v(double b11, int n, basis_3b qf, basis_3b qi, void *ctx
     if (c < 1 || c > 3) {
         return 0.0;
     }
-    return integral_exp_rn(iv->pot, b11, n, &iv->varg->pair_I[c - 1][iv->k]);
+    return integral_exp_rn(iv->pot, b11, n, iv->ctx);
 }
 
 /* ---------- isospin recoupling ---------- */
@@ -349,6 +362,19 @@ static void mol3_basis_build(const argsInput_t *input, bases_3b *spfy, bases_3b 
                                 bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
                                     t1, t2, t3, tij, totI, c, lrho, llam, L, sij, jl, J,
                                     0, 0, 0.0, 0.0);
+                                /* Identical fermions: add the two cyclic rearrangement
+                                 * charts to this component. A deuteron-like cluster can
+                                 * then sit on any pair. Odd exchanges are already in the
+                                 * pair Pauli phase, and a 3-cycle is even, so the chart
+                                 * weight is +1. L>0 keeps the same coupling in each chart. */
+                                if (s3_ident) {
+                                    bases_3b_push(spfy, 0, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                        t1, t2, t3, tij, totI, 2, lrho, llam, L, sij, jl, J,
+                                        0, 0, 0.0, 0.0);
+                                    bases_3b_push(spfy, 0, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
+                                        t1, t2, t3, tij, totI, 3, lrho, llam, L, sij, jl, J,
+                                        0, 0, 0.0, 0.0);
+                                }
                             }
                         }
                     }
@@ -369,7 +395,7 @@ static void mol3_basis_build(const argsInput_t *input, bases_3b *spfy, bases_3b 
         printf("  equal-mass S3: νλ=(4/3)νρ so nρ=nλ is permutation-symmetric\n");
     }
     if (s3_ident) {
-        printf("Molecule3 GEM basis: S3  one chart (c=1), fermion Pauli, P_int=%d, lρ+lλ≤%d\n",
+        printf("Molecule3 GEM basis: S3  rearrangement c=1+2+3, fermion Pauli, P_int=%d, lρ+lλ≤%d\n",
             Pint, Lmax);
     } else {
         printf("Molecule3 GEM basis: distinguishable  independent c=1,2,3, P_int=%d, lρ+lλ≤%d\n",
@@ -441,40 +467,71 @@ static void mol3_mlsj_jl(mol3_job_t *job)
 
 /* ---------- pair models and matrix fill ---------- */
 
+static void mol3_pair_mass(const argsInput_t *input, int p, double *mi, double *mj)
+{
+    if (p == 0) {
+        *mi = input->m1;
+        *mj = input->m2;
+    }
+    else if (p == 1) {
+        *mi = input->m1;
+        *mj = input->m3;
+    }
+    else {
+        *mi = input->m2;
+        *mj = input->m3;
+    }
+}
+
+static double mol3_pair_kss(const argsInput_t *input, int p)
+{
+    obe_leg_type_t t1, t2;
+
+    if (p == 0) {
+        t1 = input->type1;
+        t2 = input->type2;
+    }
+    else if (p == 1) {
+        t1 = input->type1;
+        t2 = input->type3;
+    }
+    else {
+        t1 = input->type2;
+        t2 = input->type3;
+    }
+    return (t1 == OBE_LEG_DIRAC ? 2.0 : 1.0) * (t2 == OBE_LEG_DIRAC ? 2.0 : 1.0);
+}
+
+/* OBESTAT: one radial kernel per pair isospin, because π/ρ carry ⟨τ·τ⟩.
+ * YUKAWA: spin dependence sits in Vss, so every tij of a pair shares one kernel. */
 static void mol3_load_pairs(const argsInput_t *input, mol3_vargs_t *varg)
 {
     for (int p = 0; p < 3; p++) {
-        argsOBEModel_t model;
-        argsOBEModelDy_t dyn;
         double mi, mj, kss, ti, tj, tk;
         int c = p + 1;
+        model_type_t kind = input->mol3_pairs[p].model;
 
-        if (input->mol3_pairs[p].model != MODEL_OBESTAT) {
-            fprintf(stderr, "Error: MOLECUL3 pair %d supports OBESTAT only.\n", p + 1);
+        mol3_pair_mass(input, p, &mi, &mj);
+        kss = mol3_pair_kss(input, p);
+        varg->has_vt[p] = 0;
+        varg->n_tp[p] = 0;
+
+        if (kind == MODEL_YUKAWA) {
+            varg->ykw_m[p] = argsYKWModel_from(input, p);
+            varg->ykw_d[p].mi = mi;
+            varg->ykw_d[p].mj = mj;
+            varg->ykw_d[p].OCent = 1.0;
+            varg->ykw_d[p].OSdS = kss;
+            varg->ykw_c[p].model = &varg->ykw_m[p];
+            varg->ykw_c[p].dyn = &varg->ykw_d[p];
+            varg->has_vt[p] = 0;
+        }
+        else if (kind != MODEL_OBESTAT) {
+            fprintf(stderr, "Error: MOLECUL3 pair %d model %s is not OBESTAT or YUKAWA.\n",
+                p + 1, model_type_str[kind]);
             exit(1);
         }
-        if (p == 0) {
-            mi = input->m1;
-            mj = input->m2;
-        } else if (p == 1) {
-            mi = input->m1;
-            mj = input->m3;
-        } else {
-            mi = input->m2;
-            mj = input->m3;
-        }
-        model = argsOBEModel_from(input, p);
-        kss = (model.type1 == OBE_LEG_DIRAC ? 2.0 : 1.0)
-            * (model.type2 == OBE_LEG_DIRAC ? 2.0 : 1.0);
-        dyn.mi = mi;
-        dyn.mj = mj;
-        dyn.OCent = 1.0;
-        dyn.OSdS = kss;
-        dyn.OLSi = 0.0;
-        dyn.OLSj = 0.0;
-        dyn.OTens = kss;
 
-        varg->n_tp[p] = 0;
         channel_3b_ijk(input->iso_t1, input->iso_t2, input->iso_t3, &ti, &tj, &tk, c);
         for (double tij = fabs(ti - tj); tij <= ti + tj + 1e-9; tij += 1.0) {
             int k;
@@ -489,12 +546,31 @@ static void mol3_load_pairs(const argsInput_t *input, mol3_vargs_t *varg)
             k = varg->n_tp[p];
             iso = mol3_tau_dot(ti, tj, tij);
             varg->tp_val[p][k] = tij;
-            varg->model_I[p][k] = model;
-            varg->model_I[p][k].iso_pi = iso;
-            varg->model_I[p][k].iso_rho = iso;
-            varg->dyn_I[p][k] = dyn;
-            varg->pair_I[p][k].model = &varg->model_I[p][k];
-            varg->pair_I[p][k].dyn = &varg->dyn_I[p][k];
+            if (kind == MODEL_YUKAWA) {
+                varg->ker[p][k].vc = YKWVc;
+                varg->ker[p][k].vss = YKWVss;
+                varg->ker[p][k].vt = NULL;
+                varg->ker[p][k].ctx = &varg->ykw_c[p];
+            }
+            else {
+                varg->obe_m[p][k] = argsOBEModel_from(input, p);
+                varg->obe_m[p][k].iso_pi = iso;
+                varg->obe_m[p][k].iso_rho = iso;
+                varg->obe_d[p][k].mi = mi;
+                varg->obe_d[p][k].mj = mj;
+                varg->obe_d[p][k].OCent = 1.0;
+                varg->obe_d[p][k].OSdS = kss;
+                varg->obe_d[p][k].OLSi = 0.0;
+                varg->obe_d[p][k].OLSj = 0.0;
+                varg->obe_d[p][k].OTens = kss;
+                varg->obe_c[p][k].model = &varg->obe_m[p][k];
+                varg->obe_c[p][k].dyn = &varg->obe_d[p][k];
+                varg->ker[p][k].vc = OBEVc;
+                varg->ker[p][k].vss = OBEVss;
+                varg->ker[p][k].vt = OBEVtens;
+                varg->ker[p][k].ctx = &varg->obe_c[p][k];
+                varg->has_vt[p] = 1;
+            }
             varg->n_tp[p]++;
         }
         printf("  pair %d recoupled tij:", p + 1);
@@ -569,33 +645,10 @@ static void getmfi(void *args)
     for (int ni = 0; ni < job->qnlist_full.len_list; ni++) {
         double nfi = 0.0;
         double T[3] = {0}, Vc[3] = {0}, Vss[3] = {0}, Vt[3] = {0}, rmsr[3] = {0};
-        int af = job->qnlist_full.qnum[nf][0].map1;
-        int ai = job->qnlist_full.qnum[ni][0].map1;
-        double iso_id = job->iso_ov[af][ai];
-        int any = (fabs(iso_id) > 1e-16);
 
-        if (!any) {
-            for (int p = 0; p < 3 && !any; p++) {
-                for (int k = 0; k < job->varg.n_tp[p]; k++) {
-                    if (fabs(job->iso_U[af][p][k] * job->iso_U[ai][p][k]) > 1e-16) {
-                        any = 1;
-                        break;
-                    }
-                }
-            }
-            if (!any) {
-                job->Nfi.value[nf][ni] = 0.0;
-                for (int p = 0; p < 3; p++) {
-                    job->T[p].value[nf][ni] = 0.0;
-                    job->Vc[p].value[nf][ni] = 0.0;
-                    job->Vss[p].value[nf][ni] = 0.0;
-                    job->Vt[p].value[nf][ni] = 0.0;
-                    job->rmsr[p].value[nf][ni] = 0.0;
-                }
-                continue;
-            }
-        }
-
+        /* Isospin is per rearrangement component. Charts of one basis
+         * vector are different coupling schemes, so a single factor from
+         * part 0 would drop the cross-chart norm and the pair projectors. */
         for (int nfp = 0; nfp < job->qnlist_full.len_part[nf]; nfp++) {
             for (int nip = 0; nip < job->qnlist_full.len_part[ni]; nip++) {
                 int mapf1 = job->qnlist_full.qnum[nf][nfp].map1;
@@ -605,43 +658,57 @@ static void getmfi(void *args)
                 basis_3b qf = job->qnlist_full.qnum[nf][nfp];
                 basis_3b qi = job->qnlist_full.qnum[ni][nip];
                 ckdk_scdk *sc0 = &job->scdk[0][mapf1][mapf2][mapi1][mapi2];
+                double iso = mol3_iso_bracket(qf.t1, qf.t2, qf.t3, qf.T,
+                    qf.c, qf.tij, qi.c, qi.tij);
 
-                nfi += inteVcenPartA(tir_cent, *sc0, qf, qi, inteNfi, &job->varg, 1);
+                if (fabs(iso) > 1e-16) {
+                    nfi += iso * inteVcenPartA(tir_cent, *sc0, qf, qi, inteNfi, &job->varg, 1);
+                }
                 for (int p = 0; p < 3; p++) {
                     int c = p + 1;
                     ckdk_scdk *scp = &job->scdk[p][mapf1][mapf2][mapi1][mapi2];
-                    T[p] += inteVcenPartA(tpi_cent, *scp, qf, qi, mol3_inte_tnr, &job->varg, c);
-                    rmsr[p] += inteVcenPartA(tir_cent, *scp, qf, qi, inteRMS, &job->varg, c);
+                    if (fabs(iso) > 1e-16) {
+                        T[p] += iso * inteVcenPartA(tpi_cent, *scp, qf, qi, mol3_inte_tnr, &job->varg, c);
+                        rmsr[p] += iso * inteVcenPartA(tir_cent, *scp, qf, qi, inteRMS, &job->varg, c);
+                    }
                     for (int k = 0; k < job->varg.n_tp[p]; k++) {
-                        double w = job->iso_U[af][p][k] * job->iso_U[ai][p][k];
+                        double uf = mol3_iso_bracket(qf.t1, qf.t2, qf.t3, qf.T,
+                            qf.c, qf.tij, c, job->varg.tp_val[p][k]);
+                        double ui = mol3_iso_bracket(qi.t1, qi.t2, qi.t3, qi.T,
+                            qi.c, qi.tij, c, job->varg.tp_val[p][k]);
+                        double w = uf * ui;
+                        mol3_kernel_t *ker = &job->varg.ker[p][k];
                         mol3_iv_t iv;
                         if (fabs(w) < 1e-16) {
                             continue;
                         }
-                        iv.varg = &job->varg;
-                        iv.k = k;
-                        iv.pot = OBEVc;
+                        iv.ctx = ker->ctx;
+                        iv.pot = ker->vc;
                         Vc[p] += w * inteVcenPartA(tir_cent, *scp, qf, qi, mol3_inte_v, &iv, c);
-                        iv.pot = OBEVss;
-                        Vss[p] += w * inteVcenPartA(tir_cent,
-                            job->scdk[3 + p][mapf1][mapf2][mapi1][mapi2],
-                            qf, qi, mol3_inte_v, &iv, c);
-                        iv.pot = OBEVtens;
-                        Vt[p] += w * inteVcenPartA(t1r_tens,
-                            job->scdk[6 + p][mapf1][mapf2][mapi1][mapi2],
-                            qf, qi, mol3_inte_v, &iv, c);
+                        if (ker->vss != NULL) {
+                            iv.pot = ker->vss;
+                            Vss[p] += w * inteVcenPartA(tir_cent,
+                                job->scdk[3 + p][mapf1][mapf2][mapi1][mapi2],
+                                qf, qi, mol3_inte_v, &iv, c);
+                        }
+                        if (job->varg.has_vt[p] && ker->vt != NULL) {
+                            iv.pot = ker->vt;
+                            Vt[p] += w * inteVcenPartA(t1r_tens,
+                                job->scdk[6 + p][mapf1][mapf2][mapi1][mapi2],
+                                qf, qi, mol3_inte_v, &iv, c);
+                        }
                     }
                 }
             }
         }
 
-        job->Nfi.value[nf][ni] = nfi * iso_id;
+        job->Nfi.value[nf][ni] = nfi;
         for (int p = 0; p < 3; p++) {
-            job->T[p].value[nf][ni] = T[p] * iso_id;
+            job->T[p].value[nf][ni] = T[p];
             job->Vc[p].value[nf][ni] = Vc[p];
             job->Vss[p].value[nf][ni] = Vss[p];
             job->Vt[p].value[nf][ni] = Vt[p];
-            job->rmsr[p].value[nf][ni] = rmsr[p] * iso_id;
+            job->rmsr[p].value[nf][ni] = rmsr[p];
         }
     }
 }
@@ -663,7 +730,7 @@ static void mol3_addH(matrix_t *H, const matrix_t *vt, const matrix_t *M, matrix
 
 /* ---------- driver ---------- */
 
-void mol3_obestat_GEM(const argsInput_t *args_input,
+void mol3_hybrid_GEM(const argsInput_t *args_input,
     array_t *e_out, matrix_t *v_out, matrix_t *n_out,
     array_t *rms12, array_t *rms13, array_t *rms23)
 {

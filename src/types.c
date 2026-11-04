@@ -18,6 +18,7 @@ const char *model_type_str[] = {
     [MODEL_NRSCREEN] = "NRSCREEN",
     [MODEL_BAGMIT] = "BAGMIT",
     [MODEL_OBESTAT] = "OBESTAT",
+    [MODEL_YUKAWA] = "YUKAWA",
     [MODEL_HYBRID] = "HYBRID"
 };
 
@@ -62,7 +63,9 @@ const char *param_type_str[] = {
     [PARAM_NRSCREEN_CUSTOM] = "NRSCREEN_CUSTOM",
     [PARAM_BAGMIT_DEFAULT] = "BAGMIT_DEFAULT",
     [PARAM_BAGMIT_CUSTOM] = "BAGMIT_CUSTOM",
-    [PARAM_OBESTAT_CUSTOM] = "OBESTAT_CUSTOM"
+    [PARAM_OBESTAT_CUSTOM] = "OBESTAT_CUSTOM",
+    [PARAM_YUKAWA_MT13] = "YUKAWA_MT13",
+    [PARAM_YUKAWA_CUSTOM] = "YUKAWA_CUSTOM"
 };
 
 const char *obe_leg_type_str[] = {

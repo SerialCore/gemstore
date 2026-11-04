@@ -121,6 +121,29 @@ typedef struct argsOBEModelDy {
     double OTens;
 } argsOBEModelDy_t;
 
+/* Local Yukawa, V = Σ (V_i e^{-μ_i r}/r) (W_i + B_i P_σ), P_σ=(1+σ1·σ2)/2.
+ * V_i is in MeV·fm and μ_i in fm^{-1}. Radial callbacks convert to GeV. */
+#define YKW_TERM_MAX 8
+
+typedef struct argsYKWTerm {
+    double V;               /* MeV·fm */
+    double mu;              /* fm^{-1} */
+    double wigner;          /* W, coefficient of 1 */
+    double bartlett;        /* B, coefficient of P_σ */
+} argsYKWTerm_t;
+
+typedef struct argsYKWModel {
+    int nterm;
+    argsYKWTerm_t term[YKW_TERM_MAX];
+} argsYKWModel_t;
+
+typedef struct argsYKWModelDy {
+    double mi;
+    double mj;
+    double OCent;
+    double OSdS;
+} argsYKWModelDy_t;
+
 /* Default meson parameters for model GIString */
 extern const argsGIModel_t argsGIString_meson;
 
@@ -154,6 +177,8 @@ extern const argsNRModel_t argsNRScreen_meson;
 /* Default MIT bag model parameters */
 extern const argsBAGModel_t argsBAGMIT_default;
 
+extern const argsYKWModel_t argsYUKAWA_MT13;
+
 /* Get GI model parameters from input */
 argsGIModel_t argsGIModel_from(const argsInput_t *input);
 
@@ -166,6 +191,9 @@ argsBAGModel_t argsBAGModel_from(const argsInput_t *input);
 /* Full OBE args for compute. MOLECUL2 ignores p and uses param_file plus type1/2.
  * MOLECUL3 uses mol3_pairs[p] (p = 0,1,2 → pairs 12, 13, 23) and the two legs of that pair. */
 argsOBEModel_t argsOBEModel_from(const argsInput_t *input, int p);
+
+/* Yukawa args. p is the MOLECUL3 pair index; MOLECUL2 ignores p. */
+argsYKWModel_t argsYKWModel_from(const argsInput_t *input, int p);
 
 /* Get quark mass from any model */
 static inline double getmq(int index, const void *args_model)

@@ -179,6 +179,7 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
     else if (strcmp(type, "NRSCREEN") == 0) input->model = MODEL_NRSCREEN;
     else if (strcmp(type, "BAGMIT") == 0) input->model = MODEL_BAGMIT;
     else if (strcmp(type, "OBESTAT") == 0) input->model = MODEL_OBESTAT;
+    else if (strcmp(type, "YUKAWA") == 0) input->model = MODEL_YUKAWA;
     else {
         fprintf(stderr, "Unknown model type: %s\n", type);
         exit(1);
@@ -239,10 +240,19 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
             exit(1);
         }
     }
+    else if (input->model == MODEL_YUKAWA) {
+        if (strcmp(param, "YUKAWA_MT13") == 0) input->param = PARAM_YUKAWA_MT13;
+        else if (strcmp(param, "YUKAWA_CUSTOM") == 0) input->param = PARAM_YUKAWA_CUSTOM;
+        else {
+            fprintf(stderr, "Unknown YUKAWA parameter set: %s\n", param);
+            exit(1);
+        }
+    }
 
     if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
         || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
-        || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM) {
+        || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM
+        || input->param == PARAM_YUKAWA_CUSTOM) {
         const char *file = read_string_item(model_json, "file")->valuestring;
         if (strlen(file) > 0) {
             strncpy(input->param_file, file, 256);
@@ -702,6 +712,58 @@ void parse_param_OBESTAT(const char *filename, argsOBEModel_t *args_model)
     args_model->g_omega2 = read_number_item(param_json, "g_omega2")->valuedouble;
     args_model->f_omega1 = read_number_or(param_json, "f_omega1", 0.0);
     args_model->f_omega2 = read_number_or(param_json, "f_omega2", 0.0);
+
+    cJSON_Delete(root);
+    free(json_text);
+}
+
+void parse_param_YUKAWA(const char *filename, argsYKWModel_t *args_model)
+{
+    char *json_text = read_input_file(filename);
+    const char *parse_error = NULL;
+    cJSON *root = cJSON_Parse(json_text);
+    cJSON *param_json;
+    cJSON *terms;
+    int n, i;
+
+    if (!root) {
+        parse_error = cJSON_GetErrorPtr();
+        fprintf(stderr, "Invalid YUKAWA parameter JSON in %s", filename);
+        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
+        fprintf(stderr, "\n");
+        free(json_text);
+        exit(1);
+    }
+
+    param_json = read_object_item(root, "param");
+    terms = read_array_item(param_json, "terms");
+    n = cJSON_GetArraySize(terms);
+    if (n < 1 || n > YKW_TERM_MAX) {
+        fprintf(stderr, "YUKAWA terms must contain 1 to %d entries in %s\n", YKW_TERM_MAX, filename);
+        cJSON_Delete(root);
+        free(json_text);
+        exit(1);
+    }
+    args_model->nterm = n;
+    for (i = 0; i < n; i++) {
+        cJSON *term = cJSON_GetArrayItem(terms, i);
+        if (!cJSON_IsObject(term)) {
+            fprintf(stderr, "YUKAWA term %d is not an object in %s\n", i + 1, filename);
+            cJSON_Delete(root);
+            free(json_text);
+            exit(1);
+        }
+        args_model->term[i].V = read_number_item(term, "V")->valuedouble;
+        args_model->term[i].mu = read_number_item(term, "mu")->valuedouble;
+        args_model->term[i].wigner = read_number_or(term, "wigner", 1.0);
+        args_model->term[i].bartlett = read_number_or(term, "bartlett", 0.0);
+        if (args_model->term[i].mu < 0.0) {
+            fprintf(stderr, "YUKAWA term %d has negative mu in %s\n", i + 1, filename);
+            cJSON_Delete(root);
+            free(json_text);
+            exit(1);
+        }
+    }
 
     cJSON_Delete(root);
     free(json_text);

@@ -59,6 +59,7 @@
 | **NR-Screen** | Non-relativistic Cornell potential with screened confinement | Meson spectra |
 | **MIT bag** | Cavity energy plus optional color–magnetic / binding Hamiltonian | Meson, baryon, tetra, penta, hexa |
 | **OBE-static** | Elastic static \(\pi\sigma\rho\omega\) (\(V_C+V_{ss}+V_t\), \(V_{ls}=0\)) | Two- and three-body hadron molecules |
+| **Yukawa** | Local Malfliet–Tjon Yukawa, central plus Bartlett \(P_\sigma\) | NN and NNN binding (`YUKAWA_MT13`) |
 
 ### Calculation Types
 
@@ -70,8 +71,8 @@
 - **MESON**: Quark–antiquark (\(q\bar q\))
 - **BARYON**: Three-quark (\(qqq\))
 - **BAG**: MIT bag; flavor content from `nn`, `ns`, `nc`, `nb`
-- **MOLECUL2**: Two-body molecule (hadron–hadron OBE on GEM)
-- **MOLECUL3**: Three-body molecule (HYBRID pair OBESTAT on GEM; example `test/Spectra-Molecule3/`)
+- **MOLECUL2**: Two-body molecule (hadron–hadron OBE or Yukawa on GEM)
+- **MOLECUL3**: Three-body molecule (HYBRID pair OBESTAT or YUKAWA on GEM; example `test/Spectra-Molecule3/`)
 
 ### Basis Set Options
 
@@ -221,7 +222,9 @@ Run it:
 - `NRSTRING` — non-relativistic Cornell model, linear confinement
 - `NRSCREEN` — non-relativistic Cornell model, screened confinement
 - `BAGMIT` — MIT bag (`system.type` must be `BAG`)
-- `OBESTAT` — static elastic OBE (`system.type` must be `MOLECUL2`)
+- `OBESTAT` — static elastic OBE (`system.type` `MOLECUL2`, or a HYBRID pair)
+- `YUKAWA` — local Yukawa (`MOLECUL2`, or a HYBRID pair)
+- `HYBRID` — three pair models for `MOLECUL3`
 
 **Predefined Parameter Sets:**
 - `GISCREEN_CCBAR` - Charm-anticharm with GI-Screen model
@@ -237,6 +240,8 @@ Run it:
 - `BAGMIT_DEFAULT` - Built-in MIT bag masses, bag constant \(B\), zero-point \(Z\), and pair bindings
 - `BAGMIT_CUSTOM` - Custom bag parameters from file (requires `"file"`)
 - `OBESTAT_CUSTOM` - Static OBE couplings from file (requires `"file"`)
+- `YUKAWA_MT13` - Built-in Malfliet–Tjon I/III (no file)
+- `YUKAWA_CUSTOM` - Yukawa terms from file (requires `"file"`)
 
 #### System Configuration
 
@@ -617,6 +622,18 @@ T = m1 + m2 + p² / 2μ
 Legs are typed (`DIRAC`, `VECTOR`, `PSEUDOSCALAR`), not named as a hadron system. Tensor \(S_{12}\) mixes \(L\) with \(L+2\). The GEM basis is a block of `nch × nmax` Gaussians. Binding is `Ebind = Mass − (m1+m2)`.
 
 **Implementation**: `src/model/obemodel.c`, `src/model/cmol2.c`
+
+### 5b. Yukawa NN / NNN
+
+`MODEL_YUKAWA` is a local potential separate from the molecular OBE. Each term is
+
+```
+v(r) = (V / r) exp(-μ r) (W + B P_σ),   P_σ = (1 + σ1·σ2) / 2
+```
+
+with `V` in MeV·fm and `μ` in fm⁻¹. `YUKAWA_MT13` is Malfliet–Tjon I/III. Nucleon masses in the sample inputs are 0.938942 GeV so that \(\hbar^2/m_N = 41.47\) MeV·fm². Samples live in `test/Spectra-Yukawa/`. The deuteron (`nmax` 20) gives −2.231 MeV. The triton keeps the local potential in every partial wave. With \(r_{\min}=0.1\) fm and \(r_{\max}=10\) fm, the ground state goes from −5.29 MeV at `nmax` 4 to −8.67 MeV at `nmax` 7 and levels off at −8.88 MeV by `nmax` 10 (the s-wave Faddeev benchmark is −8.54 MeV). `iso_pi` / `iso_rho` are ignored. Two-body entry point is `mol2_yukawa_GEM`; three-body pairs are selected inside `mol3_load_pairs`. Identical Dirac fermions (`sym12` −1) use the sum of Jacobi charts c=1, 2 and 3.
+
+**Implementation**: `src/model/ykwmodel.c`, `src/model/cmol2.c`, `src/model/cmol3.c`
 
 ### 6. Spectral Data Post-Processing
 

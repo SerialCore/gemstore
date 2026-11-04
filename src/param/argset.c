@@ -175,6 +175,22 @@ const argsBAGModel_t argsBAGMIT_default = {
     .Z = 1.83
 };
 
+const argsYKWModel_t argsYUKAWA_MT13 = {
+    .nterm = 3,
+    .term[0].V = 1438.72,
+    .term[0].mu = 3.11,
+    .term[0].wigner = 1.0,
+    .term[0].bartlett = 0.0,
+    .term[1].V = -0.5 * (626.885 + 513.968),
+    .term[1].mu = 1.55,
+    .term[1].wigner = 1.0,
+    .term[1].bartlett = 0.0,
+    .term[2].V = -0.5 * (626.885 - 513.968),
+    .term[2].mu = 1.55,
+    .term[2].wigner = 0.0,
+    .term[2].bartlett = 1.0,
+};
+
 argsGIModel_t argsGIModel_from(const argsInput_t *input)
 {
     argsGIModel_t args_model = {0};
@@ -267,5 +283,38 @@ argsOBEModel_t argsOBEModel_from(const argsInput_t *input, int p)
     args_model.eta = input->eta;
     args_model.iso_pi = input->iso_pi;
     args_model.iso_rho = input->iso_rho;
+    return args_model;
+}
+
+argsYKWModel_t argsYKWModel_from(const argsInput_t *input, int p)
+{
+    argsYKWModel_t args_model = {0};
+    param_type_t param;
+    const char *file;
+
+    if (input->model == MODEL_HYBRID) {
+        if (p < 0 || p >= MOL3_PAIR_N) {
+            fprintf(stderr, "Error: argsYKWModel_from pair index must be 0, 1, or 2.\n");
+            exit(1);
+        }
+        param = input->mol3_pairs[p].param;
+        file = input->mol3_pairs[p].param_file;
+        if (param == PARAM_YUKAWA_MT13) {
+            args_model = argsYUKAWA_MT13;
+        }
+        else if (param == PARAM_YUKAWA_CUSTOM) {
+            parse_param_YUKAWA(file, &args_model);
+        }
+        return args_model;
+    }
+
+    param = input->param;
+    file = input->param_file;
+    if (param == PARAM_YUKAWA_MT13) {
+        args_model = argsYUKAWA_MT13;
+    }
+    else if (param == PARAM_YUKAWA_CUSTOM) {
+        parse_param_YUKAWA(file, &args_model);
+    }
     return args_model;
 }

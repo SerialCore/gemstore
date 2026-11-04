@@ -1,0 +1,61 @@
+{
+  "project": "nnn_nmax4",
+  "task": "SPECTRA",
+  "model": {
+    "type": "HYBRID",
+    "model1": {
+      "type": "YUKAWA",
+      "param": "YUKAWA_MT13"
+    },
+    "model2": {
+      "type": "YUKAWA",
+      "param": "YUKAWA_MT13"
+    },
+    "model3": {
+      "type": "YUKAWA",
+      "param": "YUKAWA_MT13"
+    }
+  },
+  "system": {
+    "type": "MOLECUL3",
+    "type1": "DIRAC",
+    "type2": "DIRAC",
+    "type3": "DIRAC",
+    "m1": 0.938942,
+    "m2": 0.938942,
+    "m3": 0.938942,
+    "cc1": 0,
+    "cc2": 0,
+    "cc3": 0,
+    "J": 0.5,
+    "P": 1,
+    "I": 0.5,
+    "Lmax": 0,
+    "sym12": -1,
+    "pair1": {
+      "iso_pi": 0,
+      "iso_rho": 0,
+      "eta": 0
+    },
+    "pair2": {
+      "iso_pi": 0,
+      "iso_rho": 0,
+      "eta": 0
+    },
+    "pair3": {
+      "iso_pi": 0,
+      "iso_rho": 0,
+      "eta": 0
+    }
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 4,
+    "rmax": 10.0,
+    "rmin": 0.1
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
+  }
+}

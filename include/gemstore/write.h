@@ -23,9 +23,6 @@ int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const ma
 int write_mol3_spectra(const argsInput_t *input, const array_t *mass, const matrix_t *vector,
     const array_t *rms12, const array_t *rms13, const array_t *rms23, double threshold, int len);
 
-/* Write three pair OBE curves into {project}.pot.dat. */
-int write_mol3_pot(const argsInput_t *input);
-
 /* Write bag spectra: mass, R, x, and color-spin eigenvector of each state. */
 int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nstate, const char *order);
 
@@ -45,6 +42,12 @@ int write_meson_nr_pot(const argsInput_t *input, const argsNRModel_t *args_model
 int write_baryon_gi_pot(const argsInput_t *input, const argsGIModel_t *args_model, argsGIModelDy_t *args_dynmc);
 
 /* Write OBE radial pieces versus r in fm. Last column is V = Vc + Vss + Vt. */
-int write_obe_pot(const argsInput_t *input, const argsOBEModel_t *args_model);
+int write_mol2_obe_pot(const argsInput_t *input, const argsOBEModel_t *args_model);
+
+/* Write Yukawa Vc, Vss versus r in fm. Vt is zero. V = Vc + Vss. */
+int write_mol2_ykw_pot(const argsInput_t *input, const argsYKWModel_t *args_model);
+
+/* Write three pair OBE curves into {project}.pot.dat. */
+int write_mol3_pot(const argsInput_t *input);
 
 #endif

@@ -23,6 +23,7 @@ typedef enum model_type {
     MODEL_NRSCREEN,
     MODEL_BAGMIT,
     MODEL_OBESTAT,
+    MODEL_YUKAWA,
     MODEL_HYBRID
 } model_type_t;
 
@@ -79,7 +80,9 @@ typedef enum param_type {
     PARAM_NRSCREEN_CUSTOM,
     PARAM_BAGMIT_DEFAULT,
     PARAM_BAGMIT_CUSTOM,
-    PARAM_OBESTAT_CUSTOM
+    PARAM_OBESTAT_CUSTOM,
+    PARAM_YUKAWA_MT13,
+    PARAM_YUKAWA_CUSTOM
 } param_type_t;
 
 extern const char *param_type_str[];

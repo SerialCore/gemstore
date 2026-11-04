@@ -106,7 +106,8 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Parameter Set:        %-50s\n", param_type_str[input->param]);
         if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
             || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
-            || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM) {
+            || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM
+            || input->param == PARAM_YUKAWA_CUSTOM) {
             printf("  Parameter File:       %-50s\n", input->param_file);
         }
     }
@@ -215,8 +216,8 @@ void print_input_parameters(const argsInput_t *input)
     if (input->model == MODEL_HYBRID) {
         static const char *pair_name[MOL3_PAIR_N] = { "12", "13", "23" };
         for (int p = 0; p < MOL3_PAIR_N; p++) {
-            printf("  Pair %s (%s, %s):\n", pair_name[p],
-                model_type_str[input->mol3_pairs[p].model], input->mol3_pairs[p].param_file);
+            printf("  Pair %s (%s):\n", pair_name[p],
+                model_type_str[input->mol3_pairs[p].model]);
             if (input->mol3_pairs[p].model == MODEL_OBESTAT) {
                 argsOBEModel_t args_model = argsOBEModel_from(input, p);
                 printf("    Lambda:                  %-46.6f GeV\n", args_model.lambda);
@@ -227,6 +228,14 @@ void print_input_parameters(const argsInput_t *input)
                 printf("    f_rho:                   %.6f, %.6f\n", args_model.f_rho1, args_model.f_rho2);
                 printf("    g_omega:                 %.6f, %.6f\n", args_model.g_omega1, args_model.g_omega2);
                 printf("    f_omega:                 %.6f, %.6f\n", args_model.f_omega1, args_model.f_omega2);
+            }
+            else if (input->mol3_pairs[p].model == MODEL_YUKAWA) {
+                argsYKWModel_t args_model = argsYKWModel_from(input, p);
+                for (int i = 0; i < args_model.nterm; i++) {
+                    printf("    term %d: V=% .6f MeV·fm  mu=% .6f fm^-1  W=% .3f  B=% .3f\n",
+                        i + 1, args_model.term[i].V, args_model.term[i].mu, 
+                        args_model.term[i].wigner, args_model.term[i].bartlett);
+                }
             }
         }
         printf("\n");
@@ -298,6 +307,16 @@ void print_input_parameters(const argsInput_t *input)
         printf("    f_rho:                   %.6f, %.6f\n", args_model.f_rho1, args_model.f_rho2);
         printf("    g_omega:                 %.6f, %.6f\n", args_model.g_omega1, args_model.g_omega2);
         printf("    f_omega:                 %.6f, %.6f\n", args_model.f_omega1, args_model.f_omega2);
+        printf("\n");
+    }
+    else if (input->model == MODEL_YUKAWA) {
+        argsYKWModel_t args_model = argsYKWModel_from(input, 0);
+        printf("  Yukawa terms (V, mu, Wigner W, Bartlett B):\n");
+        for (int i = 0; i < args_model.nterm; i++) {
+            printf("    term %d: V=% .6f MeV·fm  mu=% .6f fm^-1  W=% .3f  B=% .3f\n",
+                i + 1, args_model.term[i].V, args_model.term[i].mu, 
+                args_model.term[i].wigner, args_model.term[i].bartlett);
+        }
         printf("\n");
     }
 }
