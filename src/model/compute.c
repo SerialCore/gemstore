@@ -192,7 +192,11 @@ void compute_spectra_mol2(const argsInput_t *input)
     }
 
     if (nch < 1 || ntot < 1) {
-        fprintf(stderr, "Error: MOLECUL2 has no partial-wave channels for this J, L.\n");
+        fprintf(stderr, "Error: MOLECUL2 has no partial-wave channels for this J, L");
+        if (input->type1 == input->type2 && fabs(input->m1 - input->m2) < 1e-9) {
+            fprintf(stderr, " (identical-leg Fermi/Bose emptied the list)");
+        }
+        fprintf(stderr, ".\n");
         exit(1);
     }
 

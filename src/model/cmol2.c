@@ -37,10 +37,33 @@ static void mol2_term_name(int L, double S, char *out, int n)
     snprintf(out, (size_t)n, "%d%c", mult, ell);
 }
 
+/* Two t=1/2: ⟨τ1·τ2⟩ = 2I(I+1) − 3 = iso_pi. */
+static double mol2_pair_I(double iso_pi)
+{
+    double x = 0.5 * (iso_pi + 3.0);
+    if (x < -1e-12) {
+        return -1.0;
+    }
+    return 0.5 * (-1.0 + sqrt(1.0 + 4.0 * x));
+}
+
+/* (−1)^{ℓ+(2s−S)+(2t−T)} = −1 fermion, +1 boson. */
+static int mol2_pair_sym_ok(int ell, double s, double t, double S, double T, int fermion)
+{
+    int two_s = (int)(2.0 * s + 0.5);
+    int two_t = (int)(2.0 * t + 0.5);
+    int iS = (int)(S + 0.5);
+    int iT = (int)(T + 0.5);
+    int expo = ell + (two_s - iS) + (two_t - iT);
+    int odd = (expo % 2 != 0);
+    return fermion ? odd : !odd;
+}
+
 int mol2_build_channels(const argsInput_t *input, int *Lout, double *Sout, int maxch)
 {
-    double s1, s2, J, S;
+    double s1, s2, J, S, totI;
     int L0, L, n = 0;
+    int ident, fermion;
 
     if (input == NULL || maxch < 1) {
         return 0;
@@ -54,9 +77,17 @@ int mol2_build_channels(const argsInput_t *input, int *Lout, double *Sout, int m
         L0 = 0;
     }
 
+    ident = (input->type1 == input->type2 && fabs(input->m1 - input->m2) < 1e-9);
+    fermion = (input->type1 == OBE_LEG_DIRAC);
+    totI = mol2_pair_I(input->iso_pi);
+
     for (L = L0; L <= L0 + 2; L += 2) {
         for (S = fabs(s1 - s2); S <= s1 + s2 + 1e-10; S += 1.0) {
             if (!mol2_triangle(S, (double)L, J)) {
+                continue;
+            }
+            if (ident && totI >= -1e-12
+                && !mol2_pair_sym_ok(L, s1, 0.5, S, totI, fermion)) {
                 continue;
             }
             if (Lout) Lout[n] = L;
@@ -133,8 +164,13 @@ void mol2_obestat_GEM(const argsInput_t *args_input, const argsOBEModel_t *args_
 
     nch = mol2_build_channels(args_input, Lch, Sch, MOL2_CHMAX);
     if (nch < 1) {
-        fprintf(stderr, "Error: no molecular partial waves couple to J=%.1f at L=%.0f.\n",
+        fprintf(stderr, "Error: no molecular partial waves couple to J=%.1f at L=%.0f",
             J, args_input->L);
+        if (args_input->type1 == args_input->type2
+            && fabs(args_input->m1 - args_input->m2) < 1e-9) {
+            fprintf(stderr, " (identical-leg Fermi/Bose emptied the list)");
+        }
+        fprintf(stderr, ".\n");
         exit(1);
     }
     ntot = nch * nmax;
@@ -153,6 +189,12 @@ void mol2_obestat_GEM(const argsInput_t *args_input, const argsOBEModel_t *args_
         printf("  %s", name);
     }
     printf("   (%d x %d GEM)\n", nch, nmax);
+    if (args_input->type1 == args_input->type2
+        && fabs(args_input->m1 - args_input->m2) < 1e-9) {
+        printf("  identical %s: (−1)^{L+(2s−S)+(2t−I)}=%s\n",
+            args_input->type1 == OBE_LEG_DIRAC ? "fermions" : "bosons",
+            args_input->type1 == OBE_LEG_DIRAC ? "−1" : "+1");
+    }
 
     basis = (argsOrbit_t *)malloc((size_t)ntot * sizeof(argsOrbit_t));
     for (a = 0; a < nch; a++) {
@@ -249,8 +291,13 @@ void mol2_yukawa_GEM(const argsInput_t *args_input, const argsYKWModel_t *args_m
 
     nch = mol2_build_channels(args_input, Lch, Sch, MOL2_CHMAX);
     if (nch < 1) {
-        fprintf(stderr, "Error: no molecular partial waves couple to J=%.1f at L=%.0f.\n",
+        fprintf(stderr, "Error: no molecular partial waves couple to J=%.1f at L=%.0f",
             J, args_input->L);
+        if (args_input->type1 == args_input->type2
+            && fabs(args_input->m1 - args_input->m2) < 1e-9) {
+            fprintf(stderr, " (identical-leg Fermi/Bose emptied the list)");
+        }
+        fprintf(stderr, ".\n");
         exit(1);
     }
     ntot = nch * nmax;

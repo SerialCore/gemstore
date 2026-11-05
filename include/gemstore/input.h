@@ -74,7 +74,7 @@ typedef struct argsInput {
     double iso_t1;          /* particle isospin 1; default 1/2 */
     double iso_t2;          /* particle isospin 2; default 1/2 */
     double iso_t3;          /* particle isospin 3; default 1/2 */
-    int sym12;              /* symmetry under 1<->2 exchange */
+    int sym12;              /* baryon 1<->2 exchange; MOLECUL3 identity uses type+mass */
     int Lmax;               /* baryon orbital truncation */
     int nmax;               /* Gaussian parameter */
     double rmax;            /* Gaussian parameter */

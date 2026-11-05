@@ -280,19 +280,42 @@ static void mol3_iso_cache_build(mol3_job_t *job)
 
 /* ---------- GEM basis ---------- */
 
-static int mol3_identical_dirac(const argsInput_t *input, int a, int b)
+static obe_leg_type_t mol3_leg_type(const argsInput_t *input, int a)
 {
-    obe_leg_type_t ta = (a == 1) ? input->type1 : (a == 2) ? input->type2 : input->type3;
-    obe_leg_type_t tb = (b == 1) ? input->type1 : (b == 2) ? input->type2 : input->type3;
-    double ma = (a == 1) ? input->m1 : (a == 2) ? input->m2 : input->m3;
-    double mb = (b == 1) ? input->m1 : (b == 2) ? input->m2 : input->m3;
-    return ta == OBE_LEG_DIRAC && tb == OBE_LEG_DIRAC && fabs(ma - mb) < 1e-9;
+    return (a == 1) ? input->type1 : (a == 2) ? input->type2 : input->type3;
 }
 
-/* (−1)^{lρ+sij+tij} = −1 for two identical Dirac fermions. */
-static int mol3_pair_pauli_tij(int lrho, double sij, double tij)
+static double mol3_leg_mass(const argsInput_t *input, int a)
 {
-    return ((lrho + (int)(sij + 0.5) + (int)(tij + 0.5)) % 2) != 0;
+    return (a == 1) ? input->m1 : (a == 2) ? input->m2 : input->m3;
+}
+
+static int mol3_identical(const argsInput_t *input, int a, int b)
+{
+    return mol3_leg_type(input, a) == mol3_leg_type(input, b)
+        && fabs(mol3_leg_mass(input, a) - mol3_leg_mass(input, b)) < 1e-9;
+}
+
+static int mol3_chart_pair_identical(int id12, int id31, int id23, int c)
+{
+    switch (c) {
+        case 1: return id12;
+        case 2: return id31;
+        case 3: return id23;
+        default: return 0;
+    }
+}
+
+/* (−1)^{ℓ+(2s−S)+(2t−T)} = −1 fermion, +1 boson. */
+static int mol3_pair_sym_ok(int ell, double s, double t, double S, double T, int fermion)
+{
+    int two_s = (int)(2.0 * s + 0.5);
+    int two_t = (int)(2.0 * t + 0.5);
+    int iS = (int)(S + 0.5);
+    int iT = (int)(T + 0.5);
+    int expo = ell + (two_s - iS) + (two_t - iT);
+    int odd = (expo % 2 != 0);
+    return fermion ? odd : !odd;
 }
 
 static void mol3_basis_build(const argsInput_t *input, bases_3b *spfy, bases_3b *full)
@@ -303,14 +326,17 @@ static void mol3_basis_build(const argsInput_t *input, bases_3b *spfy, bases_3b 
     double s3 = obe_leg_spin(input->type3);
     double J = input->J, totI = input->iso_I;
     double t1 = input->iso_t1, t2 = input->iso_t2, t3 = input->iso_t3;
-    int P = input->P, Lmax = input->Lmax, sym12 = input->sym12;
+    int P = input->P, Lmax = input->Lmax;
     int Pint = obe_leg_parity(input->type1) * obe_leg_parity(input->type2)
         * obe_leg_parity(input->type3);
-    int id12 = mol3_identical_dirac(input, 1, 2);
-    int id31 = mol3_identical_dirac(input, 3, 1);
-    int id23 = mol3_identical_dirac(input, 2, 3);
-    int fermion = (sym12 == -1);
-    int s3_ident = fermion && id12 && id23;
+    int id12 = mol3_identical(input, 1, 2);
+    int id31 = mol3_identical(input, 3, 1);
+    int id23 = mol3_identical(input, 2, 3);
+    int s3_ident = id12 && id23;
+    int any_ident = id12 || id23 || id31;
+    int ident_fermion = (id12 && input->type1 == OBE_LEG_DIRAC)
+        || (id23 && input->type2 == OBE_LEG_DIRAC)
+        || (id31 && input->type3 == OBE_LEG_DIRAC);
 
     bases_3b_init(spfy);
     bases_3b_init(full);
@@ -321,12 +347,6 @@ static void mol3_basis_build(const argsInput_t *input, bases_3b *spfy, bases_3b 
     }
     if (Lmax < 0) {
         fprintf(stderr, "Error: MOLECUL3 Lmax must be non-negative.\n");
-        exit(1);
-    }
-    if (fermion && (id23 || id31) && !id12) {
-        fprintf(stderr,
-            "Error: sym12 is the exchange of hadrons 1 and 2. "
-            "Put the identical Dirac pair as type1,type2.\n");
         exit(1);
     }
     if (totI < -1e-12) {
@@ -345,8 +365,16 @@ static void mol3_basis_build(const argsInput_t *input, bases_3b *spfy, bases_3b 
             for (int L = abs(lrho - llam); L <= lrho + llam; L++) {
                 for (int c = 1; c <= cmax; c++) {
                     double si, sj, sk, ti, tj, tk;
+                    int pair_fermion;
                     channel_3b_ijk(s1, s2, s3, &si, &sj, &sk, c);
                     channel_3b_ijk(t1, t2, t3, &ti, &tj, &tk, c);
+                    if (c == 1) {
+                        pair_fermion = (input->type1 == OBE_LEG_DIRAC);
+                    } else if (c == 2) {
+                        pair_fermion = (input->type3 == OBE_LEG_DIRAC);
+                    } else {
+                        pair_fermion = (input->type2 == OBE_LEG_DIRAC);
+                    }
                     for (double sij = fabs(si - sj); sij <= si + sj + 1e-9; sij += 1.0) {
                         for (double jl = fabs((double)L - sij); jl <= (double)L + sij + 1e-9; jl += 1.0) {
                             if (!mol3_triangle(jl, sk, J)) {
@@ -356,17 +384,17 @@ static void mol3_basis_build(const argsInput_t *input, bases_3b *spfy, bases_3b 
                                 if (!mol3_triangle(tij, tk, totI)) {
                                     continue;
                                 }
-                                if (fermion && !mol3_pair_pauli_tij(lrho, sij, tij)) {
+                                if (mol3_chart_pair_identical(id12, id31, id23, c)
+                                    && !mol3_pair_sym_ok(lrho, si, ti, sij, tij, pair_fermion)) {
                                     continue;
                                 }
                                 bases_3b_push(spfy, 1, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
                                     t1, t2, t3, tij, totI, c, lrho, llam, L, sij, jl, J,
                                     0, 0, 0.0, 0.0);
-                                /* Identical fermions: add the two cyclic rearrangement
-                                 * charts to this component. A deuteron-like cluster can
-                                 * then sit on any pair. Odd exchanges are already in the
-                                 * pair Pauli phase, and a 3-cycle is even, so the chart
-                                 * weight is +1. L>0 keeps the same coupling in each chart. */
+                                /* Three identical hadrons: add the two cyclic rearrangement
+                                 * charts to this component. A cluster can then sit on any
+                                 * pair. Pair Fermi/Bose is already on (lρ, sij, tij), and a
+                                 * 3-cycle is even, so the chart weight is +1. */
                                 if (s3_ident) {
                                     bases_3b_push(spfy, 0, -1, -1, 1.0, m1, m2, m3, s1, s2, s3,
                                         t1, t2, t3, tij, totI, 2, lrho, llam, L, sij, jl, J,
@@ -395,16 +423,20 @@ static void mol3_basis_build(const argsInput_t *input, bases_3b *spfy, bases_3b 
         printf("  equal-mass S3: νλ=(4/3)νρ so nρ=nλ is permutation-symmetric\n");
     }
     if (s3_ident) {
-        printf("Molecule3 GEM basis: S3  rearrangement c=1+2+3, fermion Pauli, P_int=%d, lρ+lλ≤%d\n",
-            Pint, Lmax);
+        printf("Molecule3 GEM basis: S3  rearrangement c=1+2+3, %s, P_int=%d, lρ+lλ≤%d\n",
+            ident_fermion ? "fermion Pauli" : "boson Bose", Pint, Lmax);
+    } else if (any_ident) {
+        printf("Molecule3 GEM basis: independent c=1,2,3, identical-pair %s, P_int=%d, lρ+lλ≤%d\n",
+            ident_fermion ? "Pauli" : "Bose", Pint, Lmax);
     } else {
         printf("Molecule3 GEM basis: distinguishable  independent c=1,2,3, P_int=%d, lρ+lλ≤%d\n",
             Pint, Lmax);
     }
     printf("  total I=%.1f  t=(%.1f,%.1f,%.1f); pair tij recoupled, pair iso_pi ignored\n",
         totI, t1, t2, t3);
-    if (fermion) {
-        printf("  pair Pauli (−1)^{lρ+sij+tij}=−1\n");
+    if (any_ident) {
+        printf("  identical ρ-pair (−1)^{lρ+(2s−sij)+(2t−tij)}=%s\n",
+            ident_fermion ? "−1" : "+1");
     }
     printf("  angular channels: %d  (n_full=%d)\n", spfy->len_list, full->len_list);
     fflush(stdout);

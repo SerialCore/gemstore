@@ -17,9 +17,13 @@
  * H = Σ m_i + Σ p_i²/(2m_i) + Σ_pairs (Vc + Vss s_i·s_j + Vt S12), Vls=0.
  * system.I is required: pair tij is a basis QN recoupled to total I;
  * pair iso_pi/iso_rho are ignored. t1,t2,t3 default to 1/2.
- * sym12=0: three independent charts. sym12=-1 on three identical Dirac
- * legs: each Pauli-allowed component is the rearrangement sum of charts
- * c=1,2,3 at the same (l, sij, tij), with (−1)^{lρ+sij+tij}=−1.
+ * Identical legs: same type and mass. Dirac is a fermion, VECTOR and
+ * PSEUDOSCALAR are bosons. A Jacobi ρ-pair that is identical is kept
+ * only when (−1)^{lρ+(2s−sij)+(2t−tij)} equals −1 (fermion) or +1
+ * (boson). Three identical legs: one S3 component, rearrangement sum of
+ * charts c=1,2,3 at the same (l, sij, tij). Two or three distinguishable
+ * legs: independent charts; Bose/Pauli only on the identical ρ-pair.
+ * sym12 is not used for this selection (kept in JSON for baryons).
  * Overcomplete N is pruned, then H' u = E u. Eigenvalues are the mass. */
 void mol3_hybrid_GEM(const argsInput_t *args_input,
     array_t *e_out, matrix_t *v_out, matrix_t *n_out,
