@@ -24,7 +24,9 @@ typedef enum model_type {
     MODEL_BAGMIT,
     MODEL_OBESTAT,
     MODEL_YUKAWA,
-    MODEL_HYBRID
+    MODEL_HYBRID,
+    MODEL_QMCSTAD,
+    MODEL_QMCMOD
 } model_type_t;
 
 extern const char *model_type_str[];
@@ -82,7 +84,9 @@ typedef enum param_type {
     PARAM_BAGMIT_CUSTOM,
     PARAM_OBESTAT_CUSTOM,
     PARAM_YUKAWA_MT13,
-    PARAM_YUKAWA_CUSTOM
+    PARAM_YUKAWA_CUSTOM,
+    PARAM_QMC_DEFAULT,
+    PARAM_QMC_CUSTOM
 } param_type_t;
 
 extern const char *param_type_str[];

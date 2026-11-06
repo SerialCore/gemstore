@@ -17,6 +17,7 @@
  * H = Σ m_i + Σ p_i²/(2m_i) + Σ_pairs (Vc + Vss s_i·s_j + Vt S12), Vls=0.
  * system.I is required: pair tij is a basis QN recoupled to total I;
  * pair iso_pi/iso_rho are ignored. t1,t2,t3 default to 1/2.
+ * π/ρ use c_i c_j Ti·Tj with c=2 on a doublet (τ) and c=1 on integer isospin.
  * Identical legs: same type and mass. Dirac is a fermion, VECTOR and
  * PSEUDOSCALAR are bosons. A Jacobi ρ-pair that is identical is kept
  * only when (−1)^{lρ+(2s−sij)+(2t−tij)} equals −1 (fermion) or +1

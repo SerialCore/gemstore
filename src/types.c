@@ -19,7 +19,9 @@ const char *model_type_str[] = {
     [MODEL_BAGMIT] = "BAGMIT",
     [MODEL_OBESTAT] = "OBESTAT",
     [MODEL_YUKAWA] = "YUKAWA",
-    [MODEL_HYBRID] = "HYBRID"
+    [MODEL_HYBRID] = "HYBRID",
+    [MODEL_QMCSTAD] = "QMCSTAD",
+    [MODEL_QMCMOD] = "QMCMOD"
 };
 
 const char *system_type_str[] = {
@@ -65,7 +67,9 @@ const char *param_type_str[] = {
     [PARAM_BAGMIT_CUSTOM] = "BAGMIT_CUSTOM",
     [PARAM_OBESTAT_CUSTOM] = "OBESTAT_CUSTOM",
     [PARAM_YUKAWA_MT13] = "YUKAWA_MT13",
-    [PARAM_YUKAWA_CUSTOM] = "YUKAWA_CUSTOM"
+    [PARAM_YUKAWA_CUSTOM] = "YUKAWA_CUSTOM",
+    [PARAM_QMC_DEFAULT] = "QMC_DEFAULT",
+    [PARAM_QMC_CUSTOM] = "QMC_CUSTOM"
 };
 
 const char *obe_leg_type_str[] = {

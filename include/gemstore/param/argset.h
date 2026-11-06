@@ -94,6 +94,33 @@ typedef struct argsBAGModel {
     double Z;               /* ZPE constant */
 } argsBAGModel_t;
 
+typedef struct argsQMCModel {
+    double mn;              /* mass of n quark */
+    double ms;              /* mass of s quark */
+    double mc;              /* mass of c quark */
+    double mb;              /* mass of b quark */
+    double B;               /* bag constant */
+    double Z;               /* ZPE constant */
+    double m_sigma;         /* mass of sigma meson */
+    double m_omega;         /* mass of omega meson */
+    double m_rho;           /* mass of rho meson */
+    double g_sigma;         /* coupling of sigma meson */
+    double g_omega;         /* coupling of omega meson */
+    double g_rho;           /* coupling of rho meson */
+    double lambda3;         /* scalar self-coupling; 0 if absent */
+    double g_sigma_B;       /* coupling of sigma meson in bag constant */
+    double delta;           /* exponent of bag constant */
+} argsQMCModel_t;
+
+typedef struct argsQMCModelDy {
+    model_type_t model;
+    double sigma;           /* scalar mean field, GeV */
+    double omega;           /* isoscalar vector mean field, GeV */
+    double rho3;            /* isovector vector mean field, GeV */
+    double B;               /* bag constant at this field, GeV^4 */
+    double mn_star;         /* in-medium light-quark mass, GeV */
+} argsQMCModelDy_t;
+
 typedef struct argsOBEModel {
     double lambda;          /* common monopole cutoff, GeV */
     double tensor_mass1;    /* M in f/(2M) on leg 1, not pole mass */
@@ -177,6 +204,10 @@ extern const argsNRModel_t argsNRScreen_meson;
 /* Default MIT bag model parameters */
 extern const argsBAGModel_t argsBAGMIT_default;
 
+/* Free-space MIT bag plus physical ω, ρ and m_σ = 0.550 GeV.
+ * Medium couplings are 0. QMCMOD cannot use this set. */
+extern const argsQMCModel_t argsQMC_default;
+
 extern const argsYKWModel_t argsYUKAWA_MT13;
 
 /* Get GI model parameters from input */
@@ -187,6 +218,10 @@ argsNRModel_t argsNRModel_from(const argsInput_t *input);
 
 /* Get MIT bag model parameters from input */
 argsBAGModel_t argsBAGModel_from(const argsInput_t *input);
+
+/* Get QMC parameters. QMCSTAD requires g_sigma_B = 0.
+ * QMCMOD requires g_sigma_B ≠ 0 and delta > 0. */
+argsQMCModel_t argsQMCModel_from(const argsInput_t *input);
 
 /* Full OBE args for compute. MOLECUL2 ignores p and uses param_file plus type1/2.
  * MOLECUL3 uses mol3_pairs[p] (p = 0,1,2 → pairs 12, 13, 23) and the two legs of that pair. */

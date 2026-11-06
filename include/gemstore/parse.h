@@ -13,20 +13,17 @@
 /* parse input file */
 void parse_input_file(const char *filename, argsInput_t *input);
 
-/* parse GISTRING parameters */
-void parse_param_GISTRING(const char *filename, argsGIModel_t *args_model);
+/* parse GI parameters. mu is optional and defaults to 0 (GISTRING). */
+void parse_param_GI(const char *filename, argsGIModel_t *args_model);
 
-/* parse GISCREEN parameters */
-void parse_param_GISCREEN(const char *filename, argsGIModel_t *args_model);
-
-/* parse NRSTRING parameters */
-void parse_param_NRSTRING(const char *filename, argsNRModel_t *args_model);
-
-/* parse NRSCREEN parameters */
-void parse_param_NRSCREEN(const char *filename, argsNRModel_t *args_model);
+/* parse NR parameters. mu is optional and defaults to 0 (NRSTRING). */
+void parse_param_NR(const char *filename, argsNRModel_t *args_model);
 
 /* parse MITBAG parameters */
-void parse_param_BAGMIT(const char *filename, argsBAGModel_t *args_model);
+void parse_param_BAG(const char *filename, argsBAGModel_t *args_model);
+
+/* parse QMC param file. QMCSTAD and QMCMOD share this schema. */
+void parse_param_QMC(const char *filename, argsQMCModel_t *args_model);
 
 /* parse OBESTAT param file: lambda, tensor_mass1/2, g_*, f_*.
  * Legs, cc, eta, iso_pi, iso_rho, m1/m2 stay in the system JSON. */

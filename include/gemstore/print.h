@@ -8,6 +8,7 @@
 #define GEMSTORE_PRINT
 
 #include <gemstore/input.h>
+#include <gemstore/model/qmcmodel.h>
 #include <gemstore/math/matrix.h>
 #include <gemstore/model/bagmodel.h>
 
@@ -41,5 +42,8 @@ void print_mol3_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, 
 
 /* Print one variational bag result per color-spin state. order is NULL without CMI. */
 void print_bag_spectra(const bag_mit_t *state, int nstate, const char *order);
+
+/* Print the QMC mean field and the nucleon-matter thermodynamics. */
+void print_qmc_matter(const qmc_matter_t *matter);
 
 #endif

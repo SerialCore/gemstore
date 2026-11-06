@@ -81,6 +81,8 @@ typedef struct argsInput {
     double rmin;            /* Gaussian parameter */
     double beta;            /* harmonic oscillator parameter */
     double omega;           /* complex-range Gaussian parameter */
+    double rho_b;           /* baryon density, fm^{-3}; BAG with QMCSTAD or QMCMOD */
+    double temp;            /* temperature, GeV; BAG with QMCSTAD or QMCMOD */
     int ncolor;             /* number of CMI color channels */
     int nspin;              /* number of CMI spin channels */
     int color_id[CMI_COLOR_MAX];

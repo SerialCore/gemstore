@@ -6,6 +6,7 @@
 
 #include <gemstore/model/compute.h>
 #include <gemstore/model/bagmodel.h>
+#include <gemstore/model/qmcmodel.h>
 #include <gemstore/model/cmeson.h>
 #include <gemstore/model/cbaryon.h>
 #include <gemstore/model/cmol2.h>
@@ -27,15 +28,25 @@
 
 void compute_spectra_bag(const argsInput_t *input)
 {
-    argsBAGModel_t param;
+    argsBAGModel_t bag;
+    qmc_matter_t matter;
+    const qmc_matter_t *medium = NULL;
     bag_mit_t state[CMI_COLOR_MAX * CMI_SPIN_MAX];
     char order[7] = {0};
     int nstate = 0;
 
-    param = argsBAGModel_from(input);
-    bag_compute(input, &param, state, &nstate, order);
+    if (input->model == MODEL_QMCSTAD || input->model == MODEL_QMCMOD) {
+        argsQMCModel_t param = argsQMCModel_from(input);
+
+        qmc_solve(input, &param, &matter, &bag);
+        medium = &matter;
+    }
+    else bag = argsBAGModel_from(input);
+
+    bag_compute(input, &bag, state, &nstate, order);
+    if (medium != NULL) print_qmc_matter(medium);
     print_bag_spectra(state, nstate, order[0] ? order : NULL);
-    write_bag_spectra(input, state, nstate, order[0] ? order : NULL);
+    write_bag_spectra(input, state, nstate, order[0] ? order : NULL, medium);
 }
 
 void compute_spectra_meson(const argsInput_t *input)

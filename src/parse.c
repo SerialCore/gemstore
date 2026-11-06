@@ -180,6 +180,8 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
     else if (strcmp(type, "BAGMIT") == 0) input->model = MODEL_BAGMIT;
     else if (strcmp(type, "OBESTAT") == 0) input->model = MODEL_OBESTAT;
     else if (strcmp(type, "YUKAWA") == 0) input->model = MODEL_YUKAWA;
+    else if (strcmp(type, "QMCSTAD") == 0) input->model = MODEL_QMCSTAD;
+    else if (strcmp(type, "QMCMOD") == 0) input->model = MODEL_QMCMOD;
     else {
         fprintf(stderr, "Unknown model type: %s\n", type);
         exit(1);
@@ -248,11 +250,19 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
             exit(1);
         }
     }
+    else if (input->model == MODEL_QMCSTAD || input->model == MODEL_QMCMOD) {
+        if (strcmp(param, "QMC_DEFAULT") == 0) input->param = PARAM_QMC_DEFAULT;
+        else if (strcmp(param, "QMC_CUSTOM") == 0) input->param = PARAM_QMC_CUSTOM;
+        else {
+            fprintf(stderr, "Unknown QMC parameter set: %s\n", param);
+            exit(1);
+        }
+    }
 
     if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
         || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
         || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM
-        || input->param == PARAM_YUKAWA_CUSTOM) {
+        || input->param == PARAM_YUKAWA_CUSTOM || input->param == PARAM_QMC_CUSTOM) {
         const char *file = read_string_item(model_json, "file")->valuestring;
         if (strlen(file) > 0) {
             strncpy(input->param_file, file, 256);
@@ -291,6 +301,14 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
         input->f4 = (int)read_number_or(system_json, "f4", 0.0);
         input->f5 = (int)read_number_or(system_json, "f5", 0.0);
         input->f6 = (int)read_number_or(system_json, "f6", 0.0);
+        if (input->model == MODEL_QMCSTAD || input->model == MODEL_QMCMOD) {
+            input->rho_b = read_number_item(system_json, "rho_b")->valuedouble;
+            input->temp = read_number_item(system_json, "temp")->valuedouble;
+            if (input->rho_b < 0.0 || input->temp < 0.0) {
+                fprintf(stderr, "QMC rho_b and temp must be non-negative\n");
+                exit(1);
+            }
+        }
     }
     else if (input->system == SYSTEM_MESON) {
         input->f1 = read_number_item(system_json, "f1")->valueint;
@@ -515,7 +533,7 @@ void parse_input_file(const char *filename, argsInput_t *input)
     free(json_text);
 }
 
-void parse_param_GISTRING(const char *filename, argsGIModel_t *args_model)
+void parse_param_GI(const char *filename, argsGIModel_t *args_model)
 {
     char *json_text = read_input_file(filename);
     const char *parse_error = NULL;
@@ -524,7 +542,7 @@ void parse_param_GISTRING(const char *filename, argsGIModel_t *args_model)
 
     if (!root) {
         parse_error = cJSON_GetErrorPtr();
-        fprintf(stderr, "Invalid GISTRING parameter JSON in %s", filename);
+        fprintf(stderr, "Invalid GI parameter JSON in %s", filename);
         if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
         fprintf(stderr, "\n");
         free(json_text);
@@ -537,42 +555,7 @@ void parse_param_GISTRING(const char *filename, argsGIModel_t *args_model)
     args_model->mc = read_number_item(param_json, "mc")->valuedouble;
     args_model->mb = read_number_item(param_json, "mb")->valuedouble;
     args_model->b = read_number_item(param_json, "b")->valuedouble;
-    args_model->c = read_number_item(param_json, "c")->valuedouble;
-    args_model->sigma_0 = read_number_item(param_json, "sigma_0")->valuedouble;
-    args_model->s = read_number_item(param_json, "s")->valuedouble;
-    args_model->epsilon_cont = read_number_item(param_json, "epsilon_cont")->valuedouble;
-    args_model->epsilon_sov = read_number_item(param_json, "epsilon_sov")->valuedouble;
-    args_model->epsilon_sos = read_number_item(param_json, "epsilon_sos")->valuedouble;
-    args_model->epsilon_tens = read_number_item(param_json, "epsilon_tens")->valuedouble;
-    args_model->mu = 0.0;
-
-    cJSON_Delete(root);
-    free(json_text);
-}
-
-void parse_param_GISCREEN(const char *filename, argsGIModel_t *args_model)
-{
-    char *json_text = read_input_file(filename);
-    const char *parse_error = NULL;
-    cJSON *root = cJSON_Parse(json_text);
-    cJSON *param_json;
-
-    if (!root) {
-        parse_error = cJSON_GetErrorPtr();
-        fprintf(stderr, "Invalid GISCREEN parameter JSON in %s", filename);
-        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
-        fprintf(stderr, "\n");
-        free(json_text);
-        exit(1);
-    }
-
-    param_json = read_object_item(root, "param");
-    args_model->mn = read_number_item(param_json, "mn")->valuedouble;
-    args_model->ms = read_number_item(param_json, "ms")->valuedouble;
-    args_model->mc = read_number_item(param_json, "mc")->valuedouble;
-    args_model->mb = read_number_item(param_json, "mb")->valuedouble;
-    args_model->b = read_number_item(param_json, "b")->valuedouble;
-    args_model->mu = read_number_item(param_json, "mu")->valuedouble;
+    args_model->mu = read_number_or(param_json, "mu", 0.0);
     args_model->c = read_number_item(param_json, "c")->valuedouble;
     args_model->sigma_0 = read_number_item(param_json, "sigma_0")->valuedouble;
     args_model->s = read_number_item(param_json, "s")->valuedouble;
@@ -585,7 +568,7 @@ void parse_param_GISCREEN(const char *filename, argsGIModel_t *args_model)
     free(json_text);
 }
 
-void parse_param_NRSTRING(const char *filename, argsNRModel_t *args_model)
+void parse_param_NR(const char *filename, argsNRModel_t *args_model)
 {
     char *json_text = read_input_file(filename);
     const char *parse_error = NULL;
@@ -594,7 +577,7 @@ void parse_param_NRSTRING(const char *filename, argsNRModel_t *args_model)
 
     if (!root) {
         parse_error = cJSON_GetErrorPtr();
-        fprintf(stderr, "Invalid NRSTRING parameter JSON in %s", filename);
+        fprintf(stderr, "Invalid NR parameter JSON in %s", filename);
         if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
         fprintf(stderr, "\n");
         free(json_text);
@@ -607,38 +590,7 @@ void parse_param_NRSTRING(const char *filename, argsNRModel_t *args_model)
     args_model->mc = read_number_item(param_json, "mc")->valuedouble;
     args_model->mb = read_number_item(param_json, "mb")->valuedouble;
     args_model->b = read_number_item(param_json, "b")->valuedouble;
-    args_model->c = read_number_item(param_json, "c")->valuedouble;
-    args_model->alpha_s = read_number_item(param_json, "alpha_s")->valuedouble;
-    args_model->sigma = read_number_item(param_json, "sigma")->valuedouble;
-    args_model->mu = 0.0;
-
-    cJSON_Delete(root);
-    free(json_text);
-}
-
-void parse_param_NRSCREEN(const char *filename, argsNRModel_t *args_model)
-{
-    char *json_text = read_input_file(filename);
-    const char *parse_error = NULL;
-    cJSON *root = cJSON_Parse(json_text);
-    cJSON *param_json;
-
-    if (!root) {
-        parse_error = cJSON_GetErrorPtr();
-        fprintf(stderr, "Invalid NRSCREEN parameter JSON in %s", filename);
-        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
-        fprintf(stderr, "\n");
-        free(json_text);
-        exit(1);
-    }
-
-    param_json = read_object_item(root, "param");
-    args_model->mn = read_number_item(param_json, "mn")->valuedouble;
-    args_model->ms = read_number_item(param_json, "ms")->valuedouble;
-    args_model->mc = read_number_item(param_json, "mc")->valuedouble;
-    args_model->mb = read_number_item(param_json, "mb")->valuedouble;
-    args_model->b = read_number_item(param_json, "b")->valuedouble;
-    args_model->mu = read_number_item(param_json, "mu")->valuedouble;
+    args_model->mu = read_number_or(param_json, "mu", 0.0);
     args_model->c = read_number_item(param_json, "c")->valuedouble;
     args_model->alpha_s = read_number_item(param_json, "alpha_s")->valuedouble;
     args_model->sigma = read_number_item(param_json, "sigma")->valuedouble;
@@ -647,7 +599,7 @@ void parse_param_NRSCREEN(const char *filename, argsNRModel_t *args_model)
     free(json_text);
 }
 
-void parse_param_BAGMIT(const char *filename, argsBAGModel_t *args_model)
+void parse_param_BAG(const char *filename, argsBAGModel_t *args_model)
 {
     char *json_text = read_input_file(filename);
     const char *parse_error = NULL;
@@ -675,6 +627,43 @@ void parse_param_BAGMIT(const char *filename, argsBAGModel_t *args_model)
     args_model->Bbb = read_number_item(param_json, "Bbb")->valuedouble;
     args_model->B = read_number_item(param_json, "B")->valuedouble;
     args_model->Z = read_number_item(param_json, "Z")->valuedouble;
+
+    cJSON_Delete(root);
+    free(json_text);
+}
+
+void parse_param_QMC(const char *filename, argsQMCModel_t *args_model)
+{
+    char *json_text = read_input_file(filename);
+    const char *parse_error = NULL;
+    cJSON *root = cJSON_Parse(json_text);
+    cJSON *param_json;
+
+    if (!root) {
+        parse_error = cJSON_GetErrorPtr();
+        fprintf(stderr, "Invalid QMC parameter JSON in %s", filename);
+        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
+        fprintf(stderr, "\n");
+        free(json_text);
+        exit(1);
+    }
+
+    param_json = read_object_item(root, "param");
+    args_model->mn = read_number_item(param_json, "mn")->valuedouble;
+    args_model->ms = read_number_item(param_json, "ms")->valuedouble;
+    args_model->mc = read_number_item(param_json, "mc")->valuedouble;
+    args_model->mb = read_number_item(param_json, "mb")->valuedouble;
+    args_model->B = read_number_item(param_json, "B")->valuedouble;
+    args_model->Z = read_number_item(param_json, "Z")->valuedouble;
+    args_model->m_sigma = read_number_item(param_json, "m_sigma")->valuedouble;
+    args_model->m_omega = read_number_item(param_json, "m_omega")->valuedouble;
+    args_model->m_rho = read_number_item(param_json, "m_rho")->valuedouble;
+    args_model->g_sigma = read_number_item(param_json, "g_sigma")->valuedouble;
+    args_model->g_omega = read_number_item(param_json, "g_omega")->valuedouble;
+    args_model->g_rho = read_number_item(param_json, "g_rho")->valuedouble;
+    args_model->lambda3 = read_number_or(param_json, "lambda3", 0.0);
+    args_model->g_sigma_B = read_number_item(param_json, "g_sigma_B")->valuedouble;
+    args_model->delta = read_number_item(param_json, "delta")->valuedouble;
 
     cJSON_Delete(root);
     free(json_text);

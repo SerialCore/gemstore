@@ -161,6 +161,24 @@ const argsNRModel_t argsNRScreen_meson = {
     .sigma = 1.842
 };
 
+const argsQMCModel_t argsQMC_default = {
+    .mn = 0.000,
+    .ms = 0.279,
+    .mc = 1.641,
+    .mb = 5.093,
+    .B = 0.000442051,
+    .Z = 1.83,
+    .m_sigma = 0.550,
+    .m_omega = 0.7825,
+    .m_rho = 0.7753,
+    .g_sigma = 0.0,
+    .g_omega = 0.0,
+    .g_rho = 0.0,
+    .lambda3 = 0.0,
+    .g_sigma_B = 0.0,
+    .delta = 0.0
+};
+
 const argsBAGModel_t argsBAGMIT_default = {
     .mn = 0.000,
     .ms = 0.279,
@@ -203,11 +221,8 @@ argsGIModel_t argsGIModel_from(const argsInput_t *input)
     else if (input->param == PARAM_GISCREEN_BSBAR) args_model = argsGIScreen_bsbar;
     else if (input->param == PARAM_GISCREEN_CCBAR) args_model = argsGIScreen_ccbar;
     else if (input->param == PARAM_GISCREEN_CSBAR) args_model = argsGIScreen_csbar;
-    else if (input->param == PARAM_GISTRING_CUSTOM) {
-        parse_param_GISTRING(input->param_file, &args_model);
-    }
-    else if (input->param == PARAM_GISCREEN_CUSTOM) {
-        parse_param_GISCREEN(input->param_file, &args_model);
+    else if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM) {
+        parse_param_GI(input->param_file, &args_model);
     }
 
     return args_model;
@@ -219,11 +234,8 @@ argsNRModel_t argsNRModel_from(const argsInput_t *input)
 
     if (input->param == PARAM_NRSTRING_MESON) args_model = argsNRString_meson;
     else if (input->param == PARAM_NRSCREEN_MESON) args_model = argsNRScreen_meson;
-    else if (input->param == PARAM_NRSTRING_CUSTOM) {
-        parse_param_NRSTRING(input->param_file, &args_model);
-    }
-    else if (input->param == PARAM_NRSCREEN_CUSTOM) {
-        parse_param_NRSCREEN(input->param_file, &args_model);
+    else if (input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM) {
+        parse_param_NR(input->param_file, &args_model);
     }
 
     return args_model;
@@ -235,7 +247,19 @@ argsBAGModel_t argsBAGModel_from(const argsInput_t *input)
 
     if (input->param == PARAM_BAGMIT_DEFAULT) args_model = argsBAGMIT_default;
     else if (input->param == PARAM_BAGMIT_CUSTOM) {
-        parse_param_BAGMIT(input->param_file, &args_model);
+        parse_param_BAG(input->param_file, &args_model);
+    }
+
+    return args_model;
+}
+
+argsQMCModel_t argsQMCModel_from(const argsInput_t *input)
+{
+    argsQMCModel_t args_model = {0};
+
+    if (input->param == PARAM_QMC_DEFAULT) args_model = argsQMC_default;
+    else if (input->param == PARAM_QMC_CUSTOM) {
+        parse_param_QMC(input->param_file, &args_model);
     }
 
     return args_model;

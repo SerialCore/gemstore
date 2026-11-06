@@ -298,7 +298,7 @@ int write_mol3_spectra(const argsInput_t *input, const array_t *mass, const matr
     return state;
 }
 
-int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nstate, const char *order)
+int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nstate, const char *order, const qmc_matter_t *matter)
 {
     if (input == NULL || state == NULL || nstate < 1) {
         fprintf(stderr, "Error: Invalid input parameters to write_bag_spectra()\n");
@@ -385,6 +385,21 @@ int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nsta
         }
         cJSON_AddItemToObject(obj, "eigenvector", evec);
         cJSON_AddItemToArray(states, obj);
+    }
+
+    if (matter != NULL) {
+        cJSON_AddNumberToObject(root, "sigma", matter->field.sigma);
+        cJSON_AddNumberToObject(root, "omega", matter->field.omega);
+        cJSON_AddNumberToObject(root, "B", matter->field.B);
+        cJSON_AddNumberToObject(root, "mn_star", matter->field.mn_star);
+        cJSON_AddNumberToObject(root, "m_free", matter->m_free);
+        cJSON_AddNumberToObject(root, "m_nucleon", matter->m_nucleon);
+        cJSON_AddNumberToObject(root, "R_nucleon", matter->R_nucleon);
+        cJSON_AddNumberToObject(root, "rho_s", matter->rho_s);
+        cJSON_AddNumberToObject(root, "mu", matter->mu);
+        cJSON_AddNumberToObject(root, "eps", matter->eps);
+        cJSON_AddNumberToObject(root, "press", matter->press);
+        cJSON_AddNumberToObject(root, "ebind", matter->ebind);
     }
 
     json_text = cJSON_Print(root);

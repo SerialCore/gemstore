@@ -10,6 +10,7 @@
 #include <gemstore/input.h>
 #include <gemstore/math/matrix.h>
 #include <gemstore/model/bagmodel.h>
+#include <gemstore/model/qmcmodel.h>
 #include <gemstore/param/argset.h>
 
 /* Write {len} of meson spectra to a file, including mass, RMS radius, and eigenvectors */
@@ -23,8 +24,8 @@ int write_baryon_spectra(const argsInput_t *input, const array_t *mass, const ma
 int write_mol3_spectra(const argsInput_t *input, const array_t *mass, const matrix_t *vector,
     const array_t *rms12, const array_t *rms13, const array_t *rms23, double threshold, int len);
 
-/* Write bag spectra: mass, R, x, and color-spin eigenvector of each state. */
-int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nstate, const char *order);
+/* Write bag spectra. matter is NULL for a vacuum bag and set for QMC. */
+int write_bag_spectra(const argsInput_t *input, const bag_mit_t *state, int nstate, const char *order, const qmc_matter_t *matter);
 
 /* Write meson wavefunctions to a file. overlap is the solver N. */
 int write_meson_wfn(const argsInput_t *input, const matrix_t *vector, const matrix_t *overlap);

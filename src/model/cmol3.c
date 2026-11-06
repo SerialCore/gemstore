@@ -20,6 +20,8 @@
 #include <gemstore/basis/channel.h>
 #include <gemstore/basis/orbit.h>
 
+#include <math.h>
+
 #include <gemstore/math/kinemtc.h>
 #include <gemstore/math/spinang.h>
 #include <gemstore/math/ckdk.h>
@@ -180,9 +182,19 @@ static double mol3_inte_v(double b11, int n, basis_3b qf, basis_3b qi, void *ctx
 
 /* ---------- isospin recoupling ---------- */
 
+/* Isovector factor at the vertex: a doublet uses τ = 2T, an integer isospin
+ * (Σc is t=1) uses the generator T. Two doublets give τ1·τ2 (−3 or +1).
+ * A doublet–triplet pair gives T·τ (−2 for I=1/2, +1 for I=3/2). */
+static double mol3_iso_vertex(double t)
+{
+    return (fabs(t - 0.5) < 1e-8) ? 2.0 : 1.0;
+}
+
 static double mol3_tau_dot(double ti, double tj, double tij)
 {
-    return 2.0 * tij * (tij + 1.0) - 2.0 * ti * (ti + 1.0) - 2.0 * tj * (tj + 1.0);
+    double tt = tij * (tij + 1.0) - ti * (ti + 1.0) - tj * (tj + 1.0);
+
+    return 0.5 * mol3_iso_vertex(ti) * mol3_iso_vertex(tj) * tt;
 }
 
 static double mol3_iso_scheme_amp(double t1, double t2, double t3, int c,

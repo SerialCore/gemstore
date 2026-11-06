@@ -107,7 +107,7 @@ void print_input_parameters(const argsInput_t *input)
         if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
             || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
             || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM
-            || input->param == PARAM_YUKAWA_CUSTOM) {
+            || input->param == PARAM_YUKAWA_CUSTOM || input->param == PARAM_QMC_CUSTOM) {
             printf("  Parameter File:       %-50s\n", input->param_file);
         }
     }
@@ -161,6 +161,10 @@ void print_input_parameters(const argsInput_t *input)
         printf("  s quarks (ns):        %-50d\n", input->ns);
         printf("  c quarks (nc):        %-50d\n", input->nc);
         printf("  b quarks (nb):        %-50d\n", input->nb);
+        if (input->model == MODEL_QMCSTAD || input->model == MODEL_QMCMOD) {
+            printf("  Baryon density:       %-46.6f fm^-3\n", input->rho_b);
+            printf("  Temperature:          %-46.6f GeV\n", input->temp);
+        }
     }
     else if (input->system == SYSTEM_MOLECUL2) {
         printf("  Leg 1 type:           %-50s\n", obe_leg_type_str[input->type1]);
@@ -293,6 +297,32 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Bag Parameters:\n");
         printf("    Bag Constant (B):        %-44.6e GeV^4\n", args_model.B);
         printf("    Zero Point (Z):          %-46.6f\n", args_model.Z);
+        printf("\n");
+    }
+    else if (input->model == MODEL_QMCSTAD || input->model == MODEL_QMCMOD) {
+        argsQMCModel_t args_model = argsQMCModel_from(input);
+        printf("  Quark Masses:\n");
+        printf("    Light Quark (n)   (mn):  %-46.6f GeV\n", args_model.mn);
+        printf("    Strange Quark (s) (ms):  %-46.6f GeV\n", args_model.ms);
+        printf("    Charm Quark (c)   (mc):  %-46.6f GeV\n", args_model.mc);
+        printf("    Bottom Quark (b)  (mb):  %-46.6f GeV\n", args_model.mb);
+        printf("\n");
+
+        printf("  Bag Parameters:\n");
+        printf("    Bag Constant (B0):      %-44.6e GeV^4\n", args_model.B);
+        printf("    Zero Point (Z):          %-46.6f\n", args_model.Z);
+        printf("    g_sigma_B:               %-46.6f\n", args_model.g_sigma_B);
+        printf("    delta:                   %-46.6f\n", args_model.delta);
+        printf("\n");
+
+        printf("  Meson Mean Field:\n");
+        printf("    m_sigma:                 %-46.6f GeV\n", args_model.m_sigma);
+        printf("    m_omega:                 %-46.6f GeV\n", args_model.m_omega);
+        printf("    m_rho:                   %-46.6f GeV\n", args_model.m_rho);
+        printf("    g_sigma:                 %-46.6f\n", args_model.g_sigma);
+        printf("    g_omega:                 %-46.6f\n", args_model.g_omega);
+        printf("    g_rho:                   %-46.6f\n", args_model.g_rho);
+        printf("    lambda3:                 %-46.6f\n", args_model.lambda3);
         printf("\n");
     }
     else if (input->model == MODEL_OBESTAT) {
@@ -573,6 +603,30 @@ void print_mol3_spectra(const array_t *eigenvalue, const matrix_t *eigenvector, 
     printf("  Binding range:       %.6f - %.6f GeV\n",
         min_mass - threshold, max_mass - threshold);
     printf("  Total c^T N c:       %.10f\n", total_norm);
+    printf("\n");
+}
+
+void print_qmc_matter(const qmc_matter_t *matter)
+{
+    if (matter == NULL) return;
+
+    printf("\n");
+    printf("================================================================================\n");
+    printf("                             QMC MATTER SUMMARY                               \n");
+    printf("================================================================================\n");
+    printf("\n");
+    printf("  sigma:               %-46.6f GeV\n", matter->field.sigma);
+    printf("  omega:               %-46.6f GeV\n", matter->field.omega);
+    printf("  B:                   %-44.6e GeV^4\n", matter->field.B);
+    printf("  m_n*:                %-46.6f GeV\n", matter->field.mn_star);
+    printf("  Free nucleon:        %-46.6f GeV\n", matter->m_free);
+    printf("  Nucleon mass:        %-46.6f GeV\n", matter->m_nucleon);
+    printf("  Nucleon radius:      %-46.6f GeV^-1\n", matter->R_nucleon);
+    printf("  Scalar density:      %-46.6e GeV^3\n", matter->rho_s);
+    printf("  Chemical potential:  %-46.6f GeV\n", matter->mu);
+    printf("  Energy density:      %-46.6e GeV^4\n", matter->eps);
+    printf("  Pressure:            %-46.6e GeV^4\n", matter->press);
+    printf("  Binding energy:      %-46.6f GeV\n", matter->ebind);
     printf("\n");
 }
 
