@@ -178,10 +178,11 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
     else if (strcmp(type, "NRSTRING") == 0) input->model = MODEL_NRSTRING;
     else if (strcmp(type, "NRSCREEN") == 0) input->model = MODEL_NRSCREEN;
     else if (strcmp(type, "BAGMIT") == 0) input->model = MODEL_BAGMIT;
-    else if (strcmp(type, "OBESTAT") == 0) input->model = MODEL_OBESTAT;
-    else if (strcmp(type, "YUKAWA") == 0) input->model = MODEL_YUKAWA;
     else if (strcmp(type, "QMCSTAD") == 0) input->model = MODEL_QMCSTAD;
     else if (strcmp(type, "QMCMOD") == 0) input->model = MODEL_QMCMOD;
+    else if (strcmp(type, "OBESTAT") == 0) input->model = MODEL_OBESTAT;
+    else if (strcmp(type, "YUKAWA") == 0) input->model = MODEL_YUKAWA;
+    else if (strcmp(type, "EFTCONT") == 0) input->model = MODEL_EFTCONT;
     else {
         fprintf(stderr, "Unknown model type: %s\n", type);
         exit(1);
@@ -235,6 +236,14 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
             exit(1);
         }
     }
+    else if (input->model == MODEL_QMCSTAD || input->model == MODEL_QMCMOD) {
+        if (strcmp(param, "QMC_DEFAULT") == 0) input->param = PARAM_QMC_DEFAULT;
+        else if (strcmp(param, "QMC_CUSTOM") == 0) input->param = PARAM_QMC_CUSTOM;
+        else {
+            fprintf(stderr, "Unknown QMC parameter set: %s\n", param);
+            exit(1);
+        }
+    }
     else if (input->model == MODEL_OBESTAT) {
         if (strcmp(param, "OBESTAT_CUSTOM") == 0) input->param = PARAM_OBESTAT_CUSTOM;
         else {
@@ -250,19 +259,19 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
             exit(1);
         }
     }
-    else if (input->model == MODEL_QMCSTAD || input->model == MODEL_QMCMOD) {
-        if (strcmp(param, "QMC_DEFAULT") == 0) input->param = PARAM_QMC_DEFAULT;
-        else if (strcmp(param, "QMC_CUSTOM") == 0) input->param = PARAM_QMC_CUSTOM;
+    else if (input->model == MODEL_EFTCONT) {
+        if (strcmp(param, "EFTCONT_CUSTOM") == 0) input->param = PARAM_EFTCONT_CUSTOM;
         else {
-            fprintf(stderr, "Unknown QMC parameter set: %s\n", param);
+            fprintf(stderr, "Unknown EFTCONT parameter set: %s\n", param);
             exit(1);
         }
     }
 
     if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
         || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
-        || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM
-        || input->param == PARAM_YUKAWA_CUSTOM || input->param == PARAM_QMC_CUSTOM) {
+        || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_QMC_CUSTOM 
+        || input->param == PARAM_OBESTAT_CUSTOM
+        || input->param == PARAM_YUKAWA_CUSTOM || input->param == PARAM_EFTCONT_CUSTOM) {
         const char *file = read_string_item(model_json, "file")->valuestring;
         if (strlen(file) > 0) {
             strncpy(input->param_file, file, 256);
@@ -337,6 +346,8 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
         input->eta = read_number_or(system_json, "eta", 0.0);
         input->iso_pi = read_number_item(system_json, "iso_pi")->valuedouble;
         input->iso_rho = read_number_item(system_json, "iso_rho")->valuedouble;
+        input->iso_t1 = read_number_or(system_json, "t1", 0.5);
+        input->iso_t2 = read_number_or(system_json, "t2", 0.5);
         input->S = read_number_item(system_json, "S")->valuedouble;
         input->L = read_number_item(system_json, "L")->valuedouble;
         input->J = read_number_item(system_json, "J")->valuedouble;
@@ -752,6 +763,36 @@ void parse_param_YUKAWA(const char *filename, argsYKWModel_t *args_model)
             free(json_text);
             exit(1);
         }
+    }
+
+    cJSON_Delete(root);
+    free(json_text);
+}
+
+void parse_param_EFTCONT(const char *filename, argsEFTModel_t *args_model)
+{
+    char *json_text = read_input_file(filename);
+    const char *parse_error = NULL;
+    cJSON *root = cJSON_Parse(json_text);
+    cJSON *param_json;
+
+    if (!root) {
+        parse_error = cJSON_GetErrorPtr();
+        fprintf(stderr, "Invalid EFTCONT parameter JSON in %s", filename);
+        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
+        fprintf(stderr, "\n");
+        free(json_text);
+        exit(1);
+    }
+
+    param_json = read_object_item(root, "param");
+    args_model->Ca = read_number_item(param_json, "Ca")->valuedouble;
+    args_model->Rc = read_number_item(param_json, "Rc")->valuedouble;
+    if (args_model->Rc <= 0.0) {
+        fprintf(stderr, "EFTCONT Rc must be positive in %s\n", filename);
+        cJSON_Delete(root);
+        free(json_text);
+        exit(1);
     }
 
     cJSON_Delete(root);

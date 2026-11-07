@@ -61,6 +61,7 @@
 | **QMC** | MIT bag in symmetric nuclear matter. `QMCSTAD` keeps \(B\) fixed; `QMCMOD` lets \(B\) fall with \(\sigma\) | In-medium bag spectra at \(\rho_B\) and \(T\) |
 | **OBE-static** | Elastic static \(\pi\sigma\rho\omega\) (\(V_C+V_{ss}+V_t\), \(V_{ls}=0\)) | Two- and three-body hadron molecules |
 | **Yukawa** | Local Malfliet–Tjon Yukawa, central plus Bartlett \(P_\sigma\) | NN and NNN binding (`YUKAWA_MT13`) |
+| **EFT contact** | \(V=-C_a\exp[-(r/R_c)^2]\), central only | Yuan–Liu \(DD\) and \(\Lambda_c\Lambda_c\) (`EFTCONT_CUSTOM`) |
 
 ### Calculation Types
 
@@ -72,8 +73,8 @@
 - **MESON**: Quark–antiquark (\(q\bar q\))
 - **BARYON**: Three-quark (\(qqq\))
 - **BAG**: MIT bag (`BAGMIT`) or in-medium QMC (`QMCSTAD`, `QMCMOD`); flavor counts `nn`, `ns`, `nc`, `nb`
-- **MOLECUL2**: Two-body molecule (hadron–hadron OBE or Yukawa on GEM)
-- **MOLECUL3**: Three-body molecule (HYBRID pair OBESTAT or YUKAWA on GEM; example `test/Spectra-Molecule3/`)
+- **MOLECUL2**: Two-body molecule (hadron–hadron OBE, Yukawa, or EFT contact on GEM)
+- **MOLECUL3**: Three-body molecule (HYBRID pair OBESTAT, YUKAWA, or EFTCONT on GEM; example `test/Spectra-Molecule3/`)
 
 ### Basis Set Options
 
@@ -230,6 +231,7 @@ Run it:
 - `QMCMOD` — modified QMC on `BAG`. \(B\) depends on \(\sigma\)
 - `OBESTAT` — static elastic OBE (`system.type` `MOLECUL2`, or a HYBRID pair)
 - `YUKAWA` — local Yukawa (`MOLECUL2`, or a HYBRID pair)
+- `EFTCONT` — leading-order EFT contact (`MOLECUL2`, or a HYBRID pair)
 - `HYBRID` — three pair models for `MOLECUL3`
 
 **Predefined Parameter Sets:**
@@ -250,6 +252,7 @@ Run it:
 - `OBESTAT_CUSTOM` - Static OBE couplings from file (requires `"file"`)
 - `YUKAWA_MT13` - Built-in Malfliet–Tjon I/III (no file)
 - `YUKAWA_CUSTOM` - Yukawa terms from file (requires `"file"`)
+- `EFTCONT_CUSTOM` - EFT contact \(C_a\) (MeV) and \(R_c\) (fm) from file (requires `"file"`)
 
 #### System Configuration
 
@@ -702,6 +705,18 @@ v(r) = (V / r) exp(-μ r) (W + B P_σ),   P_σ = (1 + σ1·σ2) / 2
 with `V` in MeV·fm and `μ` in fm⁻¹. `YUKAWA_MT13` is Malfliet–Tjon I/III. Nucleon masses in the sample inputs are 0.938942 GeV so that \(\hbar^2/m_N = 41.47\) MeV·fm². Samples live in `test/Spectra-Yukawa/`. The deuteron (`nmax` 20) gives −2.231 MeV. The triton keeps the local potential in every partial wave. With \(r_{\min}=0.1\) fm and \(r_{\max}=10\) fm, the ground state goes from −5.29 MeV at `nmax` 4 to −8.67 MeV at `nmax` 7 and levels off at −8.88 MeV by `nmax` 10 (the s-wave Faddeev benchmark is −8.54 MeV). `iso_pi` / `iso_rho` are ignored. Two-body entry point is `mol2_yukawa_GEM`; three-body pairs are selected inside `mol3_load_pairs`. Identical Dirac fermions (`sym12` −1) use the sum of Jacobi charts c=1, 2 and 3.
 
 **Implementation**: `src/model/ykwmodel.c`, `src/model/cmol2.c`, `src/model/cmol3.c`
+
+### 5c. EFT contact
+
+`MODEL_EFTCONT` is the leading-order coordinate-space contact of arXiv:2610.28021, Eq. (40):
+
+```
+V(r) = -Ca exp(-(r/Rc)^2)
+```
+
+`Ca` is in MeV and `Rc` in fm. The normalized Gaussian that replaces \(\delta^{(3)}(\mathbf{r})\) is already absorbed into `Ca`, so \(C_a<0\) is a repulsive well. There is no one-pion exchange and no spin operator, so \(L\) and \(L+2\) do not mix. One parameter file is one projected channel. Samples in `test/Spectra-EFTCONT/` use Yuan–Liu Table I: \(DD\) has \(C_a=-14.652\) MeV, \(R_c=1.0\) fm; \(\Lambda_c\Lambda_c\) has \(C_a=-201.259\) MeV, \(R_c=0.4\) fm. Both are repulsive, so the GEM spectrum stays above threshold. Scattering length and effective range are not computed on this path. Optional `t1`,`t2` default to \(1/2\); identical \(I=0\) baryons set them to `0`.
+
+**Implementation**: `src/model/eftmodel.c`, `src/model/cmol2.c`, `src/model/cmol3.c`
 
 ### 6. Spectral Data Post-Processing
 

@@ -32,4 +32,7 @@ void parse_param_OBESTAT(const char *filename, argsOBEModel_t *args_model);
 /* parse YUKAWA param file: param.terms[] of V (MeV·fm), mu (fm^{-1}), wigner, bartlett. */
 void parse_param_YUKAWA(const char *filename, argsYKWModel_t *args_model);
 
+/* parse EFTCONT param file: param.Ca (MeV), param.Rc (fm). */
+void parse_param_EFTCONT(const char *filename, argsEFTModel_t *args_model);
+
 #endif

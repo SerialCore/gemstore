@@ -48,6 +48,9 @@ int write_mol2_obe_pot(const argsInput_t *input, const argsOBEModel_t *args_mode
 /* Write Yukawa Vc, Vss versus r in fm. Vt is zero. V = Vc + Vss. */
 int write_mol2_ykw_pot(const argsInput_t *input, const argsYKWModel_t *args_model);
 
+/* Write the EFT contact. Vss and Vt are zero. V = -Ca exp(-(r/Rc)^2). */
+int write_mol2_eft_pot(const argsInput_t *input, const argsEFTModel_t *args_model);
+
 /* Write three pair OBE curves into {project}.pot.dat. */
 int write_mol3_pot(const argsInput_t *input);
 

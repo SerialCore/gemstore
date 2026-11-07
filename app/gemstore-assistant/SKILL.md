@@ -69,7 +69,8 @@ Baryon `SPECTRA` accepts `GISTRING` and `GISCREEN` with basis `GEM`. `NRSTRING` 
 - `QMCMOD` — modified QMC on `BAG`. \(B/B_0=(1-4 g_\sigma^B\sigma/(\delta M_N))^\delta\). Preset `QMC_CUSTOM` only
 - `OBESTAT` — static elastic one-boson exchange, for `system.type` `MOLECUL2`, or as a nested pair model under `HYBRID`
 - `YUKAWA` — local Yukawa (Malfliet–Tjon), for `MOLECUL2` or as a nested pair model under `HYBRID`. NN/NNN binding. Preset `YUKAWA_MT13` or `YUKAWA_CUSTOM`
-- `HYBRID` — three pair models `model1`/`model2`/`model3` (pairs 12/13/23), for `system.type` `MOLECUL3`. Each pair is `OBESTAT` or `YUKAWA`
+- `EFTCONT` — leading-order EFT contact \(V=-C_a\exp[-(r/R_c)^2]\) (arXiv:2610.28021 Eq. 40), for `MOLECUL2` or a nested `HYBRID` pair. Preset `EFTCONT_CUSTOM`
+- `HYBRID` — three pair models `model1`/`model2`/`model3` (pairs 12/13/23), for `system.type` `MOLECUL3`. Each pair is `OBESTAT`, `YUKAWA`, or `EFTCONT`
 
 Use `model.param` for presets:
 
@@ -94,6 +95,7 @@ Use `model.param` for presets:
 - `OBESTAT_CUSTOM`
 - `YUKAWA_MT13`
 - `YUKAWA_CUSTOM`
+- `EFTCONT_CUSTOM`
 
 For custom parameter sets, the model object must also include:
 
@@ -106,7 +108,7 @@ For custom parameter sets, the model object must also include:
 - `sigma` — contact smearing (GeV)
 - `mu` — screening mass (GeV). Required for `NRSCREEN`. `NRSTRING` does not read `mu`; confinement stays linear.
 
-`BAGMIT_CUSTOM` fields are listed in `templates/bag_spectra_template.md`. `QMC_CUSTOM` fields are `mn`, `ms`, `mc`, `mb`, `B`, `Z`, `m_sigma`, `m_omega`, `m_rho`, `g_sigma`, `g_omega`, `g_rho`, `g_sigma_B`, `delta`, inside `param`. `lambda3` is optional and defaults to 0. There is no pair-binding block. `OBESTAT_CUSTOM` fields are listed in `templates/molecule_spectra_template.md` (`lambda`, `tensor_mass1/2`, `g_*`, `f_*`). `YUKAWA_CUSTOM` is `param.terms[]` with `V` (MeV·fm), `mu` (fm⁻¹), `wigner` (default 1), `bartlett` (default 0). `YUKAWA_MT13` is built in and takes no file. Legs and physical masses stay in the system JSON. Yukawa ignores `iso_pi` / `iso_rho`; the parser still requires them on `MOLECUL2`. For NN/NNN use nucleon mass `0.938942` GeV so \(\hbar^2/m = 41.47\) MeV·fm². Deuteron: `J=1`, `L=0`. Triton: `J=0.5`, `P=1`, `I=0.5`, `sym12=-1`, `Lmax=0` (s-wave MT-I/III benchmark). Examples: `test/Spectra-Yukawa/nn_yukawa.json`, `test/Spectra-Yukawa/nnn_yukawa.json`.
+`BAGMIT_CUSTOM` fields are listed in `templates/bag_spectra_template.md`. `QMC_CUSTOM` fields are `mn`, `ms`, `mc`, `mb`, `B`, `Z`, `m_sigma`, `m_omega`, `m_rho`, `g_sigma`, `g_omega`, `g_rho`, `g_sigma_B`, `delta`, inside `param`. `lambda3` is optional and defaults to 0. There is no pair-binding block. `OBESTAT_CUSTOM` fields are listed in `templates/molecule_spectra_template.md` (`lambda`, `tensor_mass1/2`, `g_*`, `f_*`). `YUKAWA_CUSTOM` is `param.terms[]` with `V` (MeV·fm), `mu` (fm⁻¹), `wigner` (default 1), `bartlett` (default 0). `YUKAWA_MT13` is built in and takes no file. `EFTCONT_CUSTOM` is `param.Ca` (MeV) and `param.Rc` (fm), with \(V=-C_a\exp[-(r/R_c)^2]\). The Gaussian norm is already inside \(C_a\). \(C_a<0\) is repulsion. There is no spin operator. Yuan–Liu Table I: `test/Spectra-EFTCONT/`. Legs and physical masses stay in the system JSON. Yukawa ignores `iso_pi` / `iso_rho`; the parser still requires them on `MOLECUL2`. For NN/NNN use nucleon mass `0.938942` GeV so \(\hbar^2/m = 41.47\) MeV·fm². Deuteron: `J=1`, `L=0`. Triton: `J=0.5`, `P=1`, `I=0.5`, `sym12=-1`, `Lmax=0` (s-wave MT-I/III benchmark). Examples: `test/Spectra-Yukawa/nn_yukawa.json`, `test/Spectra-Yukawa/nnn_yukawa.json`.
 
 Examples:
 
@@ -219,7 +221,7 @@ At \(0.16\,\mathrm{fm}^{-3}\) and \(T=0\), the shipped samples give \(E/A=+18.9\
 
 ### Two-Body Molecule Quantum Numbers
 
-Inside `system` provide `type1`, `type2`, `m1`, `m2`, `iso_pi`, `iso_rho`, `S`, `L`, `J`. Optional `cc1`, `cc2`, `eta` default to 0. Basis must be `GEM`. Model is `OBESTAT` with `param` `OBESTAT_CUSTOM` and `file`, or `YUKAWA` with `YUKAWA_MT13` or `YUKAWA_CUSTOM`. Use `templates/molecule_spectra_template.md`. Example: `test/Spectra-Molecule2/dstar_xi_I0.json`. Yukawa NN: `test/Spectra-Yukawa/nn_yukawa.json`.
+Inside `system` provide `type1`, `type2`, `m1`, `m2`, `iso_pi`, `iso_rho`, `S`, `L`, `J`. Optional `cc1`, `cc2`, `eta` default to 0. Optional `t1`, `t2` default to \(1/2\); two identical \(I=0\) baryons set them to `0`. Basis must be `GEM`. Model is `OBESTAT` with `param` `OBESTAT_CUSTOM` and `file`, `YUKAWA` with `YUKAWA_MT13` or `YUKAWA_CUSTOM`, or `EFTCONT` with `EFTCONT_CUSTOM` and `file`. Use `templates/molecule_spectra_template.md`. Example: `test/Spectra-Molecule2/dstar_xi_I0.json`. Yukawa NN: `test/Spectra-Yukawa/nn_yukawa.json`. EFT contact: `test/Spectra-EFTCONT/dd_eft.json`.
 
 - `type1`, `type2`: `DIRAC` (baryon 1/2), `VECTOR` (1− meson), `PSEUDOSCALAR` (elastic 0− or 0+)
 - `m1`, `m2`: physical masses in GeV (threshold and \(p^2/2\mu\))
@@ -234,7 +236,7 @@ The Hamiltonian is static LO OBE: \(H=T+V_C+V_{ss}+V_t\), \(V_{ls}=0\). CLI `Ebi
 
 ### Three-Body Molecule Quantum Numbers
 
-Inside `system` provide `type1`–`type3`, `m1`–`m3`, `J`, `P`, `I`, `Lmax`, `sym12`, and `pair1`/`pair2`/`pair3` (`iso_pi`, `iso_rho`, `eta`). Optional `cc1`–`cc3` default to 0; optional `t1`,`t2`,`t3` default to \(1/2\). Basis must be `GEM`. Model must be `HYBRID`. Each nested pair is `OBESTAT` + `OBESTAT_CUSTOM`, or `YUKAWA` + `YUKAWA_MT13` / `YUKAWA_CUSTOM`. Examples: `test/Spectra-Molecule3/dkkstar.json`, `test/Spectra-Yukawa/nnn_yukawa.json`.
+Inside `system` provide `type1`–`type3`, `m1`–`m3`, `J`, `P`, `I`, `Lmax`, `sym12`, and `pair1`/`pair2`/`pair3` (`iso_pi`, `iso_rho`, `eta`). Optional `cc1`–`cc3` default to 0; optional `t1`,`t2`,`t3` default to \(1/2\). Basis must be `GEM`. Model must be `HYBRID`. Each nested pair is `OBESTAT` + `OBESTAT_CUSTOM`, `YUKAWA` + `YUKAWA_MT13` / `YUKAWA_CUSTOM`, or `EFTCONT` + `EFTCONT_CUSTOM`. Examples: `test/Spectra-Molecule3/dkkstar.json`, `test/Spectra-Yukawa/nnn_yukawa.json`, `test/Spectra-EFTCONT/ddd_eft.json`.
 
 - Legs: `DIRAC`, `VECTOR`, `PSEUDOSCALAR`. Intrinsic parity is `+1` for Dirac and `−1` for vector/pseudoscalar; total \(P=P_1 P_2 P_3 (-1)^{l_\rho+l_\lambda}\)
 - `nmax` is the number of GEM widths per Jacobi axis. The space is \(n_{\mathrm{ang}}\times n_{\max}^2\). Do not treat `nmax` as a spectroscopic \(n_r\)
@@ -334,7 +336,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - Use exact parser spellings: `MESON`, `BARYON`, `BAG`, `MOLECUL2`, `GISCREEN`, `GISTRING`, `GISTRING_BARYON`, `NRSTRING`, `NRSCREEN`, `BAGMIT`, `BAGMIT_DEFAULT`, `QMCSTAD`, `QMCMOD`, `QMC_DEFAULT`, `QMC_CUSTOM`, `OBESTAT`, `OBESTAT_CUSTOM`, `CMI`, `NONE`, `NRSTRING_MESON`, `NRSCREEN_MESON`, `GISCREEN_CCBAR`, `DIRAC`, `VECTOR`, `PSEUDOSCALAR`, etc.
 - Baryon spectra stay on `GEM`. Do not emit `SHO` or an NR model for a baryon.
 - Bag spectra use `system` `BAG` and `model` `BAGMIT`, `QMCSTAD`, or `QMCMOD`. List a complete CMI color and spin set for each `st` that should mix. QMC also requires non-negative `rho_b` and `temp`. Do not put `rho_b` or `temp` on `BAGMIT`. Do not pair `QMCMOD` with `QMC_DEFAULT`.
-- Two-body molecules use `system` `MOLECUL2`, basis `GEM`, and either `OBESTAT` + `OBESTAT_CUSTOM` or `YUKAWA` + `YUKAWA_MT13` / `YUKAWA_CUSTOM`. Three-body molecules use `MOLECUL3` + `HYBRID` + three nested pair models (`OBESTAT_CUSTOM` or `YUKAWA`). Write `iso_pi` and `iso_rho` separately.
+- Two-body molecules use `system` `MOLECUL2`, basis `GEM`, and `OBESTAT` + `OBESTAT_CUSTOM`, `YUKAWA` + `YUKAWA_MT13` / `YUKAWA_CUSTOM`, or `EFTCONT` + `EFTCONT_CUSTOM`. Three-body molecules use `MOLECUL3` + `HYBRID` + three nested pair models (`OBESTAT`, `YUKAWA`, or `EFTCONT`). Write `iso_pi` and `iso_rho` separately. `EFTCONT` ignores those isospin factors; the file is one projected channel.
 - Remember that `model.param` is the parameter-set key for `SPECTRA`.
 - For `*_CUSTOM`, always include `model.file`.
 - For `FITTING`, `fit.target` is the dataset key. Do not write `model`, `system`, or `print`.

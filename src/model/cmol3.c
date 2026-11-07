@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
  * Three-body molecular GEM. SCDK kinematics as in cbaryon. Each pair
- * supplies its own radial kernel (OBESTAT or YUKAWA) through
+ * supplies its own radial kernel (OBESTAT, YUKAWA, or EFTCONT) through
  * integral_exp_rn. Kinetics are non-relativistic.
  *
  * H = Σ m_i + Σ p_i²/(2m_i) + Σ_pairs (Vc + Vss s_i·s_j + Vt S12).
@@ -14,6 +14,7 @@
 #include <gemstore/model/cmol3.h>
 #include <gemstore/model/obemodel.h>
 #include <gemstore/model/ykwmodel.h>
+#include <gemstore/model/eftmodel.h>
 #include <gemstore/model/giradial.h>
 
 #include <gemstore/basis/basis.h>
@@ -59,6 +60,9 @@ typedef struct mol3_vargs {
     argsYKWModel_t ykw_m[3];
     argsYKWModelDy_t ykw_d[3];
     ykw_pot_ctx_t ykw_c[3];
+    argsEFTModel_t eft_m[3];
+    argsEFTModelDy_t eft_d[3];
+    eft_pot_ctx_t eft_c[3];
 } mol3_vargs_t;
 
 typedef struct mol3_iv {
@@ -547,7 +551,9 @@ static double mol3_pair_kss(const argsInput_t *input, int p)
 }
 
 /* OBESTAT: one radial kernel per pair isospin, because π/ρ carry ⟨τ·τ⟩.
- * YUKAWA: spin dependence sits in Vss, so every tij of a pair shares one kernel. */
+ * YUKAWA: spin dependence sits in Vss, so every tij of a pair shares one kernel.
+ * EFTCONT: the file is already one projected channel, and V is central,
+ * so every tij of that pair shares one kernel. */
 static void mol3_load_pairs(const argsInput_t *input, mol3_vargs_t *varg)
 {
     for (int p = 0; p < 3; p++) {
@@ -570,8 +576,17 @@ static void mol3_load_pairs(const argsInput_t *input, mol3_vargs_t *varg)
             varg->ykw_c[p].dyn = &varg->ykw_d[p];
             varg->has_vt[p] = 0;
         }
+        else if (kind == MODEL_EFTCONT) {
+            varg->eft_m[p] = argsEFTModel_from(input, p);
+            varg->eft_d[p].mi = mi;
+            varg->eft_d[p].mj = mj;
+            varg->eft_d[p].OCent = 1.0;
+            varg->eft_c[p].model = &varg->eft_m[p];
+            varg->eft_c[p].dyn = &varg->eft_d[p];
+            varg->has_vt[p] = 0;
+        }
         else if (kind != MODEL_OBESTAT) {
-            fprintf(stderr, "Error: MOLECUL3 pair %d model %s is not OBESTAT or YUKAWA.\n",
+            fprintf(stderr, "Error: MOLECUL3 pair %d model %s is not OBESTAT, YUKAWA, or EFTCONT.\n",
                 p + 1, model_type_str[kind]);
             exit(1);
         }
@@ -595,6 +610,12 @@ static void mol3_load_pairs(const argsInput_t *input, mol3_vargs_t *varg)
                 varg->ker[p][k].vss = YKWVss;
                 varg->ker[p][k].vt = NULL;
                 varg->ker[p][k].ctx = &varg->ykw_c[p];
+            }
+            else if (kind == MODEL_EFTCONT) {
+                varg->ker[p][k].vc = EFTVc;
+                varg->ker[p][k].vss = NULL;
+                varg->ker[p][k].vt = NULL;
+                varg->ker[p][k].ctx = &varg->eft_c[p];
             }
             else {
                 varg->obe_m[p][k] = argsOBEModel_from(input, p);

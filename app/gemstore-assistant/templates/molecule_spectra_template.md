@@ -1,6 +1,6 @@
 # Gemstore Molecule Spectra JSON Template
 
-Matches `src/parse.c`. Two-body molecular `SPECTRA` uses `system.type` `MOLECUL2`, basis `GEM`, and either `model.type` `OBESTAT` (`OBESTAT_CUSTOM`) or `YUKAWA` (`YUKAWA_MT13` or `YUKAWA_CUSTOM`). Example: `test/Spectra-Molecule2/`. Three-body `MOLECUL3` uses `model.type` `HYBRID`. Each of `model1`/`model2`/`model3` is `OBESTAT` or `YUKAWA`. Example: `test/Spectra-Molecule3/`.
+Matches `src/parse.c`. Two-body molecular `SPECTRA` uses `system.type` `MOLECUL2`, basis `GEM`, and `model.type` `OBESTAT` (`OBESTAT_CUSTOM`), `YUKAWA` (`YUKAWA_MT13` or `YUKAWA_CUSTOM`), or `EFTCONT` (`EFTCONT_CUSTOM`). Example: `test/Spectra-Molecule2/`. Three-body `MOLECUL3` uses `model.type` `HYBRID`. Each of `model1`/`model2`/`model3` is `OBESTAT`, `YUKAWA`, or `EFTCONT`. Example: `test/Spectra-Molecule3/`.
 
 The parameter file holds the OBE couplings for a pair of species. The system JSON holds the state (legs, masses, isospin, C, J).
 
@@ -61,7 +61,8 @@ Do not write a unified `iso` key.
 | `m1`, `m2` | Physical masses (GeV); kinetic \(T=m_1+m_2+p^2/2\mu\) and threshold |
 | `cc1`, `cc2` | Meson C. `0` leaves G-parity. Nonzero on a meson leg flips \(\pi,\omega\). Dirac `cc` is ignored. |
 | `eta` | MM C-parity on pion and magnetic vector. Write `+1` or `-1`. `0` is read as `+1`. Unused for meson–baryon. |
-| `iso_pi`, `iso_rho` | \(\langle\tau_1\cdot\tau_2\rangle\) on \(\pi\) and \(\rho\). Two \(I=1/2\) legs: \(I=0\to-3\), \(I=1\to+1\). Write both. \(\sigma,\omega\) are isoscalar. |
+| `iso_pi`, `iso_rho` | \(\langle\tau_1\cdot\tau_2\rangle\) on \(\pi\) and \(\rho\). Two \(I=1/2\) legs: \(I=0\to-3\), \(I=1\to+1\). Write both. \(\sigma,\omega\) are isoscalar. `EFTCONT` does not read them. |
+| `t1`, `t2` | Particle isospin. Default \(1/2\). Two identical \(I=0\) legs (`Λc`) use `0`. |
 | `S`, `L`, `J` | `L` is the lowest partial wave. The driver adds \(L+2\) and every total spin that couples to \(J\). JSON `S` does not select the channel list. |
 
 Examples: \(J=1/2\) → \(^2S+^4D\); \(J=3/2\) → \(^4S+^2D+^4D\).
@@ -152,7 +153,7 @@ CLI prints `Mass`, `Ebind = Mass − (m1+m2)`, `RMS`. Negative `Ebind` with RMS 
 - CLI `Ebind = Mass − (m1+m2+m3)` and three pair RMS. Bound only if `Ebind < 0` and RMS is clearly below `rmax`.
 - `"print":{"pot":"true"}` writes three pair blocks in `<project>.pot.dat`.
 - Run from `test/Spectra-Molecule3/` so relative pair files resolve. Use a distinct `project` per scan.
-- A nested pair may be `YUKAWA` instead of `OBESTAT`. `YUKAWA_MT13` needs no file. `YUKAWA_CUSTOM` uses the same `terms` file as two-body Yukawa. Example: `test/Spectra-Yukawa/nnn_yukawa.json`.
+- A nested pair may be `YUKAWA` or `EFTCONT` instead of `OBESTAT`. `YUKAWA_MT13` needs no file. `YUKAWA_CUSTOM` uses the same `terms` file as two-body Yukawa. Example: `test/Spectra-Yukawa/nnn_yukawa.json`. `EFTCONT_CUSTOM` uses `Ca` and `Rc`. Example: `test/Spectra-EFTCONT/`.
 
 ## Yukawa (`YUKAWA`)
 
@@ -177,3 +178,21 @@ Local potential, not the molecular OBE. Two-body driver is `mol2_yukawa_GEM`. Th
 ```
 
 `V` is MeV·fm, `mu` is fm⁻¹. `wigner` defaults to 1 and `bartlett` to 0. \(P_\sigma=(1+\sigma_1\cdot\sigma_2)/2\). `YUKAWA_MT13` is that Malfliet–Tjon I/III set. With \(m_N=0.938942\) GeV (\(\hbar^2/m=41.47\) MeV·fm²), the deuteron (`J=1`, `L=0`, `nmax` 20) is −2.231 MeV. The triton (`Lmax=0`, `I=0.5`, `sym12=-1`) uses the local potential in every partial wave. Inputs are in `test/Spectra-Yukawa/`. With `rmin` 0.1 fm and `rmax` 10 fm, `nmax` 7 (`nnn_yukawa.json`) gives −8.67 MeV and the scan levels off at −8.88 MeV by `nmax` 10. The s-wave-projected Faddeev benchmark is −8.54 MeV. `iso_pi` and `iso_rho` are ignored. There is no tensor, so \(L\) and \(L+2\) do not mix.
+
+## EFT contact (`EFTCONT`)
+
+Leading-order coordinate-space contact of arXiv:2610.28021, Eq. (40). One-pion exchange is absent for the channels in that paper, and the normalized Gaussian that replaces \(\delta^{(3)}(\mathbf{r})\) is absorbed into \(C_a\):
+
+\[
+V(r)=-C_a\exp\bigl[-(r/R_c)^2\bigr].
+\]
+
+`Ca` is in MeV and `Rc` in fm. \(C_a<0\) is repulsion. There is no spin-spin or tensor piece, so partial waves do not mix. The parameter file is already one projected channel: \(I=1\) \(DD\) and \(I=0\) \(\Lambda_c\Lambda_c\) are different files, not an isospin factor inside \(V(r)\). `iso_pi` and `iso_rho` are still required by the parser and are not read by the kernel. Optional `t1`,`t2` default to \(1/2\); two identical \(I=0\) baryons set them to `0` so the \(^1S_0\) state is kept.
+
+```json
+{
+  "param": { "Ca": -14.652, "Rc": 1.0 }
+}
+```
+
+Yuan–Liu Table I central values are `test/Spectra-EFTCONT/`: \(DD\) uses \(C_a=-14.652\) MeV, \(R_c=1.0\) fm and \(m=1.86725\) GeV (\(\mu=933.625\) MeV); \(\Lambda_c\Lambda_c\) uses \(C_a=-201.259\) MeV, \(R_c=0.4\) fm and the lattice mass \(m=2.413\) GeV (\(\mu=1206.5\) MeV). Both contacts are repulsive. This driver is a GEM spectrum, not the scattering-length fit.

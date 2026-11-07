@@ -171,6 +171,17 @@ typedef struct argsYKWModelDy {
     double OSdS;
 } argsYKWModelDy_t;
 
+typedef struct argsEFTModel {
+    double Ca;              /* contact amplitude in MeV */
+    double Rc;              /* cut-off radius in fm */
+} argsEFTModel_t;
+
+typedef struct argsEFTModelDy {
+    double mi;
+    double mj;
+    double OCent;
+} argsEFTModelDy_t;
+
 /* Default meson parameters for model GIString */
 extern const argsGIModel_t argsGIString_meson;
 
@@ -229,6 +240,9 @@ argsOBEModel_t argsOBEModel_from(const argsInput_t *input, int p);
 
 /* Yukawa args. p is the MOLECUL3 pair index; MOLECUL2 ignores p. */
 argsYKWModel_t argsYKWModel_from(const argsInput_t *input, int p);
+
+/* EFT contact args. p is the MOLECUL3 pair index; MOLECUL2 ignores p. */
+argsEFTModel_t argsEFTModel_from(const argsInput_t *input, int p);
 
 /* Get quark mass from any model */
 static inline double getmq(int index, const void *args_model)

@@ -107,7 +107,8 @@ void print_input_parameters(const argsInput_t *input)
         if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
             || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
             || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM
-            || input->param == PARAM_YUKAWA_CUSTOM || input->param == PARAM_QMC_CUSTOM) {
+            || input->param == PARAM_YUKAWA_CUSTOM || input->param == PARAM_EFTCONT_CUSTOM
+            || input->param == PARAM_QMC_CUSTOM) {
             printf("  Parameter File:       %-50s\n", input->param_file);
         }
     }
@@ -175,6 +176,7 @@ void print_input_parameters(const argsInput_t *input)
         printf("  eta:                  %-50.6f\n", input->eta);
         printf("  iso_pi (pion):        %-50.6f\n", input->iso_pi);
         printf("  iso_rho (rho):        %-50.6f\n", input->iso_rho);
+        printf("  Particle t1, t2:      %.6f, %.6f\n", input->iso_t1, input->iso_t2);
     }
     else if (input->system == SYSTEM_MOLECUL3) {
         printf("  Leg 1 type:           %-50s\n", obe_leg_type_str[input->type1]);
@@ -240,6 +242,11 @@ void print_input_parameters(const argsInput_t *input)
                         i + 1, args_model.term[i].V, args_model.term[i].mu, 
                         args_model.term[i].wigner, args_model.term[i].bartlett);
                 }
+            }
+            else if (input->mol3_pairs[p].model == MODEL_EFTCONT) {
+                argsEFTModel_t args_model = argsEFTModel_from(input, p);
+                printf("    Ca:                      %-46.6f MeV\n", args_model.Ca);
+                printf("    Rc:                      %-46.6f fm\n", args_model.Rc);
             }
         }
         printf("\n");
@@ -347,6 +354,13 @@ void print_input_parameters(const argsInput_t *input)
                 i + 1, args_model.term[i].V, args_model.term[i].mu, 
                 args_model.term[i].wigner, args_model.term[i].bartlett);
         }
+        printf("\n");
+    }
+    else if (input->model == MODEL_EFTCONT) {
+        argsEFTModel_t args_model = argsEFTModel_from(input, 0);
+        printf("  EFT contact V = -Ca exp(-(r/Rc)^2):\n");
+        printf("    Ca:                      %-46.6f MeV\n", args_model.Ca);
+        printf("    Rc:                      %-46.6f fm\n", args_model.Rc);
         printf("\n");
     }
 }

@@ -12,6 +12,7 @@
 #include <gemstore/model/cmol2.h>
 #include <gemstore/model/cmol3.h>
 #include <gemstore/model/ykwmodel.h>
+#include <gemstore/model/eftmodel.h>
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/math/interplt.h>
@@ -188,9 +189,12 @@ void compute_spectra_mol2(const argsInput_t *input)
     argsOBEModelDy_t args_dynmc = {0};
     argsYKWModel_t ykw_model;
     argsYKWModelDy_t ykw_dyn = {0};
+    argsEFTModel_t eft_model;
+    argsEFTModelDy_t eft_dyn = {0};
 
-    if (input->model != MODEL_OBESTAT && input->model != MODEL_YUKAWA) {
-        fprintf(stderr, "Error: MOLECUL2 SPECTRA supports OBESTAT and YUKAWA.\n");
+    if (input->model != MODEL_OBESTAT && input->model != MODEL_YUKAWA
+        && input->model != MODEL_EFTCONT) {
+        fprintf(stderr, "Error: MOLECUL2 SPECTRA supports OBESTAT, YUKAWA, and EFTCONT.\n");
         exit(1);
     }
     if (input->basis != BASIS_GEM) {
@@ -218,6 +222,10 @@ void compute_spectra_mol2(const argsInput_t *input)
         ykw_model = argsYKWModel_from(input, 0);
         mol2_yukawa_GEM(input, &ykw_model, &ykw_dyn, &eigenvalue, &eigenvector, &overlap, &rms12);
     }
+    else if (input->model == MODEL_EFTCONT) {
+        eft_model = argsEFTModel_from(input, 0);
+        mol2_eftcont_GEM(input, &eft_model, &eft_dyn, &eigenvalue, &eigenvector, &overlap, &rms12);
+    }
     else if (input->model == MODEL_OBESTAT) {
         args_model = argsOBEModel_from(input, 0);
         mol2_obestat_GEM(input, &args_model, &args_dynmc, &eigenvalue, &eigenvector, &overlap, &rms12);
@@ -229,6 +237,9 @@ void compute_spectra_mol2(const argsInput_t *input)
     if (input->print_pot) {
         if (input->model == MODEL_YUKAWA) {
             write_mol2_ykw_pot(input, &ykw_model);
+        }
+        else if (input->model == MODEL_EFTCONT) {
+            write_mol2_eft_pot(input, &eft_model);
         }
         else if (input->model == MODEL_OBESTAT) {
             write_mol2_obe_pot(input, &args_model);

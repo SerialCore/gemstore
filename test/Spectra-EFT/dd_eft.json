@@ -1,0 +1,36 @@
+{
+  "project": "dd_eft",
+  "task": "SPECTRA",
+  "model": {
+    "type": "EFTCONT",
+    "param": "EFTCONT_CUSTOM",
+    "file": "param_EFT_DD.json"
+  },
+  "system": {
+    "type": "MOLECUL2",
+    "type1": "PSEUDOSCALAR",
+    "type2": "PSEUDOSCALAR",
+    "m1": 1.86725,
+    "m2": 1.86725,
+    "cc1": 0,
+    "cc2": 0,
+    "eta": 1,
+    "iso_pi": 1,
+    "iso_rho": 1,
+    "t1": 0.5,
+    "t2": 0.5,
+    "S": 0.0,
+    "L": 0,
+    "J": 0.0
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 12,
+    "rmax": 10.0,
+    "rmin": 0.1
+  },
+  "print": {
+    "pot": "true",
+    "wfn": "false"
+  }
+}

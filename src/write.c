@@ -11,6 +11,7 @@
 #include <gemstore/model/nrmodel.h>
 #include <gemstore/model/obemodel.h>
 #include <gemstore/model/ykwmodel.h>
+#include <gemstore/model/eftmodel.h>
 #include <gemstore/model/cmol2.h>
 #include <gemstore/model/wfntrans.h>
 #include <gemstore/types.h>
@@ -803,6 +804,49 @@ int write_mol2_ykw_pot(const argsInput_t *input, const argsYKWModel_t *args_mode
     return 1;
 }
 
+int write_mol2_eft_pot(const argsInput_t *input, const argsEFTModel_t *args_model)
+{
+    double rmin = 0.01;
+    double rmax = 10.0;
+    double dr = 0.01;
+    FILE *pf;
+    char path[264];
+
+    if (args_model == NULL) {
+        fprintf(stderr, "Error: Invalid input parameters to write_eft_pot()\n");
+        return 0;
+    }
+
+    sprintf(path, "%s%s", input->project, ".pot.dat");
+    pf = fopen(path, "w");
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+
+    fprintf(pf, "# r[fm]    Vc[GeV]    Vss[GeV]    Vt[GeV]    V[GeV]\n");
+    fprintf(pf, "# V = -Ca exp(-(r/Rc)^2), Ca = %.6f MeV, Rc = %.6f fm. Vss = Vt = 0.\n",
+        args_model->Ca, args_model->Rc);
+
+    argsEFTModelDy_t dyn = {0};
+    eft_pot_ctx_t ctx;
+    dyn.OCent = 1.0;
+    ctx.model = args_model;
+    ctx.dyn = &dyn;
+    for (double r = rmin; r <= rmax; r += dr) {
+        double vc = EFTVc(r * GEMSTORE_FM, &ctx);
+
+        fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, vc, 0.0, 0.0, vc);
+    }
+
+    if (fclose(pf) != 0) {
+        fprintf(stderr, "Error: Failed to close file %s\n", path);
+        return 0;
+    }
+
+    return 1;
+}
+
 int write_mol3_pot(const argsInput_t *input)
 {
     static const char *pair_name[MOL3_PAIR_N] = { "12", "13", "23" };
@@ -843,6 +887,22 @@ int write_mol3_pot(const argsInput_t *input)
                 double vss = YKWVss(rg, &ctx);
 
                 fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, vc, vss, 0.0, vc + vss);
+            }
+        }
+        else if (input->mol3_pairs[p].model == MODEL_EFTCONT) {
+            argsEFTModel_t model = argsEFTModel_from(input, p);
+            argsEFTModelDy_t dyn = {0};
+            eft_pot_ctx_t ctx;
+
+            dyn.OCent = 1.0;
+            ctx.model = &model;
+            ctx.dyn = &dyn;
+            fprintf(pf, "# V = -Ca exp(-(r/Rc)^2), Ca = %.6f MeV, Rc = %.6f fm\n",
+                model.Ca, model.Rc);
+            for (double r = rmin; r <= rmax; r += dr) {
+                double vc = EFTVc(r * GEMSTORE_FM, &ctx);
+
+                fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, vc, 0.0, 0.0, vc);
             }
         }
         else if (input->mol3_pairs[p].model == MODEL_OBESTAT) {

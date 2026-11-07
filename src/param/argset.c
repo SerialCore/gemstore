@@ -342,3 +342,27 @@ argsYKWModel_t argsYKWModel_from(const argsInput_t *input, int p)
     }
     return args_model;
 }
+
+argsEFTModel_t argsEFTModel_from(const argsInput_t *input, int p)
+{
+    argsEFTModel_t args_model = {0};
+    const char *file;
+
+    if (input->model == MODEL_HYBRID) {
+        if (p < 0 || p >= MOL3_PAIR_N) {
+            fprintf(stderr, "Error: argsEFTModel_from pair index must be 0, 1, or 2.\n");
+            exit(1);
+        }
+        file = input->mol3_pairs[p].param_file;
+        if (input->mol3_pairs[p].param == PARAM_EFTCONT_CUSTOM) {
+            parse_param_EFTCONT(file, &args_model);
+        }
+        return args_model;
+    }
+
+    file = input->param_file;
+    if (input->param == PARAM_EFTCONT_CUSTOM) {
+        parse_param_EFTCONT(file, &args_model);
+    }
+    return args_model;
+}

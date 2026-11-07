@@ -34,4 +34,9 @@ void mol2_obestat_GEM(const argsInput_t *args_input, const argsOBEModel_t *args_
 void mol2_yukawa_GEM(const argsInput_t *args_input, const argsYKWModel_t *args_model, argsYKWModelDy_t *args_dynmc,
     array_t *e_out, matrix_t *v_out, matrix_t *n_out, array_t *rms_out);
 
+/* Two-body GEM with MODEL_EFTCONT. Central contact only, so partial waves
+ * do not mix. Eigenvalues are the molecule mass. */
+void mol2_eftcont_GEM(const argsInput_t *args_input, const argsEFTModel_t *args_model, argsEFTModelDy_t *args_dynmc,
+    array_t *e_out, matrix_t *v_out, matrix_t *n_out, array_t *rms_out);
+
 #endif
