@@ -51,6 +51,9 @@ int write_mol2_ykw_pot(const argsInput_t *input, const argsYKWModel_t *args_mode
 /* Write the EFT contact. Vss and Vt are zero. V = -Ca exp(-(r/Rc)^2). */
 int write_mol2_eft_pot(const argsInput_t *input, const argsEFTModel_t *args_model);
 
+/* Write HAL QCD V0, Vσ, VT. The last column is the 1S0 combination V0-3 Vσ. */
+int write_mol2_hal_pot(const argsInput_t *input, const argsHALModel_t *args_model);
+
 /* Write three pair OBE curves into {project}.pot.dat. */
 int write_mol3_pot(const argsInput_t *input);
 

@@ -106,9 +106,10 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Parameter Set:        %-50s\n", param_type_str[input->param]);
         if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
             || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
-            || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM
+            || input->param == PARAM_BAGMIT_CUSTOM  || input->param == PARAM_QMCSTAD_CUSTOM 
+            || input->param == PARAM_QMCMOD_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM
             || input->param == PARAM_YUKAWA_CUSTOM || input->param == PARAM_EFTCONT_CUSTOM
-            || input->param == PARAM_QMCSTAD_CUSTOM || input->param == PARAM_QMCMOD_CUSTOM) {
+            || input->param == PARAM_HALQCD_CUSTOM) {
             printf("  Parameter File:       %-50s\n", input->param_file);
         }
     }
@@ -248,6 +249,20 @@ void print_input_parameters(const argsInput_t *input)
                 printf("    Ca:                      %-46.6f MeV\n", args_model.Ca);
                 printf("    Rc:                      %-46.6f fm\n", args_model.Rc);
             }
+            else if (input->mol3_pairs[p].model == MODEL_HALQCD) {
+                argsHALSet_t set;
+                argsHALSet_from(input, p, &set);
+                for (int i = 0; i < set.n; i++) {
+                    if (set.tagged) {
+                        printf("    t_ij=%-6.4g V0, Vsig, VT:  %d, %d, %d\n",
+                            set.tij[i], set.ch[i].n0, set.ch[i].nsig, set.ch[i].nt);
+                    }
+                    else {
+                        printf("    V0, Vsig, VT points:     %d, %d, %d\n",
+                            set.ch[i].n0, set.ch[i].nsig, set.ch[i].nt);
+                    }
+                }
+            }
         }
         printf("\n");
     }
@@ -363,6 +378,24 @@ void print_input_parameters(const argsInput_t *input)
         printf("  EFT contact V = -Ca exp(-(r/Rc)^2):\n");
         printf("    Ca:                      %-46.6f MeV\n", args_model.Ca);
         printf("    Rc:                      %-46.6f fm\n", args_model.Rc);
+        printf("\n");
+    }
+    else if (input->model == MODEL_HALQCD) {
+        argsHALSet_t set;
+        int i;
+        argsHALSet_from(input, 0, &set);
+        printf("  HAL QCD tables (r in fm, V in MeV):\n");
+        for (i = 0; i < set.n; i++) {
+            if (set.tagged) {
+                printf("    t_ij=%-6.4g V0, Vsig, VT:  %d, %d, %d\n",
+                    set.tij[i], set.ch[i].n0, set.ch[i].nsig, set.ch[i].nt);
+            }
+            else {
+                printf("    V0 points:               %-46d\n", set.ch[i].n0);
+                printf("    Vsig points:             %-46d\n", set.ch[i].nsig);
+                printf("    VT points:               %-46d\n", set.ch[i].nt);
+            }
+        }
         printf("\n");
     }
 }

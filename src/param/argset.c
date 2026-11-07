@@ -11,6 +11,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <math.h>
 
 const argsGIModel_t argsGIString_meson = {
     .mn = 0.220,
@@ -366,4 +368,85 @@ argsEFTModel_t argsEFTModel_from(const argsInput_t *input, int p)
         parse_param_EFTCONT(file, &args_model);
     }
     return args_model;
+}
+
+void argsHALSet_from(const argsInput_t *input, int p, argsHALSet_t *set)
+{
+    const char *file;
+
+    if (set == NULL) {
+        fprintf(stderr, "Error: argsHALSet_from needs a parameter set.\n");
+        exit(1);
+    }
+    memset(set, 0, sizeof(*set));
+    if (input->model == MODEL_HYBRID) {
+        if (p < 0 || p >= MOL3_PAIR_N) {
+            fprintf(stderr, "Error: argsHALSet_from pair index must be 0, 1, or 2.\n");
+            exit(1);
+        }
+        file = input->mol3_pairs[p].param_file;
+        if (input->mol3_pairs[p].param == PARAM_HALQCD_CUSTOM) {
+            parse_param_HALQCD(file, set);
+        }
+        return;
+    }
+    file = input->param_file;
+    if (input->param == PARAM_HALQCD_CUSTOM) {
+        parse_param_HALQCD(file, set);
+    }
+}
+
+void argsHALModel_pick(const argsHALSet_t *set, double tij, int untagged_ok, argsHALModel_t *out)
+{
+    int i;
+
+    if (set == NULL || out == NULL || set->n < 1) {
+        fprintf(stderr, "Error: HALQCD parameter set is empty.\n");
+        exit(1);
+    }
+    if (!set->tagged) {
+        if (!untagged_ok || set->n != 1) {
+            fprintf(stderr, "Error: HALQCD file has no t_ij block for t_ij=%.4g.\n", tij);
+            exit(1);
+        }
+        *out = set->ch[0];
+        return;
+    }
+    for (i = 0; i < set->n; i++) {
+        if (fabs(set->tij[i] - tij) < 1e-6) {
+            *out = set->ch[i];
+            return;
+        }
+    }
+    fprintf(stderr, "Error: HALQCD file has no block for t_ij=%.4g.\n", tij);
+    exit(1);
+}
+
+argsHALModel_t argsHALModel_from(const argsInput_t *input, int p)
+{
+    argsHALSet_t set = {0};
+    const char *file;
+
+    if (input->model == MODEL_HYBRID) {
+        if (p < 0 || p >= MOL3_PAIR_N) {
+            fprintf(stderr, "Error: argsHALModel_from pair index must be 0, 1, or 2.\n");
+            exit(1);
+        }
+        file = input->mol3_pairs[p].param_file;
+        if (input->mol3_pairs[p].param == PARAM_HALQCD_CUSTOM) {
+            parse_param_HALQCD(file, &set);
+        }
+    }
+    else {
+        file = input->param_file;
+        if (input->param == PARAM_HALQCD_CUSTOM) {
+            parse_param_HALQCD(file, &set);
+        }
+    }
+    if (set.n > 1) {
+        fprintf(stderr, "Error: HALQCD file %s has %d isospin blocks. A single-channel use needs one block.\n",
+            file, set.n);
+        exit(1);
+    }
+    return set.ch[0];
 }

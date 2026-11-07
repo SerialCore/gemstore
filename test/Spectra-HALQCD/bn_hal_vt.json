@@ -1,0 +1,36 @@
+{
+  "project": "bn_hal_vt",
+  "task": "SPECTRA",
+  "model": {
+    "type": "HALQCD",
+    "param": "HALQCD_CUSTOM",
+    "file": "param_HAL_VT.json"
+  },
+  "system": {
+    "type": "MOLECUL2",
+    "type1": "DIRAC",
+    "type2": "DIRAC",
+    "m1": 2.286,
+    "m2": 0.939,
+    "cc1": 0,
+    "cc2": 0,
+    "eta": 1,
+    "iso_pi": 0,
+    "iso_rho": 0,
+    "t1": 0.0,
+    "t2": 0.5,
+    "S": 1.0,
+    "L": 0,
+    "J": 1.0
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 6,
+    "rmax": 6.0,
+    "rmin": 0.15
+  },
+  "print": {
+    "pot": "true",
+    "wfn": "false"
+  }
+}

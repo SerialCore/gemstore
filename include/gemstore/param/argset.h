@@ -182,6 +182,45 @@ typedef struct argsEFTModelDy {
     double OCent;
 } argsEFTModelDy_t;
 
+/* HAL QCD leading-order local potential, Miyamoto thesis Eq. (3.11):
+ * V = V0(r) + Vsig(r) (σ1·σ2) + VT(r) S12.
+ * Each radial function is a table, r in fm and V in MeV. No L·S and no
+ * coupled-channel matrix. One channel is already projected in isospin.
+ * A file may hold several such channels, keyed by the pair isospin t_ij. */
+#define HAL_PT_MAX 256
+#define HAL_ISO_MAX 4
+
+typedef struct argsHALPoint {
+    double r;
+    double V;
+} argsHALPoint_t;
+
+typedef struct argsHALModel {
+    int n0;                 /* number of points for V0 */
+    int nsig;               /* number of points for Vsig */
+    int nt;                 /* number of points for VT */
+    argsHALPoint_t V0[HAL_PT_MAX];
+    argsHALPoint_t Vsig[HAL_PT_MAX];
+    argsHALPoint_t VT[HAL_PT_MAX];
+} argsHALModel_t;
+
+/* tagged = 0: one unlabelled channel, valid only for a single t_ij.
+ * tagged = 1: ch[i] belongs to pair isospin tij[i]. */
+typedef struct argsHALSet {
+    int n;
+    int tagged;
+    double tij[HAL_ISO_MAX];
+    argsHALModel_t ch[HAL_ISO_MAX];
+} argsHALSet_t;
+
+typedef struct argsHALModelDy {
+    double mi;
+    double mj;
+    double OCent;
+    double OSdS;
+    double OTens;
+} argsHALModelDy_t;
+
 /* Default meson parameters for model GIString */
 extern const argsGIModel_t argsGIString_meson;
 
@@ -243,6 +282,14 @@ argsYKWModel_t argsYKWModel_from(const argsInput_t *input, int p);
 
 /* EFT contact args. p is the MOLECUL3 pair index; MOLECUL2 ignores p. */
 argsEFTModel_t argsEFTModel_from(const argsInput_t *input, int p);
+
+/* HAL QCD args. p is the MOLECUL3 pair index; MOLECUL2 ignores p.
+ * argsHALModel_from requires exactly one channel in the file.
+ * argsHALSet_from keeps every t_ij block. argsHALModel_pick copies the
+ * channel for tij. untagged_ok is 1 only when this pair has a single t_ij. */
+void argsHALSet_from(const argsInput_t *input, int p, argsHALSet_t *set);
+void argsHALModel_pick(const argsHALSet_t *set, double tij, int untagged_ok, argsHALModel_t *out);
+argsHALModel_t argsHALModel_from(const argsInput_t *input, int p);
 
 /* Get quark mass from any model */
 static inline double getmq(int index, const void *args_model)

@@ -62,6 +62,7 @@
 | **OBE-static** | Elastic static \(\pi\sigma\rho\omega\) (\(V_C+V_{ss}+V_t\), \(V_{ls}=0\)) | Two- and three-body hadron molecules |
 | **Yukawa** | Local Malfliet–Tjon Yukawa, central plus Bartlett \(P_\sigma\) | NN and NNN binding (`YUKAWA_MT13`) |
 | **EFT contact** | \(V=-C_a\exp[-(r/R_c)^2]\), central only | Yuan–Liu \(DD\) and \(\Lambda_c\Lambda_c\) (`EFTCONT_CUSTOM`) |
+| **HAL QCD** | \(V_0+V_\sigma(\sigma_1\cdot\sigma_2)+V_T S_{12}\) from radial tables | Leading-order local potential (`HALQCD_CUSTOM`) |
 
 ### Calculation Types
 
@@ -73,8 +74,8 @@
 - **MESON**: Quark–antiquark (\(q\bar q\))
 - **BARYON**: Three-quark (\(qqq\))
 - **BAG**: MIT bag (`BAGMIT`) or in-medium QMC (`QMCSTAD`, `QMCMOD`); flavor counts `nn`, `ns`, `nc`, `nb`
-- **MOLECUL2**: Two-body molecule (hadron–hadron OBE, Yukawa, or EFT contact on GEM)
-- **MOLECUL3**: Three-body molecule (HYBRID pair OBESTAT, YUKAWA, or EFTCONT on GEM; example `test/Spectra-Molecule3/`)
+- **MOLECUL2**: Two-body molecule (hadron–hadron OBE, Yukawa, EFT contact, or HAL QCD on GEM)
+- **MOLECUL3**: Three-body molecule (HYBRID pair OBESTAT, YUKAWA, EFTCONT, or HALQCD on GEM; example `test/Spectra-Molecule3/`)
 
 ### Basis Set Options
 
@@ -232,6 +233,7 @@ Run it:
 - `OBESTAT` — static elastic OBE (`system.type` `MOLECUL2`, or a HYBRID pair)
 - `YUKAWA` — local Yukawa (`MOLECUL2`, or a HYBRID pair)
 - `EFTCONT` — leading-order EFT contact (`MOLECUL2`, or a HYBRID pair)
+- `HALQCD` — leading-order HAL QCD local potential from radial tables (`MOLECUL2`, or a HYBRID pair)
 - `HYBRID` — three pair models for `MOLECUL3`
 
 **Predefined Parameter Sets:**
@@ -254,6 +256,7 @@ Run it:
 - `YUKAWA_MT13` - Built-in Malfliet–Tjon I/III (no file)
 - `YUKAWA_CUSTOM` - Yukawa terms from file (requires `"file"`)
 - `EFTCONT_CUSTOM` - EFT contact \(C_a\) (MeV) and \(R_c\) (fm) from file (requires `"file"`)
+- `HALQCD_CUSTOM` - HAL QCD tables \(V_0\), \(V_\sigma\), \(V_T\) (fm, MeV) from file (requires `"file"`)
 
 #### System Configuration
 
@@ -724,9 +727,25 @@ with `V` in MeV·fm and `μ` in fm⁻¹. `YUKAWA_MT13` is Malfliet–Tjon I/III.
 V(r) = -Ca exp(-(r/Rc)^2)
 ```
 
-`Ca` is in MeV and `Rc` in fm. The normalized Gaussian that replaces \(\delta^{(3)}(\mathbf{r})\) is already absorbed into `Ca`, so \(C_a<0\) is a repulsive well. There is no one-pion exchange and no spin operator, so \(L\) and \(L+2\) do not mix. One parameter file is one projected channel. Samples in `test/Spectra-EFTCONT/` use Yuan–Liu Table I: \(DD\) has \(C_a=-14.652\) MeV, \(R_c=1.0\) fm; \(\Lambda_c\Lambda_c\) has \(C_a=-201.259\) MeV, \(R_c=0.4\) fm. Both are repulsive, so the GEM spectrum stays above threshold. Scattering length and effective range are not computed on this path. Optional `t1`,`t2` default to \(1/2\); identical \(I=0\) baryons set them to `0`.
+`Ca` is in MeV and `Rc` in fm. The normalized Gaussian that replaces \(\delta^{(3)}(\mathbf{r})\) is already absorbed into `Ca`, so \(C_a<0\) is a repulsive well. There is no one-pion exchange and no spin operator, so \(L\) and \(L+2\) do not mix. One parameter file is one projected channel. Samples in `test/Spectra-EFT/` use Yuan–Liu Table I: \(DD\) has \(C_a=-14.652\) MeV, \(R_c=1.0\) fm; \(\Lambda_c\Lambda_c\) has \(C_a=-201.259\) MeV, \(R_c=0.4\) fm. Both are repulsive, so the GEM spectrum stays above threshold. Scattering length and effective range are not computed on this path. Optional `t1`,`t2` default to \(1/2\); identical \(I=0\) baryons set them to `0`.
 
 **Implementation**: `src/model/eftmodel.c`, `src/model/cmol2.c`, `src/model/cmol3.c`
+
+### 5d. HAL QCD
+
+`MODEL_HALQCD` is the leading-order local potential of the Miyamoto thesis, Eq. (3.11):
+
+```
+V(r) = V0(r) + Vsig(r) (σ1·σ2) + VT(r) S12
+```
+
+`HALQCD_CUSTOM` stores each radial function as `param.V0`, `param.Vsig`, or `param.VT`: an array of `{r, V}` with `r` in fm and `V` in MeV. A missing array is zero. `r` is non-negative and strictly increasing, and each array has at most 256 points. At least one array is required. Between nodes the kernel interpolates linearly. \(r\) at or below the first node keeps \(V(r_1)\). \(r\) at or above the last node is zero. Values enter the Hamiltonian in GeV.
+
+The two-body driver uses the same central, spin–spin, and tensor matrix elements as static OBE. Two Dirac legs put \(\langle\sigma_1\cdot\sigma_2\rangle\) and the Pauli \(S_{12}\) on those operators. \(^1S_0\) therefore sees \(V_0-3V_\sigma\). \(S_{12}\) mixes \(L\) with \(L+2\). There is no \(\mathbf{L}\cdot\mathbf{S}\) term and no coupled-channel potential matrix. Each table is already one isospin projection. A two-body file has one channel, written as `param.V0`, `param.Vsig`, and `param.VT`. A three-body file may instead key those objects by the pair isospin, `"0"`, `"1"`, `"0.5"`, `"1.5"`. Each recoupled \(t_{ij}\) loads its own block. An unlabelled file is accepted only when that pair has one \(t_{ij}\). A missing block stops the run. `iso_pi` and `iso_rho` are parsed and ignored.
+
+`.pot.dat` columns are `r`, `V0`, `Vsig`, `VT`, and `V1S0=V0-3 Vsig`, in GeV. Samples in `test/Spectra-HALQCD/` are software checks. The \(V_0\) table is the repulsive Yuan–Liu \(DD\) Gaussian written as a table, not a lattice HAL QCD potential. Scattering length and effective range are not computed on this path.
+
+**Implementation**: `src/model/halmodel.c`, `src/model/cmol2.c`, `src/model/cmol3.c`
 
 ### 6. Spectral Data Post-Processing
 

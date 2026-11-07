@@ -1,0 +1,66 @@
+{
+  "project": "bbb_hal_v0",
+  "task": "SPECTRA",
+  "model": {
+    "type": "HYBRID",
+    "model1": {
+      "type": "HALQCD",
+      "param": "HALQCD_CUSTOM",
+      "file": "param_HAL_V0.json"
+    },
+    "model2": {
+      "type": "HALQCD",
+      "param": "HALQCD_CUSTOM",
+      "file": "param_HAL_V0.json"
+    },
+    "model3": {
+      "type": "HALQCD",
+      "param": "HALQCD_CUSTOM",
+      "file": "param_HAL_V0.json"
+    }
+  },
+  "system": {
+    "type": "MOLECUL3",
+    "type1": "DIRAC",
+    "type2": "DIRAC",
+    "type3": "DIRAC",
+    "m1": 1.86725,
+    "m2": 1.86725,
+    "m3": 1.86725,
+    "cc1": 0,
+    "cc2": 0,
+    "cc3": 0,
+    "J": 0.5,
+    "P": 1,
+    "I": 0.0,
+    "Lmax": 0,
+    "t1": 0.0,
+    "t2": 0.0,
+    "t3": 0.0,
+    "pair1": {
+      "iso_pi": 0,
+      "iso_rho": 0,
+      "eta": 1
+    },
+    "pair2": {
+      "iso_pi": 0,
+      "iso_rho": 0,
+      "eta": 1
+    },
+    "pair3": {
+      "iso_pi": 0,
+      "iso_rho": 0,
+      "eta": 1
+    }
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 4,
+    "rmax": 8.0,
+    "rmin": 0.15
+  },
+  "print": {
+    "pot": "true",
+    "wfn": "false"
+  }
+}

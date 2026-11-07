@@ -15,6 +15,7 @@
 #include <gemstore/model/obemodel.h>
 #include <gemstore/model/ykwmodel.h>
 #include <gemstore/model/eftmodel.h>
+#include <gemstore/model/halmodel.h>
 #include <gemstore/model/giradial.h>
 
 #include <gemstore/basis/basis.h>
@@ -63,6 +64,9 @@ typedef struct mol3_vargs {
     argsEFTModel_t eft_m[3];
     argsEFTModelDy_t eft_d[3];
     eft_pot_ctx_t eft_c[3];
+    argsHALModel_t hal_m[3][MOL3_ISO_K];
+    argsHALModelDy_t hal_d[3];
+    hal_pot_ctx_t hal_c[3][MOL3_ISO_K];
 } mol3_vargs_t;
 
 typedef struct mol3_iv {
@@ -551,9 +555,8 @@ static double mol3_pair_kss(const argsInput_t *input, int p)
 }
 
 /* OBESTAT: one radial kernel per pair isospin, because π/ρ carry ⟨τ·τ⟩.
- * YUKAWA: spin dependence sits in Vss, so every tij of a pair shares one kernel.
- * EFTCONT: the file is already one projected channel, and V is central,
- * so every tij of that pair shares one kernel. */
+ * HALQCD: one projected table per t_ij. An unlabelled file is kept only
+ * when that pair has a single t_ij. YUKAWA and EFTCONT share one kernel. */
 static void mol3_load_pairs(const argsInput_t *input, mol3_vargs_t *varg)
 {
     for (int p = 0; p < 3; p++) {
@@ -561,10 +564,14 @@ static void mol3_load_pairs(const argsInput_t *input, mol3_vargs_t *varg)
         int c = p + 1;
         model_type_t kind = input->mol3_pairs[p].model;
 
+        argsHALSet_t hal_set;
         mol3_pair_mass(input, p, &mi, &mj);
         kss = mol3_pair_kss(input, p);
         varg->has_vt[p] = 0;
         varg->n_tp[p] = 0;
+        if (kind == MODEL_HALQCD) {
+            argsHALSet_from(input, p, &hal_set);
+        }
 
         if (kind == MODEL_YUKAWA) {
             varg->ykw_m[p] = argsYKWModel_from(input, p);
@@ -585,8 +592,16 @@ static void mol3_load_pairs(const argsInput_t *input, mol3_vargs_t *varg)
             varg->eft_c[p].dyn = &varg->eft_d[p];
             varg->has_vt[p] = 0;
         }
+        else if (kind == MODEL_HALQCD) {
+            varg->hal_d[p].mi = mi;
+            varg->hal_d[p].mj = mj;
+            varg->hal_d[p].OCent = 1.0;
+            varg->hal_d[p].OSdS = kss;
+            varg->hal_d[p].OTens = kss;
+            varg->has_vt[p] = 0;
+        }
         else if (kind != MODEL_OBESTAT) {
-            fprintf(stderr, "Error: MOLECUL3 pair %d model %s is not OBESTAT, YUKAWA, or EFTCONT.\n",
+            fprintf(stderr, "Error: MOLECUL3 pair %d model %s is not OBESTAT, YUKAWA, EFTCONT, or HALQCD.\n",
                 p + 1, model_type_str[kind]);
             exit(1);
         }
@@ -616,6 +631,25 @@ static void mol3_load_pairs(const argsInput_t *input, mol3_vargs_t *varg)
                 varg->ker[p][k].vss = NULL;
                 varg->ker[p][k].vt = NULL;
                 varg->ker[p][k].ctx = &varg->eft_c[p];
+            }
+            else if (kind == MODEL_HALQCD) {
+                argsHALModel_pick(&hal_set, tij, varg->n_tp[p] == 0, &varg->hal_m[p][k]);
+                varg->hal_c[p][k].model = &varg->hal_m[p][k];
+                varg->hal_c[p][k].dyn = &varg->hal_d[p];
+                varg->ker[p][k].vc = HALVc;
+                varg->ker[p][k].vss = (varg->hal_m[p][k].nsig > 0) ? HALVss : NULL;
+                varg->ker[p][k].vt = (varg->hal_m[p][k].nt > 0) ? HALVten : NULL;
+                varg->ker[p][k].ctx = &varg->hal_c[p][k];
+                if (varg->hal_m[p][k].nt > 0) {
+                    varg->has_vt[p] = 1;
+                }
+                printf("    HALQCD t_ij=%.4g points %d, %d, %d",
+                    tij, varg->hal_m[p][k].n0, varg->hal_m[p][k].nsig, varg->hal_m[p][k].nt);
+                if (varg->hal_m[p][k].n0 > 0) {
+                    printf(", V0(%.4g fm)=%.6f MeV",
+                        varg->hal_m[p][k].V0[0].r, varg->hal_m[p][k].V0[0].V);
+                }
+                printf("\n");
             }
             else {
                 varg->obe_m[p][k] = argsOBEModel_from(input, p);

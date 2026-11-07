@@ -1,6 +1,6 @@
 # Gemstore Molecule Spectra JSON Template
 
-Matches `src/parse.c`. Two-body molecular `SPECTRA` uses `system.type` `MOLECUL2`, basis `GEM`, and `model.type` `OBESTAT` (`OBESTAT_CUSTOM`), `YUKAWA` (`YUKAWA_MT13` or `YUKAWA_CUSTOM`), or `EFTCONT` (`EFTCONT_CUSTOM`). Example: `test/Spectra-Molecule2/`. Three-body `MOLECUL3` uses `model.type` `HYBRID`. Each of `model1`/`model2`/`model3` is `OBESTAT`, `YUKAWA`, or `EFTCONT`. Example: `test/Spectra-Molecule3/`.
+Matches `src/parse.c`. Two-body molecular `SPECTRA` uses `system.type` `MOLECUL2`, basis `GEM`, and `model.type` `OBESTAT` (`OBESTAT_CUSTOM`), `YUKAWA` (`YUKAWA_MT13` or `YUKAWA_CUSTOM`), `EFTCONT` (`EFTCONT_CUSTOM`), or `HALQCD` (`HALQCD_CUSTOM`). Example: `test/Spectra-Molecule2/`. Three-body `MOLECUL3` uses `model.type` `HYBRID`. Each of `model1`/`model2`/`model3` is `OBESTAT`, `YUKAWA`, `EFTCONT`, or `HALQCD`. Example: `test/Spectra-Molecule3/`.
 
 The parameter file holds the OBE couplings for a pair of species. The system JSON holds the state (legs, masses, isospin, C, J).
 
@@ -61,7 +61,7 @@ Do not write a unified `iso` key.
 | `m1`, `m2` | Physical masses (GeV); kinetic \(T=m_1+m_2+p^2/2\mu\) and threshold |
 | `cc1`, `cc2` | Meson C. `0` leaves G-parity. Nonzero on a meson leg flips \(\pi,\omega\). Dirac `cc` is ignored. |
 | `eta` | MM C-parity on pion and magnetic vector. Write `+1` or `-1`. `0` is read as `+1`. Unused for meson–baryon. |
-| `iso_pi`, `iso_rho` | \(\langle\tau_1\cdot\tau_2\rangle\) on \(\pi\) and \(\rho\). Two \(I=1/2\) legs: \(I=0\to-3\), \(I=1\to+1\). Write both. \(\sigma,\omega\) are isoscalar. `EFTCONT` does not read them. |
+| `iso_pi`, `iso_rho` | \(\langle\tau_1\cdot\tau_2\rangle\) on \(\pi\) and \(\rho\). Two \(I=1/2\) legs: \(I=0\to-3\), \(I=1\to+1\). Write both. \(\sigma,\omega\) are isoscalar. `EFTCONT` and `HALQCD` do not read them. |
 | `t1`, `t2` | Particle isospin. Default \(1/2\). Two identical \(I=0\) legs (`Λc`) use `0`. |
 | `S`, `L`, `J` | `L` is the lowest partial wave. The driver adds \(L+2\) and every total spin that couples to \(J\). JSON `S` does not select the channel list. |
 
@@ -153,7 +153,7 @@ CLI prints `Mass`, `Ebind = Mass − (m1+m2)`, `RMS`. Negative `Ebind` with RMS 
 - CLI `Ebind = Mass − (m1+m2+m3)` and three pair RMS. Bound only if `Ebind < 0` and RMS is clearly below `rmax`.
 - `"print":{"pot":"true"}` writes three pair blocks in `<project>.pot.dat`.
 - Run from `test/Spectra-Molecule3/` so relative pair files resolve. Use a distinct `project` per scan.
-- A nested pair may be `YUKAWA` or `EFTCONT` instead of `OBESTAT`. `YUKAWA_MT13` needs no file. `YUKAWA_CUSTOM` uses the same `terms` file as two-body Yukawa. Example: `test/Spectra-Yukawa/nnn_yukawa.json`. `EFTCONT_CUSTOM` uses `Ca` and `Rc`. Example: `test/Spectra-EFTCONT/`.
+- A nested pair may be `YUKAWA`, `EFTCONT`, or `HALQCD` instead of `OBESTAT`. `YUKAWA_MT13` needs no file. `YUKAWA_CUSTOM` uses the same `terms` file as two-body Yukawa. Example: `test/Spectra-Yukawa/nnn_yukawa.json`. `EFTCONT_CUSTOM` uses `Ca` and `Rc`. Example: `test/Spectra-EFT/`. `HALQCD_CUSTOM` uses `V0`, `Vsig`, and `VT`, or one such object per \(t_{ij}\). Example: `test/Spectra-HALQCD/`. Each recoupled \(t_{ij}\) loads its own block.
 
 ## Yukawa (`YUKAWA`)
 
@@ -195,4 +195,37 @@ V(r)=-C_a\exp\bigl[-(r/R_c)^2\bigr].
 }
 ```
 
-Yuan–Liu Table I central values are `test/Spectra-EFTCONT/`: \(DD\) uses \(C_a=-14.652\) MeV, \(R_c=1.0\) fm and \(m=1.86725\) GeV (\(\mu=933.625\) MeV); \(\Lambda_c\Lambda_c\) uses \(C_a=-201.259\) MeV, \(R_c=0.4\) fm and the lattice mass \(m=2.413\) GeV (\(\mu=1206.5\) MeV). Both contacts are repulsive. This driver is a GEM spectrum, not the scattering-length fit.
+Yuan–Liu Table I central values are `test/Spectra-EFT/`: \(DD\) uses \(C_a=-14.652\) MeV, \(R_c=1.0\) fm and \(m=1.86725\) GeV (\(\mu=933.625\) MeV); \(\Lambda_c\Lambda_c\) uses \(C_a=-201.259\) MeV, \(R_c=0.4\) fm and the lattice mass \(m=2.413\) GeV (\(\mu=1206.5\) MeV). Both contacts are repulsive. This driver is a GEM spectrum, not the scattering-length fit.
+
+## HAL QCD (`HALQCD`)
+
+Leading-order local potential, Miyamoto thesis Eq. (3.11). The radial functions are input tables, not couplings and exchange masses:
+
+\[
+V(r)=V_0(r)+V_\sigma(r)\,(\sigma_1\cdot\sigma_2)+V_T(r)\,S_{12}.
+\]
+
+```json
+{
+  "param": {
+    "V0":   [ {"r": 0.0, "V": 14.652}, {"r": 0.025, "V": 14.643} ],
+    "Vsig": [ {"r": 0.0, "V": -4.884} ],
+    "VT":   [ {"r": 0.0, "V": 0.0} ]
+  }
+}
+```
+
+`r` is fm and `V` is MeV. Each of `V0`, `Vsig`, and `VT` is optional; a missing array is zero, and at least one must be present. `r` increases strictly and stays non-negative. At most 256 points. Linear interpolation. \(r\le r_1\) keeps \(V(r_1)\). \(r\ge r_{\mathrm{last}}\) is zero. Two Dirac legs use the same \(k_{ss}=4\) factor as OBE, so the stored \(V_\sigma\) and \(V_T\) are coefficients of the Pauli operators. \(^1S_0\) is \(V_0-3V_\sigma\). \(S_{12}\) mixes \(L\) with \(L+2\). No \(\mathbf{L}\cdot\mathbf{S}\) and no coupled-channel matrix. `iso_pi` and `iso_rho` are required by the parser and ignored.
+
+One unlabelled channel is the two-body file, and a three-body pair that has only one \(t_{ij}\). When a three-body pair has several \(t_{ij}\), key each projected channel by that value. The \(I=0\) block is used only on \(t_{ij}=0\); it is not multiplied by the \(I=1\) factor.
+
+```json
+{
+  "param": {
+    "0": { "V0": [ {"r": 0.0, "V": 10.0}, {"r": 6.0, "V": 10.0} ] },
+    "1": { "V0": [ {"r": 0.0, "V": 40.0}, {"r": 6.0, "V": 40.0} ] }
+  }
+}
+```
+
+Samples in `test/Spectra-HALQCD/` check the table against the Yuan–Liu \(DD\) Gaussian and the \(^1S_0\) combination. They are not Miyamoto lattice potentials, and this driver does not compute a scattering length.

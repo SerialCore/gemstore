@@ -11,7 +11,7 @@
 #include <gemstore/math/matrix.h>
 
 /* Three-body molecular GEM, SYSTEM_MOLECUL3 + MODEL_HYBRID.
- * Each pair is OBESTAT, YUKAWA, or EFTCONT (or another radial kernel
+ * Each pair is OBESTAT, YUKAWA, EFTCONT, or HALQCD (or another radial kernel
  * registered in mol3_load_pairs). Jacobi charts c=1,2,3 with physical masses and
  * hadron spins 0, 1/2, 1.
  * H = Σ m_i + Σ p_i²/(2m_i) + Σ_pairs (Vc + Vss s_i·s_j + Vt S12), Vls=0.

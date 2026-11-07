@@ -12,6 +12,7 @@
 #include <gemstore/model/obemodel.h>
 #include <gemstore/model/ykwmodel.h>
 #include <gemstore/model/eftmodel.h>
+#include <gemstore/model/halmodel.h>
 #include <gemstore/model/cmol2.h>
 #include <gemstore/model/wfntrans.h>
 #include <gemstore/types.h>
@@ -847,6 +848,54 @@ int write_mol2_eft_pot(const argsInput_t *input, const argsEFTModel_t *args_mode
     return 1;
 }
 
+int write_mol2_hal_pot(const argsInput_t *input, const argsHALModel_t *args_model)
+{
+    double rmin = 0.01;
+    double rmax = 10.0;
+    double dr = 0.01;
+    FILE *pf;
+    char path[264];
+
+    if (args_model == NULL) {
+        fprintf(stderr, "Error: Invalid input parameters to write_hal_pot()\n");
+        return 0;
+    }
+
+    sprintf(path, "%s%s", input->project, ".pot.dat");
+    pf = fopen(path, "w");
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+
+    fprintf(pf, "# r[fm]    V0[GeV]    Vsig[GeV]    VT[GeV]    V1S0[GeV]\n");
+    fprintf(pf, "# V = V0 + Vsig (sigma1·sigma2) + VT S12. V1S0 = V0 - 3 Vsig.\n");
+    for (double r = rmin; r <= rmax; r += dr) {
+        double v0 = 0.0;
+        double vs = 0.0;
+        double vt = 0.0;
+        argsHALModelDy_t dyn = {0};
+        hal_pot_ctx_t ctx;
+
+        dyn.OCent = 1.0;
+        dyn.OSdS = 1.0;
+        dyn.OTens = 1.0;
+        ctx.model = args_model;
+        ctx.dyn = &dyn;
+        v0 = HALVc(r * GEMSTORE_FM, &ctx);
+        vs = HALVss(r * GEMSTORE_FM, &ctx);
+        vt = HALVten(r * GEMSTORE_FM, &ctx);
+        fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, v0, vs, vt, v0 - 3.0 * vs);
+    }
+
+    if (fclose(pf) != 0) {
+        fprintf(stderr, "Error: Failed to close file %s\n", path);
+        return 0;
+    }
+
+    return 1;
+}
+
 int write_mol3_pot(const argsInput_t *input)
 {
     static const char *pair_name[MOL3_PAIR_N] = { "12", "13", "23" };
@@ -903,6 +952,32 @@ int write_mol3_pot(const argsInput_t *input)
                 double vc = EFTVc(r * GEMSTORE_FM, &ctx);
 
                 fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, vc, 0.0, 0.0, vc);
+            }
+        }
+        else if (input->mol3_pairs[p].model == MODEL_HALQCD) {
+            argsHALSet_t set;
+            argsHALSet_from(input, p, &set);
+            fprintf(pf, "# columns are V0, Vsig, VT, V1S0=V0-3 Vsig, GeV\n");
+            for (int i = 0; i < set.n; i++) {
+                argsHALModelDy_t dyn = {0};
+                hal_pot_ctx_t ctx;
+
+                dyn.OCent = 1.0;
+                dyn.OSdS = 1.0;
+                dyn.OTens = 1.0;
+                ctx.model = &set.ch[i];
+                ctx.dyn = &dyn;
+                if (set.tagged) {
+                    fprintf(pf, "# t_ij=%.4g\n", set.tij[i]);
+                }
+                for (double r = rmin; r <= rmax; r += dr) {
+                    double v0 = HALVc(r * GEMSTORE_FM, &ctx);
+                    double vs = HALVss(r * GEMSTORE_FM, &ctx);
+                    double vt = HALVten(r * GEMSTORE_FM, &ctx);
+
+                    fprintf(pf, "%.8f    %.8e    %.8e    %.8e    %.8e\n", r, v0, vs, vt, v0 - 3.0 * vs);
+                }
+                fprintf(pf, "\n");
             }
         }
         else if (input->mol3_pairs[p].model == MODEL_OBESTAT) {

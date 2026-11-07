@@ -27,6 +27,7 @@ typedef enum model_type {
     MODEL_OBESTAT,
     MODEL_YUKAWA,
     MODEL_EFTCONT,
+    MODEL_HALQCD,
     MODEL_HYBRID
 } model_type_t;
 
@@ -89,7 +90,8 @@ typedef enum param_type {
     PARAM_OBESTAT_CUSTOM,
     PARAM_YUKAWA_MT13,
     PARAM_YUKAWA_CUSTOM,
-    PARAM_EFTCONT_CUSTOM
+    PARAM_EFTCONT_CUSTOM,
+    PARAM_HALQCD_CUSTOM
 } param_type_t;
 
 extern const char *param_type_str[];

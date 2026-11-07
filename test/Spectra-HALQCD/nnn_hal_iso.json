@@ -1,0 +1,34 @@
+{
+  "project": "nnn_hal_iso",
+  "task": "SPECTRA",
+  "model": {
+    "type": "HYBRID",
+    "model1": {"type": "HALQCD", "param": "HALQCD_CUSTOM", "file": "param_HAL_iso.json"},
+    "model2": {"type": "HALQCD", "param": "HALQCD_CUSTOM", "file": "param_HAL_iso.json"},
+    "model3": {"type": "HALQCD", "param": "HALQCD_CUSTOM", "file": "param_HAL_iso.json"}
+  },
+  "system": {
+    "type": "MOLECUL3",
+    "type1": "PSEUDOSCALAR",
+    "type2": "PSEUDOSCALAR",
+    "type3": "PSEUDOSCALAR",
+    "m1": 1.0,
+    "m2": 1.0,
+    "m3": 1.0,
+    "cc1": 0,
+    "cc2": 0,
+    "cc3": 0,
+    "J": 0.0,
+    "P": -1,
+    "I": 0.5,
+    "Lmax": 0,
+    "t1": 0.5,
+    "t2": 0.5,
+    "t3": 0.5,
+    "pair1": {"iso_pi": 1, "iso_rho": 1, "eta": 1},
+    "pair2": {"iso_pi": 1, "iso_rho": 1, "eta": 1},
+    "pair3": {"iso_pi": 1, "iso_rho": 1, "eta": 1}
+  },
+  "basis": {"type": "GEM", "nmax": 2, "rmax": 4.0, "rmin": 0.2},
+  "print": {"pot": "true", "wfn": "false"}
+}

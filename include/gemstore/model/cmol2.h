@@ -39,4 +39,9 @@ void mol2_yukawa_GEM(const argsInput_t *args_input, const argsYKWModel_t *args_m
 void mol2_eftcont_GEM(const argsInput_t *args_input, const argsEFTModel_t *args_model, argsEFTModelDy_t *args_dynmc,
     array_t *e_out, matrix_t *v_out, matrix_t *n_out, array_t *rms_out);
 
+/* Two-body GEM with MODEL_HALQCD. V = V0 + Vσ σ1·σ2 + VT S12.
+ * Tensor S12 mixes L and L+2. Eigenvalues are the molecule mass. */
+void mol2_halqcd_GEM(const argsInput_t *args_input, const argsHALModel_t *args_model, argsHALModelDy_t *args_dynmc,
+    array_t *e_out, matrix_t *v_out, matrix_t *n_out, array_t *rms_out);
+
 #endif

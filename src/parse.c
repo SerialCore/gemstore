@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <math.h>
 
 static char *read_input_file(const char *filename)
 {
@@ -183,6 +185,7 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
     else if (strcmp(type, "OBESTAT") == 0) input->model = MODEL_OBESTAT;
     else if (strcmp(type, "YUKAWA") == 0) input->model = MODEL_YUKAWA;
     else if (strcmp(type, "EFTCONT") == 0) input->model = MODEL_EFTCONT;
+    else if (strcmp(type, "HALQCD") == 0) input->model = MODEL_HALQCD;
     else {
         fprintf(stderr, "Unknown model type: %s\n", type);
         exit(1);
@@ -273,13 +276,20 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
             exit(1);
         }
     }
+    else if (input->model == MODEL_HALQCD) {
+        if (strcmp(param, "HALQCD_CUSTOM") == 0) input->param = PARAM_HALQCD_CUSTOM;
+        else {
+            fprintf(stderr, "Unknown HALQCD parameter set: %s\n", param);
+            exit(1);
+        }
+    }
 
     if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
         || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
         || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_QMCSTAD_CUSTOM
-        || input->param == PARAM_QMCMOD_CUSTOM 
-        || input->param == PARAM_OBESTAT_CUSTOM
-        || input->param == PARAM_YUKAWA_CUSTOM || input->param == PARAM_EFTCONT_CUSTOM) {
+        || input->param == PARAM_QMCMOD_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM
+        || input->param == PARAM_YUKAWA_CUSTOM || input->param == PARAM_EFTCONT_CUSTOM
+        || input->param == PARAM_HALQCD_CUSTOM) {
         const char *file = read_string_item(model_json, "file")->valuestring;
         if (strlen(file) > 0) {
             strncpy(input->param_file, file, 256);
@@ -826,6 +836,154 @@ void parse_param_EFTCONT(const char *filename, argsEFTModel_t *args_model)
         cJSON_Delete(root);
         free(json_text);
         exit(1);
+    }
+
+    cJSON_Delete(root);
+    free(json_text);
+}
+
+/* 1 if key is a t_ij label, 0 if it is V0/Vsig/VT, -1 otherwise. */
+static int hal_key_tij(const char *key, double *tij)
+{
+    char *end = NULL;
+    double v;
+
+    if (key == NULL || key[0] == '\0'
+        || strcmp(key, "V0") == 0 || strcmp(key, "Vsig") == 0 || strcmp(key, "VT") == 0) {
+        return 0;
+    }
+    errno = 0;
+    v = strtod(key, &end);
+    if (end == key || end == NULL || *end != '\0' || errno != 0 || v < 0.0) {
+        return -1;
+    }
+    *tij = v;
+    return 1;
+}
+
+static void parse_hal_component(cJSON *block, const char *key, argsHALPoint_t *pt, int *n,
+    const char *filename, const char *where)
+{
+    cJSON *arr = cJSON_GetObjectItemCaseSensitive(block, key);
+    int i;
+
+    *n = 0;
+    if (arr == NULL) {
+        return;
+    }
+    if (!cJSON_IsArray(arr)) {
+        fprintf(stderr, "HALQCD %s %s must be an array in %s\n", where, key, filename);
+        exit(1);
+    }
+    *n = cJSON_GetArraySize(arr);
+    if (*n > HAL_PT_MAX) {
+        fprintf(stderr, "HALQCD %s %s has %d points; the maximum is %d in %s\n",
+            where, key, *n, HAL_PT_MAX, filename);
+        exit(1);
+    }
+    for (i = 0; i < *n; i++) {
+        cJSON *item = cJSON_GetArrayItem(arr, i);
+        if (!cJSON_IsObject(item)) {
+            fprintf(stderr, "HALQCD %s %s point %d is not an object in %s\n", where, key, i + 1, filename);
+            exit(1);
+        }
+        pt[i].r = read_number_item(item, "r")->valuedouble;
+        pt[i].V = read_number_item(item, "V")->valuedouble;
+        if (pt[i].r < 0.0) {
+            fprintf(stderr, "HALQCD %s %s point %d has negative r in %s\n", where, key, i + 1, filename);
+            exit(1);
+        }
+        if (i > 0 && pt[i].r <= pt[i - 1].r) {
+            fprintf(stderr, "HALQCD %s %s r must increase at point %d in %s\n", where, key, i + 1, filename);
+            exit(1);
+        }
+    }
+}
+
+static void parse_hal_block(cJSON *block, argsHALModel_t *model, const char *filename, const char *where)
+{
+    if (!cJSON_IsObject(block)) {
+        fprintf(stderr, "HALQCD %s must be an object in %s\n", where, filename);
+        exit(1);
+    }
+    parse_hal_component(block, "V0", model->V0, &model->n0, filename, where);
+    parse_hal_component(block, "Vsig", model->Vsig, &model->nsig, filename, where);
+    parse_hal_component(block, "VT", model->VT, &model->nt, filename, where);
+    if (model->n0 + model->nsig + model->nt < 1) {
+        fprintf(stderr, "HALQCD %s in %s needs V0, Vsig, or VT\n", where, filename);
+        exit(1);
+    }
+}
+
+void parse_param_HALQCD(const char *filename, argsHALSet_t *set)
+{
+    char *json_text = read_input_file(filename);
+    const char *parse_error = NULL;
+    cJSON *root = cJSON_Parse(json_text);
+    cJSON *param_json;
+    cJSON *item;
+    int has_flat = 0;
+
+    if (set == NULL) {
+        fprintf(stderr, "Error: parse_param_HALQCD needs a parameter set.\n");
+        exit(1);
+    }
+    memset(set, 0, sizeof(*set));
+    if (!root) {
+        parse_error = cJSON_GetErrorPtr();
+        fprintf(stderr, "Invalid HALQCD parameter JSON in %s", filename);
+        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
+        fprintf(stderr, "\n");
+        free(json_text);
+        exit(1);
+    }
+
+    param_json = read_object_item(root, "param");
+    has_flat = cJSON_GetObjectItemCaseSensitive(param_json, "V0") != NULL
+        || cJSON_GetObjectItemCaseSensitive(param_json, "Vsig") != NULL
+        || cJSON_GetObjectItemCaseSensitive(param_json, "VT") != NULL;
+    for (item = param_json->child; item != NULL; item = item->next) {
+        double tij = 0.0;
+        int kind = hal_key_tij(item->string, &tij);
+        int i;
+
+        if (kind == 0) {
+            continue;
+        }
+        if (kind < 0) {
+            fprintf(stderr, "HALQCD parameter key \"%s\" is not t_ij in %s\n", item->string, filename);
+            exit(1);
+        }
+        if (has_flat) {
+            fprintf(stderr, "HALQCD file %s mixes an unlabelled table with t_ij block \"%s\"\n",
+                filename, item->string);
+            exit(1);
+        }
+        if (set->n >= HAL_ISO_MAX) {
+            fprintf(stderr, "HALQCD file %s has more than %d isospin blocks\n", filename, HAL_ISO_MAX);
+            exit(1);
+        }
+        for (i = 0; i < set->n; i++) {
+            if (fabs(set->tij[i] - tij) < 1e-6) {
+                fprintf(stderr, "HALQCD file %s repeats t_ij=%.4g\n", filename, tij);
+                exit(1);
+            }
+        }
+        set->tij[set->n] = tij;
+        parse_hal_block(item, &set->ch[set->n], filename, item->string);
+        set->n++;
+    }
+    if (has_flat) {
+        parse_hal_block(param_json, &set->ch[0], filename, "unlabelled channel");
+        set->n = 1;
+        set->tagged = 0;
+    }
+    else {
+        if (set->n < 1) {
+            fprintf(stderr, "HALQCD parameter file %s needs V0, Vsig, or VT\n", filename);
+            exit(1);
+        }
+        set->tagged = 1;
     }
 
     cJSON_Delete(root);

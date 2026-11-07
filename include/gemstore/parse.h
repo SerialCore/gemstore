@@ -35,4 +35,9 @@ void parse_param_YUKAWA(const char *filename, argsYKWModel_t *args_model);
 /* parse EFTCONT param file: param.Ca (MeV), param.Rc (fm). */
 void parse_param_EFTCONT(const char *filename, argsEFTModel_t *args_model);
 
+/* parse HALQCD param file. Flat form is param.V0, param.Vsig, param.VT.
+ * Isospin form keys those objects by t_ij: "0", "1", "0.5", "1.5".
+ * Each component is {r: fm, V: MeV}, strictly increasing in r. A missing array is zero. */
+void parse_param_HALQCD(const char *filename, argsHALSet_t *set);
+
 #endif
