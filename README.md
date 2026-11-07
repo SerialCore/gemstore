@@ -9,7 +9,7 @@
 [![Platform: Linux/Unix](https://img.shields.io/badge/Platform-Linux%2FUnix-lightgrey.svg)](https://en.wikipedia.org/wiki/Unix)
 ![Status: Active Development](https://img.shields.io/badge/Status-Active%20Development-brightgreen.svg)
 
-**A computational framework for hadron spectroscopy: Gaussian Expanding Method (GEM) with Godfrey–Isgur potentials, MIT bag spectra, and two-body molecular states from static one-boson exchange.**
+**A computational framework for hadron spectroscopy: Gaussian Expanding Method (GEM) with Godfrey–Isgur potentials, MIT bag and quark-meson-coupling spectra, and molecular states from static one-boson exchange.**
 
 </div>
 
@@ -17,11 +17,11 @@
 
 ## Overview
 
-**GEMSTORE** computes meson and baryon spectra with the **Gaussian Expanding Method** and **Godfrey–Isgur** (GI-screen / GI-string) and **Cornell** potentials, MIT **bag** masses for mesons through hexaquarks, with or without color–magnetic mixing, and two-body **molecular** spectra with a static **one-boson-exchange** kernel.
+**GEMSTORE** computes meson and baryon spectra with the **Gaussian Expanding Method** and **Godfrey–Isgur** (GI-screen / GI-string) and **Cornell** potentials, MIT **bag** masses for mesons through hexaquarks, with or without color–magnetic mixing, **quark-meson coupling** (QMC) spectra of those bags in symmetric nuclear matter, and two- and three-body **molecular** spectra with a static **one-boson-exchange** or local Yukawa kernel.
 
 ### Key Features
 
-- 🎯 **Quark models**: GI-Screen, GI-String, NR Cornell, MIT bag
+- 🎯 **Quark models**: GI-Screen, GI-String, NR Cornell, MIT bag, QMC
 - 🧲 **Molecular OBE**: static elastic \(\pi\sigma\rho\omega\) for two typed hadron legs
 - 📊 **Spectra**: masses, RMS radii (GEM), bag radius and color–spin eigenvectors, molecular binding
 - 🧩 **Multiquark bag CMI**: user-supplied color and spin channels, mixed by total spin `st`
@@ -58,6 +58,7 @@
 | **NR-String** | Non-relativistic Cornell potential with linear confinement | Meson spectra |
 | **NR-Screen** | Non-relativistic Cornell potential with screened confinement | Meson spectra |
 | **MIT bag** | Cavity energy plus optional color–magnetic / binding Hamiltonian | Meson, baryon, tetra, penta, hexa |
+| **QMC** | MIT bag in symmetric nuclear matter. `QMCSTAD` keeps \(B\) fixed; `QMCMOD` lets \(B\) fall with \(\sigma\) | In-medium bag spectra at \(\rho_B\) and \(T\) |
 | **OBE-static** | Elastic static \(\pi\sigma\rho\omega\) (\(V_C+V_{ss}+V_t\), \(V_{ls}=0\)) | Two- and three-body hadron molecules |
 | **Yukawa** | Local Malfliet–Tjon Yukawa, central plus Bartlett \(P_\sigma\) | NN and NNN binding (`YUKAWA_MT13`) |
 
@@ -70,7 +71,7 @@
 
 - **MESON**: Quark–antiquark (\(q\bar q\))
 - **BARYON**: Three-quark (\(qqq\))
-- **BAG**: MIT bag; flavor content from `nn`, `ns`, `nc`, `nb`
+- **BAG**: MIT bag (`BAGMIT`) or in-medium QMC (`QMCSTAD`, `QMCMOD`); flavor counts `nn`, `ns`, `nc`, `nb`
 - **MOLECUL2**: Two-body molecule (hadron–hadron OBE or Yukawa on GEM)
 - **MOLECUL3**: Three-body molecule (HYBRID pair OBESTAT or YUKAWA on GEM; example `test/Spectra-Molecule3/`)
 
@@ -152,6 +153,9 @@ make uninstall
 # MIT bag with color–spin mixing
 ./gemstore --compute test/Spectra-Bag/tetra_ccnn_18.json
 
+# Quark-meson coupling at saturation density (zero medium couplings)
+./gemstore --compute test/Spectra-QMC/nucleon_qmc.json
+
 # Two-body D* Ξ molecule (static OBE; param file is relative to cwd)
 cd test/Spectra-Molecule2
 ../../gemstore --compute dstar_xi_I0.json
@@ -210,8 +214,8 @@ Run it:
 
 ```json
 "model": {
-  "type": "GISCREEN", "GISTRING", "NRSTRING", "NRSCREEN", "BAGMIT", or "OBESTAT",
-  "param": "GISCREEN_CCBAR", "GISTRING_CUSTOM", "BAGMIT_DEFAULT", ...,
+  "type": "GISCREEN", "GISTRING", "NRSTRING", "NRSCREEN", "BAGMIT", "QMCSTAD", "QMCMOD", or "OBESTAT",
+  "param": "GISCREEN_CCBAR", "GISTRING_CUSTOM", "BAGMIT_DEFAULT", "QMC_DEFAULT", ...,
   "file": "param_file.json"
 }
 ```
@@ -222,6 +226,8 @@ Run it:
 - `NRSTRING` — non-relativistic Cornell model, linear confinement
 - `NRSCREEN` — non-relativistic Cornell model, screened confinement
 - `BAGMIT` — MIT bag (`system.type` must be `BAG`)
+- `QMCSTAD` — standard quark-meson coupling on `BAG`. \(B\) stays at \(B_0\)
+- `QMCMOD` — modified QMC on `BAG`. \(B\) depends on \(\sigma\)
 - `OBESTAT` — static elastic OBE (`system.type` `MOLECUL2`, or a HYBRID pair)
 - `YUKAWA` — local Yukawa (`MOLECUL2`, or a HYBRID pair)
 - `HYBRID` — three pair models for `MOLECUL3`
@@ -239,6 +245,8 @@ Run it:
 - `NRSCREEN_CUSTOM` - Custom NR-Screen parameters from file (requires `"file"`)
 - `BAGMIT_DEFAULT` - Built-in MIT bag masses, bag constant \(B\), zero-point \(Z\), and pair bindings
 - `BAGMIT_CUSTOM` - Custom bag parameters from file (requires `"file"`)
+- `QMC_DEFAULT` - Vacuum MIT bag plus \(m_\sigma=0.550\) GeV and physical \(\omega,\rho\) masses. All medium couplings are 0. Use with `QMCSTAD` only
+- `QMC_CUSTOM` - QMC couplings from file (requires `"file"`)
 - `OBESTAT_CUSTOM` - Static OBE couplings from file (requires `"file"`)
 - `YUKAWA_MT13` - Built-in Malfliet–Tjon I/III (no file)
 - `YUKAWA_CUSTOM` - Yukawa terms from file (requires `"file"`)
@@ -292,6 +300,15 @@ Run it:
 ```
 
 `nn,ns,nc,nb` are required flavor counts. `f1`–`f6` give the quark order for CMI (same flavor indices as mesons) and must match those counts. Omit `f1`–`f6` when `basis` is `NONE`. Inputs: `test/Spectra-Bag/`. Field list: `app/gemstore-assistant/templates/bag_spectra_template.md`.
+
+`QMCSTAD` and `QMCMOD` use the same `BAG` system and add
+
+```json
+"rho_b": 0.16,
+"temp": 0.0
+```
+
+`rho_b` is the baryon density in fm\(^{-3}\) and `temp` is the temperature in GeV. Both are required and must be non-negative. `BAGMIT` does not read them. Basis stays `NONE` or `CMI`. Inputs: `test/Spectra-QMC/`.
 
 **Molecule** (`"type": "MOLECUL2"`). Pair with `"model":{"type":"OBESTAT","param":"OBESTAT_CUSTOM","file":"..."}` and basis `GEM`.
 
@@ -493,7 +510,7 @@ Custom parameters can be supplied via external JSON file:
 | `epsilon_sos` | Thomas precession strength | 0.0-1.0 |
 | `epsilon_tens` | Tensor force strength | -0.5 to 0.1 |
 
-The GI fields above apply to `GISTRING` and `GISCREEN`. `NRSTRING` and `NRSCREEN` use a different `param` object. `NRSTRING` does not read `mu`. `BAGMIT_CUSTOM` uses the bag table below. `OBESTAT_CUSTOM` uses the OBE table.
+The GI fields above apply to `GISTRING` and `GISCREEN`. `NRSTRING` and `NRSCREEN` use a different `param` object. `NRSTRING` does not read `mu`. `BAGMIT_CUSTOM` uses the bag table below. `QMC_CUSTOM` uses the QMC table. `OBESTAT_CUSTOM` uses the OBE table.
 
 **NRSTRING / NRSCREEN parameter fields:**
 
@@ -517,6 +534,21 @@ The GI fields above apply to `GISTRING` and `GISCREEN`. `NRSTRING` and `NRSCREEN
 | `B` | Bag constant (GeV\(^4\)) |
 | `Z` | Zero-point coefficient |
 | `Bcs`, `Bbs`, `Bcc`, `Bbc`, `Bbb` | Pair binding strengths (GeV) |
+
+**QMC parameter fields** (`QMC_DEFAULT` in `src/param/argset.c`; `QMC_CUSTOM` via `parse_param_QMC`):
+
+| Field | Description |
+|-------|-------------|
+| `mn`, `ms`, `mc`, `mb` | Vacuum quark masses (GeV). Default \(m_n=0\), \(m_s=0.279\), \(m_c=1.641\), \(m_b=5.093\) |
+| `B` | Vacuum bag constant \(B_0\) (GeV\(^4\)). Default \(4.42051\times 10^{-4}\) |
+| `Z` | Zero-point coefficient. Default \(1.83\) |
+| `m_sigma`, `m_omega`, `m_rho` | Meson masses (GeV). Defaults \(0.550\), \(0.7825\), \(0.7753\) |
+| `g_sigma`, `g_omega`, `g_rho` | Quark–meson couplings. `QMC_DEFAULT` sets all three to 0 |
+| `lambda3` | Cubic scalar self-coupling. Optional; missing means 0 |
+| `g_sigma_B` | Bag-constant coupling. `QMCSTAD` ignores it and keeps \(B=B_0\). `QMCMOD` needs it nonzero |
+| `delta` | Exponent in \(B(\sigma)\). `QMCMOD` needs \(\delta>0\). `QMC_DEFAULT` is 0, so `QMCMOD` cannot use that preset |
+
+There is no pair-binding block. The mean-field source and the spectrum bag both set those strengths to 0. `g_rho` is stored. Symmetric matter keeps \(\rho_3=0\), so it does not shift the spectrum. A finite \(\sigma\) needs \(m_n>0\) whenever \(g_\sigma\neq 0\). The couplings in `test/Spectra-QMC/param_qmc.json` (\(m_n=0.40\) GeV, \(g_\sigma=4.40\), \(g_\omega=3.95\)) are a saturation sketch, not a published fit.
 
 **OBESTAT parameter fields** (couplings of this pair; legs and isospin stay in the system JSON):
 
@@ -609,6 +641,42 @@ H(R) = E0(R) I − CMI(R) + Bind
 ```
 
 Color and spin Casimir factor matrices (`operator_lambda2`, `operator_sigma2`) are built once. \(H(R)\) is assembled and diagonalized inside one `st` block while \(R\) is minimized in \((1,10)\). `NONE` varies \(E_0(R)\) only. Implementation: `src/model/bagmodel.c`, `src/basis/cmisym.c`, `src/math/cmi.c`.
+
+### 4b. Quark-meson coupling
+
+`QMCSTAD` and `QMCMOD` sit on the same bag. `compute_spectra_bag` calls `qmc_solve`, then `bag_compute` at the in-medium light-quark mass and bag constant.
+
+The mean field is symmetric nuclear matter. Its source is always a color-free bag of three light quarks (`NONE`), not the spectrum the user asked for. Only those quarks couple to \(\sigma\). The scalar charge of one \(\kappa=-1\) quark is \(S_q=\partial\omega/\partial m\). The nucleon response is
+
+```
+g_N = 3 g_σ S_q − (4π/3) R³ dB/dσ
+m_σ² σ + (λ₃/2) σ² = g_N ρ_s
+m_n* = m_n − g_σ σ
+ω = 3 g_ω ρ_B / m_ω²
+```
+
+\(\omega\) stays out of \(E_{\mathrm{bag}}\) and out of the boundary condition. \(\rho_3=0\).
+
+`QMCSTAD` returns \(B=B_0\) and \(dB/d\sigma=0\). `QMCMOD` uses the free source mass \(M_N\) (the three-quark bag at \(\sigma=0\), \(B=B_0\)):
+
+```
+B/B0 = (1 − 4 g_σ^B σ / (δ M_N))^δ
+```
+
+and rejects a root that would make \(B\le 0\). Temperature enters only the nucleon Fermi–Dirac sea (degeneracy 4). Net density uses \(f-\bar f\); scalar density, energy, and pressure use \(f+\bar f\). At \(T=0\) the sea is a Fermi sphere. \(\sigma=0\) when \(g_\sigma=0\), and when both \(\rho_B\) and \(T\) vanish.
+
+Thermodynamics, with \(U=\tfrac12 m_\sigma^2\sigma^2+(\lambda_3/6)\sigma^3\):
+
+```
+ε = ε_kin + U + ½ m_ω² ω²
+P = P_kin − U + ½ m_ω² ω²
+μ = E_F* + 3 g_ω ω     (T=0; at T>0, E_F* is the kinetic chemical potential ν)
+E/A = ε/ρ_B − M_N      (0 at ρ_B = 0)
+```
+
+The spectrum then reuses `bag_compute` with \(m_n^*\), \(B(\sigma)\), and the vacuum \(m_s,m_c,m_b,Z\). Quark counts and the `CMI` space come from the input. That mass is not \(M_N+3g_\omega\omega\). For an `nnn` `NONE` bag it coincides with the source mass.
+
+`test/Spectra-QMC/nucleon_qmc.json` is `QMC_DEFAULT` at \(0.16\,\mathrm{fm}^{-3}\) and \(T=0\): \(\sigma=0\) and \(E/A=+18.9\) MeV, the Fermi kinetic energy of the free bag (\(M_N=1.087\) GeV). `nucleon_qmc_custom.json` uses the sketch couplings and gives \(E/A\approx-16.7\) MeV with pressure near zero. `nucleon_mqmc.json` is the same sketch with \(g_\sigma^B=2\), \(\delta=4\): \(B\) falls to \(0.840\,B_0\) and \(E/A\approx-57.8\) MeV. Implementation: `src/model/qmcmodel.c`.
 
 ### 5. Static OBE two-body molecules
 
@@ -733,7 +801,8 @@ For details: see `app/gemstore-assistant/SKILL.md`
 |----------|-----------|--------|
 | `compute_spectra_meson()` | GEM/SHO meson dispatcher | Masses, RMS, eigenvectors |
 | `compute_spectra_baryon()` | Three-quark GI spectrum (GEM) | Masses, pair RMS, eigenvectors |
-| `compute_spectra_bag()` | MIT bag dispatcher | Masses, \(R\), \(x_f\), CMI eigenvectors |
+| `compute_spectra_bag()` | MIT bag and QMC dispatcher | Masses, \(R\), \(x_f\), CMI eigenvectors, QMC matter |
+| `qmc_solve()` | Symmetric-matter \(\sigma\), \(\omega\), and in-medium bag | `qmc_matter_t` plus the bag passed to `bag_compute` |
 | `compute_spectra_mol2()` | Two-body OBE GEM dispatcher | Mass, Ebind, RMS, mixed-channel eigenvectors |
 | `bag_compute()` | Load CMI, mix by `st`, vary \(R\) | `bag_mit_t` states |
 | `mol2_obestat_GEM()` | Block GEM \(Hc=ENc\) with \(L\oplus L+2\) | Masses, RMS, overlap |
@@ -918,6 +987,17 @@ Worked input: `test/Spectra-Bag/tetra_ccnn_18.json`. `NONE` example: `test/Spect
 
 Output `tetra_ccnn_18.state.json` stores `mass`, variational `R`, frequencies `x`, and color–spin eigenvector components. The CLI table prints `st`, mass, \(R\), and \(x_n,x_s,x_c,x_b\).
 
+### Example 3b: QMC nucleon in medium
+
+Worked inputs live in `test/Spectra-QMC/`. `nucleon_qmc.json` is `QMCSTAD` with `QMC_DEFAULT`. A custom file is `nucleon_qmc_custom.json` plus `param_qmc.json`. Modified QMC is `nucleon_mqmc.json` (`QMCMOD`, `QMC_CUSTOM`, `param_mqmc.json`). Color–magnetic mixing is `nucleon_qmc_cmi.json`.
+
+```bash
+cd test/Spectra-QMC
+../../gemstore --compute nucleon_qmc_custom.json
+```
+
+The CLI prints the usual bag table and a `QMC MATTER SUMMARY` (`sigma`, `omega`, `B`, \(m_n^*\), free and in-medium nucleon, scalar density, \(\mu\), \(\varepsilon\), \(P\), \(E/A\)). `<project>.state.json` keeps the bag `states` and adds those matter fields on the root. QMC does not write `.pot.dat` or `.wfn.N.dat`.
+
 ### Example 4: Parameter Fitting
 
 `fit.target` selects the pinned dataset. That entry sets the model and the meson state list. Do not write `model`, `system`, or `print`. Basis is `GEM` or `SHO`. The basis below is the one used with these datasets.
@@ -1061,9 +1141,10 @@ For light mesons (pions, kaons), GI-String model works better:
 
 - `test/Spectra-CustomParameter/amethyst.state.json` — GEM meson
 - `test/Spectra-Bag/*.state.json` — MIT bag (mass, \(R\), \(x\), color–spin components)
+- `test/Spectra-QMC/*.state.json` — QMC bag plus root fields `sigma`, `omega`, `B`, `mn_star`, `m_free`, `m_nucleon`, `R_nucleon`, `rho_s`, `mu`, `eps`, `press`, `ebind`
 - `test/Spectra-Molecule2/dstar_xi_I0.state.json` — two-body OBE GEM (`mass`, `rms_radius`, mixed-channel `eigenvector`)
 
-Bag states use `st`, `mass`, `R`, `x`, and an `eigenvector` array of `{color, s12, …, c}` objects. `NONE` writes `{c}` only.
+Bag states use `st`, `mass`, `R`, `x`, and an `eigenvector` array of `{color, s12, …, c}` objects. `NONE` writes `{c}` only. A QMC file adds the matter fields listed above next to `states`. `R` and `R_nucleon` are in GeV\(^{-1}\). `ebind` is \(E/A\) in GeV.
 
 ---
 
@@ -1083,13 +1164,14 @@ gemstore/
 │   ├── types.h
 │   ├── basis/           # orbit, spin, color, cmisym, …
 │   ├── math/
-│   ├── model/           # bagmodel, cmeson, cbaryon, cmol2, obemodel, compute, …
+│   ├── model/           # bagmodel, qmcmodel, cmeson, cbaryon, cmol2, obemodel, compute, …
 │   └── param/           # argset, fitting
 ├── src/                 # mirrors include/; input.c, parse.c, read.c, write.c
 ├── lib/Minuit2/
 ├── app/gemstore-assistant/
 └── test/
     ├── Spectra-Bag/     # MIT bag
+    ├── Spectra-QMC/     # QMCSTAD and QMCMOD on BAG
     ├── Spectra-Baryon/
     ├── Spectra-SHO/
     ├── Spectra-NRmodel/
@@ -1098,7 +1180,7 @@ gemstore/
     └── FittingTask/
 ```
 
-Run JSON is parsed in `src/parse.c` into `argsInput_t` (`include/gemstore/input.h`). Model coefficients live in `src/param/argset.c`. `src/model/compute.c` dispatches meson, baryon, bag, and two-body molecules. Result files are written from `src/write.c`; the terminal tables are `src/print.c`.
+Run JSON is parsed in `src/parse.c` into `argsInput_t` (`include/gemstore/input.h`). Model coefficients live in `src/param/argset.c`. `src/model/compute.c` dispatches meson, baryon, bag (including QMC), and molecular spectra. Result files are written from `src/write.c`; the terminal tables are `src/print.c`.
 
 ---
 
@@ -1154,7 +1236,7 @@ If you use GEMSTORE in research, please cite:
   year = {2026},
   url = {https://github.com/serialcore/gemstore},
   version = {0.1.4},
-  note = {GEM, Godfrey-Isgur, MIT bag, and static OBE molecules}
+  note = {GEM, Godfrey-Isgur, MIT bag, QMC, and static OBE molecules}
 }
 ```
 
