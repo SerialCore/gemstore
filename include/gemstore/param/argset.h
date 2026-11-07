@@ -108,8 +108,8 @@ typedef struct argsQMCModel {
     double g_omega;         /* coupling of omega meson */
     double g_rho;           /* coupling of rho meson */
     double lambda3;         /* scalar self-coupling; 0 if absent */
-    double g_sigma_B;       /* coupling of sigma meson in bag constant */
-    double delta;           /* exponent of bag constant */
+    double g_sigma_B;       /* QMCMOD only: sigma coupling in the bag constant */
+    double delta;           /* QMCMOD only: exponent of B(sigma); 0 for QMCSTAD */
 } argsQMCModel_t;
 
 typedef struct argsQMCModelDy {
@@ -215,9 +215,9 @@ extern const argsNRModel_t argsNRScreen_meson;
 /* Default MIT bag model parameters */
 extern const argsBAGModel_t argsBAGMIT_default;
 
-/* Free-space MIT bag plus physical ω, ρ and m_σ = 0.550 GeV.
- * Medium couplings are 0. QMCMOD cannot use this set. */
-extern const argsQMCModel_t argsQMC_default;
+/* QMCSTAD preset: free-space MIT bag, physical ω and ρ, m_σ = 0.550 GeV.
+ * Medium couplings are 0. g_sigma_B and delta stay 0. QMCMOD cannot use this set. */
+extern const argsQMCModel_t argsQMCSTAD_default;
 
 extern const argsYKWModel_t argsYUKAWA_MT13;
 
@@ -230,8 +230,8 @@ argsNRModel_t argsNRModel_from(const argsInput_t *input);
 /* Get MIT bag model parameters from input */
 argsBAGModel_t argsBAGModel_from(const argsInput_t *input);
 
-/* Get QMC parameters. QMCSTAD requires g_sigma_B = 0.
- * QMCMOD requires g_sigma_B ≠ 0 and delta > 0. */
+/* Get QMC parameters. QMCSTAD_CUSTOM does not read g_sigma_B or delta.
+ * QMCMOD_CUSTOM requires g_sigma_B ≠ 0 and delta > 0. */
 argsQMCModel_t argsQMCModel_from(const argsInput_t *input);
 
 /* Full OBE args for compute. MOLECUL2 ignores p and uses param_file plus type1/2.

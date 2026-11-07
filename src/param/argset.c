@@ -161,7 +161,7 @@ const argsNRModel_t argsNRScreen_meson = {
     .sigma = 1.842
 };
 
-const argsQMCModel_t argsQMC_default = {
+const argsQMCModel_t argsQMCSTAD_default = {
     .mn = 0.000,
     .ms = 0.279,
     .mc = 1.641,
@@ -174,9 +174,7 @@ const argsQMCModel_t argsQMC_default = {
     .g_sigma = 0.0,
     .g_omega = 0.0,
     .g_rho = 0.0,
-    .lambda3 = 0.0,
-    .g_sigma_B = 0.0,
-    .delta = 0.0
+    .lambda3 = 0.0
 };
 
 const argsBAGModel_t argsBAGMIT_default = {
@@ -257,9 +255,12 @@ argsQMCModel_t argsQMCModel_from(const argsInput_t *input)
 {
     argsQMCModel_t args_model = {0};
 
-    if (input->param == PARAM_QMC_DEFAULT) args_model = argsQMC_default;
-    else if (input->param == PARAM_QMC_CUSTOM) {
-        parse_param_QMC(input->param_file, &args_model);
+    if (input->param == PARAM_QMCSTAD_DEFAULT) args_model = argsQMCSTAD_default;
+    else if (input->param == PARAM_QMCSTAD_CUSTOM) {
+        parse_param_QMC(input->param_file, &args_model, MODEL_QMCSTAD);
+    }
+    else if (input->param == PARAM_QMCMOD_CUSTOM) {
+        parse_param_QMC(input->param_file, &args_model, MODEL_QMCMOD);
     }
 
     return args_model;

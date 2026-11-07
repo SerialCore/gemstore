@@ -108,7 +108,7 @@ void print_input_parameters(const argsInput_t *input)
             || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
             || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM
             || input->param == PARAM_YUKAWA_CUSTOM || input->param == PARAM_EFTCONT_CUSTOM
-            || input->param == PARAM_QMC_CUSTOM) {
+            || input->param == PARAM_QMCSTAD_CUSTOM || input->param == PARAM_QMCMOD_CUSTOM) {
             printf("  Parameter File:       %-50s\n", input->param_file);
         }
     }
@@ -318,8 +318,10 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Bag Parameters:\n");
         printf("    Bag Constant (B0):      %-44.6e GeV^4\n", args_model.B);
         printf("    Zero Point (Z):          %-46.6f\n", args_model.Z);
-        printf("    g_sigma_B:               %-46.6f\n", args_model.g_sigma_B);
-        printf("    delta:                   %-46.6f\n", args_model.delta);
+        if (input->model == MODEL_QMCMOD) {
+            printf("    g_sigma_B:               %-46.6f\n", args_model.g_sigma_B);
+            printf("    delta:                   %-46.6f\n", args_model.delta);
+        }
         printf("\n");
 
         printf("  Meson Mean Field:\n");

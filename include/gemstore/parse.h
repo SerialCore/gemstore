@@ -22,8 +22,8 @@ void parse_param_NR(const char *filename, argsNRModel_t *args_model);
 /* parse MITBAG parameters */
 void parse_param_BAG(const char *filename, argsBAGModel_t *args_model);
 
-/* parse QMC param file. QMCSTAD and QMCMOD share this schema. */
-void parse_param_QMC(const char *filename, argsQMCModel_t *args_model);
+/* parse QMC param file. g_sigma_B and delta are read only for QMCMOD. */
+void parse_param_QMC(const char *filename, argsQMCModel_t *args_model, model_type_t model);
 
 /* parse OBESTAT param file: lambda, tensor_mass1/2, g_*, f_*.
  * Legs, cc, eta, iso_pi, iso_rho, m1/m2 stay in the system JSON. */

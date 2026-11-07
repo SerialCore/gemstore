@@ -12,8 +12,6 @@
     "g_sigma": 4.40,
     "g_omega": 3.95,
     "g_rho": 0.0,
-    "lambda3": 0.0,
-    "g_sigma_B": 0.0,
-    "delta": 0.0
+    "lambda3": 0.0
   }
 }

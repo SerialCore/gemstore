@@ -3,7 +3,7 @@
   "task": "SPECTRA",
   "model": {
     "type": "QMCMOD",
-    "param": "QMC_CUSTOM",
+    "param": "QMCMOD_CUSTOM",
     "file": "param_mqmc.json"
   },
   "system": {

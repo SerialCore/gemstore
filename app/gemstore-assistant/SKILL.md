@@ -7,7 +7,7 @@ metadata:
   audience: researchers, hadron physicists, computational particle physics
   domain: hadron spectroscopy, quark models, Gaussian expansion method
   tools: bash, file operations, subprocess execution
-  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, GISTRING_BARYON, NRSTRING, NRSCREEN, BAGMIT, BAG, QMCSTAD, QMCMOD, QMC_DEFAULT, QMC_CUSTOM, QMC, quark-meson coupling, rho_b, CMI, NONE, MIT bag, tetraquark, pentaquark, hexaquark, meson spectra, baryon spectra, MOLECUL2, OBESTAT, OBE, Dstar Xi, molecular states, FITTING, fit.target, GISCREEN_CCBAR, charmonium, bottomonium, GEM, SHO, custom parameter file, print section, potential output, wavefunction output
+  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, GISTRING_BARYON, NRSTRING, NRSCREEN, BAGMIT, BAG, QMCSTAD, QMCMOD, QMCSTAD_DEFAULT, QMCSTAD_CUSTOM, QMCMOD_CUSTOM, QMC, quark-meson coupling, rho_b, CMI, NONE, MIT bag, tetraquark, pentaquark, hexaquark, meson spectra, baryon spectra, MOLECUL2, OBESTAT, OBE, Dstar Xi, molecular states, FITTING, fit.target, GISCREEN_CCBAR, charmonium, bottomonium, GEM, SHO, custom parameter file, print section, potential output, wavefunction output
 ---
 
 # Gemstore Hadron Spectra Skill
@@ -65,8 +65,8 @@ Baryon `SPECTRA` accepts `GISTRING` and `GISCREEN` with basis `GEM`. `NRSTRING` 
 - `NRSTRING` — non-relativistic Cornell model, linear confinement
 - `NRSCREEN` — non-relativistic Cornell model, screened confinement
 - `BAGMIT` — MIT bag, for `system.type` `BAG` only
-- `QMCSTAD` — standard quark-meson coupling on `BAG`. \(B\) stays at \(B_0\). Preset `QMC_DEFAULT` or `QMC_CUSTOM`
-- `QMCMOD` — modified QMC on `BAG`. \(B/B_0=(1-4 g_\sigma^B\sigma/(\delta M_N))^\delta\). Preset `QMC_CUSTOM` only
+- `QMCSTAD` — standard quark-meson coupling on `BAG`. \(B\) stays at \(B_0\). Preset `QMCSTAD_DEFAULT` or `QMCSTAD_CUSTOM`
+- `QMCMOD` — modified QMC on `BAG`. \(B/B_0=(1-4 g_\sigma^B\sigma/(\delta M_N))^\delta\). Preset `QMCMOD_CUSTOM` only
 - `OBESTAT` — static elastic one-boson exchange, for `system.type` `MOLECUL2`, or as a nested pair model under `HYBRID`
 - `YUKAWA` — local Yukawa (Malfliet–Tjon), for `MOLECUL2` or as a nested pair model under `HYBRID`. NN/NNN binding. Preset `YUKAWA_MT13` or `YUKAWA_CUSTOM`
 - `EFTCONT` — leading-order EFT contact \(V=-C_a\exp[-(r/R_c)^2]\) (arXiv:2610.28021 Eq. 40), for `MOLECUL2` or a nested `HYBRID` pair. Preset `EFTCONT_CUSTOM`
@@ -90,8 +90,9 @@ Use `model.param` for presets:
 - `NRSCREEN_CUSTOM`
 - `BAGMIT_DEFAULT`
 - `BAGMIT_CUSTOM`
-- `QMC_DEFAULT`
-- `QMC_CUSTOM`
+- `QMCSTAD_DEFAULT`
+- `QMCSTAD_CUSTOM`
+- `QMCMOD_CUSTOM`
 - `OBESTAT_CUSTOM`
 - `YUKAWA_MT13`
 - `YUKAWA_CUSTOM`
@@ -108,7 +109,7 @@ For custom parameter sets, the model object must also include:
 - `sigma` — contact smearing (GeV)
 - `mu` — screening mass (GeV). Required for `NRSCREEN`. `NRSTRING` does not read `mu`; confinement stays linear.
 
-`BAGMIT_CUSTOM` fields are listed in `templates/bag_spectra_template.md`. `QMC_CUSTOM` fields are `mn`, `ms`, `mc`, `mb`, `B`, `Z`, `m_sigma`, `m_omega`, `m_rho`, `g_sigma`, `g_omega`, `g_rho`, `g_sigma_B`, `delta`, inside `param`. `lambda3` is optional and defaults to 0. There is no pair-binding block. `OBESTAT_CUSTOM` fields are listed in `templates/molecule_spectra_template.md` (`lambda`, `tensor_mass1/2`, `g_*`, `f_*`). `YUKAWA_CUSTOM` is `param.terms[]` with `V` (MeV·fm), `mu` (fm⁻¹), `wigner` (default 1), `bartlett` (default 0). `YUKAWA_MT13` is built in and takes no file. `EFTCONT_CUSTOM` is `param.Ca` (MeV) and `param.Rc` (fm), with \(V=-C_a\exp[-(r/R_c)^2]\). The Gaussian norm is already inside \(C_a\). \(C_a<0\) is repulsion. There is no spin operator. Yuan–Liu Table I: `test/Spectra-EFTCONT/`. Legs and physical masses stay in the system JSON. Yukawa ignores `iso_pi` / `iso_rho`; the parser still requires them on `MOLECUL2`. For NN/NNN use nucleon mass `0.938942` GeV so \(\hbar^2/m = 41.47\) MeV·fm². Deuteron: `J=1`, `L=0`. Triton: `J=0.5`, `P=1`, `I=0.5`, `sym12=-1`, `Lmax=0` (s-wave MT-I/III benchmark). Examples: `test/Spectra-Yukawa/nn_yukawa.json`, `test/Spectra-Yukawa/nnn_yukawa.json`.
+`BAGMIT_CUSTOM` fields are listed in `templates/bag_spectra_template.md`. `QMCSTAD_CUSTOM` fields are `mn`, `ms`, `mc`, `mb`, `B`, `Z`, `m_sigma`, `m_omega`, `m_rho`, `g_sigma`, `g_omega`, `g_rho`, inside `param`. `QMCMOD_CUSTOM` adds required `g_sigma_B` and `delta`. `lambda3` is optional and defaults to 0. `QMCSTAD` does not read `g_sigma_B` or `delta`. There is no pair-binding block. `OBESTAT_CUSTOM` fields are listed in `templates/molecule_spectra_template.md` (`lambda`, `tensor_mass1/2`, `g_*`, `f_*`). `YUKAWA_CUSTOM` is `param.terms[]` with `V` (MeV·fm), `mu` (fm⁻¹), `wigner` (default 1), `bartlett` (default 0). `YUKAWA_MT13` is built in and takes no file. `EFTCONT_CUSTOM` is `param.Ca` (MeV) and `param.Rc` (fm), with \(V=-C_a\exp[-(r/R_c)^2]\). The Gaussian norm is already inside \(C_a\). \(C_a<0\) is repulsion. There is no spin operator. Yuan–Liu Table I: `test/Spectra-EFTCONT/`. Legs and physical masses stay in the system JSON. Yukawa ignores `iso_pi` / `iso_rho`; the parser still requires them on `MOLECUL2`. For NN/NNN use nucleon mass `0.938942` GeV so \(\hbar^2/m = 41.47\) MeV·fm². Deuteron: `J=1`, `L=0`. Triton: `J=0.5`, `P=1`, `I=0.5`, `sym12=-1`, `Lmax=0` (s-wave MT-I/III benchmark). Examples: `test/Spectra-Yukawa/nn_yukawa.json`, `test/Spectra-Yukawa/nnn_yukawa.json`.
 
 Examples:
 
@@ -204,12 +205,12 @@ Inside `system` provide `nn`, `ns`, `nc`, `nb`. For `CMI` also provide `f1`–`f
 `model.type` is `QMCSTAD` or `QMCMOD`. `system.type` stays `BAG`. Add required `rho_b` (fm\(^{-3}\)) and `temp` (GeV). Both must be \(\ge 0\). Basis is `NONE` or `CMI`, with the same flavor and color–spin rules as `BAGMIT`. Examples: `test/Spectra-QMC/`.
 
 ```json
-"model": { "type": "QMCSTAD", "param": "QMC_DEFAULT" },
+"model": { "type": "QMCSTAD", "param": "QMCSTAD_DEFAULT" },
 "system": { "type": "BAG", "nn": 3, "ns": 0, "nc": 0, "nb": 0, "rho_b": 0.16, "temp": 0.0 }
 ```
 
-- `QMC_DEFAULT` copies the vacuum MIT masses, \(B=4.42051\times 10^{-4}\) GeV\(^4\), and \(Z=1.83\), with \(m_\sigma=0.550\) GeV, physical \(\omega\) and \(\rho\) masses, and every medium coupling 0. \(\sigma\) stays 0. It is not a saturation fit. Use it only with `QMCSTAD`. `QMCMOD` rejects it because \(\delta=0\) and \(g_\sigma^B=0\)
-- `QMC_CUSTOM` needs `model.file`. `QMCSTAD` keeps \(B=B_0\) and ignores `g_sigma_B`. `QMCMOD` needs `g_sigma_B` \(\neq 0\) and `delta` \(> 0\). A finite \(\sigma\) also needs `mn` \(> 0\) when `g_sigma` \(\neq 0\)
+- `QMCSTAD_DEFAULT` copies the vacuum MIT masses, \(B=4.42051\times 10^{-4}\) GeV\(^4\), and \(Z=1.83\), with \(m_\sigma=0.550\) GeV, physical \(\omega\) and \(\rho\) masses, and every medium coupling 0. \(\sigma\) stays 0. It is not a saturation fit. `QMCMOD` rejects it
+- `QMCSTAD_CUSTOM` needs `model.file` and does not read `g_sigma_B` or `delta`. \(B\) stays at \(B_0\). `QMCMOD_CUSTOM` needs `model.file`, `g_sigma_B` \(\neq 0\), and `delta` \(> 0\). A finite \(\sigma\) also needs `mn` \(> 0\) when `g_sigma` \(\neq 0\)
 - The mean-field source is always a three-light-quark `NONE` bag. The requested `nn,ns,nc,nb` and `CMI` space are evaluated once at the solved \(m_n^*=m_n-g_\sigma\sigma\) and \(B(\sigma)\). \(m_s,m_c,m_b,Z\) stay at their vacuum values. Pair bindings stay 0
 - \(\omega=3 g_\omega\rho_B/m_\omega^2\) does not enter the bag mass. Symmetric matter sets \(\rho_3=0\), so `g_rho` does not shift the spectrum
 - Temperature enters only the nucleon Fermi–Dirac sea. It does not heat the cavity
@@ -217,7 +218,7 @@ Inside `system` provide `nn`, `ns`, `nc`, `nb`. For `CMI` also provide `f1`–`f
 
 `<project>.state.json` has the bag `states` plus root fields `sigma`, `omega`, `B`, `mn_star`, `m_free`, `m_nucleon`, `R_nucleon`, `rho_s`, `mu`, `eps`, `press`, `ebind`. `R` and `R_nucleon` are in GeV\(^{-1}\). `ebind` is \(E/A=\varepsilon/\rho_B-M_N\) in GeV, and is 0 at \(\rho_B=0\). `m_nucleon` is the three-light-quark source, which equals the spectrum mass only for `nnn` with `NONE`. The CLI adds a `QMC MATTER SUMMARY` before the bag table. QMC writes no `.pot.dat` or `.wfn.N.dat`.
 
-At \(0.16\,\mathrm{fm}^{-3}\) and \(T=0\), the shipped samples give \(E/A=+18.9\) MeV (`QMC_DEFAULT`), \(\approx-16.7\) MeV (`param_qmc.json`), and \(\approx-57.8\) MeV (`param_mqmc.json`, \(B/B_0\approx 0.840\)).
+At \(0.16\,\mathrm{fm}^{-3}\) and \(T=0\), the shipped samples give \(E/A=+18.9\) MeV (`QMCSTAD_DEFAULT`), \(\approx-16.7\) MeV (`param_qmc.json`), and \(\approx-57.8\) MeV (`param_mqmc.json`, \(B/B_0\approx 0.840\)).
 
 ### Two-Body Molecule Quantum Numbers
 
@@ -311,7 +312,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 
 - Build a JSON input file.
 - For heavy quarkonia prefer `GISCREEN_CCBAR` or `GISCREEN_BBBAR` when appropriate.
-- Use `GISTRING_CUSTOM`, `GISCREEN_CUSTOM`, `NRSTRING_CUSTOM`, `NRSCREEN_CUSTOM`, `BAGMIT_CUSTOM`, `QMC_CUSTOM`, `OBESTAT_CUSTOM`, or `YUKAWA_CUSTOM` only when the user explicitly has external parameter files. `QMCSTAD` may use `QMC_DEFAULT` with no file. `QMCMOD` uses `QMC_CUSTOM` plus a file. `MOLECUL2` uses `OBESTAT_CUSTOM` plus a file, or `YUKAWA` with `YUKAWA_MT13` / `YUKAWA_CUSTOM`.
+- Use `GISTRING_CUSTOM`, `GISCREEN_CUSTOM`, `NRSTRING_CUSTOM`, `NRSCREEN_CUSTOM`, `BAGMIT_CUSTOM`, `QMCSTAD_CUSTOM`, `QMCMOD_CUSTOM`, `OBESTAT_CUSTOM`, or `YUKAWA_CUSTOM` only when the user explicitly has external parameter files. `QMCSTAD` may use `QMCSTAD_DEFAULT` with no file. `QMCMOD` uses `QMCMOD_CUSTOM` plus a file. `MOLECUL2` uses `OBESTAT_CUSTOM` plus a file, or `YUKAWA` with `YUKAWA_MT13` / `YUKAWA_CUSTOM`.
 - For spectra runs, use a dedicated run directory and keep user files untouched unless they explicitly ask you to edit them. For `MOLECUL2`, put the system JSON and the OBE parameter file in that directory; `model.file` is opened from the process cwd.
 
 ### Execute safely
@@ -333,9 +334,9 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - Confirm parameters before large systematic runs.
 - Use the `"print"` section to control output of potential (`.pot.dat`) and wavefunction (`.wfn.N.dat`) files.
 - Prefer `GEM` unless the user explicitly asks for `SHO`.
-- Use exact parser spellings: `MESON`, `BARYON`, `BAG`, `MOLECUL2`, `GISCREEN`, `GISTRING`, `GISTRING_BARYON`, `NRSTRING`, `NRSCREEN`, `BAGMIT`, `BAGMIT_DEFAULT`, `QMCSTAD`, `QMCMOD`, `QMC_DEFAULT`, `QMC_CUSTOM`, `OBESTAT`, `OBESTAT_CUSTOM`, `CMI`, `NONE`, `NRSTRING_MESON`, `NRSCREEN_MESON`, `GISCREEN_CCBAR`, `DIRAC`, `VECTOR`, `PSEUDOSCALAR`, etc.
+- Use exact parser spellings: `MESON`, `BARYON`, `BAG`, `MOLECUL2`, `GISCREEN`, `GISTRING`, `GISTRING_BARYON`, `NRSTRING`, `NRSCREEN`, `BAGMIT`, `BAGMIT_DEFAULT`, `QMCSTAD`, `QMCMOD`, `QMCSTAD_DEFAULT`, `QMCSTAD_CUSTOM`, `QMCMOD_CUSTOM`, `OBESTAT`, `OBESTAT_CUSTOM`, `CMI`, `NONE`, `NRSTRING_MESON`, `NRSCREEN_MESON`, `GISCREEN_CCBAR`, `DIRAC`, `VECTOR`, `PSEUDOSCALAR`, etc.
 - Baryon spectra stay on `GEM`. Do not emit `SHO` or an NR model for a baryon.
-- Bag spectra use `system` `BAG` and `model` `BAGMIT`, `QMCSTAD`, or `QMCMOD`. List a complete CMI color and spin set for each `st` that should mix. QMC also requires non-negative `rho_b` and `temp`. Do not put `rho_b` or `temp` on `BAGMIT`. Do not pair `QMCMOD` with `QMC_DEFAULT`.
+- Bag spectra use `system` `BAG` and `model` `BAGMIT`, `QMCSTAD`, or `QMCMOD`. List a complete CMI color and spin set for each `st` that should mix. QMC also requires non-negative `rho_b` and `temp`. Do not put `rho_b` or `temp` on `BAGMIT`. Do not pair `QMCMOD` with `QMCSTAD_DEFAULT` or `QMCSTAD_CUSTOM`. Do not put `g_sigma_B` or `delta` in a `QMCSTAD_CUSTOM` file.
 - Two-body molecules use `system` `MOLECUL2`, basis `GEM`, and `OBESTAT` + `OBESTAT_CUSTOM`, `YUKAWA` + `YUKAWA_MT13` / `YUKAWA_CUSTOM`, or `EFTCONT` + `EFTCONT_CUSTOM`. Three-body molecules use `MOLECUL3` + `HYBRID` + three nested pair models (`OBESTAT`, `YUKAWA`, or `EFTCONT`). Write `iso_pi` and `iso_rho` separately. `EFTCONT` ignores those isospin factors; the file is one projected channel.
 - Remember that `model.param` is the parameter-set key for `SPECTRA`.
 - For `*_CUSTOM`, always include `model.file`.
@@ -349,7 +350,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - "Calculate the nnc 1/2+ baryon with GISTRING_BARYON, GEM, nmax = 6"
 - "Fit GISCREEN_CSBAR with GEM, nmax 20, rmax 30, rmin 0.1"
 - "MIT bag mass for nnn with no CMI"
-- "QMC nucleon at 0.16 fm^{-3} and T=0 with QMC_DEFAULT"
+- "QMC nucleon at 0.16 fm^{-3} and T=0 with QMCSTAD_DEFAULT"
 - "Modified QMC nnn with g_sigma_B and delta from param_mqmc.json, basis NONE"
 - "Bag tetraquark ccnn with tetra11 and tetra88, complete spin set in st = 0, 1, 2"
 - "D* Ξ I=0 1/2− molecular GEM with Liu Table II couplings and Λ=1.10 GeV"

@@ -3,7 +3,7 @@
   "task": "SPECTRA",
   "model": {
     "type": "QMCSTAD",
-    "param": "QMC_DEFAULT"
+    "param": "QMCSTAD_DEFAULT"
   },
   "system": {
     "type": "BAG",

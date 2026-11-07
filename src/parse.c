@@ -236,11 +236,18 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
             exit(1);
         }
     }
-    else if (input->model == MODEL_QMCSTAD || input->model == MODEL_QMCMOD) {
-        if (strcmp(param, "QMC_DEFAULT") == 0) input->param = PARAM_QMC_DEFAULT;
-        else if (strcmp(param, "QMC_CUSTOM") == 0) input->param = PARAM_QMC_CUSTOM;
+    else if (input->model == MODEL_QMCSTAD) {
+        if (strcmp(param, "QMCSTAD_DEFAULT") == 0) input->param = PARAM_QMCSTAD_DEFAULT;
+        else if (strcmp(param, "QMCSTAD_CUSTOM") == 0) input->param = PARAM_QMCSTAD_CUSTOM;
         else {
-            fprintf(stderr, "Unknown QMC parameter set: %s\n", param);
+            fprintf(stderr, "Unknown QMCSTAD parameter set: %s\n", param);
+            exit(1);
+        }
+    }
+    else if (input->model == MODEL_QMCMOD) {
+        if (strcmp(param, "QMCMOD_CUSTOM") == 0) input->param = PARAM_QMCMOD_CUSTOM;
+        else {
+            fprintf(stderr, "Unknown QMCMOD parameter set: %s\n", param);
             exit(1);
         }
     }
@@ -269,7 +276,8 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
 
     if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
         || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
-        || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_QMC_CUSTOM 
+        || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_QMCSTAD_CUSTOM
+        || input->param == PARAM_QMCMOD_CUSTOM 
         || input->param == PARAM_OBESTAT_CUSTOM
         || input->param == PARAM_YUKAWA_CUSTOM || input->param == PARAM_EFTCONT_CUSTOM) {
         const char *file = read_string_item(model_json, "file")->valuestring;
@@ -643,7 +651,7 @@ void parse_param_BAG(const char *filename, argsBAGModel_t *args_model)
     free(json_text);
 }
 
-void parse_param_QMC(const char *filename, argsQMCModel_t *args_model)
+void parse_param_QMC(const char *filename, argsQMCModel_t *args_model, model_type_t model)
 {
     char *json_text = read_input_file(filename);
     const char *parse_error = NULL;
@@ -673,8 +681,33 @@ void parse_param_QMC(const char *filename, argsQMCModel_t *args_model)
     args_model->g_omega = read_number_item(param_json, "g_omega")->valuedouble;
     args_model->g_rho = read_number_item(param_json, "g_rho")->valuedouble;
     args_model->lambda3 = read_number_or(param_json, "lambda3", 0.0);
-    args_model->g_sigma_B = read_number_item(param_json, "g_sigma_B")->valuedouble;
-    args_model->delta = read_number_item(param_json, "delta")->valuedouble;
+    if (model == MODEL_QMCMOD) {
+        args_model->g_sigma_B = read_number_item(param_json, "g_sigma_B")->valuedouble;
+        args_model->delta = read_number_item(param_json, "delta")->valuedouble;
+        if (args_model->g_sigma_B == 0.0 || !(args_model->delta > 0.0)) {
+            fprintf(stderr, "QMCMOD needs g_sigma_B != 0 and delta > 0 in %s\n", filename);
+            cJSON_Delete(root);
+            free(json_text);
+            exit(1);
+        }
+    }
+    else if (model == MODEL_QMCSTAD) {
+        if (cJSON_GetObjectItemCaseSensitive(param_json, "g_sigma_B")
+            || cJSON_GetObjectItemCaseSensitive(param_json, "delta")) {
+            fprintf(stderr, "QMCSTAD does not use g_sigma_B or delta in %s\n", filename);
+            cJSON_Delete(root);
+            free(json_text);
+            exit(1);
+        }
+        args_model->g_sigma_B = 0.0;
+        args_model->delta = 0.0;
+    }
+    else {
+        fprintf(stderr, "parse_param_QMC called for %s\n", model_type_str[model]);
+        cJSON_Delete(root);
+        free(json_text);
+        exit(1);
+    }
 
     cJSON_Delete(root);
     free(json_text);

@@ -216,7 +216,7 @@ Run it:
 ```json
 "model": {
   "type": "GISCREEN", "GISTRING", "NRSTRING", "NRSCREEN", "BAGMIT", "QMCSTAD", "QMCMOD", or "OBESTAT",
-  "param": "GISCREEN_CCBAR", "GISTRING_CUSTOM", "BAGMIT_DEFAULT", "QMC_DEFAULT", ...,
+  "param": "GISCREEN_CCBAR", "GISTRING_CUSTOM", "BAGMIT_DEFAULT", "QMCSTAD_DEFAULT", "QMCMOD_CUSTOM", ...,
   "file": "param_file.json"
 }
 ```
@@ -247,8 +247,9 @@ Run it:
 - `NRSCREEN_CUSTOM` - Custom NR-Screen parameters from file (requires `"file"`)
 - `BAGMIT_DEFAULT` - Built-in MIT bag masses, bag constant \(B\), zero-point \(Z\), and pair bindings
 - `BAGMIT_CUSTOM` - Custom bag parameters from file (requires `"file"`)
-- `QMC_DEFAULT` - Vacuum MIT bag plus \(m_\sigma=0.550\) GeV and physical \(\omega,\rho\) masses. All medium couplings are 0. Use with `QMCSTAD` only
-- `QMC_CUSTOM` - QMC couplings from file (requires `"file"`)
+- `QMCSTAD_DEFAULT` - Vacuum MIT bag plus \(m_\sigma=0.550\) GeV and physical \(\omega,\rho\) masses. All medium couplings are 0. `QMCSTAD` only
+- `QMCSTAD_CUSTOM` - Standard QMC couplings from file (requires `"file"`). Does not read `g_sigma_B` or `delta`
+- `QMCMOD_CUSTOM` - Modified QMC couplings from file (requires `"file"`). Requires `g_sigma_B` \(\neq 0\) and `delta` \(> 0\)
 - `OBESTAT_CUSTOM` - Static OBE couplings from file (requires `"file"`)
 - `YUKAWA_MT13` - Built-in Malfliet–Tjon I/III (no file)
 - `YUKAWA_CUSTOM` - Yukawa terms from file (requires `"file"`)
@@ -513,7 +514,7 @@ Custom parameters can be supplied via external JSON file:
 | `epsilon_sos` | Thomas precession strength | 0.0-1.0 |
 | `epsilon_tens` | Tensor force strength | -0.5 to 0.1 |
 
-The GI fields above apply to `GISTRING` and `GISCREEN`. `NRSTRING` and `NRSCREEN` use a different `param` object. `NRSTRING` does not read `mu`. `BAGMIT_CUSTOM` uses the bag table below. `QMC_CUSTOM` uses the QMC table. `OBESTAT_CUSTOM` uses the OBE table.
+The GI fields above apply to `GISTRING` and `GISCREEN`. `NRSTRING` and `NRSCREEN` use a different `param` object. `NRSTRING` does not read `mu`. `BAGMIT_CUSTOM` uses the bag table below. `QMCSTAD_CUSTOM` and `QMCMOD_CUSTOM` use the QMC tables. `OBESTAT_CUSTOM` uses the OBE table.
 
 **NRSTRING / NRSCREEN parameter fields:**
 
@@ -538,18 +539,27 @@ The GI fields above apply to `GISTRING` and `GISCREEN`. `NRSTRING` and `NRSCREEN
 | `Z` | Zero-point coefficient |
 | `Bcs`, `Bbs`, `Bcc`, `Bbc`, `Bbb` | Pair binding strengths (GeV) |
 
-**QMC parameter fields** (`QMC_DEFAULT` in `src/param/argset.c`; `QMC_CUSTOM` via `parse_param_QMC`):
+**QMCSTAD parameter fields** (`QMCSTAD_DEFAULT` in `src/param/argset.c`; `QMCSTAD_CUSTOM` via `parse_param_QMC`):
 
 | Field | Description |
 |-------|-------------|
 | `mn`, `ms`, `mc`, `mb` | Vacuum quark masses (GeV). Default \(m_n=0\), \(m_s=0.279\), \(m_c=1.641\), \(m_b=5.093\) |
-| `B` | Vacuum bag constant \(B_0\) (GeV\(^4\)). Default \(4.42051\times 10^{-4}\) |
+| `B` | Vacuum bag constant \(B_0\) (GeV\(^4\)). Default \(4.42051\times 10^{-4}\). \(B\) stays at \(B_0\) |
 | `Z` | Zero-point coefficient. Default \(1.83\) |
 | `m_sigma`, `m_omega`, `m_rho` | Meson masses (GeV). Defaults \(0.550\), \(0.7825\), \(0.7753\) |
-| `g_sigma`, `g_omega`, `g_rho` | Quark–meson couplings. `QMC_DEFAULT` sets all three to 0 |
+| `g_sigma`, `g_omega`, `g_rho` | Quark–meson couplings. `QMCSTAD_DEFAULT` sets all three to 0 |
 | `lambda3` | Cubic scalar self-coupling. Optional; missing means 0 |
-| `g_sigma_B` | Bag-constant coupling. `QMCSTAD` ignores it and keeps \(B=B_0\). `QMCMOD` needs it nonzero |
-| `delta` | Exponent in \(B(\sigma)\). `QMCMOD` needs \(\delta>0\). `QMC_DEFAULT` is 0, so `QMCMOD` cannot use that preset |
+
+`QMCSTAD` does not read `g_sigma_B` or `delta`. A file that contains either field is rejected.
+
+**QMCMOD parameter fields** (`QMCMOD_CUSTOM` via `parse_param_QMC`). The fields above are required, plus:
+
+| Field | Description |
+|-------|-------------|
+| `g_sigma_B` | Bag-constant coupling. Must be nonzero |
+| `delta` | Exponent in \(B(\sigma)\). Must be \(> 0\) |
+
+There is no `QMCMOD` preset. `QMCMOD` cannot use `QMCSTAD_DEFAULT`.
 
 There is no pair-binding block. The mean-field source and the spectrum bag both set those strengths to 0. `g_rho` is stored. Symmetric matter keeps \(\rho_3=0\), so it does not shift the spectrum. A finite \(\sigma\) needs \(m_n>0\) whenever \(g_\sigma\neq 0\). The couplings in `test/Spectra-QMC/param_qmc.json` (\(m_n=0.40\) GeV, \(g_\sigma=4.40\), \(g_\omega=3.95\)) are a saturation sketch, not a published fit.
 
@@ -679,7 +689,7 @@ E/A = ε/ρ_B − M_N      (0 at ρ_B = 0)
 
 The spectrum then reuses `bag_compute` with \(m_n^*\), \(B(\sigma)\), and the vacuum \(m_s,m_c,m_b,Z\). Quark counts and the `CMI` space come from the input. That mass is not \(M_N+3g_\omega\omega\). For an `nnn` `NONE` bag it coincides with the source mass.
 
-`test/Spectra-QMC/nucleon_qmc.json` is `QMC_DEFAULT` at \(0.16\,\mathrm{fm}^{-3}\) and \(T=0\): \(\sigma=0\) and \(E/A=+18.9\) MeV, the Fermi kinetic energy of the free bag (\(M_N=1.087\) GeV). `nucleon_qmc_custom.json` uses the sketch couplings and gives \(E/A\approx-16.7\) MeV with pressure near zero. `nucleon_mqmc.json` is the same sketch with \(g_\sigma^B=2\), \(\delta=4\): \(B\) falls to \(0.840\,B_0\) and \(E/A\approx-57.8\) MeV. Implementation: `src/model/qmcmodel.c`.
+`test/Spectra-QMC/nucleon_qmc.json` is `QMCSTAD_DEFAULT` at \(0.16\,\mathrm{fm}^{-3}\) and \(T=0\): \(\sigma=0\) and \(E/A=+18.9\) MeV, the Fermi kinetic energy of the free bag (\(M_N=1.087\) GeV). `nucleon_qmc_custom.json` uses the sketch couplings and gives \(E/A\approx-16.7\) MeV with pressure near zero. `nucleon_mqmc.json` is the same sketch with \(g_\sigma^B=2\), \(\delta=4\): \(B\) falls to \(0.840\,B_0\) and \(E/A\approx-57.8\) MeV. Implementation: `src/model/qmcmodel.c`.
 
 ### 5. Static OBE two-body molecules
 
@@ -1004,7 +1014,7 @@ Output `tetra_ccnn_18.state.json` stores `mass`, variational `R`, frequencies `x
 
 ### Example 3b: QMC nucleon in medium
 
-Worked inputs live in `test/Spectra-QMC/`. `nucleon_qmc.json` is `QMCSTAD` with `QMC_DEFAULT`. A custom file is `nucleon_qmc_custom.json` plus `param_qmc.json`. Modified QMC is `nucleon_mqmc.json` (`QMCMOD`, `QMC_CUSTOM`, `param_mqmc.json`). Color–magnetic mixing is `nucleon_qmc_cmi.json`.
+Worked inputs live in `test/Spectra-QMC/`. `nucleon_qmc.json` is `QMCSTAD` with `QMCSTAD_DEFAULT`. A custom file is `nucleon_qmc_custom.json` plus `param_qmc.json` (`QMCSTAD_CUSTOM`). Modified QMC is `nucleon_mqmc.json` (`QMCMOD`, `QMCMOD_CUSTOM`, `param_mqmc.json`). Color–magnetic mixing is `nucleon_qmc_cmi.json`.
 
 ```bash
 cd test/Spectra-QMC
