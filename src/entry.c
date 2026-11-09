@@ -64,8 +64,19 @@ void entry_compute(const char* arg)
             exit(1);
         }
     }
+    else if (input.task == TASK_SCATTER) {
+        if (input.system != SYSTEM_MOLECUL2) {
+            fprintf(stderr, "SCATTER supports MOLECUL2 only.\n");
+            exit(1);
+        }
+        compute_scatter(&input);
+    }
     else if (input.task == TASK_FITTING) {
         fitting_run(&input);
+    }
+    else {
+        fprintf(stderr, "Unknown task.\n");
+        exit(1);
     }
 }
 

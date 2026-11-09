@@ -10,7 +10,8 @@
 /* used for dispatching task */
 typedef enum task_type {
     TASK_SPECTRA,
-    TASK_FITTING
+    TASK_FITTING,
+    TASK_SCATTER
 } task_type_t;
 
 extern const char *task_type_str[];

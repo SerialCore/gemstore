@@ -86,7 +86,6 @@ void print_input_parameters(const argsInput_t *input)
     printf("Configuration Settings:\n");
     printf("  Project Name:         %-50s\n", input->project);
     printf("  Task Type:            %-50s\n", task_type_str[input->task]);
-    printf("  Basis Type:           %-50s\n", basis_type_str[input->basis]);
     if (input->task == TASK_FITTING) {
         printf("  Fit Target:           %-50s\n", fitting_type_str[input->target]);
     }
@@ -115,32 +114,34 @@ void print_input_parameters(const argsInput_t *input)
     }
     printf("\n");
 
-    /* Basis Parameters */
-    printf("Basis Parameters:\n");
-    if (input->basis == BASIS_GEM) {
-        printf("  Number of Gaussians (nmax): %-46d\n", input->nmax);
-        printf("  Minimum Range (rmin):       %-46.6f fm\n", input->rmin);
-        printf("  Maximum Range (rmax):       %-46.6f fm\n", input->rmax);
-    }
-    if (input->basis == BASIS_SHO) {
-        printf("  Number of Oscillators (nmax): %-44d\n", input->nmax);
-        printf("  Harmonic Scale (beta):        %-44.6f GeV\n", input->beta);
-    }
-    if (input->basis == BASIS_NONE) {
-        printf("  No color-magnetic basis\n");
-    }
-    if (input->basis == BASIS_CMI) {
-        printf("  Color channels:");
-        for (int i = 0; i < input->ncolor; i++) printf(" %s", cmicolor_type_str[input->color_id[i]]);
-        printf("\n");
-        printf("  Spin channels: %d\n", input->nspin);
-        for (int i = 0; i < input->nspin; i++) {
-            const cmi_spin_t *ch = &input->spin_ch[i];
-            printf("    %d  s12=%.1f s34=%.1f s123=%.1f s45=%.1f s456=%.1f st=%.1f st3=%.1f\n",
-                i + 1, ch->s12, ch->s34, ch->s123, ch->s45, ch->s456, ch->st, ch->st3);
+    if (input->task != TASK_SCATTER) {
+        printf("Basis Parameters:\n");
+        printf("  Basis Type:           %-50s\n", basis_type_str[input->basis]);
+        if (input->basis == BASIS_GEM) {
+            printf("  Number of Gaussians (nmax): %-46d\n", input->nmax);
+            printf("  Minimum Range (rmin):       %-46.6f fm\n", input->rmin);
+            printf("  Maximum Range (rmax):       %-46.6f fm\n", input->rmax);
         }
+        if (input->basis == BASIS_SHO) {
+            printf("  Number of Oscillators (nmax): %-44d\n", input->nmax);
+            printf("  Harmonic Scale (beta):        %-44.6f GeV\n", input->beta);
+        }
+        if (input->basis == BASIS_NONE) {
+            printf("  No color-magnetic basis\n");
+        }
+        if (input->basis == BASIS_CMI) {
+            printf("  Color channels:");
+            for (int i = 0; i < input->ncolor; i++) printf(" %s", cmicolor_type_str[input->color_id[i]]);
+            printf("\n");
+            printf("  Spin channels: %d\n", input->nspin);
+            for (int i = 0; i < input->nspin; i++) {
+                const cmi_spin_t *ch = &input->spin_ch[i];
+                printf("    %d  s12=%.1f s34=%.1f s123=%.1f s45=%.1f s456=%.1f st=%.1f st3=%.1f\n",
+                    i + 1, ch->s12, ch->s34, ch->s123, ch->s45, ch->s456, ch->st, ch->st3);
+            }
+        }
+        printf("\n");
     }
-    printf("\n");
 
     if (input->task == TASK_FITTING) {
         printf("Fitting task running ...\n");
@@ -719,5 +720,19 @@ void print_bag_spectra(const bag_mit_t *state, int nstate, const char *order)
     printf("\n");
     printf("  Number of states:    %d\n", nstate);
     printf("  Mass range:          %.6f - %.6f GeV\n", min_mass, max_mass);
+    printf("\n");
+}
+
+void print_scatter(double mu_gev, double a0_fm, double r0_fm)
+{
+    printf("\n");
+    printf("================================================================================\n");
+    printf("                          SCATTERING LENGTH SUMMARY                            \n");
+    printf("================================================================================\n");
+    printf("\n");
+    printf("  Reduced mass:        %.6f GeV\n", mu_gev);
+    printf("  Scattering length:   %.6f fm\n", a0_fm);
+    printf("  Effective range:     %.6f fm\n", r0_fm);
+    printf("  Convention:          k cot delta = 1/a0 + r0 k^2 / 2\n");
     printf("\n");
 }

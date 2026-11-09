@@ -195,7 +195,7 @@ V(r)=-C_a\exp\bigl[-(r/R_c)^2\bigr].
 }
 ```
 
-Yuan–Liu Table I central values are `test/Spectra-EFT/`: \(DD\) uses \(C_a=-14.652\) MeV, \(R_c=1.0\) fm and \(m=1.86725\) GeV (\(\mu=933.625\) MeV); \(\Lambda_c\Lambda_c\) uses \(C_a=-201.259\) MeV, \(R_c=0.4\) fm and the lattice mass \(m=2.413\) GeV (\(\mu=1206.5\) MeV). Both contacts are repulsive. This driver is a GEM spectrum, not the scattering-length fit.
+Yuan–Liu Table I central values are `test/Spectra-EFT/`: \(DD\) uses \(C_a=-14.652\) MeV, \(R_c=1.0\) fm and \(m=1.86725\) GeV (\(\mu=933.625\) MeV); \(\Lambda_c\Lambda_c\) uses \(C_a=-201.259\) MeV, \(R_c=0.4\) fm and the lattice mass \(m=2.413\) GeV (\(\mu=1206.5\) MeV). Both contacts are repulsive. This driver is a GEM spectrum. The scattering length is `task` `SCATTER`, in `test/ScatterTask/`.
 
 ## HAL QCD (`HALQCD`)
 
@@ -228,4 +228,10 @@ One unlabelled channel is the two-body file, and a three-body pair that has only
 }
 ```
 
-Samples in `test/Spectra-HALQCD/` check the table against the Yuan–Liu \(DD\) Gaussian and the \(^1S_0\) combination. They are not Miyamoto lattice potentials, and this driver does not compute a scattering length.
+Samples in `test/Spectra-HALQCD/` check the table against the Yuan–Liu \(DD\) Gaussian and the \(^1S_0\) combination. They are not Miyamoto lattice potentials. The scattering length is `task` `SCATTER`, not this GEM driver.
+
+## Scattering length (`SCATTER`)
+
+`task` is `SCATTER`. Write `project`, `model`, and `system` only. Do not write `basis` or `print`. `system.type` is `MOLECUL2`. `model.type` is `OBESTAT`, `YUKAWA`, `EFTCONT`, or `HALQCD`, with the same parameter keys as a spectrum. `L` is 0. `S` and `J` select the partial wave. The program integrates its own S-wave radial equation from the potential and the reduced mass. It does not read a GEM eigenvector. If the spectrum channel list also contains \(L=2\), this task keeps the diagonal \(\ell=0\) potential and does not solve the coupled equation. Coulomb is absent.
+
+The result file `<project>.scatter.json` holds `mu` in GeV, `a0` in fm, and `r0` in fm. It does not record the model, the system, or the channel. The convention is \(k\cot\delta_0=1/a_0+\frac12 r_0 k^2\). \(a_0>0\) is attraction. Examples: `test/ScatterTask/dd_scatter.json`, `test/ScatterTask/lclc_scatter.json`. \(DD\) gives \(a_0=-0.250006\) fm. \(\Lambda_c\Lambda_c\) gives \(a_0=-0.210000\) fm.

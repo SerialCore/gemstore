@@ -1004,3 +1004,35 @@ int write_mol3_pot(const argsInput_t *input)
 
     return 1;
 }
+
+int write_scatter(const argsInput_t *input, double mu_gev, double a0_fm, double r0_fm)
+{
+    char path[512];
+    FILE *pf;
+    int nw;
+
+    if (input == NULL) {
+        fprintf(stderr, "Error: write_scatter needs a project.\n");
+        return 0;
+    }
+    nw = snprintf(path, sizeof path, "%s.scatter.json", input->project);
+    if (nw < 0 || nw >= (int)sizeof path) {
+        fprintf(stderr, "Error: scatter output path is too long.\n");
+        return 0;
+    }
+    pf = fopen(path, "w");
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+    fprintf(pf, "{\n");
+    fprintf(pf, "  \"mu\": %.16g,\n", mu_gev);
+    fprintf(pf, "  \"a0\": %.16g,\n", a0_fm);
+    fprintf(pf, "  \"r0\": %.16g\n", r0_fm);
+    fprintf(pf, "}\n");
+    if (fclose(pf) != 0) {
+        fprintf(stderr, "Error: Failed to close file %s\n", path);
+        return 0;
+    }
+    return 1;
+}

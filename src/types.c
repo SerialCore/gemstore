@@ -8,7 +8,8 @@
 
 const char *task_type_str[] = {
     [TASK_SPECTRA] = "SPECTRA",
-    [TASK_FITTING] = "FITTING"
+    [TASK_FITTING] = "FITTING",
+    [TASK_SCATTER] = "SCATTER"
 };
 
 const char *model_type_str[] = {

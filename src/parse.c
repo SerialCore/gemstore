@@ -132,6 +132,7 @@ static void parse_task_section(const cJSON *root, argsInput_t *input)
 
     if (strcmp(task, "SPECTRA") == 0) input->task = TASK_SPECTRA;
     else if (strcmp(task, "FITTING") == 0) input->task = TASK_FITTING;
+    else if (strcmp(task, "SCATTER") == 0) input->task = TASK_SCATTER;
     else {
         fprintf(stderr, "Unknown task: %s\n", task);
         exit(1);
@@ -548,11 +549,16 @@ void parse_input_file(const char *filename, argsInput_t *input)
     input->project[255] = '\0';
 
     parse_task_section(root, input);
-    parse_basis_section(root, input);
     if (input->task == TASK_FITTING) {
+        parse_basis_section(root, input);
         parse_fit_section(root, input);
     }
+    else if (input->task == TASK_SCATTER) {
+        parse_model_section(root, input);
+        parse_system_section(root, input);
+    }
     else {
+        parse_basis_section(root, input);
         parse_model_section(root, input);
         parse_system_section(root, input);
         parse_print_section(root, input);

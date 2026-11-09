@@ -7,7 +7,7 @@ metadata:
   audience: researchers, hadron physicists, computational particle physics
   domain: hadron spectroscopy, quark models, Gaussian expansion method
   tools: bash, file operations, subprocess execution
-  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, GISTRING_BARYON, NRSTRING, NRSCREEN, BAGMIT, BAG, QMCSTAD, QMCMOD, QMCSTAD_DEFAULT, QMCSTAD_CUSTOM, QMCMOD_CUSTOM, QMC, quark-meson coupling, rho_b, CMI, NONE, MIT bag, tetraquark, pentaquark, hexaquark, meson spectra, baryon spectra, MOLECUL2, OBESTAT, OBE, HALQCD, HALQCD_CUSTOM, Dstar Xi, molecular states, FITTING, fit.target, GISCREEN_CCBAR, charmonium, bottomonium, GEM, SHO, custom parameter file, print section, potential output, wavefunction output
+  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, GISTRING_BARYON, NRSTRING, NRSCREEN, BAGMIT, BAG, QMCSTAD, QMCMOD, QMCSTAD_DEFAULT, QMCSTAD_CUSTOM, QMCMOD_CUSTOM, QMC, quark-meson coupling, rho_b, CMI, NONE, MIT bag, tetraquark, pentaquark, hexaquark, meson spectra, baryon spectra, MOLECUL2, OBESTAT, OBE, HALQCD, HALQCD_CUSTOM, Dstar Xi, molecular states, FITTING, fit.target, SCATTER, scattering length, effective range, GISCREEN_CCBAR, charmonium, bottomonium, GEM, SHO, custom parameter file, print section, potential output, wavefunction output
 ---
 
 # Gemstore Hadron Spectra Skill
@@ -22,9 +22,10 @@ The parser expects:
 
 - top-level `project`
 - top-level `task`
-- object `basis`
+- object `basis` for `SPECTRA` and `FITTING`
 - for `SPECTRA`: object `model`, object `system`, object `print`
 - for `FITTING`: object `fit` (`target` only). Do not write `model`, `system`, or `print`.
+- for `SCATTER`: object `model` and object `system`. Do not write `basis` or `print`.
 
 Use exact uppercase strings where shown below.
 
@@ -34,6 +35,7 @@ Use exact uppercase strings where shown below.
 
 - `SPECTRA`
 - `FITTING`
+- `SCATTER`
 
 ### Fitting
 
@@ -47,6 +49,12 @@ For `task` `FITTING`:
 - Do not write `print`
 
 The state list and the parameter starts live in `src/param/f*.c`. Do not put experimental masses or starting values in the JSON. Each evaluation prints `call N  chi2 = ...`. Read `<project>.fit.json` for `chi2`, `valid`, `edm`, parameters, and per-state `mass_calc`, `mass_exp`, and `residual`. Masses there are in MeV.
+
+### Scattering length
+
+`task` is `SCATTER`. Write `project`, `model`, and `system` only. `system.type` is `MOLECUL2`. `model.type` is `OBESTAT`, `YUKAWA`, `EFTCONT`, or `HALQCD`, with the same parameter keys as a two-body spectrum. Do not write `basis` or `print`. `L` is 0. `S` and `J` select the partial wave. The program builds the S-wave radial function from the potential and the reduced mass. It does not use a GEM eigenvector. If that \(J\) also couples \(L=2\), the task keeps the diagonal \(\ell=0\) potential and does not solve the coupled equation. Coulomb is absent.
+
+`<project>.scatter.json` holds `mu` in GeV, `a0` in fm, and `r0` in fm. It does not record the model, the system, or the channel. The convention is \(k\cot\delta_0=1/a_0+\frac12 r_0 k^2\). \(a_0>0\) is attraction. Examples: `test/ScatterTask/dd_scatter.json` (\(a_0=-0.250006\) fm) and `test/ScatterTask/lclc_scatter.json` (\(a_0=-0.210000\) fm). A GEM mass is not a scattering length. The terminal summary prints the reduced mass, scattering length, and effective range.
 
 ### Systems
 
@@ -233,7 +241,7 @@ Inside `system` provide `type1`, `type2`, `m1`, `m2`, `iso_pi`, `iso_rho`, `S`, 
 - `eta`: MM C-parity; `0` is read as `+1`; unused for meson–baryon
 - `L` is the lowest partial wave. The solver adds \(L+2\) and every total spin that couples to \(J\). JSON `S` does not pick the channel list (\(J=1/2\) → \(^2S+^4D\); \(J=3/2\) → \(^4S+^2D+^4D\))
 
-The Hamiltonian is static LO OBE: \(H=T+V_C+V_{ss}+V_t\), \(V_{ls}=0\). CLI `Ebind = Mass − (m1+m2)`. Treat a state as bound only if `Ebind < 0` and RMS is clearly smaller than `rmax`. Near-threshold RMS \(\approx\) `rmax` is a box state. Do not report Liu scattering lengths; this path is a bound GEM spectrum.
+The Hamiltonian is static LO OBE: \(H=T+V_C+V_{ss}+V_t\), \(V_{ls}=0\). CLI `Ebind = Mass − (m1+m2)`. Treat a state as bound only if `Ebind < 0` and RMS is clearly smaller than `rmax`. Near-threshold RMS \(\approx\) `rmax` is a box state. Do not report a GEM mass as a scattering length. Scattering length is `task` `SCATTER` and is read from `<project>.scatter.json`.
 
 `"print":{"pot":"true"}` writes `<project>.pot.dat` as `r  Vc  Vss  Vt  V`. For `HALQCD` the columns are `r`, `V0`, `Vsig`, `VT`, and `V1S0=V0-3 Vsig`, in GeV. `"print":{"wfn":"true"}` writes per-channel radial functions from 0.01 fm to \(\max(10, r_{\max})\) fm.
 
@@ -255,7 +263,7 @@ Inside `system` provide `type1`–`type3`, `m1`–`m3`, `J`, `P`, `I`, `Lmax`, `
 gemstore [--compute FILE] [--debug UNIT]
 ```
 
-Use `--compute <file.json>` for spectroscopy and for `FITTING`.
+Use `--compute <file.json>` for spectroscopy, `FITTING`, and `SCATTER`.
 
 ## Input Generation Rules
 
@@ -305,6 +313,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 
 - Identify meson, baryon, bag, QMC-in-medium bag, or two-body molecule, and the flavor or hadron content.
 - If the user asks to fit, set `task` to `FITTING` and choose `fit.target` from the six `GISCREEN_*` names. Write `project`, `task`, `basis`, and `fit` only. Do not ask the user for a mass table.
+- If the user asks for a scattering length or effective range, set `task` to `SCATTER`. Write `project`, `model`, and `system` only. Do not write `basis` or `print`.
 - For a meson spectrum extract `S`, `L`, `J`. For a baryon extract `J`, `P`, `sym12`, `Lmax`, and `jl` if the user fixes it. For a bag extract `nn,ns,nc,nb`, `NONE` versus `CMI`, and the full color and spin lists when mixing. For QMC also extract `QMCSTAD` versus `QMCMOD`, `rho_b`, and `temp`. For a molecule extract the two legs, physical masses, `iso_pi` and `iso_rho`, `J`, and lowest `L`.
 - Detect task type.
 - Detect requested model. For a fit, take the model from `fit.target`.
@@ -325,7 +334,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 
 ### Post-process and present results
 
-- For `SPECTRA`, read `<project>.state.json`. For `FITTING`, read `<project>.fit.json` and report `chi2`, `valid`, `edm`, and the floated parameters.
+- For `SPECTRA`, read `<project>.state.json`. For `FITTING`, read `<project>.fit.json` and report `chi2`, `valid`, `edm`, and the floated parameters. For `SCATTER`, read `mu`, `a0`, and `r0` from `<project>.scatter.json`. The terminal summary repeats those three numbers.
 - Check for new text outputs: `<project>.pot.dat` (potential) and `<project>.wfn.N.dat` (wavefunctions per state) when `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set.
 - Summarize masses, RMS radii, and (if requested) potential/wavefunction file locations. For bag, report `st`, mass, \(R\), and the leading color–spin components. For QMC, also report \(\sigma\), \(\omega\), \(B\), \(m_n^*\), \(M_N\), and \(E/A\) (`ebind`). For molecules, report `Mass`, `Ebind = Mass − (m1+m2)`, RMS, and the printed channel list (`2S 4D`, …).
 - Report eigenvectors when relevant.
@@ -343,6 +352,7 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - Remember that `model.param` is the parameter-set key for `SPECTRA`.
 - For `*_CUSTOM`, always include `model.file`.
 - For `FITTING`, `fit.target` is the dataset key. Do not write `model`, `system`, or `print`.
+- For `SCATTER`, do not write `basis` or `print`. The system is `MOLECUL2` and `L` is 0. Report `mu`, `a0`, and `r0` from `<project>.scatter.json`. Do not take them from a GEM mass.
 
 ## Example Requests
 
@@ -356,5 +366,6 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 - "Modified QMC nnn with g_sigma_B and delta from param_mqmc.json, basis NONE"
 - "Bag tetraquark ccnn with tetra11 and tetra88, complete spin set in st = 0, 1, 2"
 - "D* Ξ I=0 1/2− molecular GEM with Liu Table II couplings and Λ=1.10 GeV"
+- "Scattering length of the Yuan–Liu DD contact, no GEM basis"
 
 When this skill is triggered, generate the exact JSON input, run `gemstore --compute <file>`, and report the resulting physics output cleanly, mentioning any generated `.pot.dat` or `.wfn.N.dat` files.

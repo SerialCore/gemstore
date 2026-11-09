@@ -210,7 +210,7 @@ Run it:
 | Field | Type | Description | Examples |
 |-------|------|-------------|----------|
 | `project` | string | Project name (used for output files) | `"amethyst"`, `"myproject"` |
-| `task` | string | Calculation type | `"SPECTRA"`, `"FITTING"` |
+| `task` | string | Calculation type | `"SPECTRA"`, `"FITTING"`, `"SCATTER"` |
 
 #### Model Configuration
 
@@ -743,7 +743,7 @@ V(r) = V0(r) + Vsig(r) (σ1·σ2) + VT(r) S12
 
 The two-body driver uses the same central, spin–spin, and tensor matrix elements as static OBE. Two Dirac legs put \(\langle\sigma_1\cdot\sigma_2\rangle\) and the Pauli \(S_{12}\) on those operators. \(^1S_0\) therefore sees \(V_0-3V_\sigma\). \(S_{12}\) mixes \(L\) with \(L+2\). There is no \(\mathbf{L}\cdot\mathbf{S}\) term and no coupled-channel potential matrix. Each table is already one isospin projection. A two-body file has one channel, written as `param.V0`, `param.Vsig`, and `param.VT`. A three-body file may instead key those objects by the pair isospin, `"0"`, `"1"`, `"0.5"`, `"1.5"`. Each recoupled \(t_{ij}\) loads its own block. An unlabelled file is accepted only when that pair has one \(t_{ij}\). A missing block stops the run. `iso_pi` and `iso_rho` are parsed and ignored.
 
-`.pot.dat` columns are `r`, `V0`, `Vsig`, `VT`, and `V1S0=V0-3 Vsig`, in GeV. Samples in `test/Spectra-HALQCD/` are software checks. The \(V_0\) table is the repulsive Yuan–Liu \(DD\) Gaussian written as a table, not a lattice HAL QCD potential. Scattering length and effective range are not computed on this path.
+`.pot.dat` columns are `r`, `V0`, `Vsig`, `VT`, and `V1S0=V0-3 Vsig`, in GeV. Samples in `test/Spectra-HALQCD/` are software checks. The \(V_0\) table is the repulsive Yuan–Liu \(DD\) Gaussian written as a table, not a lattice HAL QCD potential. Scattering length is a separate `SCATTER` task, not a GEM eigenvalue.
 
 **Implementation**: `src/model/halmodel.c`, `src/model/cmol2.c`, `src/model/cmol3.c`
 
@@ -769,6 +769,22 @@ A fit is a `--compute` run with `"task": "FITTING"`. `fit.target` is a pinned en
 Masses in the tables are in MeV. Minuit2 MIGRAD minimizes χ². Each evaluation prints `call N  chi2 = ...`. The minimum is written to `<project>.fit.json`.
 
 **Implementation**: `src/param/fitting.c`, `src/param/minuit.cc`, `src/param/f*.c`
+
+### 8. Scattering length
+
+`"task": "SCATTER"` computes the two-body S-wave scattering length and effective range. The input has `project`, `task`, `model`, and `system`. It does not read `basis` or `print`. The system is `MOLECUL2`. The model is `OBESTAT`, `YUKAWA`, `EFTCONT`, or `HALQCD`. Masses `m1` and `m2` fix the reduced mass. `L` is 0. `S` and `J` select one partial wave.
+
+The radial wave is built by Numerov from that potential, on \(r=0\) to 80 fm with step 0.01 fm and \(\hbar c=197.3\,\mathrm{MeV\cdot fm}\). It is not the GEM molecular wave function. The fit is
+
+\[
+k\cot\delta_0=\frac{1}{a_0}+\frac12 r_0 k^2
+\]
+
+over \(k=0.05\) to \(0.50\,\mathrm{MeV}\). \(a_0>0\) is attraction. A channel list that also contains \(L=2\) still uses only the diagonal \(\ell=0\) potential. Coulomb is not included. The result file `<project>.scatter.json` holds `mu` in GeV, `a0` in fm, and `r0` in fm.
+
+Yuan–Liu Table I, run from `test/ScatterTask/`: \(DD\) gives \(a_0=-0.250006\,\mathrm{fm}\) and \(r_0=-2.531\,\mathrm{fm}\); \(\Lambda_c\Lambda_c\) gives \(a_0=-0.210000\,\mathrm{fm}\) and \(r_0=-0.170\,\mathrm{fm}\).
+
+**Implementation**: `src/model/cscatter.c`, `src/model/eremodel.c`, `src/model/compute.c`
 
 ---
 

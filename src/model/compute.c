@@ -14,6 +14,8 @@
 #include <gemstore/model/ykwmodel.h>
 #include <gemstore/model/eftmodel.h>
 #include <gemstore/model/halmodel.h>
+#include <gemstore/model/obemodel.h>
+#include <gemstore/model/cscatter.h>
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/math/interplt.h>
@@ -27,6 +29,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <string.h>
 
 void compute_spectra_bag(const argsInput_t *input)
 {
@@ -310,4 +314,15 @@ void compute_spectra_mol3(const argsInput_t *input)
     array_free(&rms23);
     matrix_free(&eigenvector);
     matrix_free(&overlap);
+}
+
+void compute_scatter(const argsInput_t *input)
+{
+    double mu;
+    double a0;
+    double r0;
+
+    cscatter(input, &mu, &a0, &r0);
+    print_scatter(mu, a0, r0);
+    write_scatter(input, mu, a0, r0);
 }

@@ -1,6 +1,7 @@
 /gemstore
 !gemstore/
 .vscode/
+.clangd
 
 *.o
 *.a

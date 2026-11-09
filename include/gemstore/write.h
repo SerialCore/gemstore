@@ -57,4 +57,7 @@ int write_mol2_hal_pot(const argsInput_t *input, const argsHALModel_t *args_mode
 /* Write three pair OBE curves into {project}.pot.dat. */
 int write_mol3_pot(const argsInput_t *input);
 
+/* Write {project}.scatter.json with mu (GeV), a0 (fm), and r0 (fm). */
+int write_scatter(const argsInput_t *input, double mu_gev, double a0_fm, double r0_fm);
+
 #endif
