@@ -1,0 +1,26 @@
+{
+  "project": "charmonium_1P1",
+  "task": "SPECTRA",
+  "system": {
+    "type": "MESON",
+    "f1": 3,
+    "f2": 3,
+    "S": 0,
+    "L": 1,
+    "J": 1
+  },
+  "model": {
+    "type": "GISCREEN",
+    "param": "GISCREEN_CCBAR"
+  },
+  "basis": {
+    "type": "GEM",
+    "nmax": 20,
+    "rmax": 30.0,
+    "rmin": 0.1
+  },
+  "print": {
+    "pot": "false",
+    "wfn": "false"
+  }
+}
