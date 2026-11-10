@@ -452,7 +452,7 @@ static void mol3_basis_build(const argsInput_t *input, bases_3b *spfy, bases_3b 
         printf("Molecule3 GEM basis: distinguishable  independent c=1,2,3, P_int=%d, lρ+lλ≤%d\n",
             Pint, Lmax);
     }
-    printf("  total I=%.1f  t=(%.1f,%.1f,%.1f); pair tij recoupled, pair iso_pi ignored\n",
+    printf("  total I=%.1f  t=(%.1f,%.1f,%.1f); pair tij recoupled, OBE ⟨τ·τ⟩ from I\n",
         totI, t1, t2, t3);
     if (any_ident) {
         printf("  identical ρ-pair (−1)^{lρ+(2s−sij)+(2t−tij)}=%s\n",
@@ -653,8 +653,7 @@ static void mol3_load_pairs(const argsInput_t *input, mol3_vargs_t *varg)
             }
             else {
                 varg->obe_m[p][k] = argsOBEModel_from(input, p);
-                varg->obe_m[p][k].iso_pi = iso;
-                varg->obe_m[p][k].iso_rho = iso;
+                varg->obe_m[p][k].iso = iso;
                 varg->obe_d[p][k].mi = mi;
                 varg->obe_d[p][k].mj = mj;
                 varg->obe_d[p][k].OCent = 1.0;

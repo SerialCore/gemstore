@@ -25,8 +25,9 @@ void parse_param_BAG(const char *filename, argsBAGModel_t *args_model);
 /* parse QMC param file. g_sigma_B and delta are read only for QMCMOD. */
 void parse_param_QMC(const char *filename, argsQMCModel_t *args_model, model_type_t model);
 
-/* parse OBESTAT param file: lambda, tensor_mass1/2, g_*, f_*.
- * Legs, cc, eta, iso_pi, iso_rho, m1/m2 stay in the system JSON. */
+/* parse OBESTAT param file: lambda, tensor_mass1/2, g_*, f_*,
+ * and required cc1, cc2, eta. Legs, masses, and I stay in the system JSON.
+ * Pair ⟨τ·τ⟩ is set from I (two-body t=1/2, or three-body recoupling). */
 void parse_param_OBESTAT(const char *filename, argsOBEModel_t *args_model);
 
 /* parse YUKAWA param file: param.terms[] of V (MeV·fm), mu (fm^{-1}), wigner, bartlett. */

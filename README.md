@@ -326,15 +326,11 @@ Run it:
   "type2": "DIRAC",
   "m1": 2.010,
   "m2": 1.318,
-  "cc1": 0, "cc2": 0,
-  "eta": 0,
-  "iso_pi": -3,
-  "iso_rho": -3,
   "S": 0.5, "L": 0, "J": 0.5
 }
 ```
 
-`type1`/`type2` are `DIRAC` (baryon 1/2), `VECTOR` (1− meson), or `PSEUDOSCALAR` (elastic 0−/0+). `m1`,`m2` are physical masses (GeV) for \(T=m_1+m_2+p^2/2\mu\) and the threshold. Write `iso_pi` and `iso_rho` separately (\(I=0\to-3\), \(I=1\to+1\) for two \(I=1/2\) legs); there is no unified `iso` key. `cc` nonzero on a meson leg flips \(G=-1\) exchanges (\(\pi,\omega\)). `eta` is MM C-parity (`0` is read as `+1`). `L` is the lowest partial wave; the solver mixes \(L\) with \(L+2\) and every total spin that couples to \(J\) (e.g. \(J=1/2\) → \(^2S+^4D\)). JSON `S` does not select the channel list. Example: `test/Spectra-Molecule2/`. Field list: `app/gemstore-assistant/templates/molecule_spectra_template.md`.
+`type1`/`type2` are `DIRAC` (baryon 1/2), `VECTOR` (1− meson), or `PSEUDOSCALAR` (elastic 0−/0+). `m1`,`m2` are physical masses (GeV) for \(T=m_1+m_2+p^2/2\mu\) and the threshold. `cc1`, `cc2`, and `eta` are required in the OBESTAT parameter file, including zeros. Two \(I=1/2\) legs write system `I`; \(\langle\tau_1\cdot\tau_2\rangle\) is \(I=0\to-3\), \(I=1\to+1\). `cc` nonzero on a meson leg flips \(G=-1\) exchanges (\(\pi,\omega\)). `eta` is MM C-parity (`0` is read as `+1`). `L` is the lowest partial wave; the solver mixes \(L\) with \(L+2\) and every total spin that couples to \(J\) (e.g. \(J=1/2\) → \(^2S+^4D\)). JSON `S` does not select the channel list. Example: `test/Spectra-Molecule2/`. Field list: `app/gemstore-assistant/templates/molecule_spectra_template.md`.
 
 #### Basis Configuration
 
@@ -566,7 +562,7 @@ There is no `QMCMOD` preset. `QMCMOD` cannot use `QMCSTAD_DEFAULT`.
 
 There is no pair-binding block. The mean-field source and the spectrum bag both set those strengths to 0. `g_rho` is stored. Symmetric matter keeps \(\rho_3=0\), so it does not shift the spectrum. A finite \(\sigma\) needs \(m_n>0\) whenever \(g_\sigma\neq 0\). The couplings in `test/Spectra-QMC/param_qmc.json` (\(m_n=0.40\) GeV, \(g_\sigma=4.40\), \(g_\omega=3.95\)) are a saturation sketch, not a published fit.
 
-**OBESTAT parameter fields** (couplings of this pair; legs and isospin stay in the system JSON):
+**OBESTAT parameter fields** (couplings of this pair, plus `cc1`, `cc2`, `eta`; legs, masses, and `I` stay in the system JSON):
 
 | Field | Description |
 |-------|-------------|
@@ -715,7 +711,7 @@ Legs are typed (`DIRAC`, `VECTOR`, `PSEUDOSCALAR`), not named as a hadron system
 v(r) = (V / r) exp(-μ r) (W + B P_σ),   P_σ = (1 + σ1·σ2) / 2
 ```
 
-with `V` in MeV·fm and `μ` in fm⁻¹. `YUKAWA_MT13` is Malfliet–Tjon I/III. Nucleon masses in the sample inputs are 0.938942 GeV so that \(\hbar^2/m_N = 41.47\) MeV·fm². Samples live in `test/Spectra-Yukawa/`. The deuteron (`nmax` 20) gives −2.231 MeV. The triton keeps the local potential in every partial wave. With \(r_{\min}=0.1\) fm and \(r_{\max}=10\) fm, the ground state goes from −5.29 MeV at `nmax` 4 to −8.67 MeV at `nmax` 7 and levels off at −8.88 MeV by `nmax` 10 (the s-wave Faddeev benchmark is −8.54 MeV). `iso_pi` / `iso_rho` are ignored. Two-body entry point is `mol2_yukawa_GEM`; three-body pairs are selected inside `mol3_load_pairs`. Identical Dirac fermions (`sym12` −1) use the sum of Jacobi charts c=1, 2 and 3.
+with `V` in MeV·fm and `μ` in fm⁻¹. `YUKAWA_MT13` is Malfliet–Tjon I/III. Nucleon masses in the sample inputs are 0.938942 GeV so that \(\hbar^2/m_N = 41.47\) MeV·fm². Samples live in `test/Spectra-Yukawa/`. The deuteron (`nmax` 20) gives −2.231 MeV. The triton keeps the local potential in every partial wave. With \(r_{\min}=0.1\) fm and \(r_{\max}=10\) fm, the ground state goes from −5.29 MeV at `nmax` 4 to −8.67 MeV at `nmax` 7 and levels off at −8.88 MeV by `nmax` 10 (the s-wave Faddeev benchmark is −8.54 MeV). OBE factors `cc`, `eta`, `iso` are not Yukawa inputs. Two-body identical \(I=1/2\) legs write `I` for Pauli. Two-body entry point is `mol2_yukawa_GEM`; three-body pairs are selected inside `mol3_load_pairs`. Identical Dirac fermions (`sym12` −1) use the sum of Jacobi charts c=1, 2 and 3.
 
 **Implementation**: `src/model/ykwmodel.c`, `src/model/cmol2.c`, `src/model/cmol3.c`
 
@@ -727,7 +723,7 @@ with `V` in MeV·fm and `μ` in fm⁻¹. `YUKAWA_MT13` is Malfliet–Tjon I/III.
 V(r) = -Ca exp(-(r/Rc)^2)
 ```
 
-`Ca` is in MeV and `Rc` in fm. The normalized Gaussian that replaces \(\delta^{(3)}(\mathbf{r})\) is already absorbed into `Ca`, so \(C_a<0\) is a repulsive well. There is no one-pion exchange and no spin operator, so \(L\) and \(L+2\) do not mix. One parameter file is one projected channel. Samples in `test/Spectra-EFT/` use Yuan–Liu Table I: \(DD\) has \(C_a=-14.652\) MeV, \(R_c=1.0\) fm; \(\Lambda_c\Lambda_c\) has \(C_a=-201.259\) MeV, \(R_c=0.4\) fm. Both are repulsive, so the GEM spectrum stays above threshold. Scattering length and effective range are not computed on this path. Optional `t1`,`t2` default to \(1/2\); identical \(I=0\) baryons set them to `0`.
+`Ca` is in MeV and `Rc` in fm. The normalized Gaussian that replaces \(\delta^{(3)}(\mathbf{r})\) is already absorbed into `Ca`, so \(C_a<0\) is a repulsive well. There is no one-pion exchange and no spin operator, so \(L\) and \(L+2\) do not mix. One parameter file is one projected channel. Samples in `test/Spectra-EFT/` use Yuan–Liu Table I: \(DD\) has \(C_a=-14.652\) MeV, \(R_c=1.0\) fm; \(\Lambda_c\Lambda_c\) has \(C_a=-201.259\) MeV, \(R_c=0.4\) fm. Both are repulsive, so the GEM spectrum stays above threshold. Scattering length and effective range are not computed on this path. `t1` and `t2` are required; identical \(I=0\) baryons set them to `0`.
 
 **Implementation**: `src/model/eftmodel.c`, `src/model/cmol2.c`, `src/model/cmol3.c`
 
@@ -741,7 +737,7 @@ V(r) = V0(r) + Vsig(r) (σ1·σ2) + VT(r) S12
 
 `HALQCD_CUSTOM` stores each radial function as `param.V0`, `param.Vsig`, or `param.VT`: an array of `{r, V}` with `r` in fm and `V` in MeV. A missing array is zero. `r` is non-negative and strictly increasing, and each array has at most 256 points. At least one array is required. Between nodes the kernel interpolates linearly. \(r\) at or below the first node keeps \(V(r_1)\). \(r\) at or above the last node is zero. Values enter the Hamiltonian in GeV.
 
-The two-body driver uses the same central, spin–spin, and tensor matrix elements as static OBE. Two Dirac legs put \(\langle\sigma_1\cdot\sigma_2\rangle\) and the Pauli \(S_{12}\) on those operators. \(^1S_0\) therefore sees \(V_0-3V_\sigma\). \(S_{12}\) mixes \(L\) with \(L+2\). There is no \(\mathbf{L}\cdot\mathbf{S}\) term and no coupled-channel potential matrix. Each table is already one isospin projection. A two-body file has one channel, written as `param.V0`, `param.Vsig`, and `param.VT`. A three-body file may instead key those objects by the pair isospin, `"0"`, `"1"`, `"0.5"`, `"1.5"`. Each recoupled \(t_{ij}\) loads its own block. An unlabelled file is accepted only when that pair has one \(t_{ij}\). A missing block stops the run. `iso_pi` and `iso_rho` are parsed and ignored.
+The two-body driver uses the same central, spin–spin, and tensor matrix elements as static OBE. Two Dirac legs put \(\langle\sigma_1\cdot\sigma_2\rangle\) and the Pauli \(S_{12}\) on those operators. \(^1S_0\) therefore sees \(V_0-3V_\sigma\). \(S_{12}\) mixes \(L\) with \(L+2\). There is no \(\mathbf{L}\cdot\mathbf{S}\) term and no coupled-channel potential matrix. Each table is already one isospin projection. A two-body file has one channel, written as `param.V0`, `param.Vsig`, and `param.VT`. A three-body file may instead key those objects by the pair isospin, `"0"`, `"1"`, `"0.5"`, `"1.5"`. Each recoupled \(t_{ij}\) loads its own block. An unlabelled file is accepted only when that pair has one \(t_{ij}\). A missing block stops the run. OBE `iso` is not a HAL QCD input. Three-body pair \(t_{ij}\) comes from recoupling to `I`.
 
 `.pot.dat` columns are `r`, `V0`, `Vsig`, `VT`, and `V1S0=V0-3 Vsig`, in GeV. Samples in `test/Spectra-HALQCD/` are software checks. The \(V_0\) table is the repulsive Yuan–Liu \(DD\) Gaussian written as a table, not a lattice HAL QCD potential. Scattering length is a separate `SCATTER` task, not a GEM eigenvalue.
 
@@ -895,7 +891,7 @@ Gaussian smearing regularization for all potential components.
 
 ### OBE kernel (`src/model/obemodel.c`)
 
-Static elastic \(\pi\sigma\rho\omega\): `OBEVc`, `OBEVss`, `OBEVtens` (`V_{ls}=0`). `write_obe_pot()` dumps `r`, `Vc`, `Vss`, `Vt`, `V`. Couplings live in `argsOBEModel_t`; legs, isospin, and physical masses come from the system JSON.
+Static elastic \(\pi\sigma\rho\omega\): `OBEVc`, `OBEVss`, `OBEVtens` (`V_{ls}=0`). `write_obe_pot()` dumps `r`, `Vc`, `Vss`, `Vt`, `V`. Couplings, `cc`, and `eta` live in `argsOBEModel_t`; legs, masses, and `I` come from the system JSON. \(\langle\tau\cdot\tau\rangle\) is set from `I`.
 
 ### Basis Functions (src/basis/)
 

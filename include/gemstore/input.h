@@ -17,9 +17,6 @@
 typedef struct mol3_pair {
     model_type_t model;
     param_type_t param;
-    double iso_pi;          /* ⟨τi·τj⟩ on π; I=0 → −3, I=1 → +1 */
-    double iso_rho;         /* ⟨τi·τj⟩ on ρ */
-    double eta;             /* MM C-parity on this pair; 0 → +1 */
     char param_file[256];
 } mol3_pair_t;
 
@@ -64,16 +61,10 @@ typedef struct argsInput {
     obe_leg_type_t type1;   /* Dirac / VECTOR / PSEUDOSCALAR of hadron 1 */
     obe_leg_type_t type2;   /* Dirac / VECTOR / PSEUDOSCALAR of hadron 2 */
     obe_leg_type_t type3;   /* Dirac / VECTOR / PSEUDOSCALAR of hadron 3 */
-    int cc1;                /* meson C on leg 1; G = −1 exchanges pick up ζ */
-    int cc2;                /* meson C on leg 2; G = −1 exchanges pick up ζ */
-    int cc3;                /* meson C on leg 3; G = −1 exchanges pick up ζ */
-    double eta;             /* MM C-parity on π and magnetic vector; 0 → +1 */
-    double iso_pi;          /* ⟨τ1·τ2⟩ on pion; I = 0 is −3, I = 1 is +1 */
-    double iso_rho;         /* ⟨τ1·τ2⟩ on rho; write both, do not use iso */
-    double iso_I;           /* MOLECUL3 total isospin. Not named I (complex.h). */
-    double iso_t1;          /* particle isospin 1; default 1/2 */
-    double iso_t2;          /* particle isospin 2; default 1/2 */
-    double iso_t3;          /* particle isospin 3; default 1/2 */
+    double iso_I;           /* total isospin I. Not named I (complex.h). */
+    double iso_t1;          /* particle isospin 1 */
+    double iso_t2;          /* particle isospin 2 */
+    double iso_t3;          /* particle isospin 3 */
     int sym12;              /* baryon 1<->2 exchange; MOLECUL3 identity uses type+mass */
     int Lmax;               /* baryon orbital truncation */
     int nmax;               /* Gaussian parameter */

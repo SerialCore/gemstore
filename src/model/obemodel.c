@@ -260,7 +260,7 @@ static double obe_iso(const argsOBEModel_t *model, int boson)
     double iso;
 
     if (!obe_boson[boson].isovector) return 1.0;
-    iso = (boson == OBE_PI) ? model->iso_pi : model->iso_rho;
+    iso = model->iso;
     return (iso == 0.0) ? 1.0 : iso;
 }
 

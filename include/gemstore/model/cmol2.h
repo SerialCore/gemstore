@@ -15,7 +15,7 @@
 
 /* S-wave plus D-wave (L and L+2) with every total spin that couples to J.
  * Identical legs (same type and mass) keep only Fermi/Bose-allowed (L,S,I),
- * with I from iso_pi for two t=1/2. Returns the number of channels.
+ * with I from system I for two t=1/2. Returns the number of channels.
  * L[] and S[] may be NULL. */
 int mol2_build_channels(const argsInput_t *input, int *L, double *S, int maxch);
 int mol2_channel_count(const argsInput_t *input);

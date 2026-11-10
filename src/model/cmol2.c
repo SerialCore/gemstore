@@ -39,16 +39,6 @@ static void mol2_term_name(int L, double S, char *out, int n)
     snprintf(out, (size_t)n, "%d%c", mult, ell);
 }
 
-/* Two t=1/2: ⟨τ1·τ2⟩ = 2I(I+1) − 3 = iso_pi. */
-static double mol2_pair_I(double iso_pi)
-{
-    double x = 0.5 * (iso_pi + 3.0);
-    if (x < -1e-12) {
-        return -1.0;
-    }
-    return 0.5 * (-1.0 + sqrt(1.0 + 4.0 * x));
-}
-
 /* (−1)^{ℓ+(2s−S)+(2t−T)} = −1 fermion, +1 boson. */
 static int mol2_pair_sym_ok(int ell, double s, double t, double S, double T, int fermion)
 {
@@ -81,7 +71,7 @@ int mol2_build_channels(const argsInput_t *input, int *Lout, double *Sout, int m
 
     ident = (input->type1 == input->type2 && fabs(input->m1 - input->m2) < 1e-9);
     fermion = (input->type1 == OBE_LEG_DIRAC);
-    totI = mol2_pair_I(input->iso_pi);
+    totI = input->iso_I;
 
     for (L = L0; L <= L0 + 2; L += 2) {
         for (S = fabs(s1 - s2); S <= s1 + s2 + 1e-10; S += 1.0) {
@@ -89,13 +79,18 @@ int mol2_build_channels(const argsInput_t *input, int *Lout, double *Sout, int m
             if (!mol2_triangle(S, (double)L, J)) {
                 continue;
             }
-            /* Two I=1/2 legs: T comes from iso_pi. Two I=0 legs (Λc): T=0
+            /* Two I=1/2 legs: T is system I. Two I=0 legs (Λc): T=0
              * and the isospin factor in the exchange sign is absent. */
             t_half = fabs(input->iso_t1 - 0.5) < 1e-9 && fabs(input->iso_t2 - 0.5) < 1e-9;
             t_zero = fabs(input->iso_t1) < 1e-9 && fabs(input->iso_t2) < 1e-9;
-            if (ident && t_half && totI >= -1e-12
-                && !mol2_pair_sym_ok(L, s1, 0.5, S, totI, fermion)) {
-                continue;
+            if (ident && t_half) {
+                if (totI < -1e-12) {
+                    fprintf(stderr, "Error: identical I=1/2 legs need I.\n");
+                    exit(1);
+                }
+                if (!mol2_pair_sym_ok(L, s1, 0.5, S, totI, fermion)) {
+                    continue;
+                }
             }
             if (ident && t_zero
                 && !mol2_pair_sym_ok(L, s1, 0.0, S, 0.0, fermion)) {

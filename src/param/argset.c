@@ -281,35 +281,28 @@ argsOBEModel_t argsOBEModel_from(const argsInput_t *input, int p)
         if (p == 0) {
             args_model.type1 = input->type1;
             args_model.type2 = input->type2;
-            args_model.cc1 = input->cc1;
-            args_model.cc2 = input->cc2;
         }
         else if (p == 1) {
             args_model.type1 = input->type1;
             args_model.type2 = input->type3;
-            args_model.cc1 = input->cc1;
-            args_model.cc2 = input->cc3;
         }
         else {
             args_model.type1 = input->type2;
             args_model.type2 = input->type3;
-            args_model.cc1 = input->cc2;
-            args_model.cc2 = input->cc3;
         }
-        args_model.eta = input->mol3_pairs[p].eta;
-        args_model.iso_pi = input->mol3_pairs[p].iso_pi;
-        args_model.iso_rho = input->mol3_pairs[p].iso_rho;
         return args_model;
     }
 
     parse_param_OBESTAT(input->param_file, &args_model);
     args_model.type1 = input->type1;
     args_model.type2 = input->type2;
-    args_model.cc1 = input->cc1;
-    args_model.cc2 = input->cc2;
-    args_model.eta = input->eta;
-    args_model.iso_pi = input->iso_pi;
-    args_model.iso_rho = input->iso_rho;
+    if (fabs(input->iso_t1 - 0.5) < 1e-9 && fabs(input->iso_t2 - 0.5) < 1e-9) {
+        if (input->iso_I < -1e-12) {
+            fprintf(stderr, "Error: two-body OBESTAT with t=1/2 legs needs I.\n");
+            exit(1);
+        }
+        args_model.iso = 2.0 * input->iso_I * (input->iso_I + 1.0) - 3.0;
+    }
     return args_model;
 }
 

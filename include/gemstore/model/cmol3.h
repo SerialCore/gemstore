@@ -15,8 +15,9 @@
  * registered in mol3_load_pairs). Jacobi charts c=1,2,3 with physical masses and
  * hadron spins 0, 1/2, 1.
  * H = Σ m_i + Σ p_i²/(2m_i) + Σ_pairs (Vc + Vss s_i·s_j + Vt S12), Vls=0.
- * system.I is required: pair tij is a basis QN recoupled to total I;
- * pair iso_pi/iso_rho are ignored. t1,t2,t3 default to 1/2.
+ * system.I is required: pair tij is a basis QN recoupled to total I.
+ * OBE cc and eta are required in each pair's OBESTAT param file.
+ * Pair ⟨τ·τ⟩ is set by recoupling to I. t1,t2,t3 are required.
  * π/ρ use c_i c_j Ti·Tj with c=2 on a doublet (τ) and c=1 on integer isospin.
  * Identical legs: same type and mass. Dirac is a fermion, VECTOR and
  * PSEUDOSCALAR are bosons. A Jacobi ρ-pair that is identical is kept

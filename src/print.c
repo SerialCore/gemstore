@@ -174,10 +174,7 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Leg 2 type:           %-50s\n", obe_leg_type_str[input->type2]);
         printf("  Physical mass m1:     %-50.6f GeV\n", input->m1);
         printf("  Physical mass m2:     %-50.6f GeV\n", input->m2);
-        printf("  cc1, cc2:             %d, %d\n", input->cc1, input->cc2);
-        printf("  eta:                  %-50.6f\n", input->eta);
-        printf("  iso_pi (pion):        %-50.6f\n", input->iso_pi);
-        printf("  iso_rho (rho):        %-50.6f\n", input->iso_rho);
+        printf("  Total isospin (I):    %-50.6f\n", input->iso_I);
         printf("  Particle t1, t2:      %.6f, %.6f\n", input->iso_t1, input->iso_t2);
     }
     else if (input->system == SYSTEM_MOLECUL3) {
@@ -187,12 +184,6 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Physical mass m1:     %-50.6f GeV\n", input->m1);
         printf("  Physical mass m2:     %-50.6f GeV\n", input->m2);
         printf("  Physical mass m3:     %-50.6f GeV\n", input->m3);
-        printf("  cc1, cc2, cc3:        %d, %d, %d\n", input->cc1, input->cc2, input->cc3);
-        static const char *pair_name[MOL3_PAIR_N] = { "12", "13", "23" };
-        for (int p = 0; p < MOL3_PAIR_N; p++) {
-            printf("  Mol3 pair %s iso_pi, iso_rho, eta:  %.6f, %.6f, %.6f\n",
-                pair_name[p], input->mol3_pairs[p].iso_pi, input->mol3_pairs[p].iso_rho, input->mol3_pairs[p].eta);
-        }
     }
     printf("\n");
 
@@ -236,6 +227,8 @@ void print_input_parameters(const argsInput_t *input)
                 printf("    f_rho:                   %.6f, %.6f\n", args_model.f_rho1, args_model.f_rho2);
                 printf("    g_omega:                 %.6f, %.6f\n", args_model.g_omega1, args_model.g_omega2);
                 printf("    f_omega:                 %.6f, %.6f\n", args_model.f_omega1, args_model.f_omega2);
+                printf("    cc1, cc2:                %d, %d\n", args_model.cc1, args_model.cc2);
+                printf("    eta:                     %-46.6f\n", args_model.eta);
             }
             else if (input->mol3_pairs[p].model == MODEL_YUKAWA) {
                 argsYKWModel_t args_model = argsYKWModel_from(input, p);
@@ -362,6 +355,9 @@ void print_input_parameters(const argsInput_t *input)
         printf("    f_rho:                   %.6f, %.6f\n", args_model.f_rho1, args_model.f_rho2);
         printf("    g_omega:                 %.6f, %.6f\n", args_model.g_omega1, args_model.g_omega2);
         printf("    f_omega:                 %.6f, %.6f\n", args_model.f_omega1, args_model.f_omega2);
+        printf("    cc1, cc2:                %d, %d\n", args_model.cc1, args_model.cc2);
+        printf("    eta:                     %-46.6f\n", args_model.eta);
+        printf("    iso:                     %-46.6f\n", args_model.iso);
         printf("\n");
     }
     else if (input->model == MODEL_YUKAWA) {
