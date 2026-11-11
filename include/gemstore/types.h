@@ -11,7 +11,8 @@
 typedef enum task_type {
     TASK_SPECTRA,
     TASK_FITTING,
-    TASK_SCATTER
+    TASK_SCATTER,
+    TASK_3P0DECAY
 } task_type_t;
 
 extern const char *task_type_str[];
@@ -29,7 +30,8 @@ typedef enum model_type {
     MODEL_YUKAWA,
     MODEL_EFTCONT,
     MODEL_HALQCD,
-    MODEL_HYBRID
+    MODEL_HYBRID,
+    MODEL_QPC3P0
 } model_type_t;
 
 extern const char *model_type_str[];
@@ -92,7 +94,8 @@ typedef enum param_type {
     PARAM_YUKAWA_MT13,
     PARAM_YUKAWA_CUSTOM,
     PARAM_EFTCONT_CUSTOM,
-    PARAM_HALQCD_CUSTOM
+    PARAM_HALQCD_CUSTOM,
+    PARAM_QPC3P0_CUSTOM
 } param_type_t;
 
 extern const char *param_type_str[];

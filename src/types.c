@@ -9,7 +9,8 @@
 const char *task_type_str[] = {
     [TASK_SPECTRA] = "SPECTRA",
     [TASK_FITTING] = "FITTING",
-    [TASK_SCATTER] = "SCATTER"
+    [TASK_SCATTER] = "SCATTER",
+    [TASK_3P0DECAY] = "3P0DECAY"
 };
 
 const char *model_type_str[] = {
@@ -18,13 +19,14 @@ const char *model_type_str[] = {
     [MODEL_NRSTRING] = "NRSTRING",
     [MODEL_NRSCREEN] = "NRSCREEN",
     [MODEL_BAGMIT] = "BAGMIT",
+    [MODEL_QMCSTAD] = "QMCSTAD",
+    [MODEL_QMCMOD] = "QMCMOD",
     [MODEL_OBESTAT] = "OBESTAT",
     [MODEL_YUKAWA] = "YUKAWA",
     [MODEL_EFTCONT] = "EFTCONT",
     [MODEL_HALQCD] = "HALQCD",
     [MODEL_HYBRID] = "HYBRID",
-    [MODEL_QMCSTAD] = "QMCSTAD",
-    [MODEL_QMCMOD] = "QMCMOD"
+    [MODEL_QPC3P0] = "QPC3P0"
 };
 
 const char *system_type_str[] = {
@@ -75,7 +77,8 @@ const char *param_type_str[] = {
     [PARAM_YUKAWA_MT13] = "YUKAWA_MT13",
     [PARAM_YUKAWA_CUSTOM] = "YUKAWA_CUSTOM",
     [PARAM_EFTCONT_CUSTOM] = "EFTCONT_CUSTOM",
-    [PARAM_HALQCD_CUSTOM] = "HALQCD_CUSTOM"
+    [PARAM_HALQCD_CUSTOM] = "HALQCD_CUSTOM",
+    [PARAM_QPC3P0_CUSTOM] = "QPC3P0_CUSTOM"
 };
 
 const char *obe_leg_type_str[] = {

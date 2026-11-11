@@ -7,7 +7,7 @@ metadata:
   audience: researchers, hadron physicists, computational particle physics
   domain: hadron spectroscopy, quark models, Gaussian expansion method
   tools: bash, file operations, subprocess execution
-  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, GISTRING_BARYON, NRSTRING, NRSCREEN, BAGMIT, BAG, QMCSTAD, QMCMOD, QMCSTAD_DEFAULT, QMCSTAD_CUSTOM, QMCMOD_CUSTOM, QMC, quark-meson coupling, rho_b, CMI, NONE, MIT bag, tetraquark, pentaquark, hexaquark, meson spectra, baryon spectra, MOLECUL2, OBESTAT, OBE, HALQCD, HALQCD_CUSTOM, Dstar Xi, molecular states, FITTING, fit.target, SCATTER, scattering length, effective range, GISCREEN_CCBAR, charmonium, bottomonium, GEM, SHO, custom parameter file, print section, potential output, wavefunction output
+  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, GISTRING_BARYON, NRSTRING, NRSCREEN, BAGMIT, BAG, QMCSTAD, QMCMOD, QMCSTAD_DEFAULT, QMCSTAD_CUSTOM, QMCMOD_CUSTOM, QMC, quark-meson coupling, rho_b, CMI, NONE, MIT bag, tetraquark, pentaquark, hexaquark, meson spectra, baryon spectra, MOLECUL2, OBESTAT, OBE, HALQCD, HALQCD_CUSTOM, Dstar Xi, molecular states, FITTING, fit.target, SCATTER, scattering length, effective range, GISCREEN_CCBAR, charmonium, bottomonium, GEM, SHO, QPC3P0, QPC3P0_CUSTOM, 3P0, 3P0DECAY, custom parameter file, print section, potential output, wavefunction output
 ---
 
 # Gemstore Hadron Spectra Skill
@@ -26,6 +26,7 @@ The parser expects:
 - for `SPECTRA`: object `model`, object `system`, object `print`
 - for `FITTING`: object `fit` (`target` only). Do not write `model`, `system`, or `print`.
 - for `SCATTER`: object `model` and object `system`. Do not write `basis` or `print`.
+- for `3P0DECAY`: object `model` and object `system`. Do not write `basis` or `print`.
 
 Use exact uppercase strings where shown below.
 
@@ -36,6 +37,7 @@ Use exact uppercase strings where shown below.
 - `SPECTRA`
 - `FITTING`
 - `SCATTER`
+- `3P0DECAY`
 
 ### Fitting
 
@@ -49,6 +51,16 @@ For `task` `FITTING`:
 - Do not write `print`
 
 The state list and the parameter starts live in `src/param/f*.c`. Do not put experimental masses or starting values in the JSON. Each evaluation prints `call N  chi2 = ...`. Read `<project>.fit.json` for `chi2`, `valid`, `edm`, parameters, and per-state `mass_calc`, `mass_exp`, and `residual`. Masses there are in MeV.
+
+### 3P0 decay
+
+`task` is `3P0DECAY`. Write `project`, `model`, and `system`. Do not write `basis` or `print`. `system.type` is `MESON`. `model.type` is `QPC3P0` and `model.param` is `QPC3P0_CUSTOM`. There is no built-in parameter set, so `model.file` is required.
+
+The parameter file holds `param.gamma`, `param.mq1`, `param.mq2`, and `param.mq3`. Masses are in GeV. `mq1` is the parent quark, `mq2` the parent antiquark, and `mq3` the created quark. All three masses must be positive.
+
+`system` carries `F`, `fl1`, `fl2`, object `initial`, and array `final` of length 2. Each meson has `f1`, `f2`, `n`, `S`, `L`, `J`, `mass`, and `beta`. `n` starts at 1 and is the SHO radial quantum number. `beta` is that meson's SHO scale in GeV. `mass` is the hadron mass in GeV. `fl1` and `fl2` are the flavor weights of the two diagrams, including sign. `F` is the charge multiplicity and multiplies the width. Run from the directory that holds `model.file`.
+
+`<project>.decay.json` holds `open`, `p`, `EB`, `EC`, `width` in MeV, and `waves` with `L`, `S`, and `M`. `open` is 0 below threshold, and then `width` is 0. Example: `test/Decay-3P0/rho_pipi.json` gives 79.429 MeV.
 
 ### Scattering length
 
@@ -79,6 +91,7 @@ Baryon `SPECTRA` accepts `GISTRING` and `GISCREEN` with basis `GEM`. `NRSTRING` 
 - `YUKAWA` — local Yukawa (Malfliet–Tjon), for `MOLECUL2` or as a nested pair model under `HYBRID`. NN/NNN binding. Preset `YUKAWA_MT13` or `YUKAWA_CUSTOM`
 - `EFTCONT` — leading-order EFT contact \(V=-C_a\exp[-(r/R_c)^2]\) (arXiv:2610.28021 Eq. 40), for `MOLECUL2` or a nested `HYBRID` pair. Preset `EFTCONT_CUSTOM`
 - `HALQCD` — leading-order HAL QCD potential \(V_0+V_\sigma(\sigma_1\cdot\sigma_2)+V_T S_{12}\) from radial tables, for `MOLECUL2` or a nested `HYBRID` pair. Preset `HALQCD_CUSTOM`
+- `QPC3P0` — quark-pair creation, for `task` `3P0DECAY` and `system.type` `MESON` only. Preset `QPC3P0_CUSTOM` only
 - `HYBRID` — three pair models `model1`/`model2`/`model3` (pairs 12/13/23), for `system.type` `MOLECUL3`. Each pair is `OBESTAT`, `YUKAWA`, `EFTCONT`, or `HALQCD`
 
 Use `model.param` for presets:
@@ -107,6 +120,7 @@ Use `model.param` for presets:
 - `YUKAWA_CUSTOM`
 - `EFTCONT_CUSTOM`
 - `HALQCD_CUSTOM`
+- `QPC3P0_CUSTOM`
 
 For custom parameter sets, the model object must also include:
 
@@ -119,7 +133,7 @@ For custom parameter sets, the model object must also include:
 - `sigma` — contact smearing (GeV)
 - `mu` — screening mass (GeV). Required for `NRSCREEN`. `NRSTRING` does not read `mu`; confinement stays linear.
 
-`BAGMIT_CUSTOM` fields are listed in `templates/bag_spectra_template.md`. `QMCSTAD_CUSTOM` fields are `mn`, `ms`, `mc`, `mb`, `B`, `Z`, `m_sigma`, `m_omega`, `m_rho`, `g_sigma`, `g_omega`, `g_rho`, inside `param`. `QMCMOD_CUSTOM` adds required `g_sigma_B` and `delta`. `lambda3` is optional and defaults to 0. `QMCSTAD` does not read `g_sigma_B` or `delta`. There is no pair-binding block. `OBESTAT_CUSTOM` fields are listed in `templates/molecule_spectra_template.md` (`lambda`, `tensor_mass1/2`, `g_*`, `f_*`). `YUKAWA_CUSTOM` is `param.terms[]` with `V` (MeV·fm), `mu` (fm⁻¹), `wigner` (default 1), `bartlett` (default 0). `YUKAWA_MT13` is built in and takes no file. `EFTCONT_CUSTOM` is `param.Ca` (MeV) and `param.Rc` (fm), with \(V=-C_a\exp[-(r/R_c)^2]\). The Gaussian norm is already inside \(C_a\). \(C_a<0\) is repulsion. There is no spin operator. Yuan–Liu Table I: `test/Spectra-EFT/`. `HALQCD_CUSTOM` is `param.V0`, `param.Vsig`, and `param.VT`, each an optional array of `{r, V}` with `r` in fm and `V` in MeV. `r` increases strictly, at most 256 points. A missing array is zero, and at least one array is required. Linear interpolation. \(r\le r_1\) keeps \(V(r_1)\). \(r\ge r_{\mathrm{last}}\) is zero. The operators are the same central, spin–spin, and tensor matrix elements as OBE, with Dirac \(k_{ss}=4\). \(^1S_0\) is \(V_0-3V_\sigma\). No \(\mathbf{L}\cdot\mathbf{S}\) and no coupled-channel matrix. A two-body file has one unlabelled channel. A three-body file keys the same objects by pair isospin (`"0"`, `"1"`, `"0.5"`, `"1.5"`). Each \(t_{ij}\) loads its own block. An unlabelled file is kept only when that pair has one \(t_{ij}\). Samples: `test/Spectra-HALQCD/`. Legs and physical masses stay in the system JSON. Yukawa does not take OBE `iso`. Two-body identical \(I=1/2\) legs write `I`. For NN/NNN use nucleon mass `0.938942` GeV so \(\hbar^2/m = 41.47\) MeV·fm². Deuteron: `J=1`, `L=0`. Triton: `J=0.5`, `P=1`, `I=0.5`, `sym12=-1`, `Lmax=0` (s-wave MT-I/III benchmark). Examples: `test/Spectra-Yukawa/nn_yukawa.json`, `test/Spectra-Yukawa/nnn_yukawa.json`.
+`BAGMIT_CUSTOM` fields are listed in `templates/bag_spectra_template.md`. `QMCSTAD_CUSTOM` fields are `mn`, `ms`, `mc`, `mb`, `B`, `Z`, `m_sigma`, `m_omega`, `m_rho`, `g_sigma`, `g_omega`, `g_rho`, inside `param`. `QMCMOD_CUSTOM` adds required `g_sigma_B` and `delta`. `lambda3` is optional and defaults to 0. `QMCSTAD` does not read `g_sigma_B` or `delta`. There is no pair-binding block. `OBESTAT_CUSTOM` fields are listed in `templates/molecule_spectra_template.md` (`lambda`, `tensor_mass1/2`, `g_*`, `f_*`). `YUKAWA_CUSTOM` is `param.terms[]` with `V` (MeV·fm), `mu` (fm⁻¹), `wigner` (default 1), `bartlett` (default 0). `YUKAWA_MT13` is built in and takes no file. `QPC3P0_CUSTOM` is `param.gamma`, `param.mq1`, `param.mq2`, and `param.mq3` (GeV). `EFTCONT_CUSTOM` is `param.Ca` (MeV) and `param.Rc` (fm), with \(V=-C_a\exp[-(r/R_c)^2]\). The Gaussian norm is already inside \(C_a\). \(C_a<0\) is repulsion. There is no spin operator. Yuan–Liu Table I: `test/Spectra-EFT/`. `HALQCD_CUSTOM` is `param.V0`, `param.Vsig`, and `param.VT`, each an optional array of `{r, V}` with `r` in fm and `V` in MeV. `r` increases strictly, at most 256 points. A missing array is zero, and at least one array is required. Linear interpolation. \(r\le r_1\) keeps \(V(r_1)\). \(r\ge r_{\mathrm{last}}\) is zero. The operators are the same central, spin–spin, and tensor matrix elements as OBE, with Dirac \(k_{ss}=4\). \(^1S_0\) is \(V_0-3V_\sigma\). No \(\mathbf{L}\cdot\mathbf{S}\) and no coupled-channel matrix. A two-body file has one unlabelled channel. A three-body file keys the same objects by pair isospin (`"0"`, `"1"`, `"0.5"`, `"1.5"`). Each \(t_{ij}\) loads its own block. An unlabelled file is kept only when that pair has one \(t_{ij}\). Samples: `test/Spectra-HALQCD/`. Legs and physical masses stay in the system JSON. Yukawa does not take OBE `iso`. Two-body identical \(I=1/2\) legs write `I`. For NN/NNN use nucleon mass `0.938942` GeV so \(\hbar^2/m = 41.47\) MeV·fm². Deuteron: `J=1`, `L=0`. Triton: `J=0.5`, `P=1`, `I=0.5`, `sym12=-1`, `Lmax=0` (s-wave MT-I/III benchmark). Examples: `test/Spectra-Yukawa/nn_yukawa.json`, `test/Spectra-Yukawa/nnn_yukawa.json`.
 
 Examples:
 
@@ -261,7 +275,7 @@ Inside `system` provide `type1`–`type3`, `m1`–`m3`, `t1`–`t3`, `J`, `P`, `
 gemstore [--compute FILE] [--debug UNIT]
 ```
 
-Use `--compute <file.json>` for spectroscopy, `FITTING`, and `SCATTER`.
+Use `--compute <file.json>` for spectroscopy, `FITTING`, `SCATTER`, and `3P0DECAY`.
 
 ## Input Generation Rules
 

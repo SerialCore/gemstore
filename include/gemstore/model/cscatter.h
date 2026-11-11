@@ -27,6 +27,6 @@ typedef struct scatter_job {
 /* Two-body S-wave scattering length for one MOLECUL2 input.
  * Projects the diagonal l=0 potential, then calls the effective-range solver.
  * On success writes the reduced mass in GeV and a0, r0 in fm. */
-void cscatter(const argsInput_t *input, double *mu_gev, double *a0_fm, double *r0_fm);
+void scatter_ere_mol2(const argsInput_t *input, double *mu_gev, double *a0_fm, double *r0_fm);
 
 #endif

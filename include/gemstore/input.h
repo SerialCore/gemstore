@@ -12,6 +12,19 @@
 #define CMI_COLOR_MAX 8
 #define CMI_SPIN_MAX 20
 #define MOL3_PAIR_N 3
+#define QPC_FINAL_N 2
+
+/* One SHO meson in a 3P0 decay. n = 1 is the nodeless radial function. */
+typedef struct qpc_meson {
+    int f1;
+    int f2;
+    int n;
+    double S;
+    double L;
+    double J;
+    double mass;
+    double beta;
+} qpc_meson_t;
 
 /* One pair in a three-body molecule: model1 → 1-2, model2 → 1-3, model3 → 2-3. */
 typedef struct mol3_pair {
@@ -81,6 +94,11 @@ typedef struct argsInput {
     char project[256];      /* project name */
     char param_file[256];   /* parameter file name */
     mol3_pair_t mol3_pairs[MOL3_PAIR_N];  /* MOLECUL3 pairs 12, 13, 23 */
+    qpc_meson_t qpc_initial;              /* 3P0 parent, one SHO */
+    qpc_meson_t qpc_final[QPC_FINAL_N];   /* 3P0 daughters B, C */
+    double qpc_F;           /* charge multiplicity, multiplies the width */
+    double qpc_fl1;         /* flavor weight of diagram 1-4-3-2 */
+    double qpc_fl2;         /* flavor weight of diagram 3-2-1-4 */
 } argsInput_t;
 
 #endif

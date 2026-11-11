@@ -1,0 +1,47 @@
+{
+  "project": "rho_pipi",
+  "task": "3P0DECAY",
+  "model": {
+    "type": "QPC3P0",
+    "param": "QPC3P0_CUSTOM",
+    "file": "param_qpc3p0_rho.json"
+  },
+  "system": {
+    "type": "MESON",
+    "F": 1,
+    "fl1": 0.7071067811865476,
+    "fl2": -0.7071067811865476,
+    "initial": {
+      "f1": 1,
+      "f2": 1,
+      "n": 1,
+      "S": 1,
+      "L": 0,
+      "J": 1,
+      "mass": 0.77,
+      "beta": 0.397
+    },
+    "final": [
+      {
+        "f1": 1,
+        "f2": 1,
+        "n": 1,
+        "S": 0,
+        "L": 0,
+        "J": 0,
+        "mass": 0.138,
+        "beta": 0.397
+      },
+      {
+        "f1": 1,
+        "f2": 1,
+        "n": 1,
+        "S": 0,
+        "L": 0,
+        "J": 0,
+        "mass": 0.138,
+        "beta": 0.397
+      }
+    ]
+  }
+}

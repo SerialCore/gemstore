@@ -11,6 +11,7 @@
 #include <gemstore/math/matrix.h>
 #include <gemstore/model/bagmodel.h>
 #include <gemstore/model/qmcmodel.h>
+#include <gemstore/model/cdecay.h>
 #include <gemstore/param/argset.h>
 
 /* Write {len} of meson spectra to a file, including mass, RMS radius, and eigenvectors */
@@ -58,6 +59,9 @@ int write_mol2_hal_pot(const argsInput_t *input, const argsHALModel_t *args_mode
 int write_mol3_pot(const argsInput_t *input);
 
 /* Write {project}.scatter.json with mu (GeV), a0 (fm), and r0 (fm). */
-int write_scatter(const argsInput_t *input, double mu_gev, double a0_fm, double r0_fm);
+int write_ere(const argsInput_t *input, double mu_gev, double a0_fm, double r0_fm);
+
+/* Write {project}.decay.json. width is in MeV. p, EB and EC are in GeV. */
+int write_qpc(const argsInput_t *input, const qpc_result_t *result);
 
 #endif

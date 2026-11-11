@@ -1005,7 +1005,7 @@ int write_mol3_pot(const argsInput_t *input)
     return 1;
 }
 
-int write_scatter(const argsInput_t *input, double mu_gev, double a0_fm, double r0_fm)
+int write_ere(const argsInput_t *input, double mu_gev, double a0_fm, double r0_fm)
 {
     char path[512];
     FILE *pf;
@@ -1029,6 +1029,48 @@ int write_scatter(const argsInput_t *input, double mu_gev, double a0_fm, double 
     fprintf(pf, "  \"mu\": %.16g,\n", mu_gev);
     fprintf(pf, "  \"a0\": %.16g,\n", a0_fm);
     fprintf(pf, "  \"r0\": %.16g\n", r0_fm);
+    fprintf(pf, "}\n");
+    if (fclose(pf) != 0) {
+        fprintf(stderr, "Error: Failed to close file %s\n", path);
+        return 0;
+    }
+    return 1;
+}
+
+int write_qpc(const argsInput_t *input, const qpc_result_t *result)
+{
+    char path[512];
+    FILE *pf;
+    int nw;
+    int i;
+
+    if (input == NULL || result == NULL) {
+        fprintf(stderr, "Error: write_decay needs a project.\n");
+        return 0;
+    }
+    nw = snprintf(path, sizeof path, "%s.decay.json", input->project);
+    if (nw < 0 || nw >= (int)sizeof path) {
+        fprintf(stderr, "Error: decay output path is too long.\n");
+        return 0;
+    }
+    pf = fopen(path, "w");
+    if (pf == NULL) {
+        fprintf(stderr, "Error: Cannot open file %s for writing\n", path);
+        return 0;
+    }
+    fprintf(pf, "{\n");
+    fprintf(pf, "  \"open\": %d,\n", result->open);
+    fprintf(pf, "  \"p\": %.16g,\n", result->p);
+    fprintf(pf, "  \"EB\": %.16g,\n", result->EB);
+    fprintf(pf, "  \"EC\": %.16g,\n", result->EC);
+    fprintf(pf, "  \"width\": %.16g,\n", result->width);
+    fprintf(pf, "  \"waves\": [\n");
+    for (i = 0; i < result->nwave; i++) {
+        fprintf(pf, "    {\"L\": %d, \"S\": %d, \"M\": %.16g}%s\n",
+            result->wave[i].L, result->wave[i].S, result->wave[i].M,
+            i + 1 < result->nwave ? "," : "");
+    }
+    fprintf(pf, "  ]\n");
     fprintf(pf, "}\n");
     if (fclose(pf) != 0) {
         fprintf(stderr, "Error: Failed to close file %s\n", path);

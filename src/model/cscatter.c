@@ -41,7 +41,7 @@ static double scatter_job_v(double r_fm, void *ctx)
     return 1000.0 * gev;
 }
 
-void cscatter(const argsInput_t *input, double *mu_gev, double *a0_fm, double *r0_fm)
+void scatter_ere_mol2(const argsInput_t *input, double *mu_gev, double *a0_fm, double *r0_fm)
 {
     int Lch[MOL2_CHMAX];
     double Sch[MOL2_CHMAX];

@@ -1,0 +1,47 @@
+{
+  "project": "psi4415_DsDsstar",
+  "task": "3P0DECAY",
+  "model": {
+    "type": "QPC3P0",
+    "param": "QPC3P0_CUSTOM",
+    "file": "param_qpc3p0_ccs.json"
+  },
+  "system": {
+    "type": "MESON",
+    "F": 2,
+    "fl1": 1.0,
+    "fl2": 0.0,
+    "initial": {
+      "f1": 3,
+      "f2": 3,
+      "n": 5,
+      "S": 1,
+      "L": 0,
+      "J": 1,
+      "mass": 4.42185227664704,
+      "beta": 0.09861087800104716
+    },
+    "final": [
+      {
+        "f1": 3,
+        "f2": 2,
+        "n": 1,
+        "S": 0,
+        "L": 0,
+        "J": 0,
+        "mass": 1.97,
+        "beta": 0.566
+      },
+      {
+        "f1": 3,
+        "f2": 2,
+        "n": 1,
+        "S": 1,
+        "L": 0,
+        "J": 1,
+        "mass": 2.107,
+        "beta": 0.487
+      }
+    ]
+  }
+}

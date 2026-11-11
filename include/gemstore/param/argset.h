@@ -220,6 +220,16 @@ typedef struct argsHALModelDy {
     double OTens;
 } argsHALModelDy_t;
 
+/* Quark-pair creation. No built-in set: gamma and the three quark masses
+ * come from a QPC3P0_CUSTOM file. mq1 is the parent quark, mq2 the parent
+ * antiquark, mq3 the created quark. Masses are in GeV. */
+typedef struct argsQPCModel {
+    double gamma;
+    double mq1;
+    double mq2;
+    double mq3;
+} argsQPCModel_t;
+
 /* Default meson parameters for model GIString */
 extern const argsGIModel_t argsGIString_meson;
 
@@ -281,6 +291,9 @@ argsYKWModel_t argsYKWModel_from(const argsInput_t *input, int p);
 
 /* EFT contact args. p is the MOLECUL3 pair index; MOLECUL2 ignores p. */
 argsEFTModel_t argsEFTModel_from(const argsInput_t *input, int p);
+
+/* QPC args from the parameter file. There is no built-in set. */
+argsQPCModel_t argsQPCModel_from(const argsInput_t *input);
 
 /* HAL QCD args. p is the MOLECUL3 pair index; MOLECUL2 ignores p.
  * argsHALModel_from requires exactly one channel in the file.

@@ -64,6 +64,17 @@ void entry_compute(const char* arg)
             exit(1);
         }
     }
+    else if (input.task == TASK_3P0DECAY) {
+        if (input.system != SYSTEM_MESON) {
+            fprintf(stderr, "3P0DECAY supports MESON only.\n");
+            exit(1);
+        }
+        if (input.model != MODEL_QPC3P0) {
+            fprintf(stderr, "3P0DECAY supports QPC3P0 only.\n");
+            exit(1);
+        }
+        compute_qpc(&input);
+    }
     else if (input.task == TASK_SCATTER) {
         if (input.system != SYSTEM_MOLECUL2) {
             fprintf(stderr, "SCATTER supports MOLECUL2 only.\n");

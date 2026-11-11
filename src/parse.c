@@ -133,6 +133,7 @@ static void parse_task_section(const cJSON *root, argsInput_t *input)
     if (strcmp(task, "SPECTRA") == 0) input->task = TASK_SPECTRA;
     else if (strcmp(task, "FITTING") == 0) input->task = TASK_FITTING;
     else if (strcmp(task, "SCATTER") == 0) input->task = TASK_SCATTER;
+    else if (strcmp(task, "3P0DECAY") == 0) input->task = TASK_3P0DECAY;
     else {
         fprintf(stderr, "Unknown task: %s\n", task);
         exit(1);
@@ -187,6 +188,7 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
     else if (strcmp(type, "YUKAWA") == 0) input->model = MODEL_YUKAWA;
     else if (strcmp(type, "EFTCONT") == 0) input->model = MODEL_EFTCONT;
     else if (strcmp(type, "HALQCD") == 0) input->model = MODEL_HALQCD;
+    else if (strcmp(type, "QPC3P0") == 0) input->model = MODEL_QPC3P0;
     else {
         fprintf(stderr, "Unknown model type: %s\n", type);
         exit(1);
@@ -284,13 +286,20 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
             exit(1);
         }
     }
+    else if (input->model == MODEL_QPC3P0) {
+        if (strcmp(param, "QPC3P0_CUSTOM") == 0) input->param = PARAM_QPC3P0_CUSTOM;
+        else {
+            fprintf(stderr, "Unknown QPC3P0 parameter set: %s\n", param);
+            exit(1);
+        }
+    }
 
     if (input->param == PARAM_GISTRING_CUSTOM || input->param == PARAM_GISCREEN_CUSTOM
         || input->param == PARAM_NRSTRING_CUSTOM || input->param == PARAM_NRSCREEN_CUSTOM
         || input->param == PARAM_BAGMIT_CUSTOM || input->param == PARAM_QMCSTAD_CUSTOM
         || input->param == PARAM_QMCMOD_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM
         || input->param == PARAM_YUKAWA_CUSTOM || input->param == PARAM_EFTCONT_CUSTOM
-        || input->param == PARAM_HALQCD_CUSTOM) {
+        || input->param == PARAM_HALQCD_CUSTOM || input->param == PARAM_QPC3P0_CUSTOM) {
         const char *file = read_string_item(model_json, "file")->valuestring;
         if (strlen(file) > 0) {
             strncpy(input->param_file, file, 256);
@@ -301,6 +310,45 @@ static void parse_model_section(const cJSON *root, argsInput_t *input)
             exit(1);
         }
     }
+}
+
+static void parse_qpc_system(const cJSON *system_json, argsInput_t *input)
+{
+    cJSON *initial = read_object_item(system_json, "initial");
+    cJSON *final_json = read_array_item(system_json, "final");
+    int n = cJSON_GetArraySize(final_json);
+    int i;
+
+    if (n != QPC_FINAL_N) {
+        fprintf(stderr, "3P0DECAY final must contain two mesons\n");
+        exit(1);
+    }
+    input->qpc_initial.f1 = read_number_item(initial, "f1")->valueint;
+    input->qpc_initial.f2 = read_number_item(initial, "f2")->valueint;
+    input->qpc_initial.n = read_number_item(initial, "n")->valueint;
+    input->qpc_initial.S = read_number_item(initial, "S")->valuedouble;
+    input->qpc_initial.L = read_number_item(initial, "L")->valuedouble;
+    input->qpc_initial.J = read_number_item(initial, "J")->valuedouble;
+    input->qpc_initial.mass = read_number_item(initial, "mass")->valuedouble;
+    input->qpc_initial.beta = read_number_item(initial, "beta")->valuedouble;
+    for (i = 0; i < QPC_FINAL_N; i++) {
+        cJSON *item = cJSON_GetArrayItem(final_json, i);
+        if (!cJSON_IsObject(item)) {
+            fprintf(stderr, "final meson %d is not an object\n", i + 1);
+            exit(1);
+        }
+        input->qpc_final[i].f1 = read_number_item(item, "f1")->valueint;
+        input->qpc_final[i].f2 = read_number_item(item, "f2")->valueint;
+        input->qpc_final[i].n = read_number_item(item, "n")->valueint;
+        input->qpc_final[i].S = read_number_item(item, "S")->valuedouble;
+        input->qpc_final[i].L = read_number_item(item, "L")->valuedouble;
+        input->qpc_final[i].J = read_number_item(item, "J")->valuedouble;
+        input->qpc_final[i].mass = read_number_item(item, "mass")->valuedouble;
+        input->qpc_final[i].beta = read_number_item(item, "beta")->valuedouble;
+    }
+    input->qpc_F = read_number_item(system_json, "F")->valuedouble;
+    input->qpc_fl1 = read_number_item(system_json, "fl1")->valuedouble;
+    input->qpc_fl2 = read_number_item(system_json, "fl2")->valuedouble;
 }
 
 static void parse_system_section(const cJSON *root, argsInput_t *input)
@@ -339,11 +387,16 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
         }
     }
     else if (input->system == SYSTEM_MESON) {
-        input->f1 = read_number_item(system_json, "f1")->valueint;
-        input->f2 = read_number_item(system_json, "f2")->valueint;
-        input->S = read_number_item(system_json, "S")->valuedouble;
-        input->L = read_number_item(system_json, "L")->valuedouble;
-        input->J = read_number_item(system_json, "J")->valuedouble;
+        if (input->task == TASK_3P0DECAY) {
+            parse_qpc_system(system_json, input);
+        }
+        else {
+            input->f1 = read_number_item(system_json, "f1")->valueint;
+            input->f2 = read_number_item(system_json, "f2")->valueint;
+            input->S = read_number_item(system_json, "S")->valuedouble;
+            input->L = read_number_item(system_json, "L")->valuedouble;
+            input->J = read_number_item(system_json, "J")->valuedouble;
+        }
     }
     else if (input->system == SYSTEM_BARYON) {
         input->f1 = read_number_item(system_json, "f1")->valueint;
@@ -539,7 +592,7 @@ void parse_input_file(const char *filename, argsInput_t *input)
         parse_basis_section(root, input);
         parse_fit_section(root, input);
     }
-    else if (input->task == TASK_SCATTER) {
+    else if (input->task == TASK_SCATTER || input->task == TASK_3P0DECAY) {
         parse_model_section(root, input);
         parse_system_section(root, input);
     }
@@ -980,6 +1033,32 @@ void parse_param_HALQCD(const char *filename, argsHALSet_t *set)
         }
         set->tagged = 1;
     }
+
+    cJSON_Delete(root);
+    free(json_text);
+}
+
+void parse_param_QPC3P0(const char *filename, argsQPCModel_t *args_model)
+{
+    char *json_text = read_input_file(filename);
+    const char *parse_error = NULL;
+    cJSON *root = cJSON_Parse(json_text);
+    cJSON *param_json;
+
+    if (!root) {
+        parse_error = cJSON_GetErrorPtr();
+        fprintf(stderr, "Invalid QPC3P0 parameter JSON in %s", filename);
+        if (parse_error) fprintf(stderr, " near: %.40s", parse_error);
+        fprintf(stderr, "\n");
+        free(json_text);
+        exit(1);
+    }
+
+    param_json = read_object_item(root, "param");
+    args_model->gamma = read_number_item(param_json, "gamma")->valuedouble;
+    args_model->mq1 = read_number_item(param_json, "mq1")->valuedouble;
+    args_model->mq2 = read_number_item(param_json, "mq2")->valuedouble;
+    args_model->mq3 = read_number_item(param_json, "mq3")->valuedouble;
 
     cJSON_Delete(root);
     free(json_text);

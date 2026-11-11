@@ -16,6 +16,7 @@
 #include <gemstore/model/halmodel.h>
 #include <gemstore/model/obemodel.h>
 #include <gemstore/model/cscatter.h>
+#include <gemstore/model/cdecay.h>
 
 #include <gemstore/math/matrix.h>
 #include <gemstore/math/interplt.h>
@@ -322,7 +323,16 @@ void compute_scatter(const argsInput_t *input)
     double a0;
     double r0;
 
-    cscatter(input, &mu, &a0, &r0);
-    print_scatter(mu, a0, r0);
-    write_scatter(input, mu, a0, r0);
+    scatter_ere_mol2(input, &mu, &a0, &r0);
+    print_ere(mu, a0, r0);
+    write_ere(input, mu, a0, r0);
+}
+
+void compute_qpc(const argsInput_t *input)
+{
+    qpc_result_t result;
+
+    decay_qpc_meson(input, &result);
+    print_qpc(&result);
+    write_qpc(input, &result);
 }

@@ -16,5 +16,6 @@ void compute_spectra_mol2(const argsInput_t *input);
 void compute_spectra_mol3(const argsInput_t *input);
 
 void compute_scatter(const argsInput_t *input);
+void compute_qpc(const argsInput_t *input);
 
 #endif

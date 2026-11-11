@@ -41,4 +41,7 @@ void parse_param_EFTCONT(const char *filename, argsEFTModel_t *args_model);
  * Each component is {r: fm, V: MeV}, strictly increasing in r. A missing array is zero. */
 void parse_param_HALQCD(const char *filename, argsHALSet_t *set);
 
+/* parse QPC3P0 param file: param.gamma, param.mq1, param.mq2, param.mq3 (GeV). */
+void parse_param_QPC3P0(const char *filename, argsQPCModel_t *args_model);
+
 #endif

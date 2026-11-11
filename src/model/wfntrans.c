@@ -86,24 +86,3 @@ double get_sho_channel_wfn(int L, int nmax, double beta, const double *coeff, do
     }
     return psi_r * pow(fm, 1.5);
 }
-
-void get_effective_beta_sho(const argsInput_t *input, const array_t *radius, array_t *ebeta, int len)
-{
-    if (input == NULL || radius == NULL || ebeta == NULL) {
-        return;
-    }
-
-    int L = (int)input->L;
-    double fm = 5.06773093854369882649;
-
-    for (int n = 0; n < len; n++) {
-        double target = radius->value[n];
-
-        if (target <= 0.0) {
-            ebeta->value[n] = 0.0;
-            continue;
-        }
-
-        ebeta->value[n] = sqrt(2.0 * n + L + 1.5) / (target * fm);
-    }
-}

@@ -443,3 +443,15 @@ argsHALModel_t argsHALModel_from(const argsInput_t *input, int p)
     }
     return set.ch[0];
 }
+
+argsQPCModel_t argsQPCModel_from(const argsInput_t *input)
+{
+    argsQPCModel_t args_model = {0};
+
+    if (input->param != PARAM_QPC3P0_CUSTOM) {
+        fprintf(stderr, "Error: QPC3P0 has no built-in parameter set.\n");
+        exit(1);
+    }
+    parse_param_QPC3P0(input->param_file, &args_model);
+    return args_model;
+}

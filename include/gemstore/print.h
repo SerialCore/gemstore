@@ -11,6 +11,7 @@
 #include <gemstore/model/qmcmodel.h>
 #include <gemstore/math/matrix.h>
 #include <gemstore/model/bagmodel.h>
+#include <gemstore/model/cdecay.h>
 
 /* Print the GEMSTORE logo */
 void print_logo();
@@ -47,6 +48,9 @@ void print_bag_spectra(const bag_mit_t *state, int nstate, const char *order);
 void print_qmc_matter(const qmc_matter_t *matter);
 
 /* S-wave scattering length and effective range. a0 and r0 are in fm. */
-void print_scatter(double mu_gev, double a0_fm, double r0_fm);
+void print_ere(double mu_gev, double a0_fm, double r0_fm);
+
+/* QPC3P0 partial waves and the width in MeV. */
+void print_qpc(const qpc_result_t *result);
 
 #endif

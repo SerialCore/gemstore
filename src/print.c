@@ -86,6 +86,34 @@ void print_input_parameters(const argsInput_t *input)
     printf("Configuration Settings:\n");
     printf("  Project Name:         %-50s\n", input->project);
     printf("  Task Type:            %-50s\n", task_type_str[input->task]);
+    if (input->task == TASK_3P0DECAY) {
+        const qpc_meson_t *mesons[3] = {
+            &input->qpc_initial, &input->qpc_final[0], &input->qpc_final[1]
+        };
+        const char *label[3] = { "Initial", "Final 1", "Final 2" };
+        int i;
+
+        argsQPCModel_t qpc = argsQPCModel_from(input);
+
+        printf("  System Type:          %-50s\n", system_type_str[input->system]);
+        printf("  Model Type:           %-50s\n", model_type_str[input->model]);
+        printf("  Parameter Set:        %-50s\n", param_type_str[input->param]);
+        printf("  Parameter File:       %-50s\n", input->param_file);
+        printf("\n");
+        printf("3P0 Decay:\n");
+        printf("  gamma:                %-50.6f\n", qpc.gamma);
+        printf("  Charge multiplicity:  %-50.6f\n", input->qpc_F);
+        printf("  mq1, mq2, mq3:        %.6f, %.6f, %.6f GeV\n",
+            qpc.mq1, qpc.mq2, qpc.mq3);
+        printf("  Diagram weights:      %.6f, %.6f\n", input->qpc_fl1, input->qpc_fl2);
+        for (i = 0; i < 3; i++) {
+            const qpc_meson_t *m = mesons[i];
+            printf("  %s: f1=%d f2=%d n=%d S=%.0f L=%.0f J=%.0f mass=%.6f GeV beta=%.6f GeV\n",
+                label[i], m->f1, m->f2, m->n, m->S, m->L, m->J, m->mass, m->beta);
+        }
+        printf("\n");
+        return;
+    }
     if (input->task == TASK_FITTING) {
         printf("  Fit Target:           %-50s\n", fitting_type_str[input->target]);
     }
@@ -108,7 +136,7 @@ void print_input_parameters(const argsInput_t *input)
             || input->param == PARAM_BAGMIT_CUSTOM  || input->param == PARAM_QMCSTAD_CUSTOM 
             || input->param == PARAM_QMCMOD_CUSTOM || input->param == PARAM_OBESTAT_CUSTOM
             || input->param == PARAM_YUKAWA_CUSTOM || input->param == PARAM_EFTCONT_CUSTOM
-            || input->param == PARAM_HALQCD_CUSTOM) {
+            || input->param == PARAM_HALQCD_CUSTOM || input->param == PARAM_QPC3P0_CUSTOM) {
             printf("  Parameter File:       %-50s\n", input->param_file);
         }
     }
@@ -719,7 +747,7 @@ void print_bag_spectra(const bag_mit_t *state, int nstate, const char *order)
     printf("\n");
 }
 
-void print_scatter(double mu_gev, double a0_fm, double r0_fm)
+void print_ere(double mu_gev, double a0_fm, double r0_fm)
 {
     printf("\n");
     printf("================================================================================\n");
@@ -730,5 +758,30 @@ void print_scatter(double mu_gev, double a0_fm, double r0_fm)
     printf("  Scattering length:   %.6f fm\n", a0_fm);
     printf("  Effective range:     %.6f fm\n", r0_fm);
     printf("  Convention:          k cot delta = 1/a0 + r0 k^2 / 2\n");
+    printf("\n");
+}
+
+void print_qpc(const qpc_result_t *result)
+{
+    int i;
+
+    printf("\n");
+    printf("================================================================================\n");
+    printf("                            3P0 DECAY SUMMARY                                  \n");
+    printf("================================================================================\n");
+    printf("\n");
+    if (result == NULL || !result->open) {
+        printf("  Channel is below threshold.\n");
+        printf("  Width:               0 MeV\n");
+        printf("\n");
+        return;
+    }
+    printf("  Momentum p:          %.6f GeV\n", result->p);
+    printf("  EB, EC:              %.6f, %.6f GeV\n", result->EB, result->EC);
+    printf("  Width:               %.6f MeV\n", result->width);
+    printf("  Partial waves:\n");
+    for (i = 0; i < result->nwave; i++) {
+        printf("    L=%d  S=%d  M=% .8e\n", result->wave[i].L, result->wave[i].S, result->wave[i].M);
+    }
     printf("\n");
 }
