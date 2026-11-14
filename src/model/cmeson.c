@@ -214,11 +214,7 @@ void meson_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args_
         ut = matrix_init(nkeep, nkeep);
     }
 
-#ifdef LAPACKE
-    lapack_standard(Hfi.value, nkeep, e_out->value, (v_out != NULL) ? ut.value : NULL, (v_out != NULL) ? nkeep : 0);
-#else
     eigen_standard(Hfi.value, nkeep, e_out->value, (v_out != NULL) ? ut.value : NULL, (v_out != NULL) ? nkeep : 0);
-#endif
 
     e_out->len = nkeep;
 
@@ -384,11 +380,7 @@ void meson_gimodel_SHO(const argsInput_t *args_input, const argsGIModel_t *args_
     add_reduced(&Hfi, &mdeltajjSos, &mVsosj, &temp);
     add_reduced(&Hfi, &mdeltaijTens, &mVtens, &temp);
 
-#ifdef LAPACKE
-    lapack_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, nmax);
-#else
     eigen_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, nmax);
-#endif
 
     if (n_out != NULL) {
         *n_out = matrix_init(Nfi.row, Nfi.col);
@@ -491,11 +483,7 @@ void meson_nrmodel_GEM(const argsInput_t *args_input, const argsNRModel_t *args_
     matrix_sum(&Hfi, &mVsos, &Hfi);
     matrix_sum(&Hfi, &mVtens, &Hfi);
 
-#ifdef LAPACKE
-    lapack_general(Hfi.value, Nfi.value, nmax, e_out->value, (v_out == NULL) ? NULL : v_out->value, nmax);
-#else
     eigen_general(Hfi.value, Nfi.value, nmax, e_out->value, (v_out == NULL) ? NULL : v_out->value, nmax);
-#endif
 
     if (n_out != NULL) {
         *n_out = matrix_init(Nfi.row, Nfi.col);
@@ -586,11 +574,7 @@ void meson_nrmodel_SHO(const argsInput_t *args_input, const argsNRModel_t *args_
     matrix_sum(&Hfi, &mVsos, &Hfi);
     matrix_sum(&Hfi, &mVtens, &Hfi);
 
-#ifdef LAPACKE
-    lapack_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, nmax);
-#else
     eigen_standard(Hfi.value, nmax, e_out->value, (v_out == NULL)? NULL : v_out->value, nmax);
-#endif
 
     if (n_out != NULL) {
         *n_out = matrix_init(Nfi.row, Nfi.col);

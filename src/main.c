@@ -7,7 +7,6 @@
 #include <gemstore/entry.h>
 #include <gemstore/print.h>
 
-#include <stdio.h>
 #include <string.h>
 #include <getopt.h>
 
@@ -39,7 +38,7 @@ int main(int argc, char **argv)
                 print_help();
                 return 0;
             case 'v':
-                printf("gemstore version 0v0\n");
+                print_copyright();
                 return 0;
             default:
                 print_help();

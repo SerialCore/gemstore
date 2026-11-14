@@ -35,10 +35,4 @@ void eigen_standard_complex(double complex **a, int n, double complex *d, double
  * lt: Number of eigenvectors */
 void eigen_general_complex(double complex **a, double complex **b, int n, double complex *d, double complex **vt, int lt);
 
-#ifdef LAPACKE
-
-void lapack_general_complex(double complex **a, double complex **b, int n, double complex *e, double complex **vt, int lt);
-
-#endif
-
 #endif

@@ -7,1349 +7,478 @@
 [![License: GPL v3+](https://img.shields.io/badge/License-GPLv3%2B-blue.svg)](https://www.gnu.org/licenses/gpl-3.0-or-later)
 [![Language: C](https://img.shields.io/badge/Language-C-blue.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
 [![Platform: Linux/Unix](https://img.shields.io/badge/Platform-Linux%2FUnix-lightgrey.svg)](https://en.wikipedia.org/wiki/Unix)
-![Status: Active Development](https://img.shields.io/badge/Status-Active%20Development-brightgreen.svg)
 
-**A computational framework for hadron spectroscopy: Gaussian Expanding Method (GEM) with Godfrey–Isgur potentials, MIT bag and quark-meson-coupling spectra, and molecular states from static one-boson exchange.**
+**A C program for hadron spectra, S-wave scattering lengths, meson parameter fits, and \(^3P_0\) decay widths.**
 
 </div>
 
----
+GEMSTORE solves quark-model meson and baryon spectra with the Gaussian expansion method (GEM), MIT bag masses from mesons through hexaquarks, those bags in symmetric nuclear matter, and two- and three-body hadronic molecules. A separate task fits built-in Godfrey–Isgur meson datasets with Minuit2. Two further tasks, outside the GEM eigenvalue problem, return an S-wave scattering length and a single-oscillator \(^3P_0\) width.
 
-## Overview
+Strings in the JSON input are case-sensitive. Masses in spectrum files are in GeV. Lengths printed as fm are femtometres.
 
-**GEMSTORE** computes meson and baryon spectra with the **Gaussian Expanding Method** and **Godfrey–Isgur** (GI-screen / GI-string) and **Cornell** potentials, MIT **bag** masses for mesons through hexaquarks, with or without color–magnetic mixing, **quark-meson coupling** (QMC) spectra of those bags in symmetric nuclear matter, and two- and three-body **molecular** spectra with a static **one-boson-exchange** or local Yukawa kernel.
+## Contents
 
-### Key Features
+1. [What this version computes](#what-this-version-computes)
+2. [Requirements and build](#requirements-and-build)
+3. [How to run](#how-to-run)
+4. [Input file](#input-file)
+5. [Parameter files](#parameter-files)
+6. [Output](#output)
+7. [Solvers](#solvers)
+8. [Test suite](#test-suite)
+9. [Source layout](#source-layout)
+10. [Optional agent skill](#optional-agent-skill)
+11. [License and citation](#license-and-citation)
 
-- 🎯 **Quark models**: GI-Screen, GI-String, NR Cornell, MIT bag, QMC
-- 🧲 **Molecular OBE**: static elastic \(\pi\sigma\rho\omega\) for two typed hadron legs
-- 📊 **Spectra**: masses, RMS radii (GEM), bag radius and color–spin eigenvectors, molecular binding
-- 🧩 **Multiquark bag CMI**: user-supplied color and spin channels, mixed by total spin `st`
-- 🔧 **Quantum numbers**: meson \(S,L,J\); baryon Jacobi GEM; bag flavor counts `nn,ns,nc,nb`; molecule legs, isospin, \(J\)
-- 🤖 **AI-assisted workflows**: `app/gemstore-assistant`
-- ⚡ **C implementation** with Minuit2 for meson parameter fits
+## What this version computes
 
----
+| Task | System | Model | Basis | Result |
+|------|--------|-------|-------|--------|
+| `SPECTRA` | `MESON` | `GISCREEN`, `GISTRING`, `NRSTRING`, `NRSCREEN` | `GEM` or `SHO` | Masses, RMS radii, eigenvectors |
+| `SPECTRA` | `BARYON` | `GISCREEN`, `GISTRING` | `GEM` | Masses, three pair radii, eigenvectors |
+| `SPECTRA` | `BAG` | `BAGMIT`, `QMCSTAD`, `QMCMOD` | `NONE` or `CMI` | Bag masses, radius, color–spin mixing; QMC also writes the nuclear-matter fields |
+| `SPECTRA` | `MOLECUL2` | `OBESTAT`, `YUKAWA`, `EFTCONT`, `HALQCD` | `GEM` | Two-body mass, binding, RMS |
+| `SPECTRA` | `MOLECUL3` | `HYBRID` of three pair models | `GEM` | Three-body mass, binding, pair RMS |
+| `FITTING` | chosen by `fit.target` | pinned `GISCREEN` set | `GEM` or `SHO` | Minuit2 \(\chi^2\) and parameters |
+| `SCATTER` | `MOLECUL2` | `OBESTAT`, `YUKAWA`, `EFTCONT`, `HALQCD` | none | S-wave scattering length and effective range |
+| `3P0DECAY` | `MESON` | `QPC3P0` | none | Partial width of one parent into two daughters |
 
-## Table of Contents
+`NRSTRING` and `NRSCREEN` are non-relativistic Cornell Hamiltonians. They check the meson radial solver. Baryon spectra in this version are Godfrey–Isgur only. `SHO` is accepted for mesons and for meson fits. Bag and molecular spectra use the bases in the table.
 
-1. [Features](#features)
-2. [System Requirements](#system-requirements)
-3. [Installation](#installation)
-4. [Quick Start](#quick-start)
-5. [Core Algorithms](#core-algorithms)
-6. [AI Integration](#ai-integration)
-7. [Main Functions](#main-functions)
-8. [Usage Examples](#usage-examples)
-9. [Project Structure](#project-structure)
-10. [Contributing](#contributing)
-11. [License](#license)
+The following problems are outside this version: non-relativistic baryon spectra, coupled channels, folded potentials, \(P\leftrightarrow P^*\) transitions, Coulomb scattering, a coupled \(\ell=0\) and \(\ell=2\) scattering equation, and a \(^3P_0\) width built from a GEM wave function. The decay task uses one harmonic-oscillator function for each meson.
 
----
+## Requirements and build
 
-## Features
+- Linux or another Unix with GNU make
+- GCC or Clang with C99 and a matching C++ compiler (`gcc` and `g++` in the Makefile)
+- CMake, used only to build the bundled Minuit2
+- POSIX threads and `libm`
 
-### Physical Models
-
-| Model | Description | Use Case |
-|-------|-------------|----------|
-| **GI-Screen** | Screen-modified Godfrey-Isgur potential with Coulomb screening | Heavy quarkonium (charmonium, bottomonium) |
-| **GI-String** | String-like linear confinement | Light mesons and general meson spectra |
-| **NR-String** | Non-relativistic Cornell potential with linear confinement | Meson spectra |
-| **NR-Screen** | Non-relativistic Cornell potential with screened confinement | Meson spectra |
-| **MIT bag** | Cavity energy plus optional color–magnetic / binding Hamiltonian | Meson, baryon, tetra, penta, hexa |
-| **QMC** | MIT bag in symmetric nuclear matter. `QMCSTAD` keeps \(B\) fixed; `QMCMOD` lets \(B\) fall with \(\sigma\) | In-medium bag spectra at \(\rho_B\) and \(T\) |
-| **OBE-static** | Elastic static \(\pi\sigma\rho\omega\) (\(V_C+V_{ss}+V_t\), \(V_{ls}=0\)) | Two- and three-body hadron molecules |
-| **Yukawa** | Local Malfliet–Tjon Yukawa, central plus Bartlett \(P_\sigma\) | NN and NNN binding (`YUKAWA_MT13`) |
-| **EFT contact** | \(V=-C_a\exp[-(r/R_c)^2]\), central only | Yuan–Liu \(DD\) and \(\Lambda_c\Lambda_c\) (`EFTCONT_CUSTOM`) |
-| **HAL QCD** | \(V_0+V_\sigma(\sigma_1\cdot\sigma_2)+V_T S_{12}\) from radial tables | Leading-order local potential (`HALQCD_CUSTOM`) |
-
-### Calculation Types
-
-- **SPECTRA**: Mass spectra (meson, baryon, bag, two- and three-body molecule)
-- **FITTING**: Minuit2 meson parameter fits
-
-### System Types
-
-- **MESON**: Quark–antiquark (\(q\bar q\))
-- **BARYON**: Three-quark (\(qqq\))
-- **BAG**: MIT bag (`BAGMIT`) or in-medium QMC (`QMCSTAD`, `QMCMOD`); flavor counts `nn`, `ns`, `nc`, `nb`
-- **MOLECUL2**: Two-body molecule (hadron–hadron OBE, Yukawa, EFT contact, or HAL QCD on GEM)
-- **MOLECUL3**: Three-body molecule (HYBRID pair OBESTAT, YUKAWA, EFTCONT, or HALQCD on GEM; example `test/Spectra-Molecule3/`)
-
-### Basis Set Options
-
-- **GEM**: Gaussian expansion (meson, baryon, two- and three-body molecule)
-- **SHO**: Harmonic oscillator (meson)
-- **CMI**: Color–spin product space (bag)
-- **NONE**: Bag kinetic plus vacuum energy, no CMI
-
----
-
-## System Requirements
-
-### Minimum Requirements
-
-- **OS**: Linux/Unix (macOS with GNU tools)
-- **Compiler**: GCC 7.0+ or Clang 5.0+
-- **Build Tool**: GNU Make 4.0+
-- **Memory**: 512 MB RAM
-- **Storage**: 100 MB installation + 1 GB for calculations
-
-### Optional Dependencies
-
-- **LAPACK/OpenBLAS**: For accelerated linear algebra
-- **Python 3.7+**: For input file generation scripts
-- **OpenCode**: For AI-assisted workflow integration
-
----
-
-## Installation
-
-### Clone the Repository
+Clone with the Minuit2 submodule and build:
 
 ```bash
 git clone --recursive https://github.com/serialcore/gemstore.git
 cd gemstore
-```
-
-### Build from Source
-
-```bash
-# Standard build
-make clean && make
-
-# With LAPACK acceleration
-make clean && make USE_LAPACKE=1
-
-# Install to system (requires sudo)
-make install
-
-# Uninstall from system
-make uninstall
-```
-
-### Verify Installation
-
-```bash
+make
 ./gemstore --help
 ./gemstore --version
 ```
 
----
+If `lib/Minuit2` is empty, run `git submodule update --init --recursive` and then `make` again. `make install` copies the binary to `~/.local/bin`. `make uninstall` removes that copy. `make clean` deletes `obj/`, the binary, and the Minuit2 build directory.
 
-## Quick Start
+The executable links `libm`, `libpthread`, and the static Minuit2 libraries. It does not link LAPACK or OpenBLAS. Python is not required to run the program. The helper `app/gemstore-assistant/scripts/generate_meson_inputs.py` needs Python 3.
 
-### Basic Usage
+## How to run
+
+```text
+gemstore [--compute FILE] [--debug UNIT]
+gemstore --help
+gemstore --version
+```
+
+`--compute` reads one JSON file and dispatches on `task`. Output is written in the process working directory, under the `project` name. A relative `model.file` is opened from that directory, so run the program from the directory that holds the parameter files:
 
 ```bash
-# Run a meson spectroscopy calculation with JSON input
-./gemstore --compute amethyst.json
+./gemstore --compute test/Spectra-Quarkonium/charmonium_1S0.json
 
-# Run with predefined parameters
-./gemstore --compute diamond.json
-
-# Fit a built-in GISCREEN dataset
-./gemstore --compute test/FittingTask/giscreen_csbar.json
-
-# MIT bag with color–spin mixing
-./gemstore --compute test/Spectra-Bag/tetra_ccnn_18.json
-
-# Quark-meson coupling at saturation density (zero medium couplings)
-./gemstore --compute test/Spectra-QMC/nucleon_qmc.json
-
-# Two-body D* Ξ molecule (static OBE; param file is relative to cwd)
 cd test/Spectra-Molecule2
 ../../gemstore --compute dstar_xi_I0.json
 ```
 
-### JSON Input Format
+`--debug` runs an internal check. The unit names are `su3_product`, `soc_operator`, `casimir_operator`, `color_wfn`, `spin_wfn`, `isospin_wfn`, `orbit_wfn`, `eigen_system`, and `eigen_system_complex`.
 
-GEMSTORE uses JSON for configuration. Create `my_meson.json`:
+## Input file
+
+Every file has a string `project` and a string `task`. The other objects depend on the task.
+
+| Task | Required objects | Omit |
+|------|------------------|------|
+| `SPECTRA` | `model`, `system`, `basis`, `print` | `fit` |
+| `FITTING` | `basis`, `fit` | `model`, `system`, `print` |
+| `SCATTER` | `model`, `system` | `basis`, `print`, `fit` |
+| `3P0DECAY` | `model`, `system` | `basis`, `print`, `fit` |
+
+`print.pot` and `print.wfn` are the strings `"true"` or `"false"`. Any other string turns that dump off. `SPECTRA` still requires the `print` object.
+
+### Meson spectrum
+
+Flavors are `1` = \(n\) (up or down), `2` = \(s\), `3` = \(c\), `4` = \(b\). The quark masses are model parameters, not these indices.
 
 ```json
 {
-  "project": "my_project",
+  "project": "charmonium_1S0",
   "task": "SPECTRA",
-  "model": {
-    "type": "GISCREEN",
-    "param": "GISCREEN_CCBAR"
-  },
-  "system": {
-    "type": "MESON",
-    "f1": 3,
-    "f2": 3,
-    "S": 1,
-    "L": 0,
-    "J": 1
-  },
-  "basis": {
-    "type": "GEM",
-    "nmax": 16,
-    "rmax": 30.0,
-    "rmin": 0.1
-  },
-  "print": {
-    "pot": "false",
-    "wfn": "false"
-  }
+  "model": { "type": "GISCREEN", "param": "GISCREEN_CCBAR" },
+  "system": { "type": "MESON", "f1": 3, "f2": 3, "S": 0, "L": 0, "J": 0 },
+  "basis": { "type": "GEM", "nmax": 20, "rmax": 30.0, "rmin": 0.1 },
+  "print": { "pot": "false", "wfn": "false" }
 }
 ```
 
-Run it:
+`S`, `L`, and `J` are the spin, orbital angular momentum, and total angular momentum of the \(q\bar q\) state. Worked inputs: `test/Spectra-Quarkonium/`, `test/Spectra-SHO/`, `test/Spectra-NRmodel/`, `test/Spectra-CustomParameter/`.
 
-```bash
-./gemstore --compute my_meson.json
-```
-
-
-### JSON Input Structure
-
-#### Global Configuration
-
-| Field | Type | Description | Examples |
-|-------|------|-------------|----------|
-| `project` | string | Project name (used for output files) | `"amethyst"`, `"myproject"` |
-| `task` | string | Calculation type | `"SPECTRA"`, `"FITTING"`, `"SCATTER"` |
-
-#### Model Configuration
-
-```json
-"model": {
-  "type": "GISCREEN", "GISTRING", "NRSTRING", "NRSCREEN", "BAGMIT", "QMCSTAD", "QMCMOD", or "OBESTAT",
-  "param": "GISCREEN_CCBAR", "GISTRING_CUSTOM", "BAGMIT_DEFAULT", "QMCSTAD_DEFAULT", "QMCMOD_CUSTOM", ...,
-  "file": "param_file.json"
-}
-```
-
-**`model.type`:**
-- `GISTRING` — relativistic GI model, linear confinement
-- `GISCREEN` — relativistic GI model, screened confinement
-- `NRSTRING` — non-relativistic Cornell model, linear confinement
-- `NRSCREEN` — non-relativistic Cornell model, screened confinement
-- `BAGMIT` — MIT bag (`system.type` must be `BAG`)
-- `QMCSTAD` — standard quark-meson coupling on `BAG`. \(B\) stays at \(B_0\)
-- `QMCMOD` — modified QMC on `BAG`. \(B\) depends on \(\sigma\)
-- `OBESTAT` — static elastic OBE (`system.type` `MOLECUL2`, or a HYBRID pair)
-- `YUKAWA` — local Yukawa (`MOLECUL2`, or a HYBRID pair)
-- `EFTCONT` — leading-order EFT contact (`MOLECUL2`, or a HYBRID pair)
-- `HALQCD` — leading-order HAL QCD local potential from radial tables (`MOLECUL2`, or a HYBRID pair)
-- `HYBRID` — three pair models for `MOLECUL3`
-
-**Predefined Parameter Sets:**
-- `GISCREEN_CCBAR` - Charm-anticharm with GI-Screen model
-- `GISCREEN_BBBAR` - Bottom-antibottom with GI-Screen model
-- `GISTRING_MESON` - General mesons with GI-String model
-- `GISTRING_BARYON` - Smeared linear GI parameters
-- `GISCREEN_CUSTOM` - Custom parameters from file (requires `"file"` field)
-- `GISTRING_CUSTOM` - Custom GI-String parameters from file
-- `NRSTRING_MESON` - Built-in meson parameters for NR-String
-- `NRSCREEN_MESON` - Built-in meson parameters for NR-Screen
-- `NRSTRING_CUSTOM` - Custom NR-String parameters from file (requires `"file"`)
-- `NRSCREEN_CUSTOM` - Custom NR-Screen parameters from file (requires `"file"`)
-- `BAGMIT_DEFAULT` - Built-in MIT bag masses, bag constant \(B\), zero-point \(Z\), and pair bindings
-- `BAGMIT_CUSTOM` - Custom bag parameters from file (requires `"file"`)
-- `QMCSTAD_DEFAULT` - Vacuum MIT bag plus \(m_\sigma=0.550\) GeV and physical \(\omega,\rho\) masses. All medium couplings are 0. `QMCSTAD` only
-- `QMCSTAD_CUSTOM` - Standard QMC couplings from file (requires `"file"`). Does not read `g_sigma_B` or `delta`
-- `QMCMOD_CUSTOM` - Modified QMC couplings from file (requires `"file"`). Requires `g_sigma_B` \(\neq 0\) and `delta` \(> 0\)
-- `OBESTAT_CUSTOM` - Static OBE couplings from file (requires `"file"`)
-- `YUKAWA_MT13` - Built-in Malfliet–Tjon I/III (no file)
-- `YUKAWA_CUSTOM` - Yukawa terms from file (requires `"file"`)
-- `EFTCONT_CUSTOM` - EFT contact \(C_a\) (MeV) and \(R_c\) (fm) from file (requires `"file"`)
-- `HALQCD_CUSTOM` - HAL QCD tables \(V_0\), \(V_\sigma\), \(V_T\) (fm, MeV) from file (requires `"file"`)
-
-#### System Configuration
-
-```json
-"system": {
-  "type": "MESON",
-  "f1": <flavor_index>,
-  "f2": <flavor_index>,
-  "S": <spin>,
-  "L": <orbital>,
-  "J": <total_angular_momentum>
-}
-```
-
-**Quark Flavors (indices):**
-| Index | Quark | Mass (GeV) |
-|-------|-------|-----------|
-| 1 | n (up/down) | ~0.3-0.35 |
-| 2 | s (strange) | ~0.42-0.53 |
-| 3 | c (charm) | ~1.6-1.8 |
-| 4 | b (bottom) | ~4.9-5.1 |
-
-**Quantum Numbers:**
-- `S`: Spin (0 = singlet, 1 = triplet)
-- `L`: Orbital angular momentum (0, 1, 2, ...)
-- `J`: Total angular momentum J = L + S or |L - S|
-
-**Baryon** (`"type": "BARYON"`).
+### Baryon spectrum
 
 ```json
 "system": {
   "type": "BARYON",
   "f1": 1, "f2": 1, "f3": 3,
-  "J": 0.5, "P": 1, "sym12": -1, "Lmax": 0
+  "J": 0.5, "P": 1, "sym12": -1, "Lmax": 0, "jl": 0
 }
 ```
 
-`P` is parity. `sym12` is the sign under \(1\leftrightarrow 2\). `Lmax` keeps \(l_\rho+l_\lambda\le L_{\max}\) on three Jacobi charts. Optional `jl` switches to the chart: \(c=1\), \(l_\rho=0\), \(l_\lambda=L_{\max}\). Pair with `GISTRING_BARYON`. `<project>.state.json` stores `mass`, `rms_r12`, `rms_r13`, `rms_r23`. Inputs: `test/Spectra-Baryon/`.
+`P` is \(+1\) or \(-1\). `sym12` is the sign under exchange of quarks 1 and 2. `Lmax` keeps channels with \(l_\rho+l_\lambda\le L_{\max}\) on the Jacobi charts. The parser requires `jl`. The basis is every \(j_l\) that couples to \(J^P\); the stored `jl` does not select a chart. Use `GISTRING_BARYON` for the smeared linear set. `GISTRING_MESON` is a different fit. Inputs: `test/Spectra-Baryon/`.
 
-**Bag** (`"type": "BAG"`).
+### MIT bag and quark-meson coupling
 
-```json
-"system": {
-  "type": "BAG",
-  "nn": 2, "ns": 0, "nc": 2, "nb": 0,
-  "f1": 3, "f2": 3, "f3": 1, "f4": 1
-}
-```
-
-`nn,ns,nc,nb` are required flavor counts. `f1`–`f6` give the quark order for CMI (same flavor indices as mesons) and must match those counts. Omit `f1`–`f6` when `basis` is `NONE`. Inputs: `test/Spectra-Bag/`. Field list: `app/gemstore-assistant/templates/bag_spectra_template.md`.
-
-`QMCSTAD` and `QMCMOD` use the same `BAG` system and add
+`nn`, `ns`, `nc`, and `nb` are the flavor counts. For `CMI`, `f1`–`f6` give the quark order and must match those counts. `NONE` does not need `f1`–`f6`.
 
 ```json
-"rho_b": 0.16,
-"temp": 0.0
-```
-
-`rho_b` is the baryon density in fm\(^{-3}\) and `temp` is the temperature in GeV. Both are required and must be non-negative. `BAGMIT` does not read them. Basis stays `NONE` or `CMI`. Inputs: `test/Spectra-QMC/`.
-
-**Molecule** (`"type": "MOLECUL2"`). Pair with `"model":{"type":"OBESTAT","param":"OBESTAT_CUSTOM","file":"..."}` and basis `GEM`.
-
-```json
-"system": {
-  "type": "MOLECUL2",
-  "type1": "VECTOR",
-  "type2": "DIRAC",
-  "m1": 2.010,
-  "m2": 1.318,
-  "S": 0.5, "L": 0, "J": 0.5
-}
-```
-
-`type1`/`type2` are `DIRAC` (baryon 1/2), `VECTOR` (1− meson), or `PSEUDOSCALAR` (elastic 0−/0+). `m1`,`m2` are physical masses (GeV) for \(T=m_1+m_2+p^2/2\mu\) and the threshold. `cc1`, `cc2`, and `eta` are required in the OBESTAT parameter file, including zeros. Two \(I=1/2\) legs write system `I`; \(\langle\tau_1\cdot\tau_2\rangle\) is \(I=0\to-3\), \(I=1\to+1\). `cc` nonzero on a meson leg flips \(G=-1\) exchanges (\(\pi,\omega\)). `eta` is MM C-parity (`0` is read as `+1`). `L` is the lowest partial wave; the solver mixes \(L\) with \(L+2\) and every total spin that couples to \(J\) (e.g. \(J=1/2\) → \(^2S+^4D\)). JSON `S` does not select the channel list. Example: `test/Spectra-Molecule2/`. Field list: `app/gemstore-assistant/templates/molecule_spectra_template.md`.
-
-#### Basis Configuration
-
-**GEM (Generalized Exponential Morse):**
-```json
-"basis": {
-  "type": "GEM",
-  "nmax": 16,
-  "rmax": 30.0,
-  "rmin": 0.1
-}
-```
-
-**SHO (Spherical Harmonic Oscillator):**
-```json
-"basis": {
-  "type": "SHO",
-  "nmax": 16,
-  "beta": 0.8
-}
-```
-
-**Bag CMI / NONE:**
-```json
+"system": { "type": "BAG", "nn": 2, "ns": 0, "nc": 2, "nb": 0,
+            "f1": 3, "f2": 3, "f3": 1, "f4": 1 },
 "basis": {
   "type": "CMI",
   "color": ["tetra11", "tetra88"],
-  "spin": [
-    {"s12": 1, "s34": 1, "st": 2, "st3": 2}
-  ]
+  "spin": [ {"s12": 1, "s34": 1, "st": 2, "st3": 2} ]
 }
 ```
 
-`NONE` has no `color` or `spin`. `CMI` takes 1–8 color names and 1–20 spin channels. Color names: `meson`, `baryon`, `tetra11`, `tetra33`, `tetra66`, `tetra88`, `penta688`, `penta388`, `penta11`, `hexa1010`, `hexa6868`, `hexa6838`, `hexa3868`, `hexa3838`, `hexa11`. Unused spin couplings stay 0. Different `st` do not mix. For five and six quarks the program keeps Pauli-allowed color⊗spin products.
+Color names: `meson`, `baryon`, `tetra11`, `tetra33`, `tetra66`, `tetra88`, `penta688`, `penta388`, `penta11`, `hexa1010`, `hexa6868`, `hexa6838`, `hexa3868`, `hexa3838`, `hexa11`. A basis has 1–8 colors and 1–20 spin channels. Unused couplings in a spin object stay 0. Channels with different total spin `st` are diagonalized separately. For five and six quarks the program keeps the Pauli-allowed color\(\otimes\)spin products. Inputs: `test/Spectra-Bag/`.
 
-| Field | Type | Description | Range |
-|-------|------|-------------|-------|
-| `type` | string | Basis set type | `"GEM"`, `"SHO"`, `"CMI"`, `"NONE"` |
-| `nmax` | int | Number of basis functions (GEM/SHO) | 8-32 (typical: 16) |
-| `rmax` | float | Maximum radius (fm; GEM) | 20.0-50.0 |
-| `rmin` | float | Minimum radius (fm; GEM) | 0.01-0.5 |
-| `beta` | float | HO scale parameter (GeV; SHO only) | 0.2-2.0 |
+`QMCSTAD` and `QMCMOD` use the same `BAG` system and add `rho_b` (fm\(^{-3}\)) and `temp` (GeV). Both are required and must be \(\ge 0\). `BAGMIT` does not read them. Inputs: `test/Spectra-QMC/`.
 
-#### Print Configuration
-
-Controls output of potential and wavefunction files:
+### Two-body molecule
 
 ```json
-"print": {
-  "pot": "true",
-  "wfn": "true"
+"model": { "type": "OBESTAT", "param": "OBESTAT_CUSTOM", "file": "param_OBESTAT_dstarxi.json" },
+"system": {
+  "type": "MOLECUL2",
+  "type1": "VECTOR", "type2": "DIRAC",
+  "m1": 2.010, "m2": 1.318,
+  "t1": 0.5, "t2": 0.5, "I": 0,
+  "S": 0.5, "L": 0, "J": 0.5
+},
+"basis": { "type": "GEM", "nmax": 20, "rmax": 30.0, "rmin": 0.1 }
+```
+
+`type1` and `type2` are `DIRAC` (spin-1/2 baryon), `VECTOR` (\(1^-\) meson), or `PSEUDOSCALAR` (elastic \(0^-\) or \(0^+\)). `m1` and `m2` are the physical masses in GeV. `t1`, `t2`, and the total isospin `I` are required. Two identical \(I=0\) baryons set `t1` and `t2` to `0`.
+
+`L` is the lowest partial wave. The solver adds \(L+2\) and every total spin that couples to `J`. The JSON value of `S` does not choose that list. For example, \(J=1/2\) is \(^2S+^4D\) and \(J=3/2\) is \(^4S+^2D+^4D\).
+
+The same system block is used with `YUKAWA`, `EFTCONT`, and `HALQCD`. Those models do not read the OBE factors `cc` and `eta`. `YUKAWA_MT13` has no parameter file. For the Malfliet–Tjon samples, the nucleon mass is `0.938942` GeV so that \(\hbar^2/m_N=41.47\) MeV·fm\(^2\).
+
+`SCATTER` uses this system with `L` equal to 0 and with no `basis` or `print`. `S` and `J` select the partial wave.
+
+### Three-body molecule
+
+`model.type` is `HYBRID`. `model1`, `model2`, and `model3` are the pair interactions on legs 12, 13, and 23. Each pair is `OBESTAT`, `YUKAWA`, `EFTCONT`, or `HALQCD`, with the same `param` keys as the two-body model.
+
+```json
+"system": {
+  "type": "MOLECUL3",
+  "type1": "PSEUDOSCALAR", "type2": "PSEUDOSCALAR", "type3": "VECTOR",
+  "m1": 1.867, "m2": 0.494, "m3": 0.892,
+  "t1": 0.5, "t2": 0.5, "t3": 0.5,
+  "J": 1.0, "P": -1, "I": 0.5, "Lmax": 2, "sym12": 0
 }
 ```
 
-| Field | Type | Description | Values |
-|-------|------|-------------|--------|
-| `pot` | string | Whether to write potential file | `"true"` or `"false"` |
-| `wfn` | string | Whether to write wavefunction files | `"true"` or `"false"` |
+Intrinsic parity is \(+1\) for a Dirac leg and \(-1\) for a vector or pseudoscalar. The total parity is \(P_1 P_2 P_3(-1)^{l_\rho+l_\lambda}\). `I` is the total isospin. Pair isospin is recoupled to `I`. `sym12` equal to `0` keeps three Jacobi charts. `sym12` equal to \(-1\) on three identical Dirac legs builds each component as the rearrangement sum of charts 1, 2, and 3, with the fermion phase \((-1)^{l_\rho+s_{ij}+t_{ij}}=-1\).
 
-- `"true"` → enabled (1)
-- `"false"` → disabled (0)
+`nmax` is the number of Gaussian widths on each Jacobi axis. The dimension is \(n_{\mathrm{ang}}\times n_{\max}^2\). It is not a spectroscopic radial quantum number.
 
-When enabled:
-- Meson potential: `<project>.pot.dat` (`r`, `V`)
-- Meson wavefunction: `<project>.wfn.N.dat` (`r`, `R`, `u`, `r²|R|²`), from 0.01 fm to \(\max(10, r_{\max})\) fm (SHO \(r_{\max}=0\) stays at 10 fm)
-- Molecule potential: `<project>.pot.dat` (`r`, `Vc`, `Vss`, `Vt`, `V`)
-- Molecule wavefunction: `<project>.wfn.N.dat` (one \(R_a\) per partial wave, same radial grid)
+### Basis
 
-### JSON Output Format
+| `basis.type` | Fields | Where |
+|--------------|--------|--------|
+| `GEM` | `nmax`, `rmin`, `rmax` (fm) | Meson, baryon, molecule, meson fit |
+| `SHO` | `nmax`, `beta` (GeV) | Meson spectrum and meson fit |
+| `CMI` | `color`, `spin` | Bag |
+| `NONE` | none | Bag energy without color–magnetic mixing |
 
-`src/write.c` writes `<project>.state.json` (meson, baryon, bag, and two-body molecule). A meson example:
+GEM functions are \(r^\ell\exp(-\nu r^2)\), with \(\nu\) placed from `rmin` to `rmax`. A single-`beta` SHO basis does not grow with excitation the way that GEM ladder does. Near-threshold molecular states with RMS close to `rmax` are box states of that basis.
+
+### Fit
+
+```json
+{
+  "project": "fit_csbar",
+  "task": "FITTING",
+  "fit": { "target": "GISCREEN_CSBAR" },
+  "basis": { "type": "GEM", "nmax": 20, "rmax": 30.0, "rmin": 0.1 }
+}
+```
+
+`fit.target` is one of `GISCREEN_MESON`, `GISCREEN_BBBAR`, `GISCREEN_BCBAR`, `GISCREEN_BSBAR`, `GISCREEN_CCBAR`, `GISCREEN_CSBAR`. The target selects the model and the experimental list. Starting values, steps, bounds, and which parameters are fixed live in `src/param/f*.c`.
+
+### \(^3P_0\) decay
 
 ```json
 {
-  "generated": "2026-04-25 18:33:25",
-  "project": "amethyst",
-  "task": "SPECTRA",
-  "model": { ... },
-  "system": { ... },
-  "basis": { ... },
-  "states": [
-    {
-      "index": 1,
-      "mass": 3.101986299943893,
-      "rms_radius": 0.324597538486162,
-      "eigenvector": [0.43147459..., 0.56587312..., ...]
-    },
-    ...
-  ]
-}
-```
-
-**Output Fields:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `generated` | string | ISO 8601 timestamp of calculation |
-
-### Text Output Files (Controlled by `"print"` section)
-
-When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set:
-
-- **Meson potential**: `<project>.pot.dat` — two-column file (`r`, `V(r)`), 0.01–10 fm
-- **Meson wavefunction**: `<project>.wfn.N.dat` — `r`, `R`, `u=rR`, `r²|R|²`, from 0.01 fm to \(\max(10, r_{\max})\) fm
-- **Molecule potential**: `<project>.pot.dat` — `r`, `Vc`, `Vss`, `Vt`, `V`, 0.01–10 fm
-- **Molecule wavefunction**: `<project>.wfn.N.dat` — per-channel \(R_a(r)\) on the same radial grid
-
-**Example output line:**
-```text
-0.01000000    -0.12345678e+00
-```
-| `project` | string | Project name (from input) |
-| `task` | string | Calculation type (from input) |
-| `model` | object | Model configuration (echoed from input) |
-| `system` | object | System configuration (echoed from input) |
-| `basis` | object | Basis configuration (echoed from input) |
-| `states` | array | Array of eigenstate results |
-
-**Per-State Data:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `index` | int | State index (1-based) |
-| `mass` | float | Eigenvalue/mass in GeV |
-| `rms_radius` | float | Root-mean-square radius in fm |
-| `eigenvector` | array | Expansion coefficients (meson: `nmax`; molecule: `nch × nmax`) |
-
-### JSON Parameter File Format
-
-Custom parameters can be supplied via external JSON file:
-
-**param_custom.json:**
-```json
-{
-  "param": {
-    "mn": 0.220,
-    "ms": 0.419,
-    "mc": 1.628,
-    "mb": 4.977,
-    "b": 0.18,
-    "c": -0.253,
-    "sigma_0": 1.8,
-    "s": 1.55,
-    "epsilon_cont": -0.168,
-    "epsilon_sov": -0.035,
-    "epsilon_sos": 0.055,
-    "epsilon_tens": 0.025
+  "project": "rho_pipi",
+  "task": "3P0DECAY",
+  "model": { "type": "QPC3P0", "param": "QPC3P0_CUSTOM", "file": "param_qpc3p0_rho.json" },
+  "system": {
+    "type": "MESON",
+    "F": 1, "fl1": 0.7071067811865476, "fl2": -0.7071067811865476,
+    "initial": { "f1": 1, "f2": 1, "n": 1, "S": 1, "L": 0, "J": 1, "mass": 0.77, "beta": 0.397 },
+    "final": [
+      { "f1": 1, "f2": 1, "n": 1, "S": 0, "L": 0, "J": 0, "mass": 0.138, "beta": 0.397 },
+      { "f1": 1, "f2": 1, "n": 1, "S": 0, "L": 0, "J": 0, "mass": 0.138, "beta": 0.397 }
+    ]
   }
 }
 ```
 
-**Reference to custom parameters:**
-```json
-{
-  ...
-  "model": {
-    "type": "GISTRING",
-    "param": "GISTRING_CUSTOM",
-    "file": "param_custom.json"
-  },
-  ...
-}
-```
+Each meson is one SHO. `n` starts at 1 and is the radial quantum number of that oscillator, not a GEM index. `beta` is the SHO scale in GeV. `mass` is the hadron mass in GeV. `fl1` and `fl2` are the signed flavor weights of the two quark-line diagrams. `F` multiplies the width and counts charge states that share the same \(|M|^2\). There is no built-in parameter set, so `model.file` is required. Run from the directory that contains that file. Inputs: `test/Decay-3P0/`.
 
-**Parameter Definitions:**
+## Parameter files
 
-| Parameter | Description | Typical Range |
-|-----------|-------------|----------------|
-| `mn` | Up/down quark mass (GeV) | 0.2-0.35 |
-| `ms` | Strange quark mass (GeV) | 0.4-0.6 |
-| `mc` | Charm quark mass (GeV) | 1.6-1.8 |
-| `mb` | Bottom quark mass (GeV) | 4.9-5.2 |
-| `b` | String tension (GI-String) | 0.15-0.25 |
-| `mu` | Screening length (GI-Screen) | 0.1-0.2 |
-| `c` | Constant offset | -0.7 to 0.0 |
-| `sigma_0` | Gaussian smearing width | 1.5-2.0 |
-| `s` | Additional smearing parameter | 1.2-1.6 |
-| `epsilon_cont` | Contact term strength | -0.3 to 0.0 |
-| `epsilon_sov` | Spin-orbit coupling strength | -0.4 to 0.0 |
-| `epsilon_sos` | Thomas precession strength | 0.0-1.0 |
-| `epsilon_tens` | Tensor force strength | -0.5 to 0.1 |
+A preset named `*_CUSTOM` needs `model.file`. The file is a JSON object with one `param` object. Built-in presets that need no file are the `GISCREEN_*` and `GISTRING_*` names other than `*_CUSTOM`, `NRSTRING_MESON`, `NRSCREEN_MESON`, `BAGMIT_DEFAULT`, `QMCSTAD_DEFAULT`, and `YUKAWA_MT13`.
 
-The GI fields above apply to `GISTRING` and `GISCREEN`. `NRSTRING` and `NRSCREEN` use a different `param` object. `NRSTRING` does not read `mu`. `BAGMIT_CUSTOM` uses the bag table below. `QMCSTAD_CUSTOM` and `QMCMOD_CUSTOM` use the QMC tables. `OBESTAT_CUSTOM` uses the OBE table.
+**Godfrey–Isgur** (`GISTRING_CUSTOM`, `GISCREEN_CUSTOM`), all required except `mu`:
 
-**NRSTRING / NRSCREEN parameter fields:**
+| Field | Meaning |
+|-------|---------|
+| `mn`, `ms`, `mc`, `mb` | Quark masses (GeV) |
+| `b`, `c` | String tension and constant |
+| `mu` | Screening mass. Missing means 0. Used by the screened set |
+| `sigma_0`, `s` | Gaussian smearing |
+| `epsilon_cont`, `epsilon_sov`, `epsilon_sos`, `epsilon_tens` | Contact, spin–orbit, Thomas, and tensor strengths |
 
-| Field | Models | Description |
-|-------|--------|-------------|
-| `mn` | both | n-quark mass (GeV) |
-| `ms` | both | s-quark mass (GeV) |
-| `mc` | both | c-quark mass (GeV) |
-| `mb` | both | b-quark mass (GeV) |
-| `b` | both | String tension (GeV²) |
-| `c` | both | Constant potential (GeV) |
-| `alpha_s` | both | Constant strong coupling |
-| `sigma` | both | Contact smearing (GeV) |
-| `mu` | `NRSCREEN` | Screening mass (GeV). `NRSTRING` ignores this field and keeps linear confinement |
+**Cornell** (`NRSTRING_CUSTOM`, `NRSCREEN_CUSTOM`): `mn`, `ms`, `mc`, `mb`, `b`, `c`, `alpha_s`, `sigma`. `NRSCREEN` also requires `mu` (GeV). `NRSTRING` ignores `mu` and keeps a linear confinement.
 
-**BAGMIT parameter fields** (`BAGMIT_DEFAULT` in `src/param/argset.c`):
+**MIT bag** (`BAGMIT_CUSTOM`): `mn`, `ms`, `mc`, `mb` (GeV; the built-in \(m_n\) is 0), `B` (GeV\(^4\)), `Z`, and the pair bindings `Bcs`, `Bbs`, `Bcc`, `Bbc`, `Bbb` (GeV).
 
-| Field | Description |
-|-------|-------------|
-| `mn`, `ms`, `mc`, `mb` | Quark masses (GeV); default \(m_n=0\) |
-| `B` | Bag constant (GeV\(^4\)) |
-| `Z` | Zero-point coefficient |
-| `Bcs`, `Bbs`, `Bcc`, `Bbc`, `Bbb` | Pair binding strengths (GeV) |
+**Standard QMC** (`QMCSTAD_CUSTOM`): the vacuum masses, `B`, `Z`, `m_sigma`, `m_omega`, `m_rho`, `g_sigma`, `g_omega`, `g_rho`. `lambda3` is optional and defaults to 0. A file that contains `g_sigma_B` or `delta` is rejected. `QMCSTAD_DEFAULT` copies the vacuum bag, \(m_\sigma=0.550\) GeV, the physical \(\omega\) and \(\rho\) masses, and zero medium couplings. It is not a saturation fit.
 
-**QMCSTAD parameter fields** (`QMCSTAD_DEFAULT` in `src/param/argset.c`; `QMCSTAD_CUSTOM` via `parse_param_QMC`):
+**Modified QMC** (`QMCMOD_CUSTOM`): the `QMCSTAD` fields plus `g_sigma_B` \(\neq 0\) and `delta` \(> 0\). There is no modified-QMC preset. `QMCMOD` cannot use `QMCSTAD_DEFAULT`.
 
-| Field | Description |
-|-------|-------------|
-| `mn`, `ms`, `mc`, `mb` | Vacuum quark masses (GeV). Default \(m_n=0\), \(m_s=0.279\), \(m_c=1.641\), \(m_b=5.093\) |
-| `B` | Vacuum bag constant \(B_0\) (GeV\(^4\)). Default \(4.42051\times 10^{-4}\). \(B\) stays at \(B_0\) |
-| `Z` | Zero-point coefficient. Default \(1.83\) |
-| `m_sigma`, `m_omega`, `m_rho` | Meson masses (GeV). Defaults \(0.550\), \(0.7825\), \(0.7753\) |
-| `g_sigma`, `g_omega`, `g_rho` | Quark–meson couplings. `QMCSTAD_DEFAULT` sets all three to 0 |
-| `lambda3` | Cubic scalar self-coupling. Optional; missing means 0 |
+**Static OBE** (`OBESTAT_CUSTOM`). Legs, masses, and `I` stay in the system file.
 
-`QMCSTAD` does not read `g_sigma_B` or `delta`. A file that contains either field is rejected.
-
-**QMCMOD parameter fields** (`QMCMOD_CUSTOM` via `parse_param_QMC`). The fields above are required, plus:
-
-| Field | Description |
-|-------|-------------|
-| `g_sigma_B` | Bag-constant coupling. Must be nonzero |
-| `delta` | Exponent in \(B(\sigma)\). Must be \(> 0\) |
-
-There is no `QMCMOD` preset. `QMCMOD` cannot use `QMCSTAD_DEFAULT`.
-
-There is no pair-binding block. The mean-field source and the spectrum bag both set those strengths to 0. `g_rho` is stored. Symmetric matter keeps \(\rho_3=0\), so it does not shift the spectrum. A finite \(\sigma\) needs \(m_n>0\) whenever \(g_\sigma\neq 0\). The couplings in `test/Spectra-QMC/param_qmc.json` (\(m_n=0.40\) GeV, \(g_\sigma=4.40\), \(g_\omega=3.95\)) are a saturation sketch, not a published fit.
-
-**OBESTAT parameter fields** (couplings of this pair, plus `cc1`, `cc2`, `eta`; legs, masses, and `I` stay in the system JSON):
-
-| Field | Description |
-|-------|-------------|
+| Field | Meaning |
+|-------|---------|
 | `lambda` | Common monopole cutoff (GeV) |
-| `tensor_mass1`, `tensor_mass2` | \(M\) in \(f/(2M)\), Liu Table II convention, not the pole mass |
-| `g_pi1`, `g_pi2` | Liu table \(g\); pion vertex conversion is internal |
+| `tensor_mass1`, `tensor_mass2` | Mass \(M\) in \(f/(2M)\), not the kinetic pole mass |
+| `g_pi1`, `g_pi2` | Pion couplings. The vertex conversion is internal |
 | `g_sigma1`, `g_sigma2` | Scalar couplings |
 | `g_rho1`, `g_rho2`, `f_rho1`, `f_rho2` | Vector \(g\) and magnetic \(f=\kappa g\) |
-| `g_omega1`, `g_omega2`, `f_omega1`, `f_omega2` | Same for \(\omega\) |
+| `g_omega1`, `g_omega2`, `f_omega1`, `f_omega2` | The same for \(\omega\) |
+| `cc1`, `cc2` | Meson charge conjugation. Write 0 when unused. A nonzero value on a meson leg flips \(\pi\) and \(\omega\). A Dirac `cc` is ignored |
+| `eta` | Meson–meson C-parity. Write \(+1\) or \(-1\). A 0 is read as \(+1\) |
 
----
+**Yukawa** (`YUKAWA_CUSTOM`): `param.terms`, an array of `{ "V", "mu", "wigner", "bartlett" }`. `V` is in MeV·fm and `mu` in fm\(^{-1}\). `wigner` defaults to 1 and `bartlett` to 0. `YUKAWA_MT13` is the Malfliet–Tjon I/III potential and takes no file.
 
-## Core Algorithms
+**EFT contact** (`EFTCONT_CUSTOM`): `Ca` (MeV) and `Rc` (fm),
 
-### 1. Gaussian Expanding Method (GEM)
+\[
+V(r)=-C_a\exp\left[-(r/R_c)^2\right].
+\]
 
-The radial wavefunction is expanded in Gaussian basis functions:
+The Gaussian that replaces \(\delta^{(3)}(\mathbf r)\) is already inside \(C_a\). \(C_a<0\) is repulsion. There is no spin operator. One file is one projected channel.
 
-```
-ψ(r) = Σ cₙ φₙ(r)
-```
+**HAL QCD** (`HALQCD_CUSTOM`): `param.V0`, `param.Vsig`, and `param.VT`. Each present key is an array of `{ "r", "V" }` with `r` in fm and `V` in MeV. `r` is non-negative and strictly increasing, at most 256 points. A missing array is zero, and at least one array is required. The kernel interpolates linearly. \(r\) at or below the first node keeps \(V(r_1)\). \(r\) at or above the last node is zero. A three-body file may instead key those objects by the pair isospin, `"0"`, `"1"`, `"0.5"`, or `"1.5"`. Each recoupled \(t_{ij}\) loads its own block. An unlabelled file is accepted only when that pair has one \(t_{ij}\).
 
-where each basis function is:
+**\(^3P_0\)** (`QPC3P0_CUSTOM`): `gamma`, `mq1`, `mq2`, `mq3`, all masses in GeV and positive. `mq1` is the parent quark, `mq2` the parent antiquark, and `mq3` the created quark.
 
-```
-φₙ(r) = r^ℓ exp(-αₙ r²)
-```
+## Output
 
-**Advantages**:
-- All integrals solvable in closed form
-- Exponential convergence with basis size
-- Efficient matrix computations
+All result files are written in the working directory.
 
-**Implementation**: `src/basis/orbit.c`, `src/math/integral.c`
+| File | Task | Contents |
+|------|------|----------|
+| `<project>.state.json` | `SPECTRA` | `states`, and the extra root fields listed below |
+| `<project>.fit.json` | `FITTING` | `chi2`, `valid`, `edm`, parameters, and per-state masses in MeV |
+| `<project>.scatter.json` | `SCATTER` | `mu` (GeV), `a0` (fm), `r0` (fm) |
+| `<project>.decay.json` | `3P0DECAY` | `open`, `p`, `EB`, `EC` (GeV), `width` (MeV), and `waves` with `L`, `S`, `M` |
+| `<project>.pot.dat` | `SPECTRA` with `print.pot` | Radial potential. Bag and QMC runs do not write it |
+| `<project>.wfn.N.dat` | `SPECTRA` with `print.wfn` | State \(N\), counting from 1. Bag and QMC runs do not write it |
+| `<project>.basis.dat` | baryon or three-body `SPECTRA` with `print.wfn` | Quantum numbers of each basis function |
 
-### 2. Godfrey-Isgur Quark Model
+A spectrum file does not copy the input back. Meson and two-body `states` have `index`, `mass` (GeV), `rms_radius` (fm), and `eigenvector`. The meson vector has length `nmax`. The two-body vector has length \(n_{\mathrm{ch}}\times n_{\max}\). Baryon states have `mass`, `rms_r12`, `rms_r13`, `rms_r23`, and `eigenvector`. Three-body files add a root field `threshold` (GeV) and, on each state, `ebind` together with the three pair radii and the eigenvector. A fresh three-body file includes that eigenvector. Some copies under `test/Spectra-Molecule3/` omit it, because the full vector makes the file tens to hundreds of megabytes.
 
-The GI potential combines three components:
+Bag files may carry a root string `configuration`. Each state has `st`, `mass`, variational `R` (GeV\(^{-1}\)), an array `x` of four frequencies, and an `eigenvector` of objects `{color, s12, s34, s123, s45, s456, st, st3, c}`. `NONE` stores `{c}` only. A QMC file adds, on the root, `sigma`, `omega`, `B`, `mn_star`, `m_free`, `m_nucleon`, `R_nucleon`, `rho_s`, `mu`, `eps`, `press`, and `ebind`. `ebind` is \(E/A=\varepsilon/\rho_B-M_N\) in GeV, and is 0 at \(\rho_B=0\). `m_nucleon` is the three-light-quark source. It equals a spectrum mass only for an `nnn` bag with basis `NONE`.
 
-**A. Confinement Potential**
-```
-V_conf(r) = b₁ · r + b₂ + const
-```
+Potential columns, from 0.01 fm to 10 fm:
 
-**B. Coulomb Interaction**
-```
-V_coul(r) = -αₛ(r) · Cᶠ / r
-```
+- Meson: `r`, `V`
+- Static OBE, Yukawa, and EFT: `r`, `Vc`, `Vss`, `Vt`, `V`
+- HAL QCD: `r`, `V0`, `Vsig`, `VT`, and \(V(^1S_0)=V_0-3V_\sigma\), in GeV
 
-**C. Hyperfine Interactions**
-- Spin-Spin: Contact term
-- Spin-Orbit: L·S coupling
-- Tensor: Tensor operator
+A meson `.wfn.N.dat` runs from 0.01 fm to \(\max(10,r_{\max})\) fm and contains `r`, \(R\), \(u=rR\), and \(r^2|R|^2\). An SHO spectrum has no `rmax`, so that upper limit stays 10 fm. A two-body molecule file uses the same grid and writes one radial column for each partial wave. A baryon or three-body `.wfn.N.dat` is the list of expansion coefficients, one line per basis function, and `<project>.basis.dat` names those functions. The baryon and three-body terminal tables print the first 20 states and leave the rest in `.state.json`.
 
-**Implementation**: `src/model/gimodel.c` (20+ potential functions)
+The fit terminal prints `call N  chi2 = ...` on every evaluation, then `chi2`, `valid`, and `edm`. The scatter terminal repeats `mu`, `a0`, and `r0`. Below a decay threshold, `open` is 0 and `width` is 0.
 
-### 3. Eigenvalue Problem Solution
+## Solvers
 
-Converts the radial Schrödinger equation into a generalized eigenvalue problem:
+### Quark-model mesons and baryons
 
-```
-H c = E S c
-```
+`GISCREEN` and `GISTRING` are the Godfrey–Isgur Hamiltonian: relativistic kinematics, linear or screened confinement, a running Coulomb term, and smeared contact, spin–orbit, and tensor interactions. `NRSTRING` and `NRSCREEN` replace that with a non-relativistic Cornell potential and a constant \(\alpha_s\).
 
-**Algorithm**:
-1. Generate Gaussian basis set
-2. Compute overlap matrix S (analytically)
-3. Compute kinetic energy matrix T (analytically)
-4. Compute potential energy matrix V (numerical integration)
-5. Solve generalized eigenvalue problem
-6. Extract masses and wavefunctions
+The radial problem is the generalized eigenproblem \(Hc=ENc\). Overlap and kinetic matrix elements are analytic. Potential matrix elements are integrated numerically. The symmetric eigenproblem is solved by the routines in `src/math/eigen.c`.
 
-**Implementation**: `src/math/eigen.c`, `src/model/cmeson.c`, `src/model/cbaryon.c`, `src/model/cmol2.c`
+A baryon uses three Jacobi charts and the same GI operator on each pair. Three identical quarks are reduced to one chart. That reduction is not a full \(S_3\) projection, and the three pair radii need not be equal.
 
-### 4. MIT bag
+### MIT bag and nuclear matter
 
-Bag energy at radius \(R\) (GeV\(^{-1}\)):
+At a cavity radius \(R\) in GeV\(^{-1}\),
 
-```
-E0(R) = Σ_f n_f ω_f(R) + (4π/3) B R³ − Z/R
-ω_f = sqrt(m_f² + x_f²/R²)
-```
+\[
+E_0(R)=\sum_f n_f\omega_f(R)+\frac{4\pi}{3}BR^3-\frac{Z}{R},
+\qquad
+\omega_f=\sqrt{m_f^2+x_f^2/R^2}.
+\]
 
 \(x_f\) is the ground-state bag frequency. With `CMI`,
 
-```
-H(R) = E0(R) I − CMI(R) + Bind
-```
+\[
+H(R)=E_0(R)\,I-\mathrm{CMI}(R)+\mathrm{Bind}.
+\]
 
-Color and spin Casimir factor matrices (`operator_lambda2`, `operator_sigma2`) are built once. \(H(R)\) is assembled and diagonalized inside one `st` block while \(R\) is minimized in \((1,10)\). `NONE` varies \(E_0(R)\) only. Implementation: `src/model/bagmodel.c`, `src/basis/cmisym.c`, `src/math/cmi.c`.
+The color and spin factor matrices are built once. \(R\) is varied in \((1,10)\), and \(H(R)\) is diagonalized inside one `st` block. `NONE` varies \(E_0(R)\) only.
 
-### 4b. Quark-meson coupling
+`QMCSTAD` and `QMCMOD` call the same bag routine after a mean-field solve. The source is always a color-free bag of three light quarks, not the spectrum requested in the input. Only those quarks couple to \(\sigma\). With \(S_q=\partial\omega/\partial m\) and \(g_N=3g_\sigma S_q-(4\pi/3)R^3\,dB/d\sigma\),
 
-`QMCSTAD` and `QMCMOD` sit on the same bag. `compute_spectra_bag` calls `qmc_solve`, then `bag_compute` at the in-medium light-quark mass and bag constant.
+\[
+m_\sigma^2\sigma+\frac{\lambda_3}{2}\sigma^2=g_N\rho_s,
+\qquad
+m_n^*=m_n-g_\sigma\sigma,
+\qquad
+\omega=\frac{3g_\omega\rho_B}{m_\omega^2}.
+\]
 
-The mean field is symmetric nuclear matter. Its source is always a color-free bag of three light quarks (`NONE`), not the spectrum the user asked for. Only those quarks couple to \(\sigma\). The scalar charge of one \(\kappa=-1\) quark is \(S_q=\partial\omega/\partial m\). The nucleon response is
+`QMCSTAD` keeps \(B=B_0\). `QMCMOD` uses the free source mass \(M_N\), the three-quark bag at \(\sigma=0\) and \(B=B_0\):
 
-```
-g_N = 3 g_σ S_q − (4π/3) R³ dB/dσ
-m_σ² σ + (λ₃/2) σ² = g_N ρ_s
-m_n* = m_n − g_σ σ
-ω = 3 g_ω ρ_B / m_ω²
-```
+\[
+\frac{B}{B_0}=\left(1-\frac{4g_\sigma^B\sigma}{\delta M_N}\right)^\delta.
+\]
 
-\(\omega\) stays out of \(E_{\mathrm{bag}}\) and out of the boundary condition. \(\rho_3=0\).
+A root with \(B\le 0\) is rejected. \(\omega\) does not enter the bag mass or the boundary condition. Symmetric matter sets \(\rho_3=0\), so `g_rho` does not shift the spectrum. Temperature enters only the nucleon Fermi–Dirac sea, with degeneracy 4. It does not heat the cavity. Net density uses \(f-\bar f\). Scalar density, energy, and pressure use \(f+\bar f\). With \(U=\tfrac12 m_\sigma^2\sigma^2+(\lambda_3/6)\sigma^3\),
 
-`QMCSTAD` returns \(B=B_0\) and \(dB/d\sigma=0\). `QMCMOD` uses the free source mass \(M_N\) (the three-quark bag at \(\sigma=0\), \(B=B_0\)):
+\[
+\varepsilon=\varepsilon_{\mathrm{kin}}+U+\tfrac12 m_\omega^2\omega^2,
+\qquad
+P=P_{\mathrm{kin}}-U+\tfrac12 m_\omega^2\omega^2,
+\qquad
+E/A=\varepsilon/\rho_B-M_N.
+\]
 
-```
-B/B0 = (1 − 4 g_σ^B σ / (δ M_N))^δ
-```
+The spectrum is then the bag at \(m_n^*\), \(B(\sigma)\), and the vacuum \(m_s\), \(m_c\), \(m_b\), and \(Z\). Pair bindings are zero. That mass is not \(M_N+3g_\omega\omega\).
 
-and rejects a root that would make \(B\le 0\). Temperature enters only the nucleon Fermi–Dirac sea (degeneracy 4). Net density uses \(f-\bar f\); scalar density, energy, and pressure use \(f+\bar f\). At \(T=0\) the sea is a Fermi sphere. \(\sigma=0\) when \(g_\sigma=0\), and when both \(\rho_B\) and \(T\) vanish.
+### Molecules
 
-Thermodynamics, with \(U=\tfrac12 m_\sigma^2\sigma^2+(\lambda_3/6)\sigma^3\):
+The two-body static one-boson-exchange Hamiltonian is
 
-```
-ε = ε_kin + U + ½ m_ω² ω²
-P = P_kin − U + ½ m_ω² ω²
-μ = E_F* + 3 g_ω ω     (T=0; at T>0, E_F* is the kinetic chemical potential ν)
-E/A = ε/ρ_B − M_N      (0 at ρ_B = 0)
-```
+\[
+H=m_1+m_2+\frac{p^2}{2\mu}+V_C+V_{ss}+V_T,
+\]
 
-The spectrum then reuses `bag_compute` with \(m_n^*\), \(B(\sigma)\), and the vacuum \(m_s,m_c,m_b,Z\). Quark counts and the `CMI` space come from the input. That mass is not \(M_N+3g_\omega\omega\). For an `nnn` `NONE` bag it coincides with the source mass.
+with \(V_{\ell s}=0\). The tensor mixes \(L\) with \(L+2\). Elastic \(0^-\) pairs have \(V_{ss}=V_T=0\) and no pion. Binding reported by the program is \(E_{\mathrm{bind}}=M-(m_1+m_2)\). Treat a state as bound when \(E_{\mathrm{bind}}<0\) and the RMS radius is clearly smaller than `rmax`.
 
-`test/Spectra-QMC/nucleon_qmc.json` is `QMCSTAD_DEFAULT` at \(0.16\,\mathrm{fm}^{-3}\) and \(T=0\): \(\sigma=0\) and \(E/A=+18.9\) MeV, the Fermi kinetic energy of the free bag (\(M_N=1.087\) GeV). `nucleon_qmc_custom.json` uses the sketch couplings and gives \(E/A\approx-16.7\) MeV with pressure near zero. `nucleon_mqmc.json` is the same sketch with \(g_\sigma^B=2\), \(\delta=4\): \(B\) falls to \(0.840\,B_0\) and \(E/A\approx-57.8\) MeV. Implementation: `src/model/qmcmodel.c`.
+A Yukawa term is \((V/r)e^{-\mu r}(W+B P_\sigma)\) with \(P_\sigma=(1+\sigma_1\cdot\sigma_2)/2\). The EFT contact is the Gaussian written above, and it does not mix \(L\) with \(L+2\). The HAL QCD kernel is
 
-### 5. Static OBE two-body molecules
+\[
+V(r)=V_0(r)+V_\sigma(r)\,(\sigma_1\cdot\sigma_2)+V_T(r)\,S_{12}.
+\]
 
-The kernel is the static elastic \(\pi\sigma\rho\omega\) potential (Liu / Pavón Valderrama / Geng limit: \(V_{ls}=0\)):
+\(^1S_0\) therefore sees \(V_0-3V_\sigma\). There is no \(\mathbf L\cdot\mathbf S\) term and no coupled-channel potential matrix. Each table is already one isospin.
 
-```
-H = T + Vc + Vss (s1·s2) + Vt S12
-T = m1 + m2 + p² / 2μ
-```
+The three-body Hamiltonian is \(\sum_i m_i+\sum_i p_i^2/(2m_i)\) plus the three pair potentials. Binding is \(M-(m_1+m_2+m_3)\).
 
-Legs are typed (`DIRAC`, `VECTOR`, `PSEUDOSCALAR`), not named as a hadron system. Tensor \(S_{12}\) mixes \(L\) with \(L+2\). The GEM basis is a block of `nch × nmax` Gaussians. Binding is `Ebind = Mass − (m1+m2)`.
+### Fit, scattering length, and \(^3P_0\)
 
-**Implementation**: `src/model/obemodel.c`, `src/model/cmol2.c`
+A fit minimizes
 
-### 5b. Yukawa NN / NNN
+\[
+\chi^2=\sum_i\frac{(M_{\mathrm{calc}}^i-M_{\mathrm{exp}}^i)^2}{\sigma_i^2}
+\]
 
-`MODEL_YUKAWA` is a local potential separate from the molecular OBE. Each term is
+with Minuit2 MIGRAD. The masses in the datasets and in `<project>.fit.json` are in MeV. Each \(\chi^2\) evaluation solves the meson Hamiltonian on the requested basis.
 
-```
-v(r) = (V / r) exp(-μ r) (W + B P_σ),   P_σ = (1 + σ1·σ2) / 2
-```
-
-with `V` in MeV·fm and `μ` in fm⁻¹. `YUKAWA_MT13` is Malfliet–Tjon I/III. Nucleon masses in the sample inputs are 0.938942 GeV so that \(\hbar^2/m_N = 41.47\) MeV·fm². Samples live in `test/Spectra-Yukawa/`. The deuteron (`nmax` 20) gives −2.231 MeV. The triton keeps the local potential in every partial wave. With \(r_{\min}=0.1\) fm and \(r_{\max}=10\) fm, the ground state goes from −5.29 MeV at `nmax` 4 to −8.67 MeV at `nmax` 7 and levels off at −8.88 MeV by `nmax` 10 (the s-wave Faddeev benchmark is −8.54 MeV). OBE factors `cc`, `eta`, `iso` are not Yukawa inputs. Two-body identical \(I=1/2\) legs write `I` for Pauli. Two-body entry point is `mol2_yukawa_GEM`; three-body pairs are selected inside `mol3_load_pairs`. Identical Dirac fermions (`sym12` −1) use the sum of Jacobi charts c=1, 2 and 3.
-
-**Implementation**: `src/model/ykwmodel.c`, `src/model/cmol2.c`, `src/model/cmol3.c`
-
-### 5c. EFT contact
-
-`MODEL_EFTCONT` is the leading-order coordinate-space contact of arXiv:2610.28021, Eq. (40):
-
-```
-V(r) = -Ca exp(-(r/Rc)^2)
-```
-
-`Ca` is in MeV and `Rc` in fm. The normalized Gaussian that replaces \(\delta^{(3)}(\mathbf{r})\) is already absorbed into `Ca`, so \(C_a<0\) is a repulsive well. There is no one-pion exchange and no spin operator, so \(L\) and \(L+2\) do not mix. One parameter file is one projected channel. Samples in `test/Spectra-EFT/` use Yuan–Liu Table I: \(DD\) has \(C_a=-14.652\) MeV, \(R_c=1.0\) fm; \(\Lambda_c\Lambda_c\) has \(C_a=-201.259\) MeV, \(R_c=0.4\) fm. Both are repulsive, so the GEM spectrum stays above threshold. Scattering length and effective range are not computed on this path. `t1` and `t2` are required; identical \(I=0\) baryons set them to `0`.
-
-**Implementation**: `src/model/eftmodel.c`, `src/model/cmol2.c`, `src/model/cmol3.c`
-
-### 5d. HAL QCD
-
-`MODEL_HALQCD` is the leading-order local potential of the Miyamoto thesis, Eq. (3.11):
-
-```
-V(r) = V0(r) + Vsig(r) (σ1·σ2) + VT(r) S12
-```
-
-`HALQCD_CUSTOM` stores each radial function as `param.V0`, `param.Vsig`, or `param.VT`: an array of `{r, V}` with `r` in fm and `V` in MeV. A missing array is zero. `r` is non-negative and strictly increasing, and each array has at most 256 points. At least one array is required. Between nodes the kernel interpolates linearly. \(r\) at or below the first node keeps \(V(r_1)\). \(r\) at or above the last node is zero. Values enter the Hamiltonian in GeV.
-
-The two-body driver uses the same central, spin–spin, and tensor matrix elements as static OBE. Two Dirac legs put \(\langle\sigma_1\cdot\sigma_2\rangle\) and the Pauli \(S_{12}\) on those operators. \(^1S_0\) therefore sees \(V_0-3V_\sigma\). \(S_{12}\) mixes \(L\) with \(L+2\). There is no \(\mathbf{L}\cdot\mathbf{S}\) term and no coupled-channel potential matrix. Each table is already one isospin projection. A two-body file has one channel, written as `param.V0`, `param.Vsig`, and `param.VT`. A three-body file may instead key those objects by the pair isospin, `"0"`, `"1"`, `"0.5"`, `"1.5"`. Each recoupled \(t_{ij}\) loads its own block. An unlabelled file is accepted only when that pair has one \(t_{ij}\). A missing block stops the run. OBE `iso` is not a HAL QCD input. Three-body pair \(t_{ij}\) comes from recoupling to `I`.
-
-`.pot.dat` columns are `r`, `V0`, `Vsig`, `VT`, and `V1S0=V0-3 Vsig`, in GeV. Samples in `test/Spectra-HALQCD/` are software checks. The \(V_0\) table is the repulsive Yuan–Liu \(DD\) Gaussian written as a table, not a lattice HAL QCD potential. Scattering length is a separate `SCATTER` task, not a GEM eigenvalue.
-
-**Implementation**: `src/model/halmodel.c`, `src/model/cmol2.c`, `src/model/cmol3.c`
-
-### 6. Spectral Data Post-Processing
-
-Meson RMS spectra are checked for high-\(n\) anomalies using quadratic interpolation (not used on molecular GEM):
-
-1. **Detect anomalies**: Identify non-monotonic points
-2. **Interpolate**: Use Lagrange quadratic/linear interpolation
-3. **Validate**: Check normalization and consistency
-
-**Implementation**: `src/math/interplt.c` (enhanced with debugging)
-
-### 7. Parameter Fitting
-
-A fit is a `--compute` run with `"task": "FITTING"`. `fit.target` is a pinned entry such as `GISCREEN_CCBAR`; it names the model and the built-in dataset. JSON does not carry `model` or `system`. The state list and the parameter starts, steps, bounds, and fixed flags are in `src/param/f*.c`.
-
-**Fit function**:
-```
-χ² = Σᵢ (M_calc^i - M_exp^i)² / σᵢ²
-```
-
-Masses in the tables are in MeV. Minuit2 MIGRAD minimizes χ². Each evaluation prints `call N  chi2 = ...`. The minimum is written to `<project>.fit.json`.
-
-**Implementation**: `src/param/fitting.c`, `src/param/minuit.cc`, `src/param/f*.c`
-
-### 8. Scattering length
-
-`"task": "SCATTER"` computes the two-body S-wave scattering length and effective range. The input has `project`, `task`, `model`, and `system`. It does not read `basis` or `print`. The system is `MOLECUL2`. The model is `OBESTAT`, `YUKAWA`, `EFTCONT`, or `HALQCD`. Masses `m1` and `m2` fix the reduced mass. `L` is 0. `S` and `J` select one partial wave.
-
-The radial wave is built by Numerov from that potential, on \(r=0\) to 80 fm with step 0.01 fm and \(\hbar c=197.3\,\mathrm{MeV\cdot fm}\). It is not the GEM molecular wave function. The fit is
+`SCATTER` integrates the \(\ell=0\) radial equation with Numerov from 0 to 80 fm, step 0.01 fm, and \(\hbar c=197.3\) MeV·fm. It does not use a GEM eigenvector. The effective-range fit is
 
 \[
 k\cot\delta_0=\frac{1}{a_0}+\frac12 r_0 k^2
 \]
 
-over \(k=0.05\) to \(0.50\,\mathrm{MeV}\). \(a_0>0\) is attraction. A channel list that also contains \(L=2\) still uses only the diagonal \(\ell=0\) potential. Coulomb is not included. The result file `<project>.scatter.json` holds `mu` in GeV, `a0` in fm, and `r0` in fm.
-
-Yuan–Liu Table I, run from `test/ScatterTask/`: \(DD\) gives \(a_0=-0.250006\,\mathrm{fm}\) and \(r_0=-2.531\,\mathrm{fm}\); \(\Lambda_c\Lambda_c\) gives \(a_0=-0.210000\,\mathrm{fm}\) and \(r_0=-0.170\,\mathrm{fm}\).
-
-**Implementation**: `src/model/cscatter.c`, `src/model/eremodel.c`, `src/model/compute.c`
-
----
-
-## AI Integration
-
-### OpenCode Assistant for GEMSTORE
-
-The `app/gemstore-assistant/` subdirectory contains an **OpenCode skill** for intelligent task automation.
-
-#### AI Capabilities
-
-```
-"Calculate charmonium 1P state with J=1"
-         ↓
-Parse quantum numbers, select model
-         ↓
-Generate input file automatically
-         ↓
-Execute gemstore calculation
-         ↓
-Parse results, format output
-         ↓
-"ψ(J^PC) = 1^-- with M = 3.686 GeV"
-```
-
-#### Features
-
-- **Natural Language Understanding**: Parse physics requests
-- **Automated Workflow**: Generate inputs, execute, parse outputs
-- **Systematic Calculations**: Run multiple L, S, J combinations
-- **Result Interpretation**: Physics-meaningful explanations
-- **Parameter Fitting**: Build a `FITTING` input for a named target such as `GISCREEN_CCBAR` and run it with `--compute`
-
-#### Skill Location
-
-```
-app/gemstore-assistant/
-├── SKILL.md
-├── scripts/generate_meson_inputs.py
-└── templates/
-    ├── meson_spectra_template.md
-    ├── meson_fitting_template.md
-    ├── baryon_spectra_template.md
-    ├── bag_spectra_template.md
-    └── molecule_spectra_template.md
-```
-
-#### Usage with OpenCode
-
-```bash
-# Enable AI-assisted calculations
-opencode "Calculate charmonium spectrum up to L=2"
-
-# Fit a built-in dataset
-opencode "Fit GISCREEN_CCBAR on a GEM basis with nmax 20"
-```
-
-For details: see `app/gemstore-assistant/SKILL.md`
-
----
-
-## Main Functions
-
-### Entry Points (src/entry.c)
-
-| Function | Purpose | Call |
-|----------|---------|------|
-| `entry_compute()` | Spectroscopy or parameter fit | `--compute <file>` |
-| `entry_debug()` | Debug calculation steps | `--debug <unit>` |
-
-### Core Spectroscopy (src/model/)
-
-| Function | Algorithm | Output |
-|----------|-----------|--------|
-| `compute_spectra_meson()` | GEM/SHO meson dispatcher | Masses, RMS, eigenvectors |
-| `compute_spectra_baryon()` | Three-quark GI spectrum (GEM) | Masses, pair RMS, eigenvectors |
-| `compute_spectra_bag()` | MIT bag and QMC dispatcher | Masses, \(R\), \(x_f\), CMI eigenvectors, QMC matter |
-| `qmc_solve()` | Symmetric-matter \(\sigma\), \(\omega\), and in-medium bag | `qmc_matter_t` plus the bag passed to `bag_compute` |
-| `compute_spectra_mol2()` | Two-body OBE GEM dispatcher | Mass, Ebind, RMS, mixed-channel eigenvectors |
-| `bag_compute()` | Load CMI, mix by `st`, vary \(R\) | `bag_mit_t` states |
-| `mol2_obestat_GEM()` | Block GEM \(Hc=ENc\) with \(L\oplus L+2\) | Masses, RMS, overlap |
-| `write_meson_spectra()` / `write_bag_spectra()` | JSON in `src/write.c` | `.state.json` |
-| `write_mol2_wfn()` | Per-channel radial dump | `.wfn.N.dat` |
-
-### Potential Functions (src/model/gimodel.c)
-
-The implementation includes 22 complete potential components:
-
-**Primary Interactions:**
-```c
-double GIVconf(double r, ...)     // Confinement (string or screened)
-double GIVcoul(double r, ...)     // Coulomb (Gaussian screened)
-double GIVcont(double r, ...)     // Contact term (delta-like)
-```
-
-**Spin-Dependent Interactions:**
-```c
-double GIVsovi(double r, ...)     // Spin-orbit coupling (quark 1)
-double GIVsovj(double r, ...)     // Spin-orbit coupling (quark 2)
-double GIVsovij(double r, ...)    // Mixed spin-orbit coupling
-double GIVsosi(double r, ...)     // Thomas precession (quark 1)
-double GIVsosj(double r, ...)     // Thomas precession (quark 2)
-double GIVtens(double r, ...)     // Tensor force
-```
-
-**Smearing Parameters (9 functions):**
-Gaussian smearing regularization for all potential components.
-
-### OBE kernel (`src/model/obemodel.c`)
-
-Static elastic \(\pi\sigma\rho\omega\): `OBEVc`, `OBEVss`, `OBEVtens` (`V_{ls}=0`). `write_obe_pot()` dumps `r`, `Vc`, `Vss`, `Vt`, `V`. Couplings, `cc`, and `eta` live in `argsOBEModel_t`; legs, masses, and `I` come from the system JSON. \(\langle\tau\cdot\tau\rangle\) is set from `I`.
-
-### Basis Functions (src/basis/)
-
-| Module | Purpose |
-|--------|---------|
-| `orbit.c` | GEM and SHO orbital basis functions |
-| `spin.c` | Spin SU(2) Clebsch-Gordan coefficients |
-| `color.c` | SU(3) color wave functions (`color_wfn_push`) |
-| `cmisym.c` | CMI color/spin load and Pauli selection |
-| `isospin.c` | Isospin basis states |
-| `intrin.c` | Intrinsic wavefunction representation |
-
-### Mathematics (src/math/)
-
-| Module | Algorithms |
-|--------|-----------|
-| `matrix.c` | Linear algebra |
-| `eigen.c` | Generalized eigenvalue solver |
-| `integral.c` | Gaussian quadrature integration |
-| `cmi.c` | Color magnetic interaction |
-| `soc.c` | Spin-orbit coupling |
-| `su3.c` | SU(3) group operations |
-| `interplt.c` | Spectral data interpolation |
-
----
-
-## Usage Examples
-
-### Example 1: Charmonium Ground State with Predefined Parameters
-
-**Input file** (`cc_ground.json`):
-```json
-{
-  "project": "charmonium_ground",
-  "task": "SPECTRA",
-  "model": {
-    "type": "GISCREEN",
-    "param": "GISCREEN_CCBAR"
-  },
-  "system": {
-    "type": "MESON",
-    "f1": 3,
-    "f2": 3,
-    "S": 0,
-    "L": 0,
-    "J": 0
-  },
-  "basis": {
-    "type": "GEM",
-    "nmax": 16,
-    "rmax": 30.0,
-    "rmin": 0.1
-  },
-  "print": {
-    "pot": "false",
-    "wfn": "false"
-  }
-}
-```
-
-**Run**:
-```bash
-./gemstore --compute cc_ground.json
-```
-
-**Output** (`charmonium_ground.state.json`):
-```json
-{
-  "generated": "2026-04-25 18:33:25",
-  "project": "charmonium_ground",
-  "states": [
-    {
-      "index": 1,
-      "mass": 3.096788,
-      "rms_radius": 0.524365,
-      "eigenvector": [0.43147..., 0.56587..., ...]
-    },
-    ...
-  ]
-}
-```
-
-### Example 2: Charmonium with Custom Parameters
-
-**Parameter file** (`my_params.json`):
-```json
-{
-  "param": {
-    "mn": 0.220,
-    "ms": 0.419,
-    "mc": 1.747603574365,
-    "mb": 5.095838715,
-    "b": 0.248247135518,
-    "mu": 0.1333931469096,
-    "c": -0.5334999044266,
-    "sigma_0": 1.56552865791,
-    "s": 1.285723132711,
-    "epsilon_cont": -0.2864647624566,
-    "epsilon_sov": -0.349573212139,
-    "epsilon_sos": 0.7905135472165,
-    "epsilon_tens": -0.487322874302
-  }
-}
-```
-
-**Input file** (`cc_custom.json`):
-```json
-{
-  "project": "charmonium_custom",
-  "task": "SPECTRA",
-  "model": {
-    "type": "GISCREEN",
-    "param": "GISCREEN_CUSTOM",
-    "file": "my_params.json"
-  },
-  "system": {
-    "type": "MESON",
-    "f1": 3,
-    "f2": 3,
-    "S": 1,
-    "L": 1,
-    "J": 1
-  },
-  "basis": {
-    "type": "GEM",
-    "nmax": 16,
-    "rmax": 30.0,
-    "rmin": 0.1
-  },
-  "print": {
-    "pot": "false",
-    "wfn": "false"
-  }
-}
-```
-
-**Run**:
-```bash
-./gemstore --compute cc_custom.json
-```
-
-### Example 3: MIT bag tetraquark
-
-Worked input: `test/Spectra-Bag/tetra_ccnn_18.json`. `NONE` example: `test/Spectra-Bag/baryon_nnn_none.json`.
-
-```bash
-./gemstore --compute test/Spectra-Bag/tetra_ccnn_18.json
-```
-
-Output `tetra_ccnn_18.state.json` stores `mass`, variational `R`, frequencies `x`, and color–spin eigenvector components. The CLI table prints `st`, mass, \(R\), and \(x_n,x_s,x_c,x_b\).
-
-### Example 3b: QMC nucleon in medium
-
-Worked inputs live in `test/Spectra-QMC/`. `nucleon_qmc.json` is `QMCSTAD` with `QMCSTAD_DEFAULT`. A custom file is `nucleon_qmc_custom.json` plus `param_qmc.json` (`QMCSTAD_CUSTOM`). Modified QMC is `nucleon_mqmc.json` (`QMCMOD`, `QMCMOD_CUSTOM`, `param_mqmc.json`). Color–magnetic mixing is `nucleon_qmc_cmi.json`.
-
-```bash
-cd test/Spectra-QMC
-../../gemstore --compute nucleon_qmc_custom.json
-```
-
-The CLI prints the usual bag table and a `QMC MATTER SUMMARY` (`sigma`, `omega`, `B`, \(m_n^*\), free and in-medium nucleon, scalar density, \(\mu\), \(\varepsilon\), \(P\), \(E/A\)). `<project>.state.json` keeps the bag `states` and adds those matter fields on the root. QMC does not write `.pot.dat` or `.wfn.N.dat`.
-
-### Example 4: Parameter Fitting
-
-`fit.target` selects the pinned dataset. That entry sets the model and the meson state list. Do not write `model`, `system`, or `print`. Basis is `GEM` or `SHO`. The basis below is the one used with these datasets.
-
-**Input file** (`fit_ccbar.json`):
-```json
-{
-  "project": "fit_ccbar",
-  "task": "FITTING",
-  "fit": { "target": "GISCREEN_CCBAR" },
-  "basis": { "type": "GEM", "nmax": 20, "rmax": 30.0, "rmin": 0.1 }
-}
-```
-
-**Targets**: `GISCREEN_MESON`, `GISCREEN_BBBAR`, `GISCREEN_BCBAR`, `GISCREEN_BSBAR`, `GISCREEN_CCBAR`, `GISCREEN_CSBAR`.
-
-**Run**:
-```bash
-./gemstore --compute fit_ccbar.json
-```
-
-The terminal prints one `call N  chi2 = ...` line per evaluation, then the parameter table, `chi2`, `valid`, and `edm`. Results go to `fit_ccbar.fit.json`. A worked input is `test/FittingTask/giscreen_csbar.json`.
-
-### Example 5: Two-body D* Ξ molecule
-
-Worked input: `test/Spectra-Molecule2/dstar_xi_I0.json` with couplings in `param_OBESTAT_dstarxi.json`.
-
-```bash
-cd test/Spectra-Molecule2
-../../gemstore --compute dstar_xi_I0.json
-```
-
-`model.file` is opened from the current working directory, so this example is run next to `param_OBESTAT_dstarxi.json`. The CLI table prints `Mass`, `Ebind = Mass − (m1+m2)`, and `RMS`. Negative `Ebind` with RMS well below `rmax` is a bound state. Near-threshold RMS \(\approx\) `rmax` is a box state. `"print":{"pot":"true"}` writes `dstar_xi_I0.pot.dat`.
-
-### Example 6: Light Mesons with GI-String Model
-
-For light mesons (pions, kaons), GI-String model works better:
-
-```json
-{
-  "project": "light_mesons",
-  "task": "SPECTRA",
-  "model": {
-    "type": "GISTRING",
-    "param": "GISTRING_MESON"
-  },
-  "system": {
-    "type": "MESON",
-    "f1": 1,
-    "f2": 1,
-    "S": 0,
-    "L": 0,
-    "J": 0
-  },
-  "basis": {
-    "type": "GEM",
-    "nmax": 16,
-    "rmax": 30.0,
-    "rmin": 0.1
-  }
-}
-```
-
----
-
-## Output Files
-
-### JSON Output (`.state.json`)
-
-`src/write.c` writes `<project>.state.json` in the current directory:
-
-```bash
-./gemstore --compute myfile.json
-```
-
-**Output File Structure:**
-
-```json
-{
-  "generated": "2026-04-25 18:33:25",
-  "project": "myproject",
-  "task": "SPECTRA",
-  "model": {
-    "type": "GISCREEN",
-    "param": "GISCREEN_CCBAR"
-  },
-  "system": {
-    "type": "MESON",
-    "f1": 3,
-    "f2": 3,
-    "S": 1,
-    "L": 0,
-    "J": 1
-  },
-  "basis": {
-    "type": "GEM",
-    "nmax": 16,
-    "rmax": 30,
-    "rmin": 0.1
-  },
-  "states": [
-    {
-      "index": 1,
-      "mass": 3.101986299943893,
-      "rms_radius": 0.324597538486162,
-      "eigenvector": [0.43147459135290689, 0.56587312869939621, 0.56203519231094468, ...]
-    },
-    {
-      "index": 2,
-      "mass": 3.6707285768604248,
-      "rms_radius": 0.53640308338098519,
-      "eigenvector": [-0.31500074209555717, -0.28193707412502728, 0.0019418306107957378, ...]
-    },
-    ...
-  ]
-}
-```
-
-**Output Field Definitions:**
-
-| Top-level Field | Type | Content |
-|-----------------|------|---------|
-| `generated` | string | ISO 8601 timestamp when calculation was performed |
-| `project` | string | Project name from input (used as filename base) |
-| `task` | string | Calculation type (e.g., `"SPECTRA"`) |
-| `model` | object | Model configuration (echoed from input) |
-| `system` | object | System quantum numbers (echoed from input) |
-| `basis` | object | Basis set configuration (echoed from input) |
-| `states` | array | Array of eigenstate results |
-
-**Per-State Fields:**
-
-| State Field | Type | Description |
-|-------------|------|-------------|
-| `index` | integer | State number (1-based) |
-| `mass` | float | Eigenvalue/mass in GeV |
-| `rms_radius` | float | Root-mean-square radius in fm |
-| `eigenvector` | array | Gaussian expansion coefficients (meson: `nmax`; molecule: `nch × nmax`) |
-
-**Example files:**
-
-- `test/Spectra-CustomParameter/amethyst.state.json` — GEM meson
-- `test/Spectra-Bag/*.state.json` — MIT bag (mass, \(R\), \(x\), color–spin components)
-- `test/Spectra-QMC/*.state.json` — QMC bag plus root fields `sigma`, `omega`, `B`, `mn_star`, `m_free`, `m_nucleon`, `R_nucleon`, `rho_s`, `mu`, `eps`, `press`, `ebind`
-- `test/Spectra-Molecule2/dstar_xi_I0.state.json` — two-body OBE GEM (`mass`, `rms_radius`, mixed-channel `eigenvector`)
-
-Bag states use `st`, `mass`, `R`, `x`, and an `eigenvector` array of `{color, s12, …, c}` objects. `NONE` writes `{c}` only. A QMC file adds the matter fields listed above next to `states`. `R` and `R_nucleon` are in GeV\(^{-1}\). `ebind` is \(E/A\) in GeV.
-
----
-
-## Project Structure
-
-```
+for ten momenta from 0.05 to 0.50 MeV. \(a_0>0\) is attraction. If the channel list also contains \(L=2\), only the diagonal \(\ell=0\) potential is integrated. A Coulomb tail stops the run.
+
+The decay width is
+
+\[
+\Gamma=2\pi\frac{E_B E_C}{M_A}\,p\,F\sum_{LS}|M_{LS}|^2.
+\]
+
+Momenta and energies are in GeV. The factor 1000 converts \(\Gamma\) to MeV. Each meson is one SHO of the `beta` and `n` given in the input. A GEM eigenvector is not summed into \(M_{LS}\). The analytic radial sum can lose digits at high \(n\) or large \(\beta\), so a high bottomonium width from this task should be checked by quadrature before it is quoted.
+
+## Test suite
+
+Each directory is a complete input, and the matching result file is already in the tree. Run `--compute` from a directory whose relative `model.file` names resolve.
+
+| Directory | What it checks |
+|-----------|----------------|
+| `test/Spectra-Quarkonium/` | Built-in `GISCREEN_CCBAR` and `GISCREEN_BBBAR` |
+| `test/Spectra-CustomParameter/` | `GISCREEN_CUSTOM` and `GISTRING_CUSTOM` |
+| `test/Spectra-SHO/` | Meson SHO basis |
+| `test/Spectra-NRmodel/` | Cornell GEM and SHO |
+| `test/Spectra-PrintPotWfn/` | Meson `.pot.dat` and `.wfn.N.dat` (`diamond.json`) |
+| `test/Spectra-Baryon/` | GI baryons on GEM |
+| `test/Spectra-Bag/` | MIT bag, `NONE` and `CMI`, through hexaquarks |
+| `test/Spectra-QMC/` | `QMCSTAD` and `QMCMOD`, including a warm run and a CMI nucleon |
+| `test/Spectra-Molecule2/` | Two-body static OBE |
+| `test/Spectra-Molecule3/` | Three-body `HYBRID` |
+| `test/Spectra-Yukawa/` | Malfliet–Tjon deuteron and triton |
+| `test/Spectra-EFT/` | Yuan–Liu contact, two- and three-body |
+| `test/Spectra-HALQCD/` | Table reader, including an isospin-keyed three-body file |
+| `test/ScatterTask/` | S-wave effective range |
+| `test/Decay-3P0/` | \(\rho\to\pi\pi\) and open-charm charmonium widths |
+| `test/FittingTask/` | `GISCREEN_CSBAR` input. The `ScreenFitting-*` logs are earlier fit records |
+
+Shipped checks, in program units:
+
+- `test/Decay-3P0/rho_pipi.decay.json` records a width of 79.429 MeV.
+- `test/ScatterTask/dd_scatter.scatter.json` records \(a_0=-0.250006\) fm. `lclc_scatter.scatter.json` records \(a_0=-0.210000\) fm.
+- `test/Spectra-Yukawa/nn_yukawa.state.json` is the MT-I/III deuteron, binding about \(-2.231\) MeV.
+- `test/Spectra-QMC/nucleon_qmc.json` is `QMCSTAD_DEFAULT` at \(0.16\,\mathrm{fm}^{-3}\) and \(T=0\). With every medium coupling equal to 0, \(\sigma=0\) and \(E/A\) is the Fermi kinetic energy of the free bag.
+
+The HAL QCD sample `param_HAL_V0.json` stores the same Gaussian as the \(DD\) contact. It checks the table reader. It is not a lattice HAL QCD potential.
+
+## Source layout
+
+```text
 gemstore/
-├── README.md
-├── LICENSE
 ├── Makefile
-├── include/gemstore/
-│   ├── input.h          # argsInput_t (run JSON)
-│   ├── parse.h          # input and model-parameter JSON
-│   ├── read.h           # result JSON helpers
-│   ├── write.h          # <project>.state.json, pot, wfn
-│   ├── print.h          # CLI tables
-│   ├── types.h
-│   ├── basis/           # orbit, spin, color, cmisym, …
-│   ├── math/
-│   ├── model/           # bagmodel, qmcmodel, cmeson, cbaryon, cmol2, obemodel, compute, …
-│   └── param/           # argset, fitting
-├── src/                 # mirrors include/; input.c, parse.c, read.c, write.c
-├── lib/Minuit2/
+├── include/gemstore/     public headers
+├── src/                  parse.c, write.c, print.c, entry.c
+│   ├── basis/            GEM, SHO, color, spin, CMI
+│   ├── math/             quadrature, matrices, eigenproblems
+│   ├── model/            spectra, QMC, OBE, Yukawa, EFT, HAL QCD, scatter, 3P0
+│   └── param/            built-in parameters, fit datasets, Minuit2 glue
+├── lib/Minuit2/          CERN Minuit2, LGPL-2.1
 ├── app/gemstore-assistant/
 └── test/
-    ├── Spectra-Bag/     # MIT bag
-    ├── Spectra-QMC/     # QMCSTAD and QMCMOD on BAG
-    ├── Spectra-Baryon/
-    ├── Spectra-SHO/
-    ├── Spectra-NRmodel/
-    ├── Spectra-CustomParameter/
-    ├── Spectra-Molecule2/   # two-body OBE GEM
-    └── FittingTask/
 ```
 
-Run JSON is parsed in `src/parse.c` into `argsInput_t` (`include/gemstore/input.h`). Model coefficients live in `src/param/argset.c`. `src/model/compute.c` dispatches meson, baryon, bag (including QMC), and molecular spectra. Result files are written from `src/write.c`; the terminal tables are `src/print.c`.
+`src/parse.c` reads the run file. `src/param/argset.c` loads the coefficient set. `src/model/compute.c` dispatches the task. `src/write.c` writes the JSON and text dumps. `src/print.c` writes the terminal tables.
 
----
+## Optional AI agent skill
 
-## Building with LAPACK Acceleration
+`app/gemstore-assistant/` is an optional agent skill: `SKILL.md`, JSON templates, and `scripts/generate_meson_inputs.py`. It prepares a parser file, runs `gemstore --compute`, and reads the result JSON. The solver does not call it, and a calculation does not need an agent. The skill text is distributed under the MIT license. The program itself remains under GPL-3.0-or-later.
 
-```bash
-# Install LAPACK/OpenBLAS (Ubuntu/Debian)
-sudo apt-get install liblapacke-dev libopenblas-dev
+## License and citation
 
-# Build with LAPACKE support
-make clean && make USE_LAPACKE=1
-```
+GEMSTORE is free software under the GNU General Public License, version 3 or any later version. See `LICENSE`. Copyright © 2026 Wen-Xuan Zhang. The bundled Minuit2 library is under the GNU Lesser General Public License, version 2.1. See `lib/Minuit2/LICENSE`.
 
----
-
-## Contributing
-
-### Guidelines
-
-1. **Code Style**: K&R style with 4-space indentation
-2. **Documentation**: Add docstrings for all public functions
-3. **Testing**: Include unit tests for new algorithms
-4. **Physics**: Cite literature for new models
-5. **Performance**: Profile before optimizing
-
-### Development Workflow
-
-```bash
-# Create feature branch
-git checkout -b feature/my-algorithm
-
-# Make changes and test
-make clean && make
-
-# Commit with descriptive messages
-git add -A
-git commit -m "Add [feature]: description"
-
-# Push and open pull request
-git push origin feature/my-algorithm
-```
-
----
-
-## Citation (not completed)
-
-If you use GEMSTORE in research, please cite:
+The Computer Physics Communications citation will replace this software record once a DOI is assigned:
 
 ```bibtex
 @software{gemstore2026,
   author = {Zhang, Wen-Xuan},
-  title = {GEMSTORE: Hadron Spectroscopy Simulation Tools},
-  year = {2026},
-  url = {https://github.com/serialcore/gemstore},
-  version = {0.1.4},
-  note = {GEM, Godfrey-Isgur, MIT bag, QMC, and static OBE molecules}
+  title  = {GEMSTORE: Hadron Spectroscopy Simulation Tools},
+  year   = {2026},
+  url    = {https://github.com/serialcore/gemstore},
+  license = {GPL-3.0-or-later}
 }
 ```
 
-### Academic References
-
-1. Godfrey, S., & Isgur, N. (1985). "Mesons in a quark model with chromomagnetic interactions." *Physical Review D, 32*(1), 189.
-
-2. Bhatnagar, V., et al. (1995). "Towards a consistent quark model for baryons." *International Journal of Modern Physics A, 10*(03), 335-392.
-
-3. Fulton, R., et al. (1990). "Gaussian wave packets in the Hilbert space formalism." *Physical Review D*.
-
-4. Chodos, A., Jaffe, R. L., Johnson, K., Thorn, C. B., & Weisskopf, V. F. (1974). "New extended model of hadrons." *Physical Review D, 9*, 3471.
-
-5. Liu, M.-Z., Pan, Y.-W., and Geng, L.-S. (2018). "\(D\Xi\) and \(D^*\Xi\) molecular states from one boson exchange." *Physical Review D, 98*, 014014. [arXiv:1805.08384](https://arxiv.org/abs/1805.08384).
-
----
-
-## License
-
-**GEMSTORE** is licensed under the **GNU General Public License v3.0 or later** (GPLv3+).
-
-- **SPDX Identifier**: `GPL-3.0-or-later`
-- **Full License**: See `LICENSE` file
-- **Copyright**: © 2026 Wen-Xuan Zhang
-
-You are free to:
-- ✓ Use for any purpose
-- ✓ Modify and redistribute
-- ✓ Include in research and commercial products
-
-With the requirement that:
-- ⚠ Derivative works must also be licensed under GPLv3+
-- ⚠ Source code must be provided
-- ⚠ License and copyright notice must be preserved
-
----
-
-## Contact & Support
-
-- **Author**: Wen-Xuan Zhang ([@serialcore](https://github.com/serialcore))
-- **Email**: serialcore@outlook.com
-- **Issues**: GitHub Issues tracker
-- **AI Assistant**: See `app/gemstore-assistant/SKILL.md`
-
----
-
-<div align="center">
-
-**Made with ❤️ for computational hadron physics**
-
-```
-███████████████████████████████████████
-████  GEMSTORE v0.1.4                ████
-████  Hadron Spectroscopy Tools      ████
-███████████████████████████████████████
-```
-
-*Last Updated: October 2026*
-
-</div>
+Author: Wen-Xuan Zhang, [serialcore@outlook.com](mailto:serialcore@outlook.com).

@@ -56,14 +56,11 @@ This template matches the current parser in `src/parse.c`.
 
 ## Custom Parameter Files
 
-If `model.param` is `GISTRING_CUSTOM`, `GISCREEN_CUSTOM`, `NRSTRING_CUSTOM`, or `NRSCREEN_CUSTOM`, also provide parameter file.
+If `model.param` is `GISTRING_CUSTOM`, `GISCREEN_CUSTOM`, `NRSTRING_CUSTOM`, or `NRSCREEN_CUSTOM`, also provide `model.file`.
 
-- `mn`, `ms`, `mc`, `mb` — quark masses (GeV)
-- `b` — string tension (GeV²)
-- `c` — constant potential (GeV)
-- `alpha_s` — constant strong coupling
-- `sigma` — contact smearing (GeV)
-- `mu` — screening mass (GeV), read only for `NRSCREEN`. `NRSTRING` leaves confinement linear and does not read `mu`.
+`GISTRING_CUSTOM` and `GISCREEN_CUSTOM` require `mn`, `ms`, `mc`, `mb`, `b`, `c`, `sigma_0`, `s`, `epsilon_cont`, `epsilon_sov`, `epsilon_sos`, `epsilon_tens`. `mu` is optional and defaults to 0. Do not write `alpha_s` or `sigma`.
+
+`NRSTRING_CUSTOM` and `NRSCREEN_CUSTOM` require `mn`, `ms`, `mc`, `mb`, `b`, `c`, `alpha_s`, `sigma`. `mu` is optional and defaults to 0. `NRSTRING` does not use `mu`. `NRSCREEN` uses `mu` as the screening mass in GeV. Do not write `sigma_0` or `epsilon_*`.
 
 ```json
 "file": "param_GISTRING.json"

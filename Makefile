@@ -3,11 +3,6 @@ CPPC = g++
 CFLAGS = -Wall -O2
 CPPFLAGS = -Wall -O2 -DMATHCORE_STANDALONE -DROOT_Math_VecTypes
 
-ifdef USE_LAPACKE
-    CFLAGS += -DLAPACKE
-    LDFLAGS += -llapacke -lopenblas
-endif
-
 INC_DIR = include/
 OBJ_DIR = obj/
 SRC_DIR = src/

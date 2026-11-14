@@ -897,13 +897,8 @@ void mol3_hybrid_GEM(const argsInput_t *args_input,
     if (v_out != NULL) {
         ut = matrix_init(nkeep, nkeep);
     }
-#ifdef LAPACKE
-    lapack_standard(Hfi.value, nkeep, e_out->value, (v_out != NULL) ? ut.value : NULL,
-        (v_out != NULL) ? nkeep : 0);
-#else
     eigen_standard(Hfi.value, nkeep, e_out->value, (v_out != NULL) ? ut.value : NULL,
         (v_out != NULL) ? nkeep : 0);
-#endif
 
     if (v_out != NULL) {
         *v_out = matrix_init(nkeep, nbas);

@@ -1,13 +1,13 @@
 ---
 name: gemstore-assistant
-description: Expert agent for running hadron spectroscopy simulations using the gemstore program. Handles JSON input generation for the current parser, meson and baryon GEM/SHO spectra, two-body molecular GEM with static OBE (MOLECUL2 + OBESTAT), three-body molecular GEM with HYBRID pair OBESTAT (MOLECUL3), MIT bag spectra (BAG + BAGMIT with NONE or CMI), in-medium QMC on that bag (QMCSTAD and QMCMOD at rho_b and temp), built-in meson parameter fits, basis selection, preset or custom parameter-file models, potential/wavefunction output control, and structured JSON + text outputs.
+description: Expert agent for running hadron spectroscopy simulations using the gemstore program. Handles JSON input generation for the current parser, meson and baryon GEM/SHO spectra, two-body molecular GEM (MOLECUL2 with OBESTAT, YUKAWA, EFTCONT, or HALQCD), three-body molecular GEM (MOLECUL3 + HYBRID of those pair models), MIT bag spectra (BAG + BAGMIT with NONE or CMI), in-medium QMC on that bag (QMCSTAD and QMCMOD at rho_b and temp), built-in GISCREEN meson fits (FITTING), S-wave scattering lengths (SCATTER), single-SHO 3P0 widths (3P0DECAY + QPC3P0), basis selection, preset or custom parameter-file models, potential/wavefunction output control, and structured JSON + text outputs.
 license: MIT
 compatibility: opencode
 metadata:
   audience: researchers, hadron physicists, computational particle physics
   domain: hadron spectroscopy, quark models, Gaussian expansion method
   tools: bash, file operations, subprocess execution
-  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, GISTRING_BARYON, NRSTRING, NRSCREEN, BAGMIT, BAG, QMCSTAD, QMCMOD, QMCSTAD_DEFAULT, QMCSTAD_CUSTOM, QMCMOD_CUSTOM, QMC, quark-meson coupling, rho_b, CMI, NONE, MIT bag, tetraquark, pentaquark, hexaquark, meson spectra, baryon spectra, MOLECUL2, OBESTAT, OBE, HALQCD, HALQCD_CUSTOM, Dstar Xi, molecular states, FITTING, fit.target, SCATTER, scattering length, effective range, GISCREEN_CCBAR, charmonium, bottomonium, GEM, SHO, QPC3P0, QPC3P0_CUSTOM, 3P0, 3P0DECAY, custom parameter file, print section, potential output, wavefunction output
+  keywords: gemstore, hadron spectroscopy, JSON input, GISCREEN, GISTRING, GISTRING_BARYON, NRSTRING, NRSCREEN, BAGMIT, BAG, QMCSTAD, QMCMOD, QMCSTAD_DEFAULT, QMCSTAD_CUSTOM, QMCMOD_CUSTOM, QMC, quark-meson coupling, rho_b, CMI, NONE, MIT bag, tetraquark, pentaquark, hexaquark, meson spectra, baryon spectra, MOLECUL2, MOLECUL3, HYBRID, OBESTAT, OBE, YUKAWA, YUKAWA_MT13, EFTCONT, EFTCONT_CUSTOM, HALQCD, HALQCD_CUSTOM, Dstar Xi, molecular states, FITTING, fit.target, SCATTER, scattering length, effective range, GISCREEN_CCBAR, charmonium, bottomonium, GEM, SHO, QPC3P0, QPC3P0_CUSTOM, 3P0, 3P0DECAY, custom parameter file, print section, potential output, wavefunction output
 ---
 
 # Gemstore Hadron Spectra Skill
@@ -60,7 +60,7 @@ The parameter file holds `param.gamma`, `param.mq1`, `param.mq2`, and `param.mq3
 
 `system` carries `F`, `fl1`, `fl2`, object `initial`, and array `final` of length 2. Each meson has `f1`, `f2`, `n`, `S`, `L`, `J`, `mass`, and `beta`. `n` starts at 1 and is the SHO radial quantum number. `beta` is that meson's SHO scale in GeV. `mass` is the hadron mass in GeV. `fl1` and `fl2` are the flavor weights of the two diagrams, including sign. `F` is the charge multiplicity and multiplies the width. Run from the directory that holds `model.file`.
 
-`<project>.decay.json` holds `open`, `p`, `EB`, `EC`, `width` in MeV, and `waves` with `L`, `S`, and `M`. `open` is 0 below threshold, and then `width` is 0. Example: `test/Decay-3P0/rho_pipi.json` gives 79.429 MeV.
+`<project>.decay.json` holds `open`, `p`, `EB`, `EC` (GeV), `width` (MeV), and `waves` with integer `L`, integer `S`, and amplitude `M`. `open` is 0 below threshold, and then `width` is 0. Example: `test/Decay-3P0/rho_pipi.json` gives 79.429 MeV. Each meson is one SHO. Do not insert a GEM eigenvector into this width. The analytic radial sum can lose cancellation at high `n` or large `beta`. Do not quote a bottomonium width from this task as a converged result. `f1` and `f2` are stored and do not enter the amplitude. `|L-S|<=J<=L+S` is not checked.
 
 ### Scattering length
 
@@ -122,16 +122,11 @@ Use `model.param` for presets:
 - `HALQCD_CUSTOM`
 - `QPC3P0_CUSTOM`
 
-For custom parameter sets, the model object must also include:
+For custom parameter sets, the model object must also include `file`, a path opened from the process cwd.
 
-- `file`: path to the JSON parameter file
+`GISTRING_CUSTOM` and `GISCREEN_CUSTOM` `param` object, all required except `mu`: `mn`, `ms`, `mc`, `mb`, `b`, `c`, `sigma_0`, `s`, `epsilon_cont`, `epsilon_sov`, `epsilon_sos`, `epsilon_tens`. `mu` defaults to 0 when omitted. Do not write `alpha_s` or `sigma` into a GI file. Sample: `test/Spectra-CustomParameter/param_GISCREEN.json`.
 
-- `mn`, `ms`, `mc`, `mb` — quark masses (GeV)
-- `b` — string tension (GeV²)
-- `c` — constant potential (GeV)
-- `alpha_s` — constant strong coupling
-- `sigma` — contact smearing (GeV)
-- `mu` — screening mass (GeV). Required for `NRSCREEN`. `NRSTRING` does not read `mu`; confinement stays linear.
+`NRSTRING_CUSTOM` and `NRSCREEN_CUSTOM` `param` object: `mn`, `ms`, `mc`, `mb`, `b`, `c`, `alpha_s`, `sigma`. `mu` defaults to 0. `NRSTRING` keeps linear confinement and does not use `mu`. `NRSCREEN` uses `mu` as the screening mass in GeV. Do not write `sigma_0` or `epsilon_*` into an NR file.
 
 `BAGMIT_CUSTOM` fields are listed in `templates/bag_spectra_template.md`. `QMCSTAD_CUSTOM` fields are `mn`, `ms`, `mc`, `mb`, `B`, `Z`, `m_sigma`, `m_omega`, `m_rho`, `g_sigma`, `g_omega`, `g_rho`, inside `param`. `QMCMOD_CUSTOM` adds required `g_sigma_B` and `delta`. `lambda3` is optional and defaults to 0. `QMCSTAD` does not read `g_sigma_B` or `delta`. There is no pair-binding block. `OBESTAT_CUSTOM` fields are listed in `templates/molecule_spectra_template.md` (`lambda`, `tensor_mass1/2`, `g_*`, `f_*`). `YUKAWA_CUSTOM` is `param.terms[]` with `V` (MeV·fm), `mu` (fm⁻¹), `wigner` (default 1), `bartlett` (default 0). `YUKAWA_MT13` is built in and takes no file. `QPC3P0_CUSTOM` is `param.gamma`, `param.mq1`, `param.mq2`, and `param.mq3` (GeV). `EFTCONT_CUSTOM` is `param.Ca` (MeV) and `param.Rc` (fm), with \(V=-C_a\exp[-(r/R_c)^2]\). The Gaussian norm is already inside \(C_a\). \(C_a<0\) is repulsion. There is no spin operator. Yuan–Liu Table I: `test/Spectra-EFT/`. `HALQCD_CUSTOM` is `param.V0`, `param.Vsig`, and `param.VT`, each an optional array of `{r, V}` with `r` in fm and `V` in MeV. `r` increases strictly, at most 256 points. A missing array is zero, and at least one array is required. Linear interpolation. \(r\le r_1\) keeps \(V(r_1)\). \(r\ge r_{\mathrm{last}}\) is zero. The operators are the same central, spin–spin, and tensor matrix elements as OBE, with Dirac \(k_{ss}=4\). \(^1S_0\) is \(V_0-3V_\sigma\). No \(\mathbf{L}\cdot\mathbf{S}\) and no coupled-channel matrix. A two-body file has one unlabelled channel. A three-body file keys the same objects by pair isospin (`"0"`, `"1"`, `"0.5"`, `"1.5"`). Each \(t_{ij}\) loads its own block. An unlabelled file is kept only when that pair has one \(t_{ij}\). Samples: `test/Spectra-HALQCD/`. Legs and physical masses stay in the system JSON. Yukawa does not take OBE `iso`. Two-body identical \(I=1/2\) legs write `I`. For NN/NNN use nucleon mass `0.938942` GeV so \(\hbar^2/m = 41.47\) MeV·fm². Deuteron: `J=1`, `L=0`. Triton: `J=0.5`, `P=1`, `I=0.5`, `sym12=-1`, `Lmax=0` (s-wave MT-I/III benchmark). Examples: `test/Spectra-Yukawa/nn_yukawa.json`, `test/Spectra-Yukawa/nnn_yukawa.json`.
 
@@ -216,7 +211,7 @@ Inside `system` provide `f1`, `f2`, `f3`, `J`, `P`, `sym12`, `Lmax`. Basis must 
 
 Prefer `GISTRING_BARYON` for the smeared linear GI set `argsGIString_baryon` in `src/param/argset.c`. `GISTRING_MESON` is a different fit.
 
-`<project>.state.json` states have `mass`, `rms_r12`, `rms_r13`, `rms_r23`, and `eigenvector`. With `"print":{"wfn":"true"}` the program writes `<project>.basis.dat` and coefficient files `<project>.wfn.N.dat`. `"print":{"pot":"true"}` writes `<project>.pot.dat`.
+`<project>.state.json` is only `states`. Each state has `index`, `mass`, `rms_r12`, `rms_r13`, `rms_r23`, and `eigenvector`. There is no `rms_radius` and no copy of the input. The terminal table prints 20 states. With `"print":{"wfn":"true"}` the program writes `<project>.basis.dat` (`i c nrho nlam lrho llam L sij jl coe`) and `<project>.wfn.N.dat` as `i coefficient` lines, not a radial grid. `"print":{"pot":"true"}` writes `<project>.pot.dat`. Always write integer `jl`. The solver never reads `input.jl`.
 
 ### Bag Quantum Numbers
 
@@ -267,6 +262,8 @@ Inside `system` provide `type1`–`type3`, `m1`–`m3`, `t1`–`t3`, `J`, `P`, `
 - `sym12=0` keeps three independent Jacobi charts (distinguishable hadrons). `sym12=-1` on three identical Dirac legs builds each component as the rearrangement sum of charts c=1, 2 and 3, with fermion Pauli \((-1)^{l_\rho+s_{ij}+t_{ij}}=-1\)
 - Hamiltonian is NR \(\sum m_i+\sum p_i^2/(2m_i)\) plus pair \(V_C+V_{ss}+V_t\). Elastic \(0^-\) pairs have \(V_{ss}=V_t=0\) and no pion. \(P\leftrightarrow P^*\) transitions are not in OBESTAT
 - CLI `Ebind = Mass − (m1+m2+m3)`. Bound only if `Ebind < 0` and pair RMS is clearly smaller than `rmax`. CLI prints the first 20 states; the rest live in `<project>.state.json`
+- `<project>.state.json` root has `threshold` (GeV). Each state has `index`, `mass`, `ebind`, `rms_r12`, `rms_r13`, `rms_r23`, and `eigenvector`. A run writes the eigenvector. Copies under `test/Spectra-Molecule3/` may omit it. There is no `rms_radius`
+- `"print":{"wfn":"true"}` writes `<project>.basis.dat` (`i c nrho nlam lrho llam L sij jl tij T coe`) and `<project>.wfn.N.dat` as coefficient lines. It does not write \(R(r)\). `"print":{"pot":"true"}` writes the pair potential with the two-body column layout of that pair model
 - Run from the directory that holds the three pair parameter files. Use distinct `project` names so `.state.json` files do not overwrite each other
 
 ## Available gemstore CLI
@@ -281,52 +278,39 @@ Use `--compute <file.json>` for spectroscopy, `FITTING`, `SCATTER`, and `3P0DECA
 
 - Always generate `.json` input files for normal runs.
 - Use `templates/meson_spectra_template.md` for meson spectra, `templates/meson_fitting_template.md` for meson fits, `templates/baryon_spectra_template.md` for baryons, `templates/bag_spectra_template.md` for MIT bag spectra, and `templates/molecule_spectra_template.md` for two-body molecules.
-- Use `scripts/generate_meson_inputs.py` only as a helper for meson JSON inputs.
-- Use `scripts/parse_meson_output.py` to parse and summarize gemstore JSON output files when helpful.
+- Use `scripts/generate_meson_inputs.py` only as a helper for meson JSON inputs. The package has no output parser script. Read the JSON files below directly.
 - Do not generate the old `.inp` section-based format unless the user explicitly asks for historical compatibility.
+- `"true"` is the only string that enables `print.pot` or `print.wfn`. Any other string, including `"True"` and `"1"`, disables that file. `SPECTRA` still requires the `print` object.
+- Result files are created in the process cwd, named from `project`. Do not run with a `project` that would drop those files on the repository root. Reuse `test/` inputs or a directory under `/tmp`.
 
 ## Output Expectations
 
-The `gemstore` program writes JSON output to `<project>.state.json` with the following structure:
+No spectrum file echoes `project`, `task`, `model`, `system`, `basis`, or a `generated` timestamp. Read the keys that the writer actually emits.
 
-```json
-{
-  "states": [
-    {
-      "index": 1,
-      "mass": 3.1043137618250256,
-      "rms_radius": 0.3248640927951712,
-      "eigenvector": [0.4314763615098784, 0.565769603960552, ...]
-    },
-    {
-      "index": 2,
-      "mass": 3.670680972467695,
-      "rms_radius": 0.5430166015432547,
-      "eigenvector": [-0.31343804644812767, -0.28099014148751866, ...]
-    }
-  ]
-}
-```
+- `MESON` and `MOLECUL2` `<project>.state.json`: `{ "states": [ { "index", "mass", "rms_radius", "eigenvector" } ] }`. Mass GeV, RMS fm. Meson eigenvector length is `nmax`. Two-body eigenvector length is `nch * nmax`. `Ebind` is not in the file. Compute it as `mass - (m1+m2)` from the input.
+- `BARYON` `<project>.state.json`: `{ "states": [ { "index", "mass", "rms_r12", "rms_r13", "rms_r23", "eigenvector" } ] }`. No `rms_radius`.
+- `MOLECUL3` `<project>.state.json`: root `threshold`, then `states[]` with `index`, `mass`, `ebind`, `rms_r12`, `rms_r13`, `rms_r23`, `eigenvector`. `ebind` is GeV. No `rms_radius`.
+- `BAG` / QMC `<project>.state.json`: optional root `configuration`. `states[]`: `index`, `st` when finite, `mass`, `R` (GeV^-1), `x` (four numbers), `eigenvector` of `{color, s12, s34, s123, s45, s456, st, st3, c}` for `CMI`, or `{c}` for `NONE`. QMC adds root `sigma`, `omega`, `B`, `mn_star`, `m_free`, `m_nucleon`, `R_nucleon`, `rho_s`, `mu`, `eps`, `press`, `ebind`. That `ebind` is \(E/A\) in GeV, not a molecular binding.
+- `FITTING` `<project>.fit.json`: `target`, `model`, `system`, `basis`, `mass_unit` = `MeV`, `chi2`, `edm`, `valid`, `parameters[]` of `{name, value, error, fixed}`, `states[]` of `{name, mass_calc, mass_exp, residual}`.
+- `SCATTER` `<project>.scatter.json`: `mu`, `a0`, `r0` only.
+- `3P0DECAY` `<project>.decay.json`: `open`, `p`, `EB`, `EC`, `width`, `waves[]` of `{L, S, M}`.
 
-Each entry in `states` contains:
+Text dumps when the matching `print` flag is the string `"true"`:
 
-- `index` — state number (1-indexed)
-- `mass` — computed meson mass (GeV)
-- `rms_radius` — root-mean-square radius (fm)
-- `eigenvector` — array of expansion coefficients (meson: length `nmax`; molecule: length `nch × nmax`)
-
-When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional text files are generated:
-- Meson: `<project>.pot.dat` (r, V) on 0.01–10 fm; `<project>.wfn.N.dat` (r, R, u, r²|R|²) from 0.01 fm to \(\max(10, r_{\max})\) fm (SHO \(r_{\max}=0\) stays at 10 fm)
-- Molecule: `<project>.pot.dat` (r, Vc, Vss, Vt, V) on 0.01–10 fm. `HALQCD` writes `r`, `V0`, `Vsig`, `VT`, `V1S0`. `<project>.wfn.N.dat` has one \(R_a\) per partial wave on the same radial grid as the meson wavefunction
+- Meson `.pot.dat`: `r`, `V`, 0.01–10 fm. Meson `.wfn.N.dat`: `r`, `R`, `u=rR`, `r^2|R|^2`, from 0.01 fm to max(10, `rmax`) fm. SHO has no `rmax`, so the upper limit stays 10 fm.
+- Two-body `.pot.dat`: `r`, `Vc`, `Vss`, `Vt`, `V` on 0.01–10 fm. `HALQCD` columns are `r`, `V0`, `Vsig`, `VT`, `V1S0=V0-3 Vsig`, in GeV. Two-body `.wfn.N.dat`: one radial column per partial wave on the meson radial grid.
+- Baryon and three-body `.wfn.N.dat` are expansion coefficients plus `.basis.dat`. They are not \(R(r)\).
+- Bag and QMC write neither `.pot.dat` nor `.wfn.N.dat`.
 
 ## Workflow
 
 ### Understand the request
 
-- Identify meson, baryon, bag, QMC-in-medium bag, or two-body molecule, and the flavor or hadron content.
+- Identify meson, baryon, bag, QMC-in-medium bag, two-body molecule, or three-body molecule, and the flavor or hadron content.
 - If the user asks to fit, set `task` to `FITTING` and choose `fit.target` from the six `GISCREEN_*` names. Write `project`, `task`, `basis`, and `fit` only. Do not ask the user for a mass table.
-- If the user asks for a scattering length or effective range, set `task` to `SCATTER`. Write `project`, `model`, and `system` only. Do not write `basis` or `print`.
-- For a meson spectrum extract `S`, `L`, `J`. For a baryon extract `J`, `P`, `sym12`, `Lmax`, and `jl` if the user fixes it. For a bag extract `nn,ns,nc,nb`, `NONE` versus `CMI`, and the full color and spin lists when mixing. For QMC also extract `QMCSTAD` versus `QMCMOD`, `rho_b`, and `temp`. For a two-body molecule extract the two legs, physical masses, `J`, and lowest `L`; put `cc1`, `cc2`, and `eta` in the OBESTAT parameter file, and `I` on the system. For a three-body molecule extract the three legs, masses, `J`, `P`, `I`, `Lmax`, and `sym12`.
+- If the user asks for a scattering length or effective range, set `task` to `SCATTER`. Write `project`, `model`, and `system` only. Do not write `basis` or `print`. Do not answer with a GEM mass.
+- If the user asks for a decay width or a \(^3P_0\) amplitude, set `task` to `3P0DECAY`. Write `project`, `model`, and `system` only. One SHO per meson. Do not run `SPECTRA` and do not fold a GEM eigenvector into the width.
+- For a meson spectrum extract `S`, `L`, `J`. For a baryon extract `J`, `P`, `sym12`, `Lmax`, and always write `jl` (integer; ignored by the solver). For a bag extract `nn,ns,nc,nb`, `NONE` versus `CMI`, and the full color and spin lists when mixing. For QMC also extract `QMCSTAD` versus `QMCMOD`, `rho_b`, and `temp`. For a two-body molecule extract the two legs, physical masses, `t1`, `t2`, `I`, `J`, and lowest `L`; put `cc1`, `cc2`, and `eta` in the OBESTAT parameter file. For a three-body molecule extract the three legs, masses, `t1`, `t2`, `t3`, `J`, `P`, `I`, `Lmax`, and `sym12`.
 - Detect task type.
 - Detect requested model. For a fit, take the model from `fit.target`.
 - Detect requested basis and any basis-specific parameters.
@@ -346,9 +330,9 @@ When `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set, additional tex
 
 ### Post-process and present results
 
-- For `SPECTRA`, read `<project>.state.json`. For `FITTING`, read `<project>.fit.json` and report `chi2`, `valid`, `edm`, and the floated parameters. For `SCATTER`, read `mu`, `a0`, and `r0` from `<project>.scatter.json`. The terminal summary repeats those three numbers.
-- Check for new text outputs: `<project>.pot.dat` (potential) and `<project>.wfn.N.dat` (wavefunctions per state) when `"print":{"pot":"true"}` or `"print":{"wfn":"true"}` is set.
-- Summarize masses, RMS radii, and (if requested) potential/wavefunction file locations. For bag, report `st`, mass, \(R\), and the leading color–spin components. For QMC, also report \(\sigma\), \(\omega\), \(B\), \(m_n^*\), \(M_N\), and \(E/A\) (`ebind`). For molecules, report `Mass`, `Ebind = Mass − (m1+m2)`, RMS, and the printed channel list (`2S 4D`, …).
+- For `SPECTRA`, read `<project>.state.json` using the keys in Output Expectations. Do not look up `rms_radius` on a baryon, bag, or three-body file. For `FITTING`, read `<project>.fit.json` and report `chi2`, `valid`, `edm`, and parameters with `fixed` false. For `SCATTER`, read `mu`, `a0`, and `r0`. For `3P0DECAY`, read `open`, `p`, `width`, and `waves`.
+- Check for `.pot.dat` and `.wfn.N.dat` only when the corresponding print flag is the string `"true"`. Baryon and three-body wave-function files are coefficients. Two-body and meson wave-function files are radial.
+- Summarize masses and RMS radii. For bag, report `st`, mass, \(R\), and the leading color–spin components. For QMC, also report `sigma`, `omega`, `B`, `mn_star`, `m_nucleon`, and `ebind` as \(E/A\). For two-body molecules, report `mass`, `mass-(m1+m2)`, `rms_radius`, and the printed channel list. For three-body molecules, report `mass`, `ebind`, and the three pair radii. Call a state bound only when the binding is negative and the RMS is clearly below `rmax`. The baryon and three-body terminals stop at 20 states.
 - Report eigenvectors when relevant.
 - Mention parse or validation errors with the exact offending field if gemstore rejects the input.
 

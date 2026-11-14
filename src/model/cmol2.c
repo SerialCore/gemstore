@@ -262,11 +262,7 @@ void mol2_obestat_GEM(const argsInput_t *args_input, const argsOBEModel_t *args_
     matrix_symmetrize(&Hfi);
     matrix_symmetrize(&Nfi);
 
-#ifdef LAPACKE
-    lapack_general(Hfi.value, Nfi.value, ntot, e_out->value, (v_out == NULL) ? NULL : v_out->value, ntot);
-#else
     eigen_general(Hfi.value, Nfi.value, ntot, e_out->value, (v_out == NULL) ? NULL : v_out->value, ntot);
-#endif
     e_out->len = ntot;
 
     if (n_out != NULL) {
@@ -377,11 +373,7 @@ void mol2_yukawa_GEM(const argsInput_t *args_input, const argsYKWModel_t *args_m
     matrix_symmetrize(&Hfi);
     matrix_symmetrize(&Nfi);
 
-#ifdef LAPACKE
-    lapack_general(Hfi.value, Nfi.value, ntot, e_out->value, (v_out == NULL) ? NULL : v_out->value, ntot);
-#else
     eigen_general(Hfi.value, Nfi.value, ntot, e_out->value, (v_out == NULL) ? NULL : v_out->value, ntot);
-#endif
     e_out->len = ntot;
 
     if (n_out != NULL) {
@@ -488,11 +480,7 @@ void mol2_eftcont_GEM(const argsInput_t *args_input, const argsEFTModel_t *args_
     matrix_symmetrize(&Hfi);
     matrix_symmetrize(&Nfi);
 
-#ifdef LAPACKE
-    lapack_general(Hfi.value, Nfi.value, ntot, e_out->value, (v_out == NULL) ? NULL : v_out->value, ntot);
-#else
     eigen_general(Hfi.value, Nfi.value, ntot, e_out->value, (v_out == NULL) ? NULL : v_out->value, ntot);
-#endif
     e_out->len = ntot;
 
     if (n_out != NULL) {
@@ -607,11 +595,7 @@ void mol2_halqcd_GEM(const argsInput_t *args_input, const argsHALModel_t *args_m
     matrix_symmetrize(&Hfi);
     matrix_symmetrize(&Nfi);
 
-#ifdef LAPACKE
-    lapack_general(Hfi.value, Nfi.value, ntot, e_out->value, (v_out == NULL) ? NULL : v_out->value, ntot);
-#else
     eigen_general(Hfi.value, Nfi.value, ntot, e_out->value, (v_out == NULL) ? NULL : v_out->value, ntot);
-#endif
     e_out->len = ntot;
 
     if (n_out != NULL) {

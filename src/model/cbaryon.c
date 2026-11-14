@@ -499,11 +499,7 @@ void baryon_gimodel_GEM(const argsInput_t *args_input, const argsGIModel_t *args
         ut = matrix_init(nkeep, nkeep);
     }
 
-#ifdef LAPACKE
-    lapack_standard(Hfi.value, nkeep, e_out->value, (v_out != NULL) ? ut.value : NULL, (v_out != NULL) ? nkeep : 0);
-#else
     eigen_standard(Hfi.value, nkeep, e_out->value, (v_out != NULL) ? ut.value : NULL, (v_out != NULL) ? nkeep : 0);
-#endif
 
     if (v_out != NULL) {
         *v_out = matrix_init(nkeep, nbas);

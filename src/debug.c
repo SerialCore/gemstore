@@ -308,11 +308,7 @@ void debug_eigen_system()
     array_t e = array_init(n);
     matrix_t v = matrix_init(n, n);
 
-#ifdef LAPACKE
-    lapack_general(a.value, b.value, n, e.value, v.value, n);
-#else
     eigen_general(a.value, b.value, n, e.value, v.value, n);
-#endif
 
     printf("A:\n");
     matrix_print(&a);
@@ -391,11 +387,7 @@ void debug_eigen_system_complex()
     cmatrix_print(&b);
     
     /* Call complex eigenvalue solver */
-#ifdef LAPACKE
-    lapack_general_complex(a.value, b.value, n, e.value, v.value, n);
-#else
     eigen_general_complex(a.value, b.value, n, e.value, v.value, n);
-#endif
     
     printf("e:\n");
     carray_print(&e);

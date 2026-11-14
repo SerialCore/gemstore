@@ -49,6 +49,8 @@ void print_copyright()
     printf("\n");
     printf("GEMSTORE - Hadron Spectroscopy Simulation Tools\n");
     printf("\n");
+    printf("Version: 1.5\n");
+    printf("\n");
     printf("Copyright (C) 2026, Wen-Xuan Zhang <serialcore@outlook.com>\n");
     printf("\n");
     printf("This program is free software: you can redistribute it and/or modify\n");

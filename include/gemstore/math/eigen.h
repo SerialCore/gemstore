@@ -34,10 +34,4 @@ void eigen_standard(double **a, int n, double *d, double **vt, int lt);
  * (info): Output error code: error_cholesky */
 void eigen_general(double **a, double **b, int n, double *d, double **vt, int lt);
 
-#ifdef LAPACKE
-
-void lapack_general(double **a, double **b, int n, double *e, double **vt, int lt);
-
-#endif
-
 #endif
