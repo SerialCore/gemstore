@@ -406,7 +406,7 @@ for ten momenta from 0.05 to 0.50 MeV. $a_0>0$ is attraction. If the channel lis
 The decay width is
 
 $$
-\Gamma=2\pi\frac{E_B E_C}{M_A}\,p\,F\sum_{LS}|M_{LS}|^2.
+\Gamma=2\pi\frac{E_B E_C}{M_A}pF\sum_{LS}|M_{LS}|^2.
 $$
 
 Momenta and energies are in GeV. The factor 1000 converts $\Gamma$ to MeV. Each meson is one SHO of the `beta` and `n` given in the input. A GEM eigenvector is not summed into $M_{LS}$. The analytic radial sum can lose digits at high $n$ or large $\beta$, so a high bottomonium width from this task should be checked by quadrature before it is quoted.
