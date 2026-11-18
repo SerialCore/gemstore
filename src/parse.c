@@ -406,7 +406,7 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
         input->P = read_number_item(system_json, "P")->valueint;
         input->sym12 = read_number_item(system_json, "sym12")->valueint;
         input->Lmax = read_number_item(system_json, "Lmax")->valueint;
-        input->jl = read_number_item(system_json, "jl")->valueint;
+        input->jl = (int)read_number_or(system_json, "jl", 0.0);
     }
     else if (input->system == SYSTEM_MOLECUL2) {
         input->type1 = parse_obe_leg_name(read_string_item(system_json, "type1")->valuestring);

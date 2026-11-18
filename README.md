@@ -123,11 +123,11 @@ Flavors are `1` = $n$ (up or down), `2` = $s$, `3` = $c$, `4` = $b$. The quark m
 "system": {
   "type": "BARYON",
   "f1": 1, "f2": 1, "f3": 3,
-  "J": 0.5, "P": 1, "sym12": -1, "Lmax": 0, "jl": 0
+  "J": 0.5, "P": 1, "sym12": -1, "Lmax": 0
 }
 ```
 
-`P` is $+1$ or $-1$. `sym12` is the sign under exchange of quarks 1 and 2. `Lmax` keeps channels with $l_\rho+l_\lambda\le L_{\max}$ on the Jacobi charts. The parser requires `jl`. The basis is every $j_l$ that couples to $J^P$; the stored `jl` does not select a chart. Use `GISTRING_BARYON` for the smeared linear set. `GISTRING_MESON` is a different fit. Inputs: `test/Spectra-Baryon/`.
+`P` is $+1$ or $-1$. `sym12` is the flavor symmetry of quarks 1 and 2. The exchange phase is `sym12` times $(-1)^{1+s_{ij}+l_\rho}$; a channel is kept only when that phase equals $+1$. `Lmax` keeps channels with $l_\rho+l_\lambda\le L_{\max}$. Three identical quarks use chart 1 only. Do not write `jl`. The basis is every $j_l$ that couples to $J^P$. Use `GISTRING_BARYON` for the smeared linear set. `GISTRING_MESON` is a different fit. Inputs: `test/Spectra-Baryon/`.
 
 ### MIT bag and quark-meson coupling
 
@@ -163,7 +163,7 @@ Color names: `meson`, `baryon`, `tetra11`, `tetra33`, `tetra66`, `tetra88`, `pen
 
 `type1` and `type2` are `DIRAC` (spin-1/2 baryon), `VECTOR` ($1^-$ meson), or `PSEUDOSCALAR` (elastic $0^-$ or $0^+$). `m1` and `m2` are the physical masses in GeV. `t1`, `t2`, and the total isospin `I` are required. Two identical $I=0$ baryons set `t1` and `t2` to `0`.
 
-`L` is the lowest partial wave. The solver adds $L+2$ and every total spin that couples to `J`. The JSON value of `S` does not choose that list. For example, $J=1/2$ is $^2S+^4D$ and $J=3/2$ is $^4S+^2D+^4D$.
+`L` is the lowest partial wave. Tensor mixing of S and D, together with every total spin that couples to `J`, sets the channel list. The JSON value of `S` does not choose that list. For example, $J=1/2$ is $^2S+^4D$ and $J=3/2$ is $^4S+^2D+^4D$.
 
 The same system block is used with `YUKAWA`, `EFTCONT`, and `HALQCD`. Those models do not read the OBE factors `cc` and `eta`. `YUKAWA_MT13` has no parameter file. For the Malfliet–Tjon samples, the nucleon mass is `0.938942` GeV so that $\hbar^2/m_N=41.47$ MeV·fm$^2$.
 
@@ -179,11 +179,11 @@ The same system block is used with `YUKAWA`, `EFTCONT`, and `HALQCD`. Those mode
   "type1": "PSEUDOSCALAR", "type2": "PSEUDOSCALAR", "type3": "VECTOR",
   "m1": 1.867, "m2": 0.494, "m3": 0.892,
   "t1": 0.5, "t2": 0.5, "t3": 0.5,
-  "J": 1.0, "P": -1, "I": 0.5, "Lmax": 2, "sym12": 0
+  "J": 1.0, "P": -1, "I": 0.5, "Lmax": 2
 }
 ```
 
-Intrinsic parity is $+1$ for a Dirac leg and $-1$ for a vector or pseudoscalar. The total parity is $P_1 P_2 P_3(-1)^{l_\rho+l_\lambda}$. `I` is the total isospin. Pair isospin is recoupled to `I`. `sym12` equal to `0` keeps three Jacobi charts. `sym12` equal to $-1$ on three identical Dirac legs builds each component as the rearrangement sum of charts 1, 2, and 3, with the fermion phase $(-1)^{l_\rho+s_{ij}+t_{ij}}=-1$.
+Intrinsic parity is $+1$ for a Dirac leg and $-1$ for a vector or pseudoscalar. The total parity is $P_1 P_2 P_3(-1)^{l_\rho+l_\lambda}$. `I` is the total isospin. Pair isospin is recoupled to `I`. Identical legs follow from equal type and mass. `DIRAC` is a fermion; `VECTOR` and `PSEUDOSCALAR` are bosons. An identical $\rho$-pair is kept when $(-1)^{l_\rho+(2s-s_{ij})+(2t-t_{ij})}$ equals $-1$ (fermion) or $+1$ (boson). Three identical legs add charts 2 and 3 at weight $+1$ to chart 1. `sym12` is not read for this filter.
 
 `nmax` is the number of Gaussian widths on each Jacobi axis. The dimension is $n_{\mathrm{ang}}\times n_{\max}^2$. It is not a spectroscopic radial quantum number.
 
@@ -363,7 +363,7 @@ P=P_{\mathrm{kin}}-U+\tfrac12 m_\omega^2\omega^2,
 E/A=\varepsilon/\rho_B-M_N.
 $$
 
-The spectrum is then the bag at $m_n^*$, $B(\sigma)$, and the vacuum $m_s$, $m_c$, $m_b$, and $Z$. Pair bindings are zero. That mass is not $M_N+3g_\omega\omega$.
+The spectrum is then the bag at $m_n^*$, $B(\sigma)$, and the vacuum $m_s$, $m_c$, $m_b$, and $Z$. That mass is not $M_N+3g_\omega\omega$.
 
 ### Molecules
 
@@ -373,9 +373,9 @@ $$
 H=m_1+m_2+\frac{p^2}{2\mu}+V_C+V_{ss}+V_T,
 $$
 
-with $V_{\ell s}=0$. The tensor mixes $L$ with $L+2$. Elastic $0^-$ pairs have $V_{ss}=V_T=0$ and no pion. Binding reported by the program is $E_{\mathrm{bind}}=M-(m_1+m_2)$. Treat a state as bound when $E_{\mathrm{bind}}<0$ and the RMS radius is clearly smaller than `rmax`.
+with $V_{\ell s}=0$. The tensor mixes S and D. Elastic $0^-$ pairs have $V_{ss}=V_T=0$ and no pion. Binding reported by the program is $E_{\mathrm{bind}}=M-(m_1+m_2)$. Treat a state as bound when $E_{\mathrm{bind}}<0$ and the RMS radius is clearly smaller than `rmax`.
 
-A Yukawa term is $(V/r)e^{-\mu r}(W+B P_\sigma)$ with $P_\sigma=(1+\sigma_1\cdot\sigma_2)/2$. The EFT contact is the Gaussian written above, and it does not mix $L$ with $L+2$. The HAL QCD kernel is
+A Yukawa term is $(V/r)e^{-\mu r}(W+B P_\sigma)$ with $P_\sigma=(1+\sigma_1\cdot\sigma_2)/2$. The EFT contact is the Gaussian written above, and it does not mix S and D. The HAL QCD kernel is
 
 $$
 V(r)=V_0(r)+V_\sigma(r)\,(\sigma_1\cdot\sigma_2)+V_T(r)\,S_{12}.
@@ -401,7 +401,7 @@ $$
 k\cot\delta_0=\frac{1}{a_0}+\frac12 r_0 k^2
 $$
 
-for ten momenta from 0.05 to 0.50 MeV. $a_0>0$ is attraction. If the channel list also contains $L=2$, only the diagonal $\ell=0$ potential is integrated. A Coulomb tail stops the run.
+for ten momenta from 0.05 to 0.50 MeV. $a_0>0$ is attraction. The integration uses the diagonal S-wave potential. A Coulomb tail stops the run.
 
 The decay width is
 

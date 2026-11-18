@@ -5,7 +5,7 @@
  *
  * Two-body molecule GEM. Radial path as meson_nrmodel_GEM: getnu,
  * GRnlr / GRnlp, integral_nlr_hamilton / integral_nlp_hamilton, H c = E N c.
- * Partial waves are L and L+2 with every total spin that couples to J.
+ * Partial waves are S–D mixing with every total spin that couples to J.
  * Tensor S12 mixes those blocks (Liu ²S–⁴D at J=1/2, ⁴S–²D–⁴D at J=3/2).
  */
 

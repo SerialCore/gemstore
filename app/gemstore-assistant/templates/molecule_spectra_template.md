@@ -57,7 +57,7 @@ The parameter file holds OBE couplings and `cc1`, `cc2`, `eta`. Write those thre
 | `m1`, `m2` | Physical masses (GeV); kinetic \(T=m_1+m_2+p^2/2\mu\) and threshold |
 | `t1`, `t2` | Particle isospin. Required. Two identical \(I=0\) legs (`Λc`) use `0`. |
 | `I` | Two-body total isospin. Required. |
-| `S`, `L`, `J` | `L` is the lowest partial wave. The driver adds \(L+2\) and every total spin that couples to \(J\). JSON `S` does not select the channel list. |
+| `S`, `L`, `J` | `L` is the lowest partial wave. Tensor mixing of S and D, together with every total spin that couples to \(J\), sets the channel list. JSON `S` does not select that list. |
 
 Examples: \(J=1/2\) → \(^2S+^4D\); \(J=3/2\) → \(^4S+^2D+^4D\).
 
@@ -103,7 +103,7 @@ Examples: \(J=1/2\) → \(^2S+^4D\); \(J=3/2\) → \(^4S+^2D+^4D\).
 
 ## Hamiltonian and output
 
-Static LO OBE: \(H=T+V_C+V_{ss}+V_t\), \(V_{ls}=0\). Tensor mixes \(L\) with \(L+2\).
+Static LO OBE: \(H=T+V_C+V_{ss}+V_t\), \(V_{ls}=0\). Tensor mixes S and D.
 
 CLI prints `Mass`, `Ebind = Mass − (m1+m2)`, `RMS`. Negative `Ebind` with RMS clearly below `rmax` is a bound state. Near-threshold RMS \(\approx\) `rmax` is a box state.
 
@@ -137,8 +137,7 @@ CLI prints `Mass`, `Ebind = Mass − (m1+m2)`, `RMS`. Negative `Ebind` with RMS 
     "t1": 0.5,
     "t2": 0.5,
     "t3": 0.5,
-    "Lmax": 2,
-    "sym12": 0
+    "Lmax": 2
   },
   "basis": { "type": "GEM", "nmax": 6, "rmax": 30.0, "rmin": 0.1 },
   "print": { "pot": "false", "wfn": "false" }
@@ -147,8 +146,7 @@ CLI prints `Mass`, `Ebind = Mass − (m1+m2)`, `RMS`. Negative `Ebind` with RMS 
 
 - Nested models are pairs 12, 13, 23. `nmax` is widths per Jacobi axis; \(n_{\mathrm{full}}=n_{\mathrm{ang}}\times n_{\max}^2\).
 - `I` is required total isospin. Pair \(t_{ij}\) is a basis quantum number; \(\pi/\rho\) use \(\langle\tau_i\cdot\tau_j\rangle\) of the operator pair after recoupling. Do not write system `pair1`/`pair2`/`pair3`. OBE `cc1`, `cc2`, `eta` are required in each pair's OBESTAT parameter file, including zeros. Pair \(\langle\tau\cdot\tau\rangle\) is recoupled from `I`. `t1`,`t2`,`t3` are required. DKK* uses \(I=1/2\).
-- `sym12=0` uses three independent charts (distinguishable hadrons).
-- `sym12=-1` on three identical Dirac legs builds each component as the rearrangement sum of charts c=1, 2 and 3, with fermion Pauli \((-1)^{l_\rho+s_{ij}+t_{ij}}=-1\).
+- Identical legs follow from equal type and mass. `DIRAC` is a fermion; `VECTOR` and `PSEUDOSCALAR` are bosons. An identical \(\rho\)-pair is kept when \((-1)^{l_\rho+(2s-s_{ij})+(2t-t_{ij})}\) equals \(-1\) (fermion) or \(+1\) (boson). Three identical legs add cyclic charts 2 and 3 at weight \(+1\) to chart 1. Distinguishable hadrons, or one identical pair, occupy independent charts `c=1,2,3`. Do not write `sym12` for this filter; the solver does not read it.
 - CLI `Ebind = Mass − (m1+m2+m3)` and three pair RMS. Bound only if `Ebind < 0` and RMS is clearly below `rmax`.
 - `"print":{"pot":"true"}` writes three pair blocks in `<project>.pot.dat`.
 - Run from `test/Spectra-Molecule3/` so relative pair files resolve. Use a distinct `project` per scan.
@@ -176,7 +174,7 @@ Local potential, not the molecular OBE. Two-body driver is `mol2_yukawa_GEM`. Th
 }
 ```
 
-`V` is MeV·fm, `mu` is fm⁻¹. `wigner` defaults to 1 and `bartlett` to 0. \(P_\sigma=(1+\sigma_1\cdot\sigma_2)/2\). `YUKAWA_MT13` is that Malfliet–Tjon I/III set. With \(m_N=0.938942\) GeV (\(\hbar^2/m=41.47\) MeV·fm²), the deuteron (`J=1`, `L=0`, `nmax` 20) is −2.231 MeV. The triton (`Lmax=0`, `I=0.5`, `sym12=-1`) uses the local potential in every partial wave. Inputs are in `test/Spectra-Yukawa/`. With `rmin` 0.1 fm and `rmax` 10 fm, `nmax` 7 (`nnn_yukawa.json`) gives −8.67 MeV and the scan levels off at −8.88 MeV by `nmax` 10. The s-wave-projected Faddeev benchmark is −8.54 MeV. The deuteron writes `"I": 0`. There is no tensor, so \(L\) and \(L+2\) do not mix.
+`V` is MeV·fm, `mu` is fm⁻¹. `wigner` defaults to 1 and `bartlett` to 0. \(P_\sigma=(1+\sigma_1\cdot\sigma_2)/2\). `YUKAWA_MT13` is that Malfliet–Tjon I/III set. With \(m_N=0.938942\) GeV (\(\hbar^2/m=41.47\) MeV·fm²), the deuteron (`J=1`, `L=0`, `nmax` 20) is −2.231 MeV. The triton (`Lmax=0`, `I=0.5`) uses the local potential in every partial wave. Identical nucleons follow from equal `DIRAC` masses. Inputs are in `test/Spectra-Yukawa/`. With `rmin` 0.1 fm and `rmax` 10 fm, `nmax` 7 (`nnn_yukawa.json`) gives −8.67 MeV and the scan levels off at −8.88 MeV by `nmax` 10. The s-wave-projected Faddeev benchmark is −8.54 MeV. The deuteron writes `"I": 0`. There is no tensor, so S and D do not mix.
 
 ## EFT contact (`EFTCONT`)
 
@@ -214,7 +212,7 @@ V(r)=V_0(r)+V_\sigma(r)\,(\sigma_1\cdot\sigma_2)+V_T(r)\,S_{12}.
 }
 ```
 
-`r` is fm and `V` is MeV. Each of `V0`, `Vsig`, and `VT` is optional; a missing array is zero, and at least one must be present. `r` increases strictly and stays non-negative. At most 256 points. Linear interpolation. \(r\le r_1\) keeps \(V(r_1)\). \(r\ge r_{\mathrm{last}}\) is zero. Two Dirac legs use the same \(k_{ss}=4\) factor as OBE, so the stored \(V_\sigma\) and \(V_T\) are coefficients of the Pauli operators. \(^1S_0\) is \(V_0-3V_\sigma\). \(S_{12}\) mixes \(L\) with \(L+2\). No \(\mathbf{L}\cdot\mathbf{S}\) and no coupled-channel matrix. Do not write OBE `iso`.
+`r` is fm and `V` is MeV. Each of `V0`, `Vsig`, and `VT` is optional; a missing array is zero, and at least one must be present. `r` increases strictly and stays non-negative. At most 256 points. Linear interpolation. \(r\le r_1\) keeps \(V(r_1)\). \(r\ge r_{\mathrm{last}}\) is zero. Two Dirac legs use the same \(k_{ss}=4\) factor as OBE, so the stored \(V_\sigma\) and \(V_T\) are coefficients of the Pauli operators. \(^1S_0\) is \(V_0-3V_\sigma\). \(S_{12}\) mixes S and D. No \(\mathbf{L}\cdot\mathbf{S}\) and no coupled-channel matrix. Do not write OBE `iso`.
 
 One unlabelled channel is the two-body file, and a three-body pair that has only one \(t_{ij}\). When a three-body pair has several \(t_{ij}\), key each projected channel by that value. The \(I=0\) block is used only on \(t_{ij}=0\); it is not multiplied by the \(I=1\) factor.
 
@@ -231,6 +229,6 @@ Samples in `test/Spectra-HALQCD/` check the table against the Yuan–Liu \(DD\) 
 
 ## Scattering length (`SCATTER`)
 
-`task` is `SCATTER`. Write `project`, `model`, and `system` only. Do not write `basis` or `print`. `system.type` is `MOLECUL2`. `model.type` is `OBESTAT`, `YUKAWA`, `EFTCONT`, or `HALQCD`, with the same parameter keys as a spectrum. `L` is 0. `S` and `J` select the partial wave. The program integrates its own S-wave radial equation from the potential and the reduced mass. It does not read a GEM eigenvector. If the spectrum channel list also contains \(L=2\), this task keeps the diagonal \(\ell=0\) potential and does not solve the coupled equation. Coulomb is absent.
+`task` is `SCATTER`. Write `project`, `model`, and `system` only. Do not write `basis` or `print`. `system.type` is `MOLECUL2`. `model.type` is `OBESTAT`, `YUKAWA`, `EFTCONT`, or `HALQCD`, with the same parameter keys as a spectrum. `L` is 0. `S` and `J` select the partial wave. The program integrates its own S-wave radial equation from the potential and the reduced mass. It does not read a GEM eigenvector. The integration uses the diagonal S-wave potential. Coulomb is absent.
 
 The result file `<project>.scatter.json` holds `mu` in GeV, `a0` in fm, and `r0` in fm. It does not record the model, the system, or the channel. The convention is \(k\cot\delta_0=1/a_0+\frac12 r_0 k^2\). \(a_0>0\) is attraction. Examples: `test/ScatterTask/dd_scatter.json`, `test/ScatterTask/lclc_scatter.json`. \(DD\) gives \(a_0=-0.250006\) fm. \(\Lambda_c\Lambda_c\) gives \(a_0=-0.210000\) fm.

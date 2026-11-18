@@ -32,7 +32,7 @@ void print_help()
     printf("gemstore: hadron spectroscopy tools using Gaussian Expanding Method, Godfrey-Isgur models and more.\n\n");
     printf("Usage: gemstore [--compute FILE] [--debug UNIT]\n\n");
     printf("Arguments:\n");
-    printf("  -c, --compute         run FILE. task is SPECTRA or FITTING\n");
+    printf("  -c, --compute         run FILE. task is SPECTRA, FITTING, SCATTER, or 3P0DECAY\n");
     printf("  -d, --debug           debug UNIT such as su3_product, soc_operator, casimir_operator, \n");
     printf("                        color_wfn, spin_wfn, isospin_wfn, orbit_wfn, eigen_system,\n");
     printf("                        eigen_system_complex\n");

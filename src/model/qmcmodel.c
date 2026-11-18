@@ -36,7 +36,7 @@ static double qmc_scalar_charge(double m, double x, double r)
 
 /* Color-free bag of three light quarks at this mn and B. The mean field always
  * uses this source. A CMI or strange spectrum is evaluated later, at the solved σ.
- * x is the light-quark boundary root. Pair bindings stay zero. */
+ * x is the light-quark boundary root. */
 static void qmc_source(const argsQMCModel_t *model, double mn, double B, double *mass, double *radius, double *x)
 {
     argsInput_t input = {0};
@@ -277,7 +277,7 @@ static double qmc_sigma_residual(double sigma, void *ctx)
 }
 
 /* Spectrum bag: in-medium light mass and B(σ). ms, mc, mb and Z stay free.
- * Pair bindings stay zero. Quark content is supplied by the caller. */
+ * Quark content is supplied by the caller. */
 static argsBAGModel_t qmc_spectrum_bag(const argsQMCModel_t *model, double mn, double B)
 {
     argsBAGModel_t bag = {0};

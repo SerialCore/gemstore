@@ -99,7 +99,7 @@ void scatter_ere_mol2(const argsInput_t *input, double *mu_gev, double *a0_fm, d
         exit(1);
     }
     if (extra) {
-        printf("  SCATTER uses the diagonal l=0 potential. Coupling to L=2 is not solved.\n");
+        printf("  SCATTER uses the diagonal S-wave potential.\n");
     }
 
     s1 = obe_leg_spin(input->type1);

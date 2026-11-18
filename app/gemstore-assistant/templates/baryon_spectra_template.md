@@ -18,8 +18,7 @@ Matches `src/parse.c`. Baryon `SPECTRA` uses `GEM` with `GISTRING` or `GISCREEN`
     "J": 0.5,
     "P": 1,
     "sym12": -1,
-    "Lmax": 0,
-    "jl": 0
+    "Lmax": 0
   },
   "basis": {
     "type": "GEM",
@@ -37,8 +36,8 @@ Matches `src/parse.c`. Baryon `SPECTRA` uses `GEM` with `GISTRING` or `GISCREEN`
 ## Fields
 
 - Flavors `f1`, `f2`, `f3`: `1` = n, `2` = s, `3` = c, `4` = b
-- `J`, `P` (`+1` or `-1`), `sym12` (`+1` or `-1`), `Lmax`
-- Always write integer `jl`. The parser requires it. The solver does not read it. The basis includes every \(j_l\) that couples to \(J^P\)
+- `J`, `P` (`+1` or `-1`), `sym12` (flavor symmetry of quarks 1 and 2, `+1` or `-1`), `Lmax`
+- Do not write `jl`. An existing integer is stored and ignored. The basis includes every \(j_l\) that couples to \(J^P\)
 - `GISTRING_BARYON` is `argsGIString_baryon` in `src/param/argset.c`. `GISTRING_MESON` is a meson fit
 - `NRSTRING` and `NRSCREEN` are rejected for baryon spectra
 - Output `<project>.state.json`: `mass`, `rms_r12`, `rms_r13`, `rms_r23`, `eigenvector`
