@@ -45,7 +45,7 @@ Strings in the JSON input are case-sensitive. Masses in spectrum files are in Ge
 
 `NRSTRING` and `NRSCREEN` are non-relativistic Cornell Hamiltonians. They check the meson radial solver. Baryon spectra in this version are Godfrey–Isgur only. `SHO` is accepted for mesons and for meson fits. Bag and molecular spectra use the bases in the table.
 
-The following problems are outside this version: non-relativistic baryon spectra, coupled channels, folded potentials, $P\leftrightarrow P^*$ transitions, Coulomb scattering, a coupled $\ell=0$ and $\ell=2$ scattering equation, and a $^3P_0$ width built from a GEM wave function. The decay task uses one harmonic-oscillator function for each meson.
+The following problems are outside this version: non-relativistic baryon spectra, coupled channels, folded potentials, $P\leftrightarrow P^*$ transitions, spin-$3/2$ baryons in OBE, a coupled $\ell=0$ and $\ell=2$ scattering equation, and a $^3P_0$ width built from a GEM wave function. The decay task uses one harmonic-oscillator function for each meson.
 
 ## Requirements and build
 
@@ -161,7 +161,7 @@ Color names: `meson`, `baryon`, `tetra11`, `tetra33`, `tetra66`, `tetra88`, `pen
 "basis": { "type": "GEM", "nmax": 20, "rmax": 30.0, "rmin": 0.1 }
 ```
 
-`type1` and `type2` are `DIRAC` (spin-1/2 baryon), `VECTOR` ($1^-$ meson), or `PSEUDOSCALAR` (elastic $0^-$ or $0^+$). `m1` and `m2` are the physical masses in GeV. `t1`, `t2`, and the total isospin `I` are required. Two identical $I=0$ baryons set `t1` and `t2` to `0`.
+`type1` and `type2` are `DIRAC` (spin-1/2 baryon), `VECTOR` ($1^-$ meson), or `PSEUDOSCALAR` (elastic $0^-$ or $0^+$). `m1` and `m2` are the physical masses in GeV. `t1`, `t2`, and the total isospin `I` are required. $\pi$ and $\rho$ use $\langle\tau\cdot T\rangle$ from those three numbers. A $t=1/2$ leg uses $\tau=2T$. Two doublets give $-3$ or $+1$. $\Sigma_c$ ($t=1$) with $\bar D$ gives $-2$ at $I=1/2$ and $+1$ at $I=3/2$. Two $t=0$ legs give $0$. An antimeson is a nonzero `cc` on that meson in the parameter file; it flips $\pi$ and $\omega$ and does not change the isospin factor. Identical legs of any common $t$ keep states with $(-1)^{L+(2s-S)+(2t-I)}$ equal to $-1$ (Dirac) or $+1$ (meson). Two identical $I=0$ baryons set `t1` and `t2` to `0`.
 
 `L` is the lowest partial wave. Tensor mixing of S and D, together with every total spin that couples to `J`, sets the channel list. The JSON value of `S` does not choose that list. For example, $J=1/2$ is $^2S+^4D$ and $J=3/2$ is $^4S+^2D+^4D$.
 

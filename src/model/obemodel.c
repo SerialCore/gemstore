@@ -11,8 +11,10 @@
  *   meson–meson           MesonMeson
  *   one Dirac, one meson  MesonBaryon
  * Elastic 0-, 0+ and 1- meson legs are covered (0+ uses the 0- vertices).
- * P ↔ P*, AxialVector, finite-mass Gordon, dipole / Λ1 ≠ Λ2, and extra
- * bosons are not.
+ * An antimeson is cc ≠ 0 on that meson leg (π and ω flip). The isospin
+ * factor is obe_tau_dot, not a second flip from cc.
+ * P ↔ P* and spin 3/2 are left out on purpose. AxialVector, finite-mass
+ * Gordon, dipole / Λ1 ≠ Λ2, and extra bosons are not in this operator.
  * π, σ, ρ, ω masses and G-parity live in obe_boson[] below.
  */
 
@@ -255,13 +257,20 @@ static void obe_leg_coup(const argsOBEModel_t *model, int boson, int which,
     *f *= s;
 }
 
+/* Doublet vertex is τ = 2T. Integer isospin uses T. Two isoscalars give 0. */
+double obe_tau_dot(double ti, double tj, double tij)
+{
+    double vi = (fabs(ti - 0.5) < 1e-8) ? 2.0 : 1.0;
+    double vj = (fabs(tj - 0.5) < 1e-8) ? 2.0 : 1.0;
+    double tt = tij * (tij + 1.0) - ti * (ti + 1.0) - tj * (tj + 1.0);
+
+    return 0.5 * vi * vj * tt;
+}
+
 static double obe_iso(const argsOBEModel_t *model, int boson)
 {
-    double iso;
-
     if (!obe_boson[boson].isovector) return 1.0;
-    iso = model->iso;
-    return (iso == 0.0) ? 1.0 : iso;
+    return model->iso;
 }
 
 /*

@@ -94,10 +94,10 @@ Examples: \(J=1/2\) → \(^2S+^4D\); \(J=3/2\) → \(^4S+^2D+^4D\).
 | `tensor_mass1/2` | \(M\) in \(f/(2M)\), Liu Table II convention, not the pole mass |
 | `g_*` | Liu table couplings; pion vertex conversion is internal |
 | `f_*` | Magnetic \(f=\kappa g\). Omit or `0` to drop magnetic \(V_{ss},V_t\) |
-| `cc1`, `cc2` | Meson C on each leg. `0` leaves G-parity. Nonzero on a meson leg flips \(\pi,\omega\). Dirac `cc` is ignored. Write `0`. |
+| `cc1`, `cc2` | Meson C on each leg. `0` leaves G-parity. Nonzero on a meson leg flips \(\pi,\omega\) (the antimeson). Dirac `cc` is ignored. This does not change \(\langle\tau\cdot T\rangle\). |
 | `eta` | MM C-parity on pion and magnetic vector. Write `+1` or `-1`. `0` is read as `+1`. Unused for meson–baryon. Write `0` when unused. |
 
-`type1` and `m1` stay in the system JSON. `cc1`, `cc2`, and `eta` are required in this file. \(\langle\tau_1\cdot\tau_2\rangle\) is set from `I`.
+`type1` and `m1` stay in the system JSON. `cc1`, `cc2`, and `eta` are required in this file. \(\langle\tau\cdot T\rangle\) is set from `t1`, `t2`, and `I`. A \(t=1/2\) leg uses \(\tau=2T\). \(\Sigma_c\bar D\) at \(I=1/2\) is \(-2\).
 
 `model.file` is opened from the process cwd. Run next to the parameter file (as in `test/Spectra-Molecule2/`) or give an absolute path.
 
@@ -146,7 +146,7 @@ CLI prints `Mass`, `Ebind = Mass − (m1+m2)`, `RMS`. Negative `Ebind` with RMS 
 
 - Nested models are pairs 12, 13, 23. `nmax` is widths per Jacobi axis; \(n_{\mathrm{full}}=n_{\mathrm{ang}}\times n_{\max}^2\).
 - `I` is required total isospin. Pair \(t_{ij}\) is a basis quantum number; \(\pi/\rho\) use \(\langle\tau_i\cdot\tau_j\rangle\) of the operator pair after recoupling. Do not write system `pair1`/`pair2`/`pair3`. OBE `cc1`, `cc2`, `eta` are required in each pair's OBESTAT parameter file, including zeros. Pair \(\langle\tau\cdot\tau\rangle\) is recoupled from `I`. `t1`,`t2`,`t3` are required. DKK* uses \(I=1/2\).
-- Identical legs follow from equal type and mass. `DIRAC` is a fermion; `VECTOR` and `PSEUDOSCALAR` are bosons. An identical \(\rho\)-pair is kept when \((-1)^{l_\rho+(2s-s_{ij})+(2t-t_{ij})}\) equals \(-1\) (fermion) or \(+1\) (boson). Three identical legs add cyclic charts 2 and 3 at weight \(+1\) to chart 1. Distinguishable hadrons, or one identical pair, occupy independent charts `c=1,2,3`. Do not write `sym12` for this filter; the solver does not read it.
+- Identical legs follow from equal type and mass. `DIRAC` is a fermion; `VECTOR` and `PSEUDOSCALAR` are bosons. An identical \(\rho\)-pair is kept when \((-1)^{l_\rho+(2s-s_{ij})+(2t-t_{ij})}\) equals \(-1\) (fermion) or \(+1\) (boson). Three identical legs add cyclic charts 2 and 3 at weight \(+1\) to chart 1. Distinguishable hadrons, or one identical pair, occupy independent charts `c=1,2,3`. Do not write `sym12` for this filter; the parser ignores it.
 - CLI `Ebind = Mass − (m1+m2+m3)` and three pair RMS. Bound only if `Ebind < 0` and RMS is clearly below `rmax`.
 - `"print":{"pot":"true"}` writes three pair blocks in `<project>.pot.dat`.
 - Run from `test/Spectra-Molecule3/` so relative pair files resolve. Use a distinct `project` per scan.

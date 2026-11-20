@@ -72,33 +72,25 @@ int mol2_build_channels(const argsInput_t *input, int *Lout, double *Sout, int m
     ident = (input->type1 == input->type2 && fabs(input->m1 - input->m2) < 1e-9);
     fermion = (input->type1 == OBE_LEG_DIRAC);
     totI = input->iso_I;
+    if (ident && fabs(input->iso_t1 - input->iso_t2) > 1e-8) {
+        fprintf(stderr, "Error: identical legs need equal isospin, t1=%.4g t2=%.4g.\n",
+            input->iso_t1, input->iso_t2);
+        exit(1);
+    }
+    if (ident && !mol2_triangle(input->iso_t1, input->iso_t2, totI)) {
+        fprintf(stderr, "Error: identical legs have I=%.4g outside t=%.4g.\n",
+            totI, input->iso_t1);
+        exit(1);
+    }
 
     for (L = L0; L <= L0 + 2; L += 2) {
         for (S = fabs(s1 - s2); S <= s1 + s2 + 1e-10; S += 1.0) {
-            int t_half, t_zero;
             if (!mol2_triangle(S, (double)L, J)) {
                 continue;
             }
-            /* Two I=1/2 legs: T is system I. Two I=0 legs (Λc): T=0
-             * and the isospin factor in the exchange sign is absent. */
-            t_half = fabs(input->iso_t1 - 0.5) < 1e-9 && fabs(input->iso_t2 - 0.5) < 1e-9;
-            t_zero = fabs(input->iso_t1) < 1e-9 && fabs(input->iso_t2) < 1e-9;
-            if (ident && t_half) {
-                if (totI < -1e-12) {
-                    fprintf(stderr, "Error: identical I=1/2 legs need I.\n");
-                    exit(1);
-                }
-                if (!mol2_pair_sym_ok(L, s1, 0.5, S, totI, fermion)) {
-                    continue;
-                }
-            }
-            if (ident && t_zero
-                && !mol2_pair_sym_ok(L, s1, 0.0, S, 0.0, fermion)) {
+            /* (−1)^{L+(2s−S)+(2t−I)} for any common t, including Σc (t=1). */
+            if (ident && !mol2_pair_sym_ok(L, s1, input->iso_t1, S, totI, fermion)) {
                 continue;
-            }
-            if (ident && !t_half && !t_zero) {
-                fprintf(stderr, "Error: identical-leg exchange supports t=1/2 or t=0 only.\n");
-                exit(1);
             }
             if (Lout) Lout[n] = L;
             if (Sout) Sout[n] = S;

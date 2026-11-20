@@ -212,7 +212,7 @@ Inside `system` provide `f1`, `f2`, `f3`, `J`, `P`, `sym12`, `Lmax`. Basis must 
 
 Prefer `GISTRING_BARYON` for the smeared linear GI set `argsGIString_baryon` in `src/param/argset.c`. `GISTRING_MESON` is a different fit.
 
-`<project>.state.json` is only `states`. Each state has `index`, `mass`, `rms_r12`, `rms_r13`, `rms_r23`, and `eigenvector`. There is no `rms_radius` and no copy of the input. The terminal table prints 20 states. With `"print":{"wfn":"true"}` the program writes `<project>.basis.dat` (`i c nrho nlam lrho llam L sij jl coe`) and `<project>.wfn.N.dat` as `i coefficient` lines, not a radial grid. `"print":{"pot":"true"}` writes `<project>.pot.dat`. Do not write `jl`; an existing integer is stored and ignored.
+`<project>.state.json` is only `states`. Each state has `index`, `mass`, `rms_r12`, `rms_r13`, `rms_r23`, and `eigenvector`. There is no `rms_radius` and no copy of the input. The terminal table prints 20 states. With `"print":{"wfn":"true"}` the program writes `<project>.basis.dat` (`i c nrho nlam lrho llam L sij jl coe`) and `<project>.wfn.N.dat` as `i coefficient` lines, not a radial grid. `"print":{"pot":"true"}` writes `<project>.pot.dat`. Do not write `jl`. An extra `jl` key is ignored.
 
 ### Bag Quantum Numbers
 
@@ -242,12 +242,27 @@ At \(0.16\,\mathrm{fm}^{-3}\) and \(T=0\), the shipped samples give \(E/A=+18.9\
 
 ### Two-Body Molecule Quantum Numbers
 
-Inside `system` provide `type1`, `type2`, `m1`, `m2`, `t1`, `t2`, `I`, `S`, `L`, `J`. For `OBESTAT`, `cc1`, `cc2`, and `eta` are required in the parameter file, including zeros. For two \(t=1/2\) legs, \(\langle\tau_1\cdot\tau_2\rangle\) is set from `I`. Other pair models omit those OBE factors. Two identical \(I=0\) baryons set `t1` and `t2` to `0`. Basis must be `GEM`. Model is `OBESTAT` with `param` `OBESTAT_CUSTOM` and `file`, `YUKAWA` with `YUKAWA_MT13` or `YUKAWA_CUSTOM`, `EFTCONT` with `EFTCONT_CUSTOM` and `file`, or `HALQCD` with `HALQCD_CUSTOM` and `file`. Use `templates/molecule_spectra_template.md`. Example: `test/Spectra-Molecule2/dstar_xi_I0.json`. Yukawa NN: `test/Spectra-Yukawa/nn_yukawa.json`. EFT contact: `test/Spectra-EFT/dd_eft.json`. HAL QCD tables: `test/Spectra-HALQCD/dd_hal_v0.json`.
+Inside `system` provide `type1`, `type2`, `m1`, `m2`, `t1`, `t2`, `I`, `S`, `L`, `J`. For `OBESTAT`, `cc1`, `cc2`, and `eta` are required in the parameter file, including zeros. \(\langle\tau\cdot T\rangle\) is set from `t1`, `t2`, and `I` for every pair. A \(t=1/2\) leg uses \(\tau=2T\), so two doublets give \(-3\) or \(+1\), and \(\Sigma_c\) (\(t=1\)) with \(\bar D\) gives \(-2\) at \(I=1/2\) and \(+1\) at \(I=3/2\). Two \(t=0\) legs give 0. Other pair models omit those OBE factors. Identical legs of any common `t` use \((-1)^{L+(2s-S)+(2t-I)}\). Two identical \(I=0\) baryons set `t1` and `t2` to `0`. Basis must be `GEM`. Model is `OBESTAT` with `param` `OBESTAT_CUSTOM` and `file`, `YUKAWA` with `YUKAWA_MT13` or `YUKAWA_CUSTOM`, `EFTCONT` with `EFTCONT_CUSTOM` and `file`, or `HALQCD` with `HALQCD_CUSTOM` and `file`. Use `templates/molecule_spectra_template.md`. Example: `test/Spectra-Molecule2/dstar_xi_I0.json`. Yukawa NN: `test/Spectra-Yukawa/nn_yukawa.json`. EFT contact: `test/Spectra-EFT/dd_eft.json`. HAL QCD tables: `test/Spectra-HALQCD/dd_hal_v0.json`.
 
 - `type1`, `type2`: `DIRAC` (baryon 1/2), `VECTOR` (1− meson), `PSEUDOSCALAR` (elastic 0− or 0+)
 - `m1`, `m2`: physical masses in GeV (threshold and \(p^2/2\mu\))
-- `cc1`, `cc2`, `eta`: OBESTAT parameter-file fields. `cc` nonzero on a meson leg flips \(\pi,\omega\). `eta` is MM C-parity (`0` is read as `+1`). \(\langle\tau\cdot\tau\rangle\) comes from system `I`
+- `cc1`, `cc2`, `eta`: OBESTAT parameter-file fields. Rules are in **OBESTAT scope** below. \(\langle\tau\cdot T\rangle\) comes from `t1`, `t2`, and `I`
 - `L` is the lowest partial wave. Tensor mixing of S and D, together with every total spin that couples to \(J\), sets the channel list. JSON `S` does not pick that list (\(J=1/2\) → \(^2S+^4D\); \(J=3/2\) → \(^4S+^2D+^4D\))
+
+### OBESTAT scope
+
+Leave these two out. Do not add a channel, a mass gap, or a leg type for them:
+
+- \(P\leftrightarrow P^*\) transitions. Each leg is elastic. \(D\bar D^*\leftrightarrow D^*\bar D\) is not in the Hamiltonian.
+- Spin \(3/2\). `DIRAC` is spin \(1/2\). \(\Sigma_c^*\) and \(\Sigma_c\leftrightarrow\Sigma_c^*\) are out.
+
+The system JSON has no particle or antiparticle flag. `cc1` and `cc2` in the OBESTAT parameter file are the charge conjugation of leg 1 and leg 2, in the same order as `type1` and `type2`.
+
+- `0` on a meson leg: particle meson. \(\pi\) and \(\omega\) keep the particle sign.
+- Nonzero on a meson leg: that leg is the antimeson. \(\pi\) and \(\omega\) each get an extra \(-1\). \(\sigma\) and \(\rho\) stay. \(\langle\tau\cdot T\rangle\) stays the value from the isospins.
+- Nonzero on a `DIRAC` leg: ignored. A baryon and an antibaryon are the same `DIRAC` leg.
+- \(\bar K^*\) in arXiv:2008.07389 stays `cc=0`. That field is already written in the Lagrangian. Do not set `cc` only because the name carries a bar.
+- `eta` is the C-parity of a meson–meson state. It multiplies the pion and the magnetic vector piece. It does not mark which leg is the antimeson. Write `+1` or `-1`. A `0` is read as `+1`. Meson–baryon ignores `eta`.
 
 The Hamiltonian is static LO OBE: \(H=T+V_C+V_{ss}+V_t\), \(V_{ls}=0\). CLI `Ebind = Mass − (m1+m2)`. Treat a state as bound only if `Ebind < 0` and RMS is clearly smaller than `rmax`. Near-threshold RMS \(\approx\) `rmax` is a box state. Do not report a GEM mass as a scattering length. Scattering length is `task` `SCATTER` and is read from `<project>.scatter.json`.
 
@@ -260,8 +275,8 @@ Inside `system` provide `type1`–`type3`, `m1`–`m3`, `t1`–`t3`, `J`, `P`, `
 - Legs: `DIRAC`, `VECTOR`, `PSEUDOSCALAR`. Intrinsic parity is `+1` for Dirac and `−1` for vector/pseudoscalar; total \(P=P_1 P_2 P_3 (-1)^{l_\rho+l_\lambda}\)
 - `nmax` is the number of GEM widths per Jacobi axis. The space is \(n_{\mathrm{ang}}\times n_{\max}^2\). Do not treat `nmax` as a spectroscopic \(n_r\)
 - `I` is required total isospin. Pair \(t_{ij}\) is a basis quantum number recoupled to \(I\). DKK* uses \(I=1/2\)
-- Identical legs: same type and mass. `DIRAC` is a fermion; `VECTOR` and `PSEUDOSCALAR` are bosons. An identical \(\rho\)-pair is kept when \((-1)^{l_\rho+(2s-s_{ij})+(2t-t_{ij})}\) equals \(-1\) (fermion) or \(+1\) (boson). Three identical legs add cyclic charts 2 and 3 at weight \(+1\) to chart 1. Distinguishable hadrons, or one identical pair, occupy independent charts `c=1,2,3`, with Fermi/Bose only on the identical \(\rho\)-pair. `sym12` may appear in old JSON; the solver does not read it
-- Hamiltonian is NR \(\sum m_i+\sum p_i^2/(2m_i)\) plus pair \(V_C+V_{ss}+V_t\). Elastic \(0^-\) pairs have \(V_{ss}=V_t=0\) and no pion. \(P\leftrightarrow P^*\) transitions are not in OBESTAT
+- Identical legs: same type and mass. `DIRAC` is a fermion; `VECTOR` and `PSEUDOSCALAR` are bosons. An identical \(\rho\)-pair is kept when \((-1)^{l_\rho+(2s-s_{ij})+(2t-t_{ij})}\) equals \(-1\) (fermion) or \(+1\) (boson). Three identical legs add cyclic charts 2 and 3 at weight \(+1\) to chart 1. Distinguishable hadrons, or one identical pair, occupy independent charts `c=1,2,3`, with Fermi/Bose only on the identical \(\rho\)-pair. `sym12` may appear in old JSON; the parser ignores it
+- Hamiltonian is NR \(\sum m_i+\sum p_i^2/(2m_i)\) plus pair \(V_C+V_{ss}+V_t\). Elastic \(0^-\) pairs have \(V_{ss}=V_t=0\) and no pion. Antimeson `cc` and the two deferred pieces are in **OBESTAT scope**
 - CLI `Ebind = Mass − (m1+m2+m3)`. Bound only if `Ebind < 0` and pair RMS is clearly smaller than `rmax`. CLI prints the first 20 states; the rest live in `<project>.state.json`
 - `<project>.state.json` root has `threshold` (GeV). Each state has `index`, `mass`, `ebind`, `rms_r12`, `rms_r13`, `rms_r23`, and `eigenvector`. A run writes the eigenvector. Copies under `test/Spectra-Molecule3/` may omit it. There is no `rms_radius`
 - `"print":{"wfn":"true"}` writes `<project>.basis.dat` (`i c nrho nlam lrho llam L sij jl tij T coe`) and `<project>.wfn.N.dat` as coefficient lines. It does not write \(R(r)\). `"print":{"pot":"true"}` writes the pair potential with the two-body column layout of that pair model
@@ -311,7 +326,7 @@ Text dumps when the matching `print` flag is the string `"true"`:
 - If the user asks to fit, set `task` to `FITTING` and choose `fit.target` from the six `GISCREEN_*` names. Write `project`, `task`, `basis`, and `fit` only. Do not ask the user for a mass table.
 - If the user asks for a scattering length or effective range, set `task` to `SCATTER`. Write `project`, `model`, and `system` only. Do not write `basis` or `print`. Do not answer with a GEM mass.
 - If the user asks for a decay width or a \(^3P_0\) amplitude, set `task` to `3P0DECAY`. Write `project`, `model`, and `system` only. One SHO per meson. Do not run `SPECTRA` and do not fold a GEM eigenvector into the width.
-- For a meson spectrum extract `S`, `L`, `J`. For a baryon extract `J`, `P`, `sym12` (flavor symmetry of quarks 1 and 2), and `Lmax`. Do not write `jl`. For a bag extract `nn,ns,nc,nb`, `NONE` versus `CMI`, and the full color and spin lists when mixing. For QMC also extract `QMCSTAD` versus `QMCMOD`, `rho_b`, and `temp`. For a two-body molecule extract the two legs, physical masses, `t1`, `t2`, `I`, `J`, and lowest `L`; put `cc1`, `cc2`, and `eta` in the OBESTAT parameter file. For a three-body molecule extract the three legs, masses, `t1`, `t2`, `t3`, `J`, `P`, `I`, and `Lmax`. Do not use `sym12` to set molecular Pauli.
+- For a meson spectrum extract `S`, `L`, `J`. For a baryon extract `J`, `P`, `sym12` (flavor symmetry of quarks 1 and 2), and `Lmax`. Do not write `jl`. For a bag extract `nn,ns,nc,nb`, `NONE` versus `CMI`, and the full color and spin lists when mixing. For QMC also extract `QMCSTAD` versus `QMCMOD`, `rho_b`, and `temp`. For a two-body molecule extract the two legs, physical masses, `t1`, `t2`, `I`, `J`, and lowest `L`; put `cc1`, `cc2`, and `eta` in the OBESTAT parameter file. A named antimeson gets nonzero `cc` on that meson leg, except \(\bar K^*\) in arXiv:2008.07389, which stays `0`. A `DIRAC` `cc` stays `0`. Do not build a \(P\leftrightarrow P^*\) transition or a spin-\(3/2\) leg. For a three-body molecule extract the three legs, masses, `t1`, `t2`, `t3`, `J`, `P`, `I`, and `Lmax`. Do not use `sym12` to set molecular Pauli.
 - Detect task type.
 - Detect requested model. For a fit, take the model from `fit.target`.
 - Detect requested basis and any basis-specific parameters.

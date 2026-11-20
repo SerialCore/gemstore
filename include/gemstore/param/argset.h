@@ -134,7 +134,7 @@ typedef struct argsOBEModel {
     int cc1;                /* meson C-parity; 0 no G flip, nonzero flips G=-1 exchanges for π,ω; Dirac ignored */
     int cc2;
     double eta;             /* MM C-parity on π and magnetic vector; write +1 or −1; 0 is read as +1; MB/BB ignored */
-    double iso;             /* ⟨τ1·τ2⟩ on π and ρ, set from I; 0 → +1 */
+    double iso;             /* ⟨τ·T⟩ on π and ρ, from t1, t2, I; 0 is zero */
 } argsOBEModel_t;
 
 typedef struct argsOBEModelDy {

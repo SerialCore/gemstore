@@ -224,16 +224,19 @@ void print_input_parameters(const argsInput_t *input)
         printf("  Orbital Momentum (L): %-50.6f\n", input->L);
         printf("  Total Momentum (J):   %-50.6f\n", input->J);
     }
-    else if (input->system == SYSTEM_BARYON || input->system == SYSTEM_MOLECUL3) {
+    else if (input->system == SYSTEM_BARYON) {
         printf("  1<->2 symmetry:       %-50d\n", input->sym12);
         printf("  Parity (P):           %-50d\n", input->P);
         printf("  Jacobi Lmax:          %-50d\n", input->Lmax);
         printf("  Total Momentum (J):   %-50.6f\n", input->J);
-        if (input->system == SYSTEM_MOLECUL3) {
-            printf("  Total isospin (I):    %-50.6f\n", input->iso_I);
-            printf("  Particle t1,t2,t3:    %.6f, %.6f, %.6f\n",
-                input->iso_t1, input->iso_t2, input->iso_t3);
-        }
+    }
+    else if (input->system == SYSTEM_MOLECUL3) {
+        printf("  Parity (P):           %-50d\n", input->P);
+        printf("  Jacobi Lmax:          %-50d\n", input->Lmax);
+        printf("  Total Momentum (J):   %-50.6f\n", input->J);
+        printf("  Total isospin (I):    %-50.6f\n", input->iso_I);
+        printf("  Particle t1,t2,t3:    %.6f, %.6f, %.6f\n",
+            input->iso_t1, input->iso_t2, input->iso_t3);
     }
     else if (input->system == SYSTEM_BAG) {
         printf("  Defined in color-magnetic basis parameters\n");

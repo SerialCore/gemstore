@@ -190,20 +190,7 @@ static double mol3_inte_v(double b11, int n, basis_3b qf, basis_3b qi, void *ctx
 
 /* ---------- isospin recoupling ---------- */
 
-/* Isovector factor at the vertex: a doublet uses τ = 2T, an integer isospin
- * (Σc is t=1) uses the generator T. Two doublets give τ1·τ2 (−3 or +1).
- * A doublet–triplet pair gives T·τ (−2 for I=1/2, +1 for I=3/2). */
-static double mol3_iso_vertex(double t)
-{
-    return (fabs(t - 0.5) < 1e-8) ? 2.0 : 1.0;
-}
 
-static double mol3_tau_dot(double ti, double tj, double tij)
-{
-    double tt = tij * (tij + 1.0) - ti * (ti + 1.0) - tj * (tj + 1.0);
-
-    return 0.5 * mol3_iso_vertex(ti) * mol3_iso_vertex(tj) * tt;
-}
 
 static double mol3_iso_scheme_amp(double t1, double t2, double t3, int c,
     double tij, double T, double MT, double m1, double m2, double m3)
@@ -618,7 +605,7 @@ static void mol3_load_pairs(const argsInput_t *input, mol3_vargs_t *varg)
                 exit(1);
             }
             k = varg->n_tp[p];
-            iso = mol3_tau_dot(ti, tj, tij);
+            iso = obe_tau_dot(ti, tj, tij);
             varg->tp_val[p][k] = tij;
             if (kind == MODEL_YUKAWA) {
                 varg->ker[p][k].vc = YKWVc;
@@ -674,7 +661,7 @@ static void mol3_load_pairs(const argsInput_t *input, mol3_vargs_t *varg)
         printf("  pair %d recoupled tij:", p + 1);
         for (int k = 0; k < varg->n_tp[p]; k++) {
             printf(" %.1f(⟨τ·τ⟩=%.3f)", varg->tp_val[p][k],
-                mol3_tau_dot(ti, tj, varg->tp_val[p][k]));
+                obe_tau_dot(ti, tj, varg->tp_val[p][k]));
         }
         printf("\n");
     }
@@ -843,7 +830,7 @@ void mol3_hybrid_GEM(const argsInput_t *args_input,
 
     nbas = job.qnlist_full.len_list;
     if (nbas <= 0) {
-        fprintf(stderr, "Error: empty MOLECUL3 basis. Check J, P, Lmax, sym12, I, and leg types.\n");
+        fprintf(stderr, "Error: empty MOLECUL3 basis. Check J, P, Lmax, I, and leg types.\n");
         exit(1);
     }
     mol3_iso_cache_build(&job);

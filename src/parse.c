@@ -406,7 +406,6 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
         input->P = read_number_item(system_json, "P")->valueint;
         input->sym12 = read_number_item(system_json, "sym12")->valueint;
         input->Lmax = read_number_item(system_json, "Lmax")->valueint;
-        input->jl = (int)read_number_or(system_json, "jl", 0.0);
     }
     else if (input->system == SYSTEM_MOLECUL2) {
         input->type1 = parse_obe_leg_name(read_string_item(system_json, "type1")->valuestring);
@@ -430,7 +429,6 @@ static void parse_system_section(const cJSON *root, argsInput_t *input)
         input->J = read_number_item(system_json, "J")->valuedouble;
         input->P = read_number_item(system_json, "P")->valueint;
         input->Lmax = read_number_item(system_json, "Lmax")->valueint;
-        input->sym12 = (int)read_number_or(system_json, "sym12", 0.0);
         input->iso_I = read_number_item(system_json, "I")->valuedouble;
         input->iso_t1 = read_number_item(system_json, "t1")->valuedouble;
         input->iso_t2 = read_number_item(system_json, "t2")->valuedouble;

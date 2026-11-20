@@ -27,7 +27,8 @@ void parse_param_QMC(const char *filename, argsQMCModel_t *args_model, model_typ
 
 /* parse OBESTAT param file: lambda, tensor_mass1/2, g_*, f_*,
  * and required cc1, cc2, eta. Legs, masses, and I stay in the system JSON.
- * Pair ⟨τ·τ⟩ is set from I (two-body t=1/2, or three-body recoupling). */
+ * Pair ⟨τ·T⟩ is not in this file. Two-body sets it from t1, t2, I.
+ * Three-body recouples each pair to I. */
 void parse_param_OBESTAT(const char *filename, argsOBEModel_t *args_model);
 
 /* parse YUKAWA param file: param.terms[] of V (MeV·fm), mu (fm^{-1}), wigner, bartlett. */

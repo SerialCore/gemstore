@@ -34,10 +34,19 @@
  * OBE_LEG_PSEUDOSCALAR: OBELib Scalar and Pseudoscalar legs share the
  * elastic NR vertices.
  *
- * Not implemented, on purpose: P ↔ P* / MassGap, StaticBaryon -> False
- * (Gordon g+f, Vls, q²/8m_B²), AxialVector, dipole or Λ1 ≠ Λ2, extra
- * bosons (η, δ, a1). Those exist in OBEPotential; this C potential is
- * the static elastic πσρω operator.
+ * An antimeson is a meson leg with cc ≠ 0. That flips G = −1 exchanges
+ * (π, ω) and leaves σ, ρ, and the isospin factor alone. cc does not
+ * replace ⟨τ·T⟩. obe_tau_dot builds that factor from the two isospins
+ * and the pair I: a doublet uses τ = 2T, an integer isospin uses T.
+ * Two doublets give −3 or +1. Σc (t = 1) with D (t = 1/2) gives −2 at
+ * I = 1/2 and +1 at I = 3/2. Two isoscalars give 0.
+ *
+ * Left out on purpose, and not a missing elastic channel: P ↔ P*
+ * transitions and MassGap (μ² = m² − Δ²), and spin-3/2 baryons
+ * (Σc*, Σc ↔ Σc*). A Dirac leg is spin 1/2. Also absent, as in the
+ * static Liu operator: StaticBaryon -> False (Gordon g+f, Vls,
+ * q²/8m_B²), AxialVector, dipole or Λ1 ≠ Λ2, and extra bosons
+ * (η, δ, a1).
  *
  * Couplings and Dy live in argset.h (argsOBEStatModel / argsOBEStatModelDy).
  * Legs are obe_leg_type_t in types.h.
@@ -54,6 +63,10 @@ double obe_leg_spin(obe_leg_type_t type);
 /* Intrinsic parity: Dirac +1, VECTOR (1−) and PSEUDOSCALAR (0−) −1.
  * Elastic 0+ currently shares PSEUDOSCALAR vertices and this parity. */
 int obe_leg_parity(obe_leg_type_t type);
+
+/* ⟨τi·τj⟩ for π and ρ. A t = 1/2 leg contributes τ = 2T; any other t
+ * contributes the generator T. tij is the pair isospin. */
+double obe_tau_dot(double ti, double tj, double tij);
 
 /* Radial pieces without spin matrix elements: V = vc + vss (s1·s2) + vt S12. */
 void obe_radial(const argsOBEModel_t *model, double r, double *vc, double *vss, double *vt);

@@ -8,6 +8,7 @@
 
 #include <gemstore/types.h>
 #include <gemstore/parse.h>
+#include <gemstore/model/obemodel.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -296,13 +297,14 @@ argsOBEModel_t argsOBEModel_from(const argsInput_t *input, int p)
     parse_param_OBESTAT(input->param_file, &args_model);
     args_model.type1 = input->type1;
     args_model.type2 = input->type2;
-    if (fabs(input->iso_t1 - 0.5) < 1e-9 && fabs(input->iso_t2 - 0.5) < 1e-9) {
-        if (input->iso_I < -1e-12) {
-            fprintf(stderr, "Error: two-body OBESTAT with t=1/2 legs needs I.\n");
-            exit(1);
-        }
-        args_model.iso = 2.0 * input->iso_I * (input->iso_I + 1.0) - 3.0;
+    if (input->iso_I < fabs(input->iso_t1 - input->iso_t2) - 1e-8
+        || input->iso_I > input->iso_t1 + input->iso_t2 + 1e-8) {
+        fprintf(stderr,
+            "Error: two-body OBESTAT I=%.4g is outside |t1−t2| .. t1+t2 (t=%.4g, %.4g).\n",
+            input->iso_I, input->iso_t1, input->iso_t2);
+        exit(1);
     }
+    args_model.iso = obe_tau_dot(input->iso_t1, input->iso_t2, input->iso_I);
     return args_model;
 }
 

@@ -25,7 +25,6 @@
  * (boson). Three identical legs: one S3 component, rearrangement sum of
  * charts c=1,2,3 at the same (l, sij, tij). Two or three distinguishable
  * legs: independent charts; Bose/Pauli only on the identical ρ-pair.
- * sym12 is not used for this selection (kept in JSON for baryons).
  * Overcomplete N is pruned, then H' u = E u. Eigenvalues are the mass. */
 void mol3_hybrid_GEM(const argsInput_t *args_input,
     array_t *e_out, matrix_t *v_out, matrix_t *n_out,
